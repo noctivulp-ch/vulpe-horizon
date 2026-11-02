@@ -72,6 +72,8 @@ pasada de bloom, 49 en la final (por sitio en el código; límite 64).
 ## Visto y no visto
 
 - **Visto:** día con el cielo azul y la hierba saturada; atardecer con halo alrededor del sol; noche oscura con la
-  aurora y el paisaje en silueta.
-- **No visto:** la adaptación al entrar y salir de una cueva (el tp bajo tierra devuelve a la superficie; hace
-  falta otra escena), la ceguera y la oscuridad del Warden.
+  aurora y el paisaje en silueta; **cueva** (caja de piedra construida con `fill` en el aire, sin luz de cielo, con
+  una piedra luminosa): oscura y azulada por la luz mínima y el Purkinje, con la piedra luminosa brillando; **al
+  salir al sol** deslumbra (imagen lavada, `imagen-salida-cueva.png`) y en unos segundos se adapta
+  (`imagen-salida-adaptado.png`).
+- **No visto:** la ceguera y la oscuridad del Warden.
