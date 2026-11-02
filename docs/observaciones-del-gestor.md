@@ -108,3 +108,10 @@ La duda de la ventana al cielo está con A. Siguiente: 09 (TAA), luego 07–16.
   dirección de vista. En §6, el peso de la luz de la cortina tiene que saturar en cada muestra (ya hecho).
 - El gestor reescribió el historial de `vulpe-horizon-spec` (todo noctivulp-ch, firmado): los hashes viejos se
   traducen con `../vulpe-horizon-spec/historial-reescrito.md`.
+
+## 2026-11-02 — revisión de df5e00e y a40893a
+
+Ventana bien cerrada. Las tres desviaciones del 10–11 (exposición mezclada, Reinhard por defecto, bloom de niebla
+al cuadrado) están con A: dejarlas así hasta que responda. La cuarta vista de `hoja-imagen.png` estaba negra (era
+la casilla vacía de una hoja 2×2 con tres capturas): rehecha con la cueva construida con `fill`, como sugirió el
+gestor.
