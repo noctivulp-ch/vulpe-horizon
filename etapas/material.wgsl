@@ -81,14 +81,20 @@ fn material(input: MaterialInput) -> Surface {
     }
     var color = difusa_total + especular + reflejo;
 
-    // Emisión: mezcla hacia el color emitido.
+    // Emisión: mezcla hacia el color emitido (bloques que dan luz, LabPBR o menas, 12).
     var emision = sup_emision_texeles(p.albedo, p.emision_bloque);
+    var color_emision = p.albedo;
     var brillo_emision = 1.0;
+    let mena = adp_mena(input, p.albedo);
+    if mena.emision > emision {
+        emision = mena.emision;
+        color_emision = mena.albedo;
+    }
     if m.emision > 0.0 {
         emision = pow(m.emision, 2.0);
         brillo_emision = o.emision_labpbr;
     }
-    color = mix(color, p.albedo * OPC_EMISION * brillo_emision * 4.0, emision);
+    color = mix(color, color_emision * OPC_EMISION * brillo_emision * 4.0, emision);
 
     if !p.translucido {
         let total = col_luminancia(directa + indirecta) + 1e-6;
