@@ -4,7 +4,7 @@
   `build/` · 0004 el «picture» guarda la escena codificada con el mapeo de tonos.
 - `efectos/<efecto>.md`: qué hace cada efecto y el **porqué del código** (el código solo remite aquí).
   Empezar por `efectos/nucleo.md` (base matemática, ruido, color, adaptadores y herramientas). Luego
-  `efectos/cielo-y-atmosfera.md` (01).
+  `efectos/cielo-y-atmosfera.md` (01) y `efectos/cielo-fractal.md` (02).
 - `observaciones-del-gestor.md`: lo que llega del gestor fuera de la especificación.
 
 ## Carpetas añadidas a las del ADR 0002
