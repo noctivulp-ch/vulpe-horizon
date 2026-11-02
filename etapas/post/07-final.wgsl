@@ -29,6 +29,8 @@ fn post(input: PostInput) -> vec4<f32> {
     c = col_tonemap(c, o.tonemap, OPC_BLANCO);
     c = col_gradar(c, o.gradacion);
     c = mat_saturar3(c);
+    // Rayos del fractal (14): luz de la escena tras el tonemap y antes del aislamiento de color.
+    c += adp_rayos(p.uv, p.pixel, e.exposicion);
     var salida = col_lineal_a_srgb(c);
     if aislamiento {
         salida = img_aislar(salida, p.uv, previous, linear_sampler, opc_aislamiento(e.exposicion));
