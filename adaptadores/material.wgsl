@@ -99,20 +99,19 @@ fn adp_luces(o: OpcLuz) -> AdpLuces {
     // Lluvia: el cielo cubierto apaga el sol y vuelve gris la luz de cielo.
     let cubierto = clamp(frame.rain, 0.0, 1.0);
     directa *= 1.0 - 0.9 * cubierto;
-    var cielo = adp_cielo_medio(c) * o.cielo;
+    var cielo = adp_cielo_medio(c) * o.cielo * OPC_LUZ_CIELO_BASE;
     cielo = mix(cielo, vec3<f32>(col_luminancia(cielo)) * 0.8, cubierto) * (1.0 - 0.5 * frame.thunder);
-    return AdpLuces(d, directa, cielo, adp_suelo(c) * o.cielo);
+    return AdpLuces(d, directa, cielo, adp_suelo(c) * o.cielo * OPC_LUZ_CIELO_BASE);
 }
 
-// Sombra provisional hasta el subsistema 04: la luz de cielo de Minecraft (sin cielo, sin sol).
 struct AdpSombra {
     luz: vec3<f32>,         // 0..1 por canal
     grosor: f32,            // distancia al ocluyente hacia la luz, bloques
 }
 
 fn adp_sombra(p: AdpPunto) -> AdpSombra {
-    let s = smoothstep(0.86, 0.97, p.luz_cielo);
-    return AdpSombra(vec3<f32>(s), mix(2.0, 0.0, s));
+    let r = adp_sombra_punto(AdpEntradaSombra(p.posicion, p.normal_cara, p.luz_cielo, p.pixel), opc_sombras());
+    return AdpSombra(r.luz, r.grosor);
 }
 
 // Color de la luz de bloque: el de [[lights]] cercano, si lo hay.
