@@ -28,4 +28,8 @@ Vulpe (`opciones/rayos.wgsl`). Van 48.
 
 - **Visto:** de frente, haces que convergen hacia el centro de la figura, concentrados en sus zonas brillantes; con el
   efecto apagado, nada.
-- **No visto:** los haces anticrepusculares de espaldas (en la captura apenas se distinguen), el corte por nubes.
+- **De espaldas** (polo en la antípoda, mirando al norte con la semilla 8): no se distingue nada (diferencia media
+  2,4/255 con el efecto apagado, casi todo ruido). Alrededor de la antípoda no hay nada brillante que desenfocar:
+  la niebla nocturna es oscura y la única zona clara es el halo de la luna, lejos del polo. No sé si es lo esperado
+  con la niebla de noche o si el umbral de espaldas (0,04 mapeado) es alto en nuestra escala: duda para A.
+- **No visto:** el corte por nubes.
