@@ -77,7 +77,10 @@ Distinguirlas por la altura de la cara superior solo serviría para esa cara y s
 
 ### Especular y LabPBR
 
-GGX + Smith correlacionado + Schlick (`nucleo/superficie/brdf.wgsl`); rugosidad = (1 − suavidad)². LabPBR
+GGX + Smith correlacionado + Schlick (`nucleo/superficie/brdf.wgsl`); rugosidad lineal α = (1 − suavidad)²,
+que es lo que entra tal cual en la GGX, la visibilidad de Smith y el muestreo VNDF. **Corregido el
+2026-11-02** (lo hizo revisar el gestor): se volvía a elevar al cuadrado dentro del especular y del VNDF, con
+lo que la α efectiva era (1 − s)⁴ y los brillos salían más estrechos y fuertes de lo debido. LabPBR
 según su estándar público: verde < 230 F0 lineal, 230–237 los ocho metales predefinidos con su F0
 calculado de n y k (tabla del estándar), 255 metal con el albedo de F0. **Reflejo del ambiente:** el color
 del cielo en la dirección reflejada aproximado con la tabla (horizonte → cielo medio ×2 hacia arriba,

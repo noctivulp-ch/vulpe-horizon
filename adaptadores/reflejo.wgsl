@@ -20,7 +20,7 @@ fn adp_post_reflejo(p: AdpPixel, dir: vec3<f32>, pasos: i32) -> vec3<f32> {
     let base = sup_base(n);
     let v_local = transpose(base) * (-dir);
     let u = vec2<f32>(rui_blanco_pixel(p.pixel, frame.frame_index), rui_blanco_pixel(p.pixel + 97.0, frame.frame_index));
-    let h = base * sup_muestrear_vndf(v_local, max(rugosidad * rugosidad, 1e-4), u);
+    let h = base * sup_muestrear_vndf(v_local, max(rugosidad, 1e-4), u);
     var r = reflect(dir, h);
     if dot(r, n) <= 0.0 {
         r = reflect(dir, n);
