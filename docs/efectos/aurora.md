@@ -47,9 +47,31 @@ analíticas, `rui_valor2_derivadas`, para la distancia a lo largo de la línea),
 octavas inclinado con la altura y movido con el día, ventana ×2 sumada sin pesarla por la transmitancia.
 La normal de la línea sale de diferencias del canal a entre texeles vecinos del mapa.
 
+### Peso de la luz
+
+La especificación suma la luz de cada muestra pesada por `1 − e^(−densidad·(1 − despeje)·largo)`, con la
+densidad de la niebla **en las unidades de Vulpe**. Con nuestra extinción física de noche (≈0,0076 por
+bloque) ese peso no pasaba de ~0,15 y la luz solo salía donde el rayo recorre mucho velo: un ribete en el
+borde de la figura, con el interior oscuro y sin altura (lo vio el gestor). Se multiplica la extinción por
+`VOL_AURORA_DENSIDAD` = 25 solo para ese peso: satura casi en cada muestra, como en Vulpe, y la cortina brilla
+en toda su altura con el color del mapa en ese punto (también el interior de la figura).
+
 **Escala de la luz:** el mapa trae la radiancia del fractal del cielo (muy baja: del orden de las estrellas
-tenues); la emisión es esa × intensidad 600 × 0,5 (`ADP_AURORA_ESCALA`) × el ajuste del usuario. Con
-0,01, la de la especificación tomada literal, no se veía nada en nuestra escala de luz; 0,5 afinado a ojo.
+tenues); la emisión es esa × intensidad 600 × 0,5 (`ADP_AURORA_ESCALA`) × el ajuste del usuario. Con 0,01, la
+de la especificación tomada literal, no se veía nada en nuestra escala de luz; 0,5 afinado a ojo.
+
+### Ventana
+
+La ventana suma el color del mapa en la dirección de vista; ese color es la radiancia del fractal del cielo y
+sumado tal cual no se notaba: se multiplica por `VOL_AURORA_VENTANA_ESCALA` = 12. **Aun así no se aprecia**
+(diferencia media entre «Aurora: sin ventana» y la normal: 2,7/255, casi todo ruido). Duda para A: a través
+de un cono la dirección de vista cae en zonas del disco sin fractal; ¿el color de la ventana es el del mapa en
+la dirección de vista o en el punto del cono?
+
+### Depuración
+
+Dos vistas en la opción de depuración del pack (como pide la especificación): «Aurora: conos» suma rojo
+proporcional al despeje de cada muestra; «Aurora: sin ventana» quita la ventana.
 
 ## Opciones
 
@@ -63,11 +85,11 @@ Noche mirando la figura (1830×1040, RTX 3050 Ti portátil): 6,09 ms de GPU con 
 
 ## Visto y no visto
 
-- **Visto:** la luz con la forma y el tono del fractal dentro de la niebla nocturna, donde está la figura (al
-  sur con la semilla 8), con huecos; nada al norte (sin figura); de día no corre.
-- **Diferencia con la referencia** (`ruidov_noche.png`): allí son **cortinas verticales** con vetas que bajan
-  desde las figuras; aquí se lee más como una **lámina horizontal** brillante con la silueta del fractal. Sin
-  resolver: puede ser la escala de la luz frente a la del borde superior, el ancho del velo visto desde el
-  suelo o la poca niebla de la franja (σ ≈ 0,0076).
-- **No visto:** la ventana al cielo de forma clara (los huecos se ven oscuros), el despeje en detalle con la
-  depuración de conos (no implementada) y el suelo medido del mod nativo.
+- **Visto, con el peso corregido:** la luz llena el cuerpo de las figuras (relleno y filamentos), no solo el
+  borde. Con la semilla 3 (varias figuras, algunas altas) la aurora ocupa buena parte del cielo y se ven las
+  cortinas verticales como rayas que convergen hacia arriba vistas desde abajo (`aurora-semilla3*.png`). Con
+  la semilla 8 (la de por defecto, una figura cerca del horizonte) la huella sobre el velo, que es un plano a
+  200–300 bloques de altura, se ve muy escorzada y se lee más como una lámina (`aurora-sur.png`).
+- **Conos** (`aurora-conos.png`): zonas y rayos rojos que bajan desde tramos de la línea del fractal, como en
+  `dbg_conos.png`.
+- **No visto:** la ventana al cielo (ver §Ventana) y el suelo medido del mod nativo.
