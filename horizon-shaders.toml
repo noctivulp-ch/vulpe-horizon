@@ -34,11 +34,13 @@ shared = [
     "nucleo/cielo/estrellas.wgsl",
     "nucleo/cielo/composicion.wgsl",
     "nucleo/cielo/fractal_colocacion.wgsl",
+    "nucleo/superficie/datos.wgsl",
     "opciones/depuracion.wgsl",
     "opciones/imagen.wgsl",
     "opciones/exposicion.wgsl",
     "opciones/cielo.wgsl",
     "opciones/fractal.wgsl",
+    "opciones/luz.wgsl",
     "adaptadores/marco.wgsl",
     "adaptadores/atmosfera.wgsl",
     "adaptadores/fractal.wgsl",
@@ -59,7 +61,16 @@ stars = false
 
 [material]
 file = "etapas/material.wgsl"
-files = ["adaptadores/material.wgsl"]
+files = [
+    "nucleo/superficie/brdf.wgsl",
+    "nucleo/superficie/labpbr.wgsl",
+    "nucleo/superficie/sss.wgsl",
+    "nucleo/superficie/humedad.wgsl",
+    "nucleo/superficie/emision.wgsl",
+    "nucleo/luz/curvas.wgsl",
+    "nucleo/luz/difusa.wgsl",
+    "adaptadores/material.wgsl",
+]
 
 [[post]]
 file = "etapas/post/01-final.wgsl"
@@ -101,7 +112,7 @@ id = "imagen_tonemap"
 name = "Mapeo de tonos"
 description = "Cómo se comprimen los brillos por encima de 1."
 type = "choice"
-values = ["Vulpe", "Reinhard (luminancia)", "ACES"]
+values = ["Vulpe", "Reinhard (luminancia)", "ACES", "Reinhard (por canal)"]
 default = "Vulpe"
 
 [[options]]
@@ -289,6 +300,93 @@ type = "choice"
 values = ["Original", "Suave"]
 default = "Original"
 
+[[options]]
+id = "luz_cielo"
+name = "Brillo de la luz de cielo"
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
+id = "luz_bloque"
+name = "Brillo de la luz de bloque"
+description = "Antorchas, lava, linternas."
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
+id = "luz_bloque_color"
+name = "Color de la luz de bloque"
+type = "choice"
+values = ["Cálido", "Neutro", "Frío"]
+default = "Cálido"
+
+[[options]]
+id = "luz_minima_cuevas"
+name = "Luz mínima en cuevas"
+description = "Para distinguir las formas de una cueva sin antorchas."
+type = "float"
+default = 0.5
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "luz_minima_exterior"
+name = "Luz mínima al aire libre"
+type = "float"
+default = 0.0
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "sss"
+name = "Dispersión bajo la superficie"
+description = "Hojas, plantas y nieve que dejan pasar la luz. Lista: por bloque; LabPBR: del paquete de recursos."
+type = "choice"
+values = ["Apagada", "Lista", "LabPBR", "Ambas"]
+default = "Lista"
+
+[[options]]
+id = "sss_brillo"
+name = "Brillo de la dispersión"
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
+id = "especular_sol"
+name = "Brillo especular del sol"
+type = "float"
+default = 1.0
+min = 0.0
+max = 10.0
+step = 0.25
+
+[[options]]
+id = "emision_labpbr"
+name = "Brillo de la emisión LabPBR"
+type = "float"
+default = 1.0
+min = 1.0
+max = 50.0
+step = 1.0
+
+[[options]]
+id = "charcos"
+name = "Charcos"
+type = "choice"
+values = ["Charcos y mojado", "Solo charcos", "Solo mojado", "Apagado"]
+default = "Charcos y mojado"
+
 [[textures]]
 id = "atmosfera"
 file = "texturas/atmosfera.png"
@@ -301,12 +399,38 @@ file = "texturas/transmitancia.png"
 filter = "linear"
 wrap = "clamp"
 
+# --- Materiales (ids de MaterialInput.material; ver opciones/luz.wgsl) -------------------------
+
+[[materials]]       # hojas: SSS fuerte
+id = 1
+sprites = ["block/*_leaves"]
+
+[[materials]]       # plantas cruzadas altas, retoños y algas: SSS fuerte
+id = 2
+sprites = ["block/*_sapling", "block/tall_grass_*", "block/large_fern_*", "block/sunflower_*", "block/lilac_*", "block/rose_bush_*", "block/peony_*", "block/pitcher_plant_*", "block/kelp", "block/kelp_plant", "block/seagrass", "block/tall_seagrass_*", "block/*_propagule*"]
+
+[[materials]]       # hielo compacto: SSS fuerte
+id = 3
+sprites = ["block/packed_ice", "block/blue_ice"]
+
+[[materials]]       # hierba, helechos, flores, bambú, lianas: SSS medio, cruzadas
+id = 4
+sprites = ["block/short_grass", "block/grass", "block/fern", "block/dandelion", "block/poppy", "block/blue_orchid", "block/allium", "block/azure_bluet", "block/*_tulip", "block/oxeye_daisy", "block/cornflower", "block/lily_of_the_valley", "block/wither_rose", "block/torchflower", "block/bamboo_stage0", "block/bamboo_*_leaves", "block/vine", "block/*_vines", "block/*_vines_plant", "block/*_roots", "block/sugar_cane", "block/sweet_berry_bush_*", "block/dead_bush", "block/*_fungus", "block/hanging_roots", "block/cave_vines*"]
+
+[[materials]]       # liquen, pétalos, cogollos de amatista: SSS medio
+id = 5
+sprites = ["block/glow_lichen", "block/pink_petals*", "block/*_amethyst_bud", "block/amethyst_cluster", "block/moss_carpet"]
+
+[[materials]]       # nieve, amatista, telaraña, coral, champiñón: SSS débil
+id = 6
+sprites = ["block/snow", "block/powder_snow", "block/amethyst_block", "block/cobweb", "block/*coral*", "block/*_mushroom_block", "block/mushroom_block_inside", "block/mushroom_stem"]
+
 # --- Menú -----------------------------------------------------------------------------------
 
 [[pages]]
 id = "principal"
 name = "Vulpe"
-items = ["page:cielo", "page:fractal", "page:imagen", "page:depuracion"]
+items = ["page:cielo", "page:fractal", "page:luz", "page:imagen", "page:depuracion"]
 
 [[pages]]
 id = "cielo"
@@ -319,6 +443,12 @@ id = "fractal"
 name = "Cielo fractal"
 description = "Las constelaciones de fractales de la noche."
 items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_paleta", "fractal_brillo", "fractal_techo", "fractal_saturacion", "fractal_contraste", "fractal_mutacion", "fractal_hueco", "fractal_dibujo"]
+
+[[pages]]
+id = "luz"
+name = "Luz"
+description = "Cielo, bloques, dispersión, brillos y charcos."
+items = ["luz_cielo", "luz_bloque", "luz_bloque_color", "luz_minima_cuevas", "luz_minima_exterior", "sss", "sss_brillo", "especular_sol", "emision_labpbr", "charcos"]
 
 [[pages]]
 id = "imagen"

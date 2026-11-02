@@ -29,7 +29,7 @@ fn sky(input: SkyInput) -> vec4<f32> {
     let suelo = cie_factor_suelo(dir.y, 0.06);
     var cielo = atm.luz * mix(0.6, 1.0, suelo) + fondo * atm.transmitancia * suelo;
     cielo = mix(cie_color_bajo_horizonte(adp_cielo_medio(ajustes), adp_suelo(ajustes), 0.35), cielo, suelo);
-    cielo = col_saturar(cielo, OPC_CIELO_SATURACION);
+    cielo = col_saturar(cielo, OPC_CIELO_SATURACION) * OPC_CIELO_BRILLO_DIBUJO;
     cielo = cie_aplicar_lluvia(cielo, dir.y, adp_lluvia(ajustes));
     return adp_cielo_salida(cielo, dir);
 }

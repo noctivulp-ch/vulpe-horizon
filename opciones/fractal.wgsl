@@ -14,7 +14,7 @@ override fractal_hueco: f32 = 40.0;
 override fractal_dibujo: u32 = 0u;          // original
 
 // Escala de brillo y techo en la escala común: el fractal queda del orden de las estrellas tenues.
-const OPC_FRACTAL_ESCALA: f32 = 2.5e-5;
+const OPC_FRACTAL_ESCALA: f32 = 0.8e-5;
 const OPC_FRACTAL_ITERACIONES: i32 = 100;
 
 struct OpcFractal {

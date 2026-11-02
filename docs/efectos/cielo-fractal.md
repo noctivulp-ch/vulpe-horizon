@@ -27,9 +27,16 @@ Fibonacci de área igual del cenit hacia el horizonte (`acos(1 − (i+½)/n · 0
 en el borde del cardioide (pares) o del bulbo de periodo 2 (impares) un 0–6 % por fuera, una de cada tres
 ampliación del Mandelbrot, y el tamaño que pone el borde de la figura en el del casquete.
 
-**Hash propio:** en vez del `fract(sin(·)·43758…)` de Vulpe, PCG sobre los bits de la semilla
-(`cie_fractal_azar`): es exacto en enteros y da lo mismo en toda GPU. El sorteo no es el mismo que el de Vulpe
-para una semilla dada (los números al azar son otros), pero sí sigue las mismas reglas.
+**Hash propio (cambio intencionado):** en vez del `fract(sin(·)·43758…)` de la referencia, PCG sobre los bits
+de la semilla y el índice (`cie_fractal_azar`). Motivos:
+1. `sin` de argumentos grandes no está especificado con precisión en WGSL ni en las GPU: el mismo hash da
+   números distintos según el fabricante y el controlador (la propia referencia tuvo que plegar la semilla
+   del mundo a un rango pequeño por eso). PCG es aritmética entera exacta: el mismo cielo en toda máquina,
+   que es lo que hace que «una vez por mundo» signifique algo.
+2. Es el hash que ya usa el resto del núcleo (`nucleo/ruido/hash.wgsl`, Jarzynski y Olano 2020).
+
+**Consecuencia aceptada:** la misma semilla **no da el mismo cielo que en Vulpe** (los números al azar son
+otros); el reparto sigue las mismas reglas y la variedad es la misma.
 
 **Día del mundo:** `frame.mods[0].z` (número de día, con el mod nativo) + `frame.day_time`. Sin mod el
 número de día es 0 y el cielo no cambia entre noches; el salto de la fracción a 0 ocurre al amanecer, de
@@ -70,10 +77,10 @@ Julia y `0,02 · k` en las ampliaciones.
 
 ### Escala de brillo
 
-`OPC_FRACTAL_ESCALA = 2,5·10⁻⁵` por unidad de la opción Brillo (40 por defecto) y el techo en la misma escala
-×4. Calibrado a ojo con la exposición de noche del 01: con 1·10⁻⁵ las figuras apenas se separaban del cielo;
-con 2,5·10⁻⁵ los filamentos se leen dorados, tenues y por debajo de la luna. Pendiente de comparar con
-`referencias/forge_cielo.png` cuando haya bloom (10).
+`OPC_FRACTAL_ESCALA = 0,8·10⁻⁵` por unidad de la opción Brillo (40 por defecto) y el techo en la misma escala
+×4. Primero 1·10⁻⁵ (apenas se separaban del cielo con pocas figuras), luego 2,5·10⁻⁵; el gestor vio esas
+figuras más brillantes y opacas que la referencia, que las quiere del orden de las estrellas tenues
+(observación del 2026-11-01), y se bajó a 0,8·10⁻⁵.
 
 ## Opciones
 
