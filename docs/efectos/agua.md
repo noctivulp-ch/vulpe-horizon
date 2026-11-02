@@ -40,9 +40,9 @@ Especificación: `../vulpe-horizon-spec/subsistemas/07-agua.md`. Capturas: `prue
 - **Desde abajo:** Fresnel desde dentro con el ángulo crítico de n = 1,333; fuera, reflexión total hacia un color
   de agua profunda.
 - **Niebla bajo el agua:** absorción × 0,45 a lo largo de la vista (con la de la superficie se cerraba en pocos
-  bloques: un muro azul), dispersión con la luz del sol × 0,5 y ambiente teñido. La transmitancia que se guarda es
-  la luminancia (el volumen tiene un solo canal de transmitancia): el tinte de lo que se ve a través sale de la luz
-  dispersada, no de una transmitancia por canal (simplificación).
+  bloques: un muro azul), dispersión con la luz del sol × 0,5 y ambiente teñido. El destino del volumen guarda una sola
+  transmitancia (la luminancia); **la composición aplica la absorción por canal** con la distancia (Beer-Lambert con la
+  misma absorción del raymarch, `adp_transmitancia_compuesta`; falta 07.1 de la fase 2).
 - Las funciones del agua van solo en material, volumen y composición, no en `shared`: las lecturas de textura
   cuentan por etapa aunque la función no se use, y la final ya va por 49.
 
@@ -75,3 +75,9 @@ emborronaría).
 
 `horizon-ctl tp` mueve al jugador solo en el cliente y el servidor lo devuelve a los pocos segundos: las escenas
 usan `command tp @s X Y Z` (anotado en `tools/probar.sh`).
+
+## Absorción por canal bajo el agua (fase 2, falta 07.1)
+
+**Visto** (`agua-color.png`, escena `pruebas/escenas/agua-color.ctl`, lana roja y blanca a 2, 5 y 10 bloques, aislamiento
+apagado): a 2 bloques la roja sale rojo oscuro y la blanca blanca verdosa; a 5, la roja ya es pardo oscuro y la
+blanca verde azulada; a 10 se pierden en el azul.
