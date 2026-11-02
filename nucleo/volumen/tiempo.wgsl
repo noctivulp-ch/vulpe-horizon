@@ -66,7 +66,7 @@ fn vol_horario(fraccion: f32) -> VolHorario {
     let amanecer = 1.0 - smoothstep(0.0, 0.08, min(f, 1.0 - f) - 0.0);
     let atardecer = 1.0 - smoothstep(0.0, 0.08, abs(f - 0.5));
     let noche = smoothstep(0.5, 0.6, f) * (1.0 - smoothstep(0.92, 1.0, f));
-    let uniforme = amanecer * 0.06 + atardecer * 0.1 + noche * 0.45;
+    let uniforme = amanecer * 0.06 + atardecer * 0.1 + noche * 0.38;
     let manchas = amanecer * 0.5 + noche * 0.15;
     return VolHorario(uniforme, manchas);
 }

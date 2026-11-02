@@ -12,6 +12,12 @@ struct CieLluvia {
     cielo_medio: vec3<f32>, // radiancia media del cielo despejado
 }
 
+// Cuánto de bruma (y no de suelo) hay en una dirección bajo el horizonte: 1 cerca de él, 0 mirando hacia abajo
+// más de unos 30°. Lo comparten el cielo bajo el horizonte y la niebla de borde, para que casen.
+fn cie_peso_bruma_horizonte(dir_y: f32) -> f32 {
+    return 1.0 - smoothstep(0.15, 0.5, max(-dir_y, 0.0));
+}
+
 // Color del «suelo» que se ve bajo el horizonte más allá del terreno: oscuro y teñido del cielo, no el
 // suelo iluminado de la tabla (que sale casi blanco con la exposición del día).
 fn cie_color_bajo_horizonte(cielo_medio: vec3<f32>, suelo: vec3<f32>, oscuridad: f32) -> vec3<f32> {

@@ -6,8 +6,7 @@
 // del horizonte (no mirando arriba ni abajo).
 fn vol_borde(cilindrica: f32, alcance: f32, dir_y: f32, fuera: f32) -> f32 {
     let f = smoothstep(alcance * 0.66, alcance * 0.98, cilindrica);
-    let horizonte = 1.0 - smoothstep(0.15, 0.5, abs(dir_y));
-    return f * horizonte * fuera;
+    return f * cie_peso_bruma_horizonte(-abs(dir_y)) * fuera;
 }
 
 // Color del cielo cerca del horizonte en la dirección `dir_y`, desde la tabla: del horizonte al cielo medio.

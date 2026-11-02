@@ -41,10 +41,12 @@ como `referencias/uns_cielo-noche_sinfractal.png`. Es analítica y no lee nada d
   (`(1 − e^{−σΔ})/σ`), para que pocos pasos no oscurezcan el cielo.
 - **Dispersión múltiple aproximada:** término isótropo `σ_s · L_media` en cada tramo, con `L_media` la media
   de las filas «cielo» y «suelo» de la tabla para ese astro (la radiancia que ve en promedio un punto del
-  aire), ×0,4 (`OPC_MULTIPLE_REFUERZO`). Con ×1 el cielo de mediodía salía gris; la tabla itera el mismo
+  aire), ×0,4 (`ATM_MULTIPLE`, en `parametros.wgsl`: también lo lee la herramienta). Con ×1 el cielo de mediodía salía gris; la tabla itera el mismo
   término cuatro veces hasta converger.
-- **Aerosoles ×5** sobre Hillaire (`OPC_BRUMA_BASE`) por defecto: con el aire limpio el halo del sol era
-  pequeño y apagado, y la referencia (`base_Bliss-UNS_dia_r1.png`) lo quiere amplio y blanco.
+- **Aerosoles ×5** sobre Hillaire, dentro de `atm_tierra()`: con el aire limpio el halo del sol era pequeño
+  y apagado, y la referencia (`base_Bliss-UNS_dia_r1.png`) lo quiere amplio y blanco. Antes era un
+  multiplicador en `opciones/` que la tabla no veía: su horizonte salía más oscuro que el cielo en vivo y la
+  niebla de borde pintaba una franja gris sobre el mar. Ahora la tabla sale del mismo modelo.
 - **Saturación del cielo** (`OPC_CIELO_SATURACION`): fue ×1,5 mientras la codificación usaba Reinhard por
   canal (comprimía el cenit de ~1 : 2 : 4,5 a ~1 : 1,6 : 2,4); con el Reinhard sobre el canal máximo
   (ADR 0004) vuelve a 1.
@@ -95,11 +97,14 @@ píxeles que se desplaza suave al girar en vez de centellear. No giran con la ho
 
 ### Montaje
 
-`etapas/cielo.wgsl`: fondo (estrellas + disco) × transmitancia, + dispersión; bajo el horizonte un factor
-gaussiano de 0,06 de anchura en `dir.y` lleva a un «suelo» oscuro teñido del cielo
-(`cie_color_bajo_horizonte`: 60 % del cielo medio, 40 % del suelo de la tabla, ×0,35). El suelo iluminado
-de la tabla a secas salía casi blanco con la exposición del día. La dispersión bajo el horizonte se deja
-al 60 % (perspectiva aérea hasta el suelo del planeta).
+`etapas/cielo.wgsl`: fondo (estrellas + disco) × transmitancia, + dispersión. **Bajo el horizonte** la
+atmósfera se evalúa como si se mirase al horizonte (`dir.y` llevado a 0): en Minecraft el terreno acaba antes
+que el horizonte del planeta y lo que se ve detrás tiene que ser bruma; evaluada de verdad, el rayo tocaba el
+suelo del planeta enseguida y quedaba una banda oscura sobre el mar lejano (observación del gestor). Esa
+bruma pasa a un «suelo» oscuro teñido del cielo (`cie_color_bajo_horizonte`: 60 % del cielo medio, 40 % del
+suelo de la tabla, ×0,35) con el mismo peso por ángulo que la niebla de borde del 05
+(`cie_peso_bruma_horizonte`: bruma hasta ~9° bajo el horizonte, suelo pasados ~30°), así casan a cualquier
+altura de la cámara.
 
 **Lluvia:** mezcla hacia un gris (35 % del color medio del cielo) ×1,1, ×(1 − 0,6·tormenta), con peso
 `lluvia · mix(0,75; 1; e^(−4·max(dir.y, 0)))`, mayor hacia el horizonte; la lluvia y la tormenta se
@@ -111,10 +116,9 @@ etapa `sky` no tiene coordenada de píxel.
 
 ## Opciones
 
-Página «Cielo»: brillo del cielo, bruma y brillo de la luna en pasos (−2…+2, 0 en el centro: la regla del
-valor por defecto centrado de las convenciones, con el ×0,25…×4 de la especificación), temperatura del sol
-4000–8000 K (6000 en el centro), estrellas sí/no y su brillo. El multiplicador de Rayleigh por canal
-(prioridad baja) queda fuera para ahorrar opciones.
+Página «Cielo» (presupuesto de `convenciones.md`, 2026-11-02): brillo del cielo y de la luna en pasos
+(−2…+2, 0 en el centro: el ×0,25…×4 de la especificación) y estrellas sí/no. Bruma, temperatura del sol y
+brillo de las estrellas pasan a constantes con su valor por defecto (`opciones/cielo.wgsl`).
 
 ## Coste medido
 

@@ -14,9 +14,10 @@ reescalado bilateral por profundidad, niebla de borde. `[material] fog = false`:
 se aplica. También cierra dos pendientes: las **sombras de nubes** del 04 en el material, y la **lluvia
 sobre el cielo, que se desvanece por encima de la capa de nubes** (01).
 
-**Fuera por ahora:** los ganchos de la aurora (06) y los rayos del fractal (14) en el bucle; la niebla de
-nieve con `precipitation == 2`; el ruido azul (se usa IGN desplazado por fotograma, y hasta el TAA, 09, se ve
-algo de grano en las nubes y la niebla).
+**Fuera por ahora:** los ganchos de la aurora (06) y los rayos del fractal (14) en el bucle; el ruido azul
+desplazado con R2 (lo trae el 09): hasta entonces el primer paso se desplaza con ruido blanco PCG por píxel y
+fotograma (`rui_blanco_pixel`) y se ve grano fino. Con IGN se veían **estrías paralelas** dentro de las nubes
+(observación del gestor): su estructura diagonal se alineaba entre píxeles vecinos.
 
 ## Por qué del código
 
@@ -47,8 +48,16 @@ código (medido): el presupuesto de 64 por etapa no aprieta.
 - **Sombra** del mapa (una comparación por paso) con la posición del mapa calculada en el núcleo con la
   fórmula documentada de la distorsión (`luz_posicion_mapa`); **sombra de nubes** evaluada en los dos
   extremos del tramo e interpolada (varía despacio y evaluarla en cada paso costaba).
-- **Nubes:** cada capa en el orden en que el rayo la cruza (de abajo arriba mirando arriba, al revés mirando
-  abajo), entre los planos de su losa, 10 pasos (6/10/16 por calidad), 3 en los altoestratos. Luz: Beer con
+- **Tramos ordenados:** la niebla solo existe por debajo del plano de nubes bajas; cada capa de nubes, en su
+  losa. Los cuatro tramos (niebla y tres capas) no se solapan: se calculan sus entradas y se integran en el
+  orden en que el rayo los cruza, esté la cámara por debajo, dentro o por encima de cada capa
+  (`vol_integrar`). Visto en el juego desde Y = 420 (cúmulos grandes encima) y Y = 900 (cúmulos grandes
+  debajo, con la cima iluminada, por delante del suelo).
+- **Píxeles de cielo mirando hacia abajo** (más allá de la distancia de renderizado): el rayo acaba en el plano
+  del mar. Antes seguía 512 bloques bajo el mundo, donde las manchas ya no caen con la altura, y desde encima
+  de las nubes daba un velo opaco ruidoso (lo vio el gestor; la causa la encontró una sonda: `manchas` > 0
+  por el término de bioma húmedo, `downfall` 0,8 del bosque).
+- **Nubes:** 14 pasos por capa baja (8/14/20 por calidad), 3 en los altoestratos. Luz: Beer con
   dos muestras hacia el astro a 8 y 28 bloques **sin erosión** (solo cobertura y forma, como prevé la
   especificación para el presupuesto), fase con «powder», ambiente más oscuro en la base. Hasta 6000
   bloques, fundidas desde la mitad: cerca del horizonte cada paso abarcaba miles de bloques y dejaba vetas.
@@ -57,12 +66,14 @@ código (medido): el presupuesto de 64 por etapa no aprieta.
 
 - **Aire:** Rayleigh (0,5; 1,2; 2,9)·10⁻⁴ y Mie 1·10⁻⁴ por bloque al nivel del mar, altura de escala 600
   bloques. Afinado a ojo: azula y aclara lo lejano sin velar lo cercano.
-- **Niebla uniforme pegada al suelo (desviación, duda para A):** además de la caída desde Y = 320, la uniforme
-  decae con una altura de escala de 70 bloques sobre «mar + 20» (`VOL_UNIFORME_ALTURA`), y la de noche es
-  0,6. Con la uniforme constante hasta 320, mirar arriba de noche atravesaba ~240 bloques de niebla densa
-  (τ ≈ 5) y **tapaba del todo las estrellas y el cielo fractal**, que en la referencia de Vulpe
-  (`forge_cielo.png`) se ven de noche. Así sigue densa a ras de suelo y el cielo se intuye atenuado. Con el
-  mod nativo debería ser la altura media del terreno (`frame.mods[0].w`) en vez del mar.
+- **Niebla nocturna (respuesta de A, 2026-11-02):** tapa el cielo casi entero a propósito (la aurora, 06,
+  existe por eso). Uniforme hasta Y = 320 (sin pegarla al suelo: se probó y se deshizo), densidad relativa
+  0,38 de noche: σ = 0,0076 por bloque, que da τ ≈ 2,2 al cenit desde Y = 70 (≈11 % de transmitancia; A pide
+  10–15 %) y τ ≈ 3,9 hacia el horizonte en los 512 bloques del alcance (≈2 %; A pide < 3 %). **Brillo:** la
+  niebla tiene una fase propia (`vol_fase_niebla`: 96 % de Henyey-Greenstein con g = 0,9, el resto difuso y
+  hacia atrás) y ambiente ×0,015–0,05 del cielo: fuera del halo de la luna queda más oscura que el cielo
+  despejado. Medido en el juego: 16–34/255 lejos del halo frente a 3–17 de `aurora_off_noche.png`; aún algo
+  más clara y gris que la referencia.
 - **Niebla:** extinción 0,02 por bloque con densidad relativa 1; manchas de ruido 3D (celdas de 96×40×96
   bloques) umbralizadas, que caen por encima del mar + 24; caída global `exp(−0,025·(y − 320))`.
   Luz: sol × sombra × fase + ambiente ×0,1–0,25 (más mirando arriba). El ambiente es bajo a propósito:
@@ -72,7 +83,9 @@ código (medido): el presupuesto de 64 por etapa no aprieta.
   por un **gradiente de altura** (base redondeada en los primeros 25 bloques, techo en cúpula):
   `(cobertura − (1 − gradiente))/gradiente` (Schneider y Vos 2015). Sin eso, con densidad casi constante
   en altura, salían columnas de paredes rectas que, vistas desde abajo, convergían en el cenit como rayas.
-  Erosión 3D de dos frecuencias en los bordes. Extinción 0,25 por bloque (0,03 los altoestratos): con 0,06
+  Erosión 3D de dos frecuencias en los bordes. Techo que se estrecha desde el 55 % del espesor (desde el 25 %
+  salían conos). **Inclinación con el viento:** un 20 % del espesor en la *dirección* del viento; antes usaba el
+  desplazamiento acumulado, que crece con el tiempo, y salían lágrimas tumbadas (observación del gestor). Extinción 0,25 por bloque (0,03 los altoestratos): con 0,06
   se veía la columna entera a través de la base.
 - **Capas:** base 175 / 450 / 2000 bloques sobre el mar (Y = 63), espesor 100 / 200 / 12.
 
@@ -82,11 +95,17 @@ Once perfiles (despejado, cúmulos pequeños, grandes, ambos, altoestratos, mixt
 cobertura de cada capa; uno por cuarto de día sorteado con PCG del número de día (`frame.mods[0].z`; 0 sin
 mod: se repite cada día), fundido con el siguiente en el último 20 % del cuarto. Con lluvia se mezcla hacia
 perfiles de lluvia (cobertura 0,65–0,95, densidad ×1,3–1,8). **Horario de la niebla** (relativo): amanecer
-uniforme 0,06 y manchas 0,5; mediodía 0; atardecer uniforme 0,1; noche uniforme 0,6 y manchas 0,15;
+uniforme 0,06 y manchas 0,5; mediodía 0; atardecer uniforme 0,1; noche uniforme 0,38 y manchas 0,15;
 transiciones de 0,08 de día. Lluvia: +0,5 uniforme y +0,4 manchas (× opción). Biomas húmedos: más manchas
-con `downfall` alto y temperatura templada. En cuevas (luz de cielo en la cámara baja) la niebla queda al 5 %.
+con `downfall` por encima de 0,85 (pantanos, junglas, manglares; el bosque normal, 0,8, ya no: sus manchas a
+mediodía salían como grano en el halo del sol) y temperatura templada. **Tormenta de nieve** (`precipitation == 2` y lluvia): +1,2
+uniforme, +0,5 manchas y luz ambiente ×8 (niebla blanca). Vista en un bioma nevado (escena). En cuevas (luz de cielo en la cámara baja) la niebla queda al 5 %.
 
 ### Composición y borde
+
+**Cielo bajo el horizonte y borde:** la niebla de borde y el cielo bajo el horizonte (01) usan el mismo peso
+por ángulo (`cie_peso_bruma_horizonte`: bruma hasta ~9° bajo el horizonte, suelo más allá de ~30°), así el
+terreno que acaba antes del horizonte casa con lo que el cielo pinta detrás, a cualquier altura de cámara.
 
 Reescalado bilateral: los 4 texels vecinos de media resolución pesados por bilineal × `1/(ε + |Δd|/d)` con
 la distancia de cada texel reconstruida con `depth_at` y `view_position`. Niebla de borde: el último tercio de
@@ -95,9 +114,10 @@ cuevas, hacia el color del cielo aproximado de la tabla. `color = escena · T + 
 
 ## Opciones
 
-Página «Niebla y nubes» (12): niebla sí/no, pasos (4–16), cantidad, con lluvia, bruma (0–2), caída
-(0–100 ‰), alcance (256–2048), nubes sí/no, calidad, viento (0–3), sombras de nubes (0–100 %), tiempo diario
-aleatorio. «Nubes por capa» queda fuera para ahorrar opciones (van 58 de 64).
+Presupuesto de `convenciones.md` (2026-11-02): niebla sí/no, calidad (pasos 4–16), cantidad, con lluvia,
+**nubes por capas** (apagadas, todas, solo cúmulos, solo altoestratos) y calidad de nubes. Las sombras de
+nubes van en la página de sombras (04). Bruma, caída, alcance, viento y tiempo aleatorio pasan a constantes
+(`opciones/volumen.wgsl`, en mayúsculas) con su valor por defecto.
 
 ## Coste medido
 
