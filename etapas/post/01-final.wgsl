@@ -1,4 +1,5 @@
-// Última pasada post: compone la gradación, el mapa de tonos, el tramado y las vistas de depuración.
+// Última pasada post: decodifica la escena y compone exposición, gradación, mapeo de tonos y tramado
+// (ADR 0004); y las vistas de depuración.
 fn post(input: PostInput) -> vec4<f32> {
     let p = adp_post_pixel(input);
     let depuracion = opc_depuracion();
@@ -17,9 +18,10 @@ fn post(input: PostInput) -> vec4<f32> {
         default: {}
     }
     let ajustes = opc_imagen();
-    var c = col_srgb_a_lineal(p.color);
+    let k = adp_codificacion();
+    var c = adp_post_escena(p) * k.exposicion;
     c = col_gradar(c, ajustes.gradacion);
-    c = col_tonemap(c, ajustes.tonemap, 4.0);
+    c = col_tonemap(c, ajustes.tonemap, k.blanco);
     var salida = col_lineal_a_srgb(c);
     if ajustes.tramado {
         // ±media unidad de 8 bits.

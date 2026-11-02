@@ -42,18 +42,19 @@ divide por w. La reconstrucción de posiciones en post la hace el adaptador con 
 - `col_srgb_a_lineal` / `col_lineal_a_srgb`: la curva exacta por tramos de IEC 61966-2-1, no la potencia
   2,2: la diferencia se ve en las sombras, que es justo donde un shader nocturno vive.
 - `col_luminancia`: pesos de Rec. 709 (los primarios de sRGB).
-- **Mapeo de tonos intercambiable** (`col_tonemap`, principio L): ninguno (recorte), **Reinhard extendido
-  sobre la luminancia** (Reinhard et al., «Photographic Tone Reproduction for Digital Images», SIGGRAPH
+- **Mapeo de tonos intercambiable** (`col_tonemap`, principio L): **Reinhard extendido por canal** (el de
+  la codificación del «picture», ADR 0004, y por eso el de por defecto, con su inversa exacta), **Reinhard
+  extendido sobre la luminancia** (Reinhard et al., «Photographic Tone Reproduction for Digital Images», SIGGRAPH
   2002, ec. 4; aplicado a la luminancia y reescalando el color para no desaturar) y la **aproximación ACES de
   Narkowicz** («ACES Filmic Tone Mapping Curve», 2015). Todos con la misma firma.
 - `col_gradar` con `ColParametrosGradacion`: exposición en EV (`exp2`), saturación respecto a la luminancia
   y contraste como potencia alrededor del gris medio 0,18 (equivale a escalar en log2, que es como lo hacen
   las herramientas de gradación).
 
-**Supuesto pendiente de confirmar:** el color que la etapa post recibe de Horizon está codificado en sRGB
-(el renderizado de vanilla trabaja en espacio gamma). Por eso la última pasada decodifica, grada en lineal y
-vuelve a codificar. Con los ajustes por defecto la ida y vuelta es la identidad salvo el tramado: el aspecto
-queda igual que vanilla (capturas `pruebas/capturas/base-*.png`).
+**Medido (ADR 0004):** el «picture» del mundo es de 8 bits lineal y guarda valores de pantalla. La escena se
+guarda codificada (`nucleo/color/codificacion.wgsl`: sRGB del mapeo por canal de la luz expuesta) y la
+última pasada decodifica, grada y vuelve a codificar; con los ajustes por defecto la ida y vuelta es la
+identidad salvo el tramado.
 
 ### Vistas de depuración
 

@@ -3,7 +3,7 @@
 struct AdpPixel {
     uv: vec2<f32>,
     pixel: vec2<f32>,
-    color: vec3<f32>,       // codificado como lo entrega Horizon (sRGB)
+    color: vec3<f32>,       // tal como llega (en la primera pasada, el «picture» codificado)
     alfa: f32,
     profundidad: f32,       // invertida: 0 cielo, 1 cerca
     es_cielo: bool,
@@ -11,6 +11,11 @@ struct AdpPixel {
 
 fn adp_post_pixel(input: PostInput) -> AdpPixel {
     return AdpPixel(input.uv, input.pixel, input.color.rgb, input.color.a, input.depth, input.depth <= 0.0);
+}
+
+// Luz lineal de la escena a partir del «picture» codificado (ADR 0004).
+fn adp_post_escena(p: AdpPixel) -> vec3<f32> {
+    return col_decodificar_escena(p.color, adp_codificacion());
 }
 
 // Distancia a la cámara en bloques; muy grande en el cielo.

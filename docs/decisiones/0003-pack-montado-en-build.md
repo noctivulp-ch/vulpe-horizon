@@ -11,8 +11,8 @@ el manifiesto y las carpetas de WGSL en la raíz del repo, junto a `docs/`, `too
 ## Decisión
 
 La raíz del repo sigue siendo la fuente (estructura del ADR 0002 intacta). `tools/montar.sh` crea
-`build/vulpe/` con **enlaces simbólicos** al manifiesto, el README y las carpetas `nucleo/`, `adaptadores/`,
-`opciones/` y `etapas/`. Esa es la carpeta que se valida y la que se pasa al juego en
+`build/vulpe/` con **enlaces simbólicos** al manifiesto, el README, `LICENSE` y las carpetas `nucleo/`,
+`adaptadores/`, `opciones/`, `etapas/` y `texturas/`. Esa es la carpeta que se valida y la que se pasa al juego en
 `HORIZON_SHADER_PACK`. `build/` no va a git.
 
 ## Alternativas descartadas
