@@ -16,6 +16,18 @@ fn post(input: PostInput) -> vec4<f32> {
         case OPC_VISTA_TRAMADO: {
             return adp_post_salida(vec3<f32>(adp_ruido_azul(p.pixel, 0u)), 1.0);
         }
+        case OPC_VISTA_AURORA_MAPA: {
+            // El disco del cielo ocupa el alto de la pantalla; brillo normalizado para verlo (×1/medio del mapa).
+            let lado = vec2<f32>(textureDimensions(mapa_aurora));
+            let aspecto = frame.resolution.x / frame.resolution.y;
+            let d = vec2<f32>((p.uv.x - 0.5) * aspecto + 0.5, p.uv.y);
+            if any(d < vec2<f32>(0.0)) || any(d > vec2<f32>(1.0)) {
+                return adp_post_salida(vec3<f32>(0.0), 1.0);
+            }
+            let m = textureLoad(mapa_aurora, vec2<i32>(d * lado), 0).rgb;
+            // Lineal, con una ganancia fija: el pico del mapa (el techo del fractal) llega a ~1.
+            return adp_post_salida(col_lineal_a_srgb(min(m * 600.0, vec3<f32>(1.0))), 1.0);
+        }
         default: {}
     }
     let o = opc_imagen();

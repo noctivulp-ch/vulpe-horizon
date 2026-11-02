@@ -322,7 +322,7 @@ default = true
 id = "depuracion_vista"
 name = "Vista de depuración"
 type = "choice"
-values = ["Normal", "Distancia", "Ruido fBm", "Tramado", "Aurora: conos", "Aurora: sin ventana"]
+values = ["Normal", "Distancia", "Ruido fBm", "Tramado", "Aurora: conos", "Aurora: sin ventana", "Aurora: mapa"]
 default = "Normal"
 
 [[options]]
@@ -421,7 +421,7 @@ id = "fractal_semilla"
 name = "Semilla"
 description = "Rebaraja el reparto."
 type = "int"
-default = 8
+default = 3
 min = 0
 max = 15
 
