@@ -136,3 +136,14 @@ compensa en parte la exposición automática.
 **Visto** (`hoja-inmersion.png`, dentro de una caja de cristal rellena con `command fill`, aislamiento de color
 apagado): en lava, todo naranja a un bloque (encima, el fuego de vanilla); en nieve en polvo, gris azulado claro con la
 escarcha de vanilla en los bordes.
+
+## Niebla nocturna con el tono de la noche (fase 2, falta 05.2)
+
+La niebla de noche salía gris: su ambiente era el color medio del cielo, casi neutro. De noche (`adp_factor_noche`,
+sin lluvia) ese ambiente se lleva hacia su versión saturada ×5 y ×2 de brillo (`adp_volumen_luz`), como pide el 05
+§«Cuánto cielo deja ver la niebla de noche» (el ambiente es el color del cielo nocturno, no un gris). La exposición de
+noche baja (`OPC_EV_NOCHE` 4,3) para seguir en el objetivo del 11: **17,3/255** a las 18000.
+
+**Visto** (`hoja-niebla-noche.png`, a las 14000 mirando al sur, sin aurora ni aislamiento, frente a
+`aurora_off_noche.png`): antes, arriba (8; 11; 15) y gris; ahora (14; 21; 26), azul marino oscuro. La referencia
+arriba es (25; 40; 60): sigue algo más oscura y menos azul que ella, pero ya no gris.

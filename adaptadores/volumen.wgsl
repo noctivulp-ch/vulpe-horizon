@@ -27,6 +27,10 @@ fn adp_volumen_luz() -> VolLuz {
     var cielo = adp_cielo_medio(c) * OPC_LUZ_CIELO_BASE;
     let cubierto = clamp(frame.rain, 0.0, 1.0);
     cielo = mix(cielo, vec3<f32>(col_luminancia(cielo)) * 0.8, cubierto) * (1.0 - 0.5 * frame.thunder);
+    // De noche la niebla toma el azul del cielo nocturno (05.2): su ambiente, más saturado y más fuerte; sin esto salía
+    // gris. Porqué: docs/efectos/niebla-y-nubes.md §Niebla nocturna
+    let noche = adp_factor_noche() * (1.0 - cubierto);
+    cielo = mix(cielo, col_saturar(cielo, 5.0) * 2.0, noche);
     return VolLuz(frame.light_direction, adp_irradiancia_astro(c), cielo, adp_suelo(c) * OPC_LUZ_CIELO_BASE);
 }
 
