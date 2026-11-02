@@ -16,7 +16,8 @@ sleep 2
 screenshot luz-noche
 time 6000
 command weather rain
-sleep 35
-look 0 40
+sleep 40
+tp 172.5 72 160.5
+look 180 30
 screenshot luz-lluvia
 command weather clear

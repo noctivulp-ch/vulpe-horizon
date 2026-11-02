@@ -102,11 +102,15 @@ scale = 0.5
 [[post]]
 file = "etapas/post/02-composicion.wgsl"
 files = [
+    "nucleo/superficie/brdf.wgsl",
+    "nucleo/superficie/reflejo_pantalla.wgsl",
+    "nucleo/luz/curvas.wgsl",
     "nucleo/volumen/fase.wgsl",
     "nucleo/volumen/medios.wgsl",
     "nucleo/volumen/raymarch.wgsl",
     "adaptadores/post.wgsl",
     "adaptadores/volumen.wgsl",
+    "adaptadores/reflejo.wgsl",
 ]
 name = "Composición"
 
@@ -419,6 +423,14 @@ max = 50.0
 step = 1.0
 
 [[options]]
+id = "reflejos_pantalla"
+name = "Reflejos de pantalla"
+description = "Charcos, metales y superficies lisas reflejan lo que se ve en pantalla."
+type = "choice"
+values = ["Apagados", "Bajos", "Altos"]
+default = "Bajos"
+
+[[options]]
 id = "charcos"
 name = "Charcos"
 type = "choice"
@@ -647,7 +659,7 @@ items = ["niebla", "niebla_pasos", "niebla_cantidad", "niebla_lluvia", "niebla_b
 id = "luz"
 name = "Luz"
 description = "Cielo, bloques, dispersión, brillos y charcos."
-items = ["luz_cielo", "luz_bloque", "luz_bloque_color", "luz_minima_cuevas", "luz_minima_exterior", "sss", "sss_brillo", "especular_sol", "emision_labpbr", "charcos"]
+items = ["luz_cielo", "luz_bloque", "luz_bloque_color", "luz_minima_cuevas", "luz_minima_exterior", "sss", "sss_brillo", "especular_sol", "emision_labpbr", "reflejos_pantalla", "charcos"]
 
 [[pages]]
 id = "sombras"

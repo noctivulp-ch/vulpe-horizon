@@ -15,7 +15,8 @@ const VOL_AIRE_MIE: f32 = 1.0e-4;
 const VOL_AIRE_ALTURA: f32 = 600.0;
 const VOL_NIEBLA_SIGMA: f32 = 0.02;        // por bloque con densidad relativa 1
 const VOL_CAIDA_DESDE: f32 = 320.0;         // por encima del velo de la aurora (decisión de Vulpe)
-const VOL_MANCHAS_ALTURA: f32 = 24.0;       // las manchas son bruma baja: caen por encima del mar + esto
+const VOL_MANCHAS_ALTURA: f32 = 24.0;
+const VOL_UNIFORME_ALTURA: f32 = 70.0;      // altura de escala de la niebla uniforme, bloques       // las manchas son bruma baja: caen por encima del mar + esto
 
 struct VolAire {
     rayleigh: vec3<f32>,
@@ -29,7 +30,9 @@ fn vol_aire(y: f32, bruma: f32) -> VolAire {
 
 // Coeficiente de extinción de la niebla global (por bloque) en `mundo`.
 fn vol_niebla(mundo: vec3<f32>, a: VolAjustesNiebla, ruido3d: texture_2d<f32>) -> f32 {
-    var d = a.uniforme;
+    // La uniforme se pega al suelo (altura de escala sobre el mar + 20): densa a ras de suelo y sin tapar el
+    // cielo de noche (las estrellas y el fractal). Duda abierta para la especificación (§Medios del doc).
+    var d = a.uniforme * exp(-max(mundo.y - VOL_MAR - 20.0, 0.0) / VOL_UNIFORME_ALTURA);
     if a.manchas > 0.0 {
         let p = (mundo + a.viento) * vec3<f32>(1.0 / 96.0, 1.0 / 40.0, 1.0 / 96.0);
         let n = vol_ruido3d(ruido3d, p).a;

@@ -9,6 +9,7 @@ override sss_brillo: f32 = 1.0;
 override especular_sol: f32 = 1.0;
 override emision_labpbr: f32 = 1.0;
 override charcos: u32 = 0u;                 // charcos y mojado, solo charcos, solo mojado, apagado
+override reflejos_pantalla: u32 = 1u;       // apagado, bajo, alto
 
 // Escalas en la escala común (convenciones.md): proporciones de partida afinadas en el juego.
 const OPC_LUZ_BLOQUE: f32 = 0.012;          // superficie blanca junto a una antorcha (antes del refuerzo)
@@ -19,6 +20,9 @@ const OPC_EMISION: f32 = 0.05;
 const OPC_LUZ_CIELO_BASE: f32 = 1.8;
 
 // Ids de [[materials]] (horizon-shaders.toml).
+// Suavidad desde la que el reflejo lo pone el trazado de pantalla (post) y no el material.
+const OPC_SUAVIDAD_REFLEJO_PANTALLA: f32 = 0.7;
+
 const OPC_MAT_HOJAS: u32 = 1u;
 const OPC_MAT_PLANTA_FUERTE: u32 = 2u;      // planta cruzada, SSS fuerte
 const OPC_MAT_HIELO: u32 = 3u;
@@ -39,6 +43,7 @@ struct OpcLuz {
     emision_labpbr: f32,
     charcos: bool,
     mojado: bool,
+    pasos_reflejo: i32,     // 0 apagado
 }
 
 fn opc_luz() -> OpcLuz {
@@ -53,5 +58,6 @@ fn opc_luz() -> OpcLuz {
         sss == 1u || sss == 3u, sss == 2u || sss == 3u, sss_brillo,
         especular_sol, emision_labpbr,
         charcos == 0u || charcos == 1u, charcos == 0u || charcos == 2u,
+        array<i32, 3>(0, 16, 32)[min(reflejos_pantalla, 2u)],
     );
 }
