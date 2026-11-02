@@ -6,7 +6,6 @@ const SOMBRAS_MUESTRAS: i32 = 8;
 const SOMBRAS_COLOR: bool = true;
 
 const OPC_SOMBRA_TAMANO_SOL: f32 = 0.026;   // tan(1,5°): el sol aparente, mayor que el real por gusto
-const OPC_AGUA_TINTE: vec3<f32> = vec3<f32>(0.55, 0.8, 0.85);
 
 struct OpcSombras {
     ajustes: LuzAjustesSombra,

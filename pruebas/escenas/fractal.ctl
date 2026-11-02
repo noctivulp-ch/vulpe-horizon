@@ -1,7 +1,7 @@
 # Cielo fractal (subsistema 02): cenit y dos alturas de noche con campo de visión amplio, y su aparición en
 # el crepúsculo. Deja el campo de visión como estaba (70).
 close
-tp 170.5 77 166.5
+command tp @s 170.5 77 166.5
 command weather clear
 options-set fov 110
 time 18000

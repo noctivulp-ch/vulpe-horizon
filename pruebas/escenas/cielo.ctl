@@ -1,7 +1,7 @@
 # Cielo y atmósfera (subsistema 01): mediodía, atardecer hacia el oeste y hacia el este, crepúsculo,
 # noche con la luna, mirada hacia abajo desde lo alto, y lluvia.
 close
-tp 170.5 77 166.5
+command tp @s 170.5 77 166.5
 command weather clear
 sleep 3
 time 6000
@@ -30,11 +30,11 @@ look 90 -10
 sleep 1
 screenshot cielo-noche-horizonte
 time 6000
-tp 170.5 250 166.5
+command tp @s 170.5 250 166.5
 look 0 30
 sleep 0.5
 screenshot cielo-alto-abajo
-tp 170.5 77 166.5
+command tp @s 170.5 77 166.5
 command weather rain
 sleep 6
 look 0 -10

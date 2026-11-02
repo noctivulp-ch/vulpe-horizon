@@ -1,7 +1,7 @@
 # Aurora (subsistema 06): de noche con la niebla, mirando hacia la figura de la semilla por defecto (al sur)
 # a dos alturas, al cenit, y al norte sin figura. Campo de visión 110.
 close
-tp 170.5 77 166.5
+command tp @s 170.5 77 166.5
 command weather clear
 options-set fov 110
 time 18000
