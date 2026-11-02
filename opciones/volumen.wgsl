@@ -38,3 +38,7 @@ fn opc_volumen() -> OpcVolumen {
         nubes != 0u, array<vec3<f32>, 4>(vec3<f32>(0.0), vec3<f32>(1.0), vec3<f32>(1.0, 1.0, 0.0), vec3<f32>(0.0, 0.0, 1.0))[min(nubes, 3u)], pasos_nubes, NUBES_VIENTO, nubes_sombras * 0.01, TIEMPO_ALEATORIO,
     );
 }
+
+// Otras dimensiones (17).
+override niebla_nether: f32 = 1.0;
+override niebla_end: f32 = 1.0;

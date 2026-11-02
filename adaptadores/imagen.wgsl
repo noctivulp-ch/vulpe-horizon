@@ -52,6 +52,8 @@ fn adp_exposicion(o: OpcImagen) -> AdpExposicion {
         e = exp2(mix(log2(previa), log2(automatica), OPC_EXPOSICION_PESO_AUTO));
     }
     var bastones = select(0.0, col_peso_bastones(estado.y, OPC_BASTONES_L0), estado.y > 0.0) * OPC_PURKINJE;
+    // Fuera del Overworld no hay noche que adaptar (17): sin Purkinje (teñía de azul el Nether).
+    bastones *= select(0.0, 1.0, adp_es_superficie());
     // Visión nocturna: sin Purkinje y exposición alta.
     bastones *= 1.0 - frame.night_vision;
     e *= mix(1.0, 4.0, frame.night_vision);

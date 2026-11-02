@@ -10,7 +10,7 @@ fn material(input: MaterialInput) -> Surface {
     // La sombra solo se busca donde puede verse: cara hacia la luz o con SSS, y con algo de cielo.
     let hacia_luz = p.cruzada || dot(p.normal_cara, luces.direccion) > -0.05 || p.pbr.sss > 0.0;
     var sombra = AdpSombra(vec3<f32>(0.0), 2.0);
-    if hacia_luz && p.luz_cielo > 0.02 {
+    if hacia_luz && p.luz_cielo > 0.02 && !luces.fija {
         sombra = adp_sombra(p);
     }
 
@@ -18,7 +18,7 @@ fn material(input: MaterialInput) -> Surface {
     var albedo = p.albedo;
     var n = p.normal;
     var m = p.pbr;
-    if (o.charcos || o.mojado) && frame.wetness > 0.0 && p.fluido == 0u && !m.metal {
+    if (o.charcos || o.mojado) && frame.wetness > 0.0 && adp_es_superficie() && p.fluido == 0u && !m.metal {
         let h = sup_humedad(frame.wetness, p.luz_cielo, p.mundo, p.normal_cara.y, adp_tiempo().segundos);
         let mojado = select(0.0, h.mojado, o.mojado);
         let charco = select(0.0, h.charco, o.charcos);
@@ -47,7 +47,7 @@ fn material(input: MaterialInput) -> Surface {
     directa *= directa_luz;
 
     // Ambiente: cielo hemisférico × curva de la luz de cielo; bloque; mínima.
-    let curva_cielo = luz_curva_cielo(p.luz_cielo);
+    let curva_cielo = select(luz_curva_cielo(p.luz_cielo), 1.0, luces.fija);
     let ambiente_cielo = luz_hemisferica(n.y, luces.cielo, luces.suelo) * curva_cielo;
     var sss_cielo = vec3<f32>(0.0);
     if m.sss > 0.0 {
