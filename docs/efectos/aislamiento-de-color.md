@@ -24,5 +24,9 @@ elección si sobran). Van 46.
 
 - **Visto:** de día, el mundo en grises verdosos muy apagados con el bloque de redstone y las dos flores en rojo
   limpio (como `referencias/fg2_dia.png`); de noche, todo en gris con la aurora en gris y el bloque rojo.
-- **A revisar:** en los bordes de la tierra (marrón anaranjado) queda algo de color: el matiz de la tierra cae cerca
-  del borde del rango y su saturación pasa la mínima.
+- **El naranja de la tierra es de la regla, no un fallo** (medido el 2026-11-02): la cara lateral de la tierra sale
+  con matiz ≈ 25° y saturación ≈ 0,5 sin aislamiento; con los valores por defecto (matiz 0°, rango 20°, suavidad
+  12°, saturación mínima 0,17) su pertenencia vale ≈ 0,7, y como las caras son manchas grandes pasan la prueba de
+  tamaño. En la referencia de Vulpe (`fg2_dia.png`) pasa lo mismo: la montaña de terracota rojiza de la derecha
+  conserva su rojo. No se cambia: los valores son los del usuario. Si se quiere la tierra en gris, bajar la
+  amplitud a ~10 (opción del menú) o la suavidad (constante).
