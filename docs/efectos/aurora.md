@@ -116,3 +116,11 @@ a la derecha `referencias/ruidov_noche.png`.
   puntos nítidos son la **ventana** (el fractal visto a través de los conos) o el borde superior del velo con un
   perfil más estrecho. **Duda para A:** ¿de dónde salen los puntos nítidos de la referencia, y cuánto del velo se
   integra por píxel en Vulpe?
+
+## Revisión según la especificación 06 §7 bis (2026-11-02)
+
+**Paso 1, el mapa solo** (vista de depuración «Aurora: mapa», `aurora-mapa.png`, semilla 3, ganancia lineal fija):
+filamentos y bordes brillantes sobre negro, con el interior de los conjuntos oscuro; la figura grande de la
+izquierda (una ampliación del Mandelbrot) tiene bandas de iteración rellenando el entorno, como la noche 3 de
+`hoja-auto.png`. A ¼ de resolución cada téxel son ~4 bloques y se ven los escalones. **El mapa no está en manchas:
+el problema no es el mapa** sino cómo se integra y el contraste con la niebla.
