@@ -18,3 +18,14 @@ fn rui_blanco_pixel(pixel: vec2<f32>, fotograma: u32) -> f32 {
     let p = vec2<u32>(pixel);
     return rui_u32_a_unidad(rui_pcg(p.x + rui_pcg(p.y + rui_pcg(fotograma))));
 }
+
+// Secuencia R2 (Roberts 2018): desplazamiento cuasialeatorio por fotograma en dos ejes, en [0, 1).
+fn rui_r2(fotograma: u32) -> vec2<f32> {
+    let n = f32(fotograma % 65536u);
+    return fract(vec2<f32>(0.5) + n * vec2<f32>(0.7548776662, 0.5698402910));
+}
+
+// Un valor de ruido azul de la textura desplazado por fotograma con R2 (eje 0 o 1 de la secuencia).
+fn rui_azul(valor: f32, fotograma: u32, eje: u32) -> f32 {
+    return fract(valor + rui_r2(fotograma)[eje & 1u]);
+}

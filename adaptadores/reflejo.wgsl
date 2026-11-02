@@ -19,7 +19,7 @@ fn adp_post_reflejo(p: AdpPixel, dir: vec3<f32>, pasos: i32) -> vec3<f32> {
     // promediará el ruido); en las superficies casi espejo apenas se desvía.
     let base = sup_base(n);
     let v_local = transpose(base) * (-dir);
-    let u = vec2<f32>(rui_blanco_pixel(p.pixel, frame.frame_index), rui_blanco_pixel(p.pixel + 97.0, frame.frame_index));
+    let u = vec2<f32>(adp_ruido_azul(p.pixel, 2u), adp_ruido_azul(p.pixel, 3u));
     let h = base * sup_muestrear_vndf(v_local, max(rugosidad, 1e-4), u);
     var r = reflect(dir, h);
     if dot(r, n) <= 0.0 {
@@ -29,7 +29,7 @@ fn adp_post_reflejo(p: AdpPixel, dir: vec3<f32>, pasos: i32) -> vec3<f32> {
     let vp = frame.projection * frame.view;
     let inv = frame.view_inverse * frame.projection_inverse;
     let camara = SupCamara(vp, inv, frame.resolution);
-    let ruido = fract(rui_tramado_ign(p.pixel) + f32(frame.frame_index % 64u) * 0.618034);
+    let ruido = adp_ruido_azul(p.pixel, 0u);
     let impacto = sup_trazar_reflejo(pos + n * 0.02, r, camara, scene_depth, pasos, ruido, 48.0);
     // Sin impacto: el cielo aproximado de la tabla en la dirección reflejada, si el punto ve el cielo.
     let c = opc_cielo();

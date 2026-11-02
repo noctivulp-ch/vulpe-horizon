@@ -18,7 +18,7 @@ fn adp_volumen_rayo(uv: vec2<f32>, pixel: vec2<f32>) -> VolRayo {
         escena = length(p);
         dir = p / escena;
     }
-    let ruido = rui_blanco_pixel(pixel, frame.frame_index);
+    let ruido = adp_ruido_azul(pixel, 0u);
     return VolRayo(frame.camera_position, dir, escena, ruido, d <= 0.0);
 }
 

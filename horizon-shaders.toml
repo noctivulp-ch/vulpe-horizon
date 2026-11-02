@@ -49,10 +49,12 @@ shared = [
     "opciones/luz.wgsl",
     "opciones/sombras.wgsl",
     "opciones/volumen.wgsl",
+    "opciones/taa.wgsl",
     "adaptadores/marco.wgsl",
     "adaptadores/atmosfera.wgsl",
     "adaptadores/fractal.wgsl",
     "adaptadores/tiempo.wgsl",
+    "adaptadores/ruido.wgsl",
 ]
 
 [sky]
@@ -137,11 +139,32 @@ files = [
 name = "Composición"
 
 [[post]]
-file = "etapas/post/04-final.wgsl"
+file = "etapas/post/04-taa.wgsl"
+files = ["nucleo/imagen/taa.wgsl", "adaptadores/taa.wgsl"]
+name = "TAA"
+
+[[post]]
+file = "etapas/post/05-final.wgsl"
 files = ["adaptadores/post.wgsl"]
 name = "Final"
 
 # --- Opciones -------------------------------------------------------------------------------
+
+[[options]]
+id = "taa"
+name = "Antialiasing temporal"
+description = "Limpia el grano de niebla, nubes, sombras y reflejos promediando fotogramas."
+type = "bool"
+default = true
+
+[[options]]
+id = "taa_nitidez"
+name = "Nitidez del TAA"
+type = "float"
+default = 0.5
+min = 0.0
+max = 1.0
+step = 0.05
 
 [[options]]
 id = "imagen_exposicion"
@@ -441,6 +464,12 @@ filter = "nearest"
 wrap = "repeat"
 
 [[textures]]
+id = "ruido_azul"
+file = "texturas/ruido_azul.png"
+filter = "nearest"
+wrap = "repeat"
+
+[[textures]]
 id = "transmitancia"
 file = "texturas/transmitancia.png"
 filter = "linear"
@@ -513,7 +542,7 @@ items = ["sombras_penumbra", "nubes_sombras"]
 id = "imagen"
 name = "Imagen"
 description = "Exposición, color y mapeo de tonos."
-items = ["imagen_exposicion", "imagen_saturacion", "imagen_contraste", "imagen_tonemap", "imagen_tramado"]
+items = ["taa", "taa_nitidez", "imagen_exposicion", "imagen_saturacion", "imagen_contraste", "imagen_tonemap", "imagen_tramado"]
 
 [[pages]]
 id = "depuracion"

@@ -52,7 +52,7 @@ fn adp_sombra_punto(e: AdpEntradaSombra, o: OpcSombras) -> AdpResultadoSombra {
     pos += (centro - mundo) * interior * 0.6;
 
     let mapa = shadow_position(pos);
-    let ruido = fract(rui_tramado_ign(e.pixel) + f32(frame.frame_index % 64u) * 0.618034);
+    let ruido = adp_ruido_azul(e.pixel, 1u);
     let punto = LuzPuntoSombra(mapa, tpb, adp_bloques_por_profundidad(), frame.shadow_resolution, ruido);
     let s = luz_sombra(punto, o.ajustes, shadow_map, shadow_sampler);
     var luz = vec3<f32>(s.luz);
