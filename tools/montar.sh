@@ -6,7 +6,7 @@ set -euo pipefail
 raiz="$(cd "$(dirname "$0")/.." && pwd)"
 destino="$raiz/build/vulpe"
 mkdir -p "$destino"
-for f in horizon-shaders.toml README.md nucleo adaptadores opciones etapas; do
+for f in horizon-shaders.toml README.md LICENSE nucleo adaptadores opciones etapas texturas; do
     ln -sfn "../../$f" "$destino/$f"
 done
 echo "$destino"

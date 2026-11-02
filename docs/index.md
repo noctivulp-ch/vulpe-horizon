@@ -1,7 +1,14 @@
 # Documentación de Vulpe para Horizon
 
 - `decisiones/`: ADR numerados. 0001 sala limpia · 0002 carpetas por función y SOLID · 0003 pack montado en
-  `build/`.
+  `build/` · 0004 el «picture» guarda la escena codificada con el mapeo de tonos.
 - `efectos/<efecto>.md`: qué hace cada efecto y el **porqué del código** (el código solo remite aquí).
-  Empezar por `efectos/nucleo.md` (base matemática, ruido, color, adaptadores y herramientas).
+  Empezar por `efectos/nucleo.md` (base matemática, ruido, color, adaptadores y herramientas). Luego
+  `efectos/cielo-y-atmosfera.md` (01).
 - `observaciones-del-gestor.md`: lo que llega del gestor fuera de la especificación.
+
+## Carpetas añadidas a las del ADR 0002
+
+- `texturas/`: PNG del `[[textures]]` del manifiesto. Son **generadas**: cada una dice en su documento de
+  efecto qué herramienta de `tools/` la reescribe (p. ej. `tools/atmosfera/generar_tabla.py`). Van a git
+  porque el pack las necesita tal cual.

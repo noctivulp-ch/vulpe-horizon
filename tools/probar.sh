@@ -2,7 +2,7 @@
 # Valida, abre Horizon con el pack, recorre una escena y guarda sus capturas.
 # Uso: tools/probar.sh ESCENA [--dejar-abierto]
 #   ESCENA: nombre de pruebas/escenas/<nombre>.ctl (una orden de horizon-ctl por línea; `#` comenta;
-#   `screenshot NOMBRE` guarda en pruebas/capturas/NOMBRE.png).
+#   `screenshot NOMBRE` guarda en pruebas/capturas/NOMBRE.png). El HUD se oculta al lanzar.
 # Si ya hay un Horizon abierto se reutiliza (la recarga en caliente ya tiene el pack al día) solo si
 # lo abrió este script; si no, se aborta para no pisar la partida de nadie.
 set -euo pipefail
@@ -26,8 +26,11 @@ if pgrep -x horizon-client >/dev/null; then
     fi
     echo "Reutilizo el Horizon abierto (recarga en caliente)."
 else
-    HORIZON_SHADER_PACK="$pack" "$ctl" launch --world VulpePrueba --seed 1 --creative --wait
+    HORIZON_SHADER_PACK="$pack" "$ctl" launch --world VulpePrueba --seed 1 --creative --wait >/dev/null
     touch "$marca"
+    # Sin HUD (F1 alterna: solo al lanzar, no al reutilizar).
+    "$ctl" close >/dev/null || true
+    "$ctl" key f1 tap >/dev/null
 fi
 
 while IFS= read -r linea || [[ -n "$linea" ]]; do

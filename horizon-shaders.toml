@@ -8,6 +8,7 @@ version = "0.1.0"
 api = "0.1"
 description = "Vulpe para Horizon, escrito en sala limpia."
 authors = ["noctivulp-ch"]
+license = "GPL-3.0-or-later"
 shared = [
     "nucleo/matematica/constantes.wgsl",
     "nucleo/matematica/utilidades.wgsl",
@@ -20,15 +21,33 @@ shared = [
     "nucleo/color/luminancia.wgsl",
     "nucleo/color/tonemap.wgsl",
     "nucleo/color/gradacion.wgsl",
+    "nucleo/color/codificacion.wgsl",
+    "nucleo/color/exposicion.wgsl",
+    "nucleo/atmosfera/parametros.wgsl",
+    "nucleo/atmosfera/geometria.wgsl",
+    "nucleo/atmosfera/fase.wgsl",
+    "nucleo/atmosfera/medio.wgsl",
+    "nucleo/atmosfera/transmitancia.wgsl",
+    "nucleo/atmosfera/dispersion.wgsl",
+    "nucleo/atmosfera/astros.wgsl",
+    "nucleo/atmosfera/tabla.wgsl",
+    "nucleo/cielo/estrellas.wgsl",
+    "nucleo/cielo/composicion.wgsl",
     "opciones/depuracion.wgsl",
     "opciones/imagen.wgsl",
+    "opciones/exposicion.wgsl",
+    "opciones/cielo.wgsl",
     "adaptadores/marco.wgsl",
+    "adaptadores/atmosfera.wgsl",
 ]
 
 [sky]
 file = "etapas/cielo.wgsl"
 files = ["adaptadores/cielo.wgsl"]
 name = "Cielo"
+clouds = false      # las nubes son del subsistema 05
+sun = false         # el disco del sol es nuestro (subsistema 01); la luna la dibuja Horizon
+stars = false
 
 [material]
 file = "etapas/material.wgsl"
@@ -74,8 +93,8 @@ id = "imagen_tonemap"
 name = "Mapeo de tonos"
 description = "Cómo se comprimen los brillos por encima de 1."
 type = "choice"
-values = ["Ninguno", "Reinhard", "ACES"]
-default = "Ninguno"
+values = ["Vulpe", "Reinhard (luminancia)", "ACES"]
+default = "Vulpe"
 
 [[options]]
 id = "imagen_tramado"
@@ -91,12 +110,85 @@ type = "choice"
 values = ["Normal", "Distancia", "Ruido fBm", "Tramado"]
 default = "Normal"
 
+[[options]]
+id = "cielo_brillo"
+name = "Brillo del cielo"
+description = "Pasos de brillo de la atmósfera (0 neutro)."
+type = "float"
+default = 0.0
+min = -2.0
+max = 2.0
+step = 0.1
+
+[[options]]
+id = "cielo_bruma"
+name = "Bruma"
+description = "Aerosoles: cielo limpio y halo pequeño, o cielo lechoso y halo enorme."
+type = "float"
+default = 0.0
+min = -2.0
+max = 2.0
+step = 0.1
+
+[[options]]
+id = "sol_temperatura"
+name = "Temperatura del sol"
+description = "Kelvin: anaranjado a la izquierda, blanco azulado a la derecha."
+type = "float"
+default = 6000.0
+min = 4000.0
+max = 8000.0
+step = 100.0
+
+[[options]]
+id = "luna_brillo"
+name = "Brillo de la luna"
+description = "Pasos de brillo de la luz de luna: noches más oscuras o más claras."
+type = "float"
+default = 0.0
+min = -2.0
+max = 2.0
+step = 0.1
+
+[[options]]
+id = "estrellas"
+name = "Estrellas"
+type = "bool"
+default = true
+
+[[options]]
+id = "estrellas_brillo"
+name = "Brillo de las estrellas"
+type = "float"
+default = 0.0
+min = -2.0
+max = 2.0
+step = 0.1
+
+[[textures]]
+id = "atmosfera"
+file = "texturas/atmosfera.png"
+filter = "linear"
+wrap = "clamp"
+
+[[textures]]
+id = "transmitancia"
+file = "texturas/transmitancia.png"
+filter = "linear"
+wrap = "clamp"
+
 # --- Menú -----------------------------------------------------------------------------------
 
 [[pages]]
 id = "principal"
 name = "Vulpe"
-items = ["page:imagen", "page:depuracion"]
+items = ["page:cielo", "page:imagen", "page:depuracion"]
+
+[[pages]]
+id = "cielo"
+name = "Cielo"
+description = "Atmósfera, sol, luna y estrellas."
+items = ["cielo_brillo", "cielo_bruma", "sol_temperatura", "luna_brillo", "estrellas", "estrellas_brillo"]
 
 [[pages]]
 id = "imagen"

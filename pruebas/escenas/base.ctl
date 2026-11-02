@@ -1,6 +1,5 @@
 # Escena base: mediodía, atardecer y noche mirando al horizonte y al suelo.
 close
-key f1 tap
 sleep 3
 time 6000
 look 0 10

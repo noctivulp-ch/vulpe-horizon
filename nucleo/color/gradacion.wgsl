@@ -19,3 +19,9 @@ fn col_gradar(c_entrada: vec3<f32>, g: ColParametrosGradacion) -> vec3<f32> {
     c = gris * pow(max(c, vec3<f32>(0.0)) / gris, vec3<f32>(g.contraste));
     return max(c, vec3<f32>(0.0));
 }
+
+// Saturación respecto a la luminancia, sin dejar canales negativos.
+fn col_saturar(c: vec3<f32>, saturacion: f32) -> vec3<f32> {
+    let l = col_luminancia(c);
+    return max(mix(vec3<f32>(l), c, saturacion), vec3<f32>(0.0));
+}
