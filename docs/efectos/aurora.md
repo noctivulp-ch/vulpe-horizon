@@ -124,3 +124,21 @@ filamentos y bordes brillantes sobre negro, con el interior de los conjuntos osc
 izquierda (una ampliación del Mandelbrot) tiene bandas de iteración rellenando el entorno, como la noche 3 de
 `hoja-auto.png`. A ¼ de resolución cada téxel son ~4 bloques y se ven los escalones. **El mapa no está en manchas:
 el problema no es el mapa** sino cómo se integra y el contraste con la niebla.
+
+**Paso 2, la integración:** cada una de las 4 muestras del tramo **suma** su luz con un peso casi saturado (§6), sin
+promediar por la longitud; el perfil es el `smoothstep` de la especificación (la mitad de la luz sale de los ~45
+bloques de arriba). **Mejora opcional probada y descartada:** estrechar la banda brillante (perfil a la cuarta,
+`aurora-45-perfil-estrecho.png`): el detalle se afila, pero con 4 muestras repartidas en ~120 bloques la banda
+estrecha se toca pocas veces, la cortina se apaga y se llena de grano.
+
+**Paso 3, la niebla de noche:** más oscura fuera del halo de la luna: la fase de la niebla pasa a 98,5 % de
+Henyey-Greenstein con g = 0,95 (antes 96 % con 0,9) y el ambiente a ×0,005–0,015 del cielo (antes 0,015–0,05). Se
+deshacen el ×3 de las cortinas y el ×2,5 de la ventana (vuelven a 0,5 y 0,6). La exposición de noche se reajusta
+(`OPC_EV_NOCHE` 5,1) para seguir en el objetivo del 11: **17,9 de noche y 148,3 de día** (media del cuarto central).
+
+**Paso 4, a 45° de elevación** (`aurora-45-grados.png` y `hoja-aurora-frente-referencia.png`, semilla 3, campo de
+visión 110): ahora se leen cortinas con estructura (el trazado de las figuras, zonas claras y huecos oscuros, rayas
+que convergen hacia arriba) sobre un fondo oscuro. **Siguen sin salir** los puntos nítidos y muy brillantes de la
+referencia: a esa elevación cada píxel integra todavía ~0,23 R del disco, unos 30 téxeles del mapa, y el detalle de
+un téxel se pierde en la suma. En la referencia la cámara mira al horizonte y la luna no está en pantalla; a las
+18000 la luna está en el cenit y su halo entra siempre en la vista a 45°.

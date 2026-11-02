@@ -22,5 +22,5 @@ fn vol_fase(c: f32, densidad_optica: f32) -> f32 {
 // la niebla nocturna se aclaraba en todas direcciones y quedaba gris (la referencia es azul marino oscuro
 // salvo en el halo de la luna).
 fn vol_fase_niebla(c: f32) -> f32 {
-    return vol_hg(c, 0.9) * 0.96 + vol_hg(c, 0.3) * 0.025 + vol_hg(c, -0.3) * 0.015;
+    return vol_hg(c, 0.95) * 0.985 + vol_hg(c, 0.3) * 0.01 + vol_hg(c, -0.3) * 0.005;
 }

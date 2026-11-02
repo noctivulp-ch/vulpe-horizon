@@ -102,7 +102,7 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
         let sol = luz.irradiancia * visible;
         let fuente_aire = aire.rayleigh * (sol * fase_aire_r + ambiente) + aire.mie * (sol * fase_aire_m + ambiente);
         let fuente_niebla = niebla * (sol * vol_fase_niebla(cos_luz)
-                          + luz.cielo * a.niebla.ambiente * mix(0.015, 0.05, rayo.dir.y * 0.5 + 0.5));
+                          + luz.cielo * a.niebla.ambiente * mix(0.005, 0.015, rayo.dir.y * 0.5 + 0.5));
         let sigma = (col_luminancia(aire.rayleigh) + aire.mie * 1.1) + niebla;
         vol_tramo(r, fuente_aire + fuente_niebla, sigma, paso);
     }
