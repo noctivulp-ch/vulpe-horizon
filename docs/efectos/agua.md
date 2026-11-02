@@ -64,6 +64,13 @@ que el motor dibuja a media resolución).
 - **No visto:** la ventana de Snell desde abajo (mirando arriba solo se distingue el resplandor), los rayos de luz
   bajo el agua, la lluvia sobre el agua, el agua en cuevas, la detección del cielo en el espejo de noche.
 
+## Puntos oscuros en las capturas
+
+Los cuadraditos oscuros de unos píxeles, azulados, que se ven en el agua (observación del gestor) son
+**partículas del juego** (las del agua), no píxeles inválidos del pack: con `particles` al mínimo desaparece el del
+centro de la pantalla, y son cuadrados nítidos de color uniforme (un NaN sería un píxel suelto que el TAA
+emborronaría).
+
 ## Dato del motor
 
 `horizon-ctl tp` mueve al jugador solo en el cliente y el servidor lo devuelve a los pocos segundos: las escenas

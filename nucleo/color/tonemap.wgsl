@@ -5,7 +5,7 @@
 // col_tonemap_reinhard_maximo, aparte (ADR 0004).
 const COL_TONEMAP_FILMICO: u32 = 0u;
 const COL_TONEMAP_ACES: u32 = 1u;
-const COL_TONEMAP_REINHARD_MAXIMO: u32 = 2u;
+const COL_TONEMAP_REINHARD_LUMINANCIA: u32 = 2u;
 
 // Reinhard extendido (Reinhard et al. 2002, ec. 4) por canal; `blanco` es el valor que llega a 1.
 fn col_tonemap_reinhard_canal(c: vec3<f32>, blanco: f32) -> vec3<f32> {
@@ -68,7 +68,7 @@ fn col_tonemap_filmico(c: vec3<f32>) -> vec3<f32> {
 fn col_tonemap(c: vec3<f32>, operador: u32, blanco: f32) -> vec3<f32> {
     switch operador {
         case COL_TONEMAP_ACES: { return col_tonemap_aces(c); }
-        case COL_TONEMAP_REINHARD_MAXIMO: { return col_tonemap_reinhard_maximo(c, blanco); }
+        case COL_TONEMAP_REINHARD_LUMINANCIA: { return col_tonemap_reinhard_luminancia(c, blanco); }
         default: { return col_tonemap_filmico(c); }
     }
 }

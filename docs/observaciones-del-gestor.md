@@ -115,3 +115,10 @@ Ventana bien cerrada. Las tres desviaciones del 10–11 (exposición mezclada, R
 al cuadrado) están con A: dejarlas así hasta que responda. La cuarta vista de `hoja-imagen.png` estaba negra (era
 la casilla vacía de una hoja 2×2 con tres capturas): rehecha con la cueva construida con `fill`, como sugirió el
 gestor.
+
+## 2026-11-02 — revisión de 05eba4f y 57da59b
+
+- Hoja del agua bien. Puntitos oscuros en `hoja-agua.png`: comprobado que son partículas del juego.
+- Decisiones de A (`0fcece2`): exposición con la media en log aceptada, objetivo día ≈ 146/255 y noche ≈ 17–18/255
+  medido en el centro (hecho: 146,7 y 17,6); Reinhard provisional sobre la luminancia (hecho) y prueba del fílmico
+  con el cenit en 0,4–0,6 (hecha: sigue desaturado); bloom de niebla al cuadrado aceptado.
