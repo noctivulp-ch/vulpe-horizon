@@ -12,7 +12,7 @@ fn adp_volumen_rayo(uv: vec2<f32>, pixel: vec2<f32>) -> VolRayo {
         escena = length(p);
         dir = p / escena;
     }
-    let ruido = fract(rui_tramado_ign(pixel) + f32(frame.frame_index % 64u) * 0.618034);
+    let ruido = rui_blanco_pixel(pixel, frame.frame_index);
     return VolRayo(frame.camera_position, dir, escena, ruido);
 }
 
@@ -30,10 +30,12 @@ fn adp_volumen_ajustes() -> VolAjustes {
     // En una cueva no entra la niebla de cielo: queda una tenue.
     let fuera = smoothstep(0.1, 0.7, frame.eye_light_smooth.y);
     let lluvia = frame.rain * o.lluvia;
-    let uniforme = (h.uniforme + lluvia * 0.5) * mix(0.05, 1.0, fuera);
-    let manchas = (h.manchas + lluvia * 0.4 + clamp(frame.downfall - 0.6, 0.0, 0.4) * smoothstep(0.5, 0.9, frame.temperature)) * fuera;
+    // Tormenta de nieve: lluvia en un bioma donde nieva (precipitation 2): densa y blanca.
+    let nieve = select(0.0, frame.rain, frame.precipitation == 2u);
+    let uniforme = (h.uniforme + lluvia * 0.5 + nieve * 1.2) * mix(0.05, 1.0, fuera);
+    let manchas = (h.manchas + lluvia * 0.4 + nieve * 0.5 + clamp(frame.downfall - 0.6, 0.0, 0.4) * smoothstep(0.5, 0.9, frame.temperature)) * fuera;
     let viento = vec3<f32>(OPC_VIENTO.x, 0.0, OPC_VIENTO.y) * o.viento * frame.time * 0.5;
-    let niebla = VolAjustesNiebla(uniforme, manchas, o.cantidad, o.bruma, o.caida, viento);
+    let niebla = VolAjustesNiebla(uniforme, manchas, o.cantidad, o.bruma, o.caida, viento, mix(1.0, 4.0, nieve));
     let con_niebla = o.niebla && frame.in_water < 0.5;
     let mapa = LuzMapa(frame.shadow_view_proj, frame.shadow_distortion);
     return VolAjustes(niebla, adp_nubes(), o.alcance, o.pasos, o.pasos_nubes, con_niebla, o.nubes,

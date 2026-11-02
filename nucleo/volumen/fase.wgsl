@@ -17,3 +17,10 @@ fn vol_fase(c: f32, densidad_optica: f32) -> f32 {
     let atras = vol_hg(c, -0.3);
     return delante * 0.6 + difuso * 0.32 + atras * 0.08;
 }
+
+// Fase de la niebla: casi todo hacia delante (el halo de la luna o del sol) y poca difusa. Con la de las nubes,
+// la niebla nocturna se aclaraba en todas direcciones y quedaba gris (la referencia es azul marino oscuro
+// salvo en el halo de la luna).
+fn vol_fase_niebla(c: f32) -> f32 {
+    return vol_hg(c, 0.8) * 0.8 + vol_hg(c, 0.3) * 0.15 + vol_hg(c, -0.3) * 0.05;
+}

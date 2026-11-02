@@ -32,3 +32,36 @@ contaminación da 0.
 
 Respuestas: Horizon **no aplica jitter** a la proyección ni lo expone (A lo tendrá en cuenta en el 09). Las
 dudas 1, 2, 3 y 5 pasan a A. El 03, el 04 y el 05 están revisados por la muralla.
+
+## 2026-11-02 — revisión del 03–05
+
+Faltas que señala el gestor (cita la línea de la especificación, no dice cómo):
+1. 03 §Reflejo en espacio de pantalla: la rugosidad (muestreo de la VNDF de GGX, Heitz 2018) no está.
+2. 05 §Biomas: falta la tormenta de nieve (`precipitation == 2` y lluvia: densidad alta, blanca).
+3. 05 §Pasos y §Más allá de la capa de nubes: la cámara por encima de la capa baja mirando hacia abajo
+   (orden de nubes y niebla, y la niebla no se integra por encima del plano de nubes).
+4. 05 §Opciones: «Nubes» pide sí/no **y por capa**.
+
+Lo que se ve (`hoja-niebla.png`, `hoja-luz.png`):
+- **Cúmulos:** estrías paralelas dentro de las nubes, como escalones; formas en gota o lágrima,
+  inclinadas, en vez de base plana y techo en cúpula (05, objetivo visual y §Nubes).
+- **Horizonte sobre el mar:** el mar lejano acaba en una franja gris clara, como un muro, en vez de
+  fundirse con el cielo.
+- **Lluvia:** bien (arena y piedra mojadas más oscuras, charcos).
+
+Respuestas de la API (comprobadas por el gestor en el renderizador; para el 07):
+- `reflection`: su alfa no distingue cielo de terreno: vale 1 en el cielo vanilla y en el terreno, y
+  < 0,75 solo en píxeles emisivos (la marca de HDR del motor).
+- El pase translúcido mezcla `Surface.color` con alfa estándar (src·a + dst·(1−a)), descarta a < 0,01 y
+  luego aplica la niebla del motor si no está apagada.
+
+Respuestas de A en la especificación (commit 9aa2fa7):
+- **Presupuesto de opciones** (`convenciones.md`): 48 imprescindibles por subsistema; lo demás, constante.
+- **Niebla nocturna:** tapa el cielo casi entero **a propósito** (la aurora, 06, existe por eso):
+  transmitancia al cenit ≈ 10–15 % desde Y ≈ 70, < 3 % al horizonte; más oscura que el cielo nocturno
+  despejado salvo en el halo de la luna. Volver a la densidad uniforme hasta la altura de caída y ajustar el
+  brillo, no la densidad. Referencia nueva: `referencias/aurora_off_noche.png`.
+- **Alfombras y capas de nieve:** `[[materials]] blocks` no lo resuelve (sigue siendo por sprite);
+  preferencia: aceptarlo.
+
+Las especificaciones 06, 07 y 08 han pasado la revisión del gestor.

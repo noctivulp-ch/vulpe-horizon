@@ -7,6 +7,7 @@ struct VolAjustesNiebla {
     bruma: f32,             // multiplicador del aire (opción)
     caida: f32,             // por bloque, por encima de VOL_CAIDA_DESDE
     viento: vec3<f32>,      // desplazamiento de las manchas, bloques
+    ambiente: f32,          // multiplicador de la luz ambiente dispersada (>1 en la tormenta de nieve: blanca)
 }
 
 // Perspectiva aérea a escala de Minecraft: Rayleigh y Mie con alturas de escala cortas.
@@ -15,8 +16,7 @@ const VOL_AIRE_MIE: f32 = 1.0e-4;
 const VOL_AIRE_ALTURA: f32 = 600.0;
 const VOL_NIEBLA_SIGMA: f32 = 0.02;        // por bloque con densidad relativa 1
 const VOL_CAIDA_DESDE: f32 = 320.0;         // por encima del velo de la aurora (decisión de Vulpe)
-const VOL_MANCHAS_ALTURA: f32 = 24.0;
-const VOL_UNIFORME_ALTURA: f32 = 70.0;      // altura de escala de la niebla uniforme, bloques       // las manchas son bruma baja: caen por encima del mar + esto
+const VOL_MANCHAS_ALTURA: f32 = 24.0;       // las manchas son bruma baja: caen por encima del mar + esto
 
 struct VolAire {
     rayleigh: vec3<f32>,
@@ -30,9 +30,7 @@ fn vol_aire(y: f32, bruma: f32) -> VolAire {
 
 // Coeficiente de extinción de la niebla global (por bloque) en `mundo`.
 fn vol_niebla(mundo: vec3<f32>, a: VolAjustesNiebla, ruido3d: texture_2d<f32>) -> f32 {
-    // La uniforme se pega al suelo (altura de escala sobre el mar + 20): densa a ras de suelo y sin tapar el
-    // cielo de noche (las estrellas y el fractal). Duda abierta para la especificación (§Medios del doc).
-    var d = a.uniforme * exp(-max(mundo.y - VOL_MAR - 20.0, 0.0) / VOL_UNIFORME_ALTURA);
+    var d = a.uniforme;
     if a.manchas > 0.0 {
         let p = (mundo + a.viento) * vec3<f32>(1.0 / 96.0, 1.0 / 40.0, 1.0 / 96.0);
         let n = vol_ruido3d(ruido3d, p).a;
@@ -51,8 +49,10 @@ fn vol_nube(mundo: vec3<f32>, i: i32, n: VolNubes, t2: texture_2d<f32>, s2: samp
     if h < 0.0 || h > 1.0 {
         return 0.0;
     }
-    // Los cúmulos se inclinan con el viento al subir.
-    let inclinado = mundo.xz + n.viento * 0.15 * h * VOL_ESPESOR[i] / 100.0;
+    // Los cúmulos se inclinan algo con el viento al subir: un 20 % de su espesor en la dirección del viento.
+    // (Con el desplazamiento acumulado en vez de la dirección, la inclinación crecía con el tiempo y salían
+    // lágrimas tumbadas.)
+    let inclinado = mundo.xz + n.direccion * (h * VOL_ESPESOR[i] * 0.2);
     let cob = vol_cobertura(inclinado, i, n, t2, s2);
     if cob <= 0.0 {
         return 0.0;
@@ -64,7 +64,7 @@ fn vol_nube(mundo: vec3<f32>, i: i32, n: VolNubes, t2: texture_2d<f32>, s2: samp
     // se recorta con él (Schneider y Vos 2015): donde hay mucha cobertura la nube es alta; en el borde solo
     // queda una franja baja. Así salen cúpulas y no columnas de paredes rectas.
     let base = smoothstep(0.0, 25.0 / VOL_ESPESOR[i], h);
-    let techo = 1.0 - smoothstep(0.25, 1.0, h);
+    let techo = 1.0 - smoothstep(0.55, 1.0, h);
     let gradiente = base * techo;
     var d = clamp((cob - (1.0 - gradiente)) / max(gradiente, 0.05), 0.0, 1.0);
     // Erosión con ruido 3D de dos frecuencias, más fuerte en los bordes (donde d es baja).

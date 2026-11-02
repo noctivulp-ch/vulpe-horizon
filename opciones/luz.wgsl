@@ -1,13 +1,13 @@
 // Ajustes de la luz de superficie. Porqué: docs/efectos/luz-de-superficie.md §Opciones
 override luz_cielo: f32 = 1.0;
 override luz_bloque: f32 = 1.0;
-override luz_bloque_color: u32 = 0u;        // cálido, neutro, frío
+const LUZ_BLOQUE_COLOR: u32 = 0u;        // cálido, neutro, frío
 override luz_minima_cuevas: f32 = 0.5;
-override luz_minima_exterior: f32 = 0.0;
+const LUZ_MINIMA_EXTERIOR: f32 = 0.0;
 override sss: u32 = 1u;                     // apagado, lista, LabPBR, ambos
-override sss_brillo: f32 = 1.0;
-override especular_sol: f32 = 1.0;
-override emision_labpbr: f32 = 1.0;
+const SSS_BRILLO: f32 = 1.0;
+const ESPECULAR_SOL: f32 = 1.0;
+const EMISION_LABPBR: f32 = 1.0;
 override charcos: u32 = 0u;                 // charcos y mojado, solo charcos, solo mojado, apagado
 override reflejos_pantalla: u32 = 1u;       // apagado, bajo, alto
 
@@ -48,15 +48,15 @@ struct OpcLuz {
 
 fn opc_luz() -> OpcLuz {
     var color = vec3<f32>(1.0, 0.5, 0.25);
-    if luz_bloque_color == 1u {
+    if LUZ_BLOQUE_COLOR == 1u {
         color = vec3<f32>(1.0, 0.78, 0.6);
-    } else if luz_bloque_color == 2u {
+    } else if LUZ_BLOQUE_COLOR == 2u {
         color = vec3<f32>(0.75, 0.85, 1.0);
     }
     return OpcLuz(
-        luz_cielo, luz_bloque, color, luz_minima_cuevas, luz_minima_exterior,
-        sss == 1u || sss == 3u, sss == 2u || sss == 3u, sss_brillo,
-        especular_sol, emision_labpbr,
+        luz_cielo, luz_bloque, color, luz_minima_cuevas, LUZ_MINIMA_EXTERIOR,
+        sss == 1u || sss == 3u, sss == 2u || sss == 3u, SSS_BRILLO,
+        ESPECULAR_SOL, EMISION_LABPBR,
         charcos == 0u || charcos == 1u, charcos == 0u || charcos == 2u,
         array<i32, 3>(0, 16, 32)[min(reflejos_pantalla, 2u)],
     );

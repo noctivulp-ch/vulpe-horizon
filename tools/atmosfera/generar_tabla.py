@@ -165,7 +165,7 @@ def calcular(p, k, irradiancia_toa):
             cielo_medio[i] = e_cielo / math.pi
             suelo[i] = k["ATM_ALBEDO_SUELO"] / math.pi * (sol[i] * max(math.sin(el), 0.0) + e_cielo)
             horizonte[i] = cielo(o, d_hor, luz, irradiancia_toa, multiple[i], p).mean(0)
-        multiple = 0.5 * (cielo_medio + suelo)
+        multiple = k["ATM_MULTIPLE"] * 0.5 * (cielo_medio + suelo)
     return elevs, sol, cielo_medio, suelo, horizonte
 
 

@@ -182,26 +182,6 @@ max = 2.0
 step = 0.1
 
 [[options]]
-id = "cielo_bruma"
-name = "Bruma"
-description = "Aerosoles: cielo limpio y halo pequeño, o cielo lechoso y halo enorme."
-type = "float"
-default = 0.0
-min = -2.0
-max = 2.0
-step = 0.1
-
-[[options]]
-id = "sol_temperatura"
-name = "Temperatura del sol"
-description = "Kelvin: anaranjado a la izquierda, blanco azulado a la derecha."
-type = "float"
-default = 6000.0
-min = 4000.0
-max = 8000.0
-step = 100.0
-
-[[options]]
 id = "luna_brillo"
 name = "Brillo de la luna"
 description = "Pasos de brillo de la luz de luna: noches más oscuras o más claras."
@@ -216,15 +196,6 @@ id = "estrellas"
 name = "Estrellas"
 type = "bool"
 default = true
-
-[[options]]
-id = "estrellas_brillo"
-name = "Brillo de las estrellas"
-type = "float"
-default = 0.0
-min = -2.0
-max = 2.0
-step = 0.1
 
 [[options]]
 id = "fractal"
@@ -285,16 +256,6 @@ max = 200.0
 step = 5.0
 
 [[options]]
-id = "fractal_techo"
-name = "Techo"
-description = "Acota el pico de brillo (0: sin techo)."
-type = "float"
-default = 150.0
-min = 0.0
-max = 200.0
-step = 5.0
-
-[[options]]
 id = "fractal_saturacion"
 name = "Saturación"
 description = "Gris a la izquierda, carta de ajuste a la derecha."
@@ -303,44 +264,6 @@ default = 70.0
 min = 0.0
 max = 100.0
 step = 5.0
-
-[[options]]
-id = "fractal_contraste"
-name = "Contraste"
-description = "Bajo: color en los filamentos finos. Alto: concentrado."
-type = "float"
-default = 60.0
-min = 0.0
-max = 300.0
-step = 10.0
-
-[[options]]
-id = "fractal_mutacion"
-name = "Mutación"
-description = "Cuánto respiran las figuras de una noche a otra."
-type = "float"
-default = 25.0
-min = 0.0
-max = 100.0
-step = 5.0
-
-[[options]]
-id = "fractal_hueco"
-name = "Hueco de los astros"
-description = "Ceñido al disco a la izquierda, cono amplio a la derecha."
-type = "float"
-default = 40.0
-min = 0.0
-max = 400.0
-step = 10.0
-
-[[options]]
-id = "fractal_dibujo"
-name = "Dibujo"
-description = "Original: las líneas de la cuenta entera. Suave: conteo suavizado."
-type = "choice"
-values = ["Original", "Suave"]
-default = "Original"
 
 [[options]]
 id = "luz_cielo"
@@ -362,27 +285,11 @@ max = 2.0
 step = 0.05
 
 [[options]]
-id = "luz_bloque_color"
-name = "Color de la luz de bloque"
-type = "choice"
-values = ["Cálido", "Neutro", "Frío"]
-default = "Cálido"
-
-[[options]]
 id = "luz_minima_cuevas"
 name = "Luz mínima en cuevas"
 description = "Para distinguir las formas de una cueva sin antorchas."
 type = "float"
 default = 0.5
-min = 0.0
-max = 1.0
-step = 0.05
-
-[[options]]
-id = "luz_minima_exterior"
-name = "Luz mínima al aire libre"
-type = "float"
-default = 0.0
 min = 0.0
 max = 1.0
 step = 0.05
@@ -394,33 +301,6 @@ description = "Hojas, plantas y nieve que dejan pasar la luz. Lista: por bloque;
 type = "choice"
 values = ["Apagada", "Lista", "LabPBR", "Ambas"]
 default = "Lista"
-
-[[options]]
-id = "sss_brillo"
-name = "Brillo de la dispersión"
-type = "float"
-default = 1.0
-min = 0.0
-max = 2.0
-step = 0.05
-
-[[options]]
-id = "especular_sol"
-name = "Brillo especular del sol"
-type = "float"
-default = 1.0
-min = 0.0
-max = 10.0
-step = 0.25
-
-[[options]]
-id = "emision_labpbr"
-name = "Brillo de la emisión LabPBR"
-type = "float"
-default = 1.0
-min = 1.0
-max = 50.0
-step = 1.0
 
 [[options]]
 id = "reflejos_pantalla"
@@ -444,39 +324,6 @@ description = "Básica: borde suave fijo. Variable: dura al pie del objeto, difu
 type = "choice"
 values = ["Básica", "Variable"]
 default = "Variable"
-
-[[options]]
-id = "sombras_penumbra_min"
-name = "Penumbra mínima"
-type = "float"
-default = 5.0
-min = 0.0
-max = 10.0
-step = 0.5
-
-[[options]]
-id = "sombras_penumbra_max"
-name = "Penumbra máxima"
-type = "float"
-default = 20.0
-min = 0.0
-max = 40.0
-step = 1.0
-
-[[options]]
-id = "sombras_muestras"
-name = "Muestras del filtro"
-type = "int"
-default = 8
-min = 4
-max = 16
-
-[[options]]
-id = "sombras_color"
-name = "Sombras de color"
-description = "El agua y el cristal de colores tiñen la luz que pasa."
-type = "bool"
-default = true
 
 [[options]]
 id = "niebla"
@@ -513,40 +360,12 @@ max = 2.0
 step = 0.05
 
 [[options]]
-id = "niebla_bruma"
-name = "Bruma"
-description = "Perspectiva aérea: cuánto se azula y aclara lo lejano."
-type = "float"
-default = 1.0
-min = 0.0
-max = 2.0
-step = 0.05
-
-[[options]]
-id = "niebla_caida"
-name = "Caída de la niebla con la altura"
-description = "Por mil y bloque, desde Y = 320 (0: sin caída)."
-type = "float"
-default = 25.0
-min = 0.0
-max = 100.0
-step = 5.0
-
-[[options]]
-id = "niebla_alcance"
-name = "Alcance de la niebla"
-description = "Bloques: la niebla tiene la misma densidad con cualquier distancia de renderizado."
-type = "float"
-default = 512.0
-min = 256.0
-max = 2048.0
-step = 64.0
-
-[[options]]
 id = "nubes"
 name = "Nubes"
-type = "bool"
-default = true
+description = "Qué capas de nubes se dibujan."
+type = "choice"
+values = ["Apagadas", "Todas", "Solo cúmulos", "Solo altoestratos"]
+default = "Todas"
 
 [[options]]
 id = "nubes_calidad"
@@ -556,15 +375,6 @@ values = ["Baja", "Media", "Alta"]
 default = "Media"
 
 [[options]]
-id = "nubes_viento"
-name = "Velocidad del viento"
-type = "float"
-default = 1.0
-min = 0.0
-max = 3.0
-step = 0.1
-
-[[options]]
 id = "nubes_sombras"
 name = "Sombras de nubes"
 type = "float"
@@ -572,13 +382,6 @@ default = 100.0
 min = 0.0
 max = 100.0
 step = 5.0
-
-[[options]]
-id = "tiempo_aleatorio"
-name = "Tiempo diario aleatorio"
-description = "Apagado: siempre el mismo cielo de nubes."
-type = "bool"
-default = true
 
 [[textures]]
 id = "atmosfera"
@@ -641,31 +444,31 @@ items = ["page:cielo", "page:fractal", "page:niebla", "page:luz", "page:sombras"
 id = "cielo"
 name = "Cielo"
 description = "Atmósfera, sol, luna y estrellas."
-items = ["cielo_brillo", "cielo_bruma", "sol_temperatura", "luna_brillo", "estrellas", "estrellas_brillo"]
+items = ["cielo_brillo", "luna_brillo", "estrellas"]
 
 [[pages]]
 id = "fractal"
 name = "Cielo fractal"
 description = "Las constelaciones de fractales de la noche."
-items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_paleta", "fractal_brillo", "fractal_techo", "fractal_saturacion", "fractal_contraste", "fractal_mutacion", "fractal_hueco", "fractal_dibujo"]
+items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_paleta", "fractal_brillo", "fractal_saturacion"]
 
 [[pages]]
 id = "niebla"
 name = "Niebla y nubes"
-description = "Niebla volumétrica, bruma, nubes y tiempo."
-items = ["niebla", "niebla_pasos", "niebla_cantidad", "niebla_lluvia", "niebla_bruma", "niebla_caida", "niebla_alcance", "nubes", "nubes_calidad", "nubes_viento", "nubes_sombras", "tiempo_aleatorio"]
+description = "Niebla volumétrica y nubes."
+items = ["niebla", "niebla_pasos", "niebla_cantidad", "niebla_lluvia", "nubes", "nubes_calidad"]
 
 [[pages]]
 id = "luz"
 name = "Luz"
 description = "Cielo, bloques, dispersión, brillos y charcos."
-items = ["luz_cielo", "luz_bloque", "luz_bloque_color", "luz_minima_cuevas", "luz_minima_exterior", "sss", "sss_brillo", "especular_sol", "emision_labpbr", "reflejos_pantalla", "charcos"]
+items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "sss", "reflejos_pantalla", "charcos"]
 
 [[pages]]
 id = "sombras"
 name = "Sombras"
-description = "Penumbra, filtro y sombras de color."
-items = ["sombras_penumbra", "sombras_penumbra_min", "sombras_penumbra_max", "sombras_muestras", "sombras_color"]
+description = "Penumbra y sombras de nubes."
+items = ["sombras_penumbra", "nubes_sombras"]
 
 [[pages]]
 id = "imagen"
