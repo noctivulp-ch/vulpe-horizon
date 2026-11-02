@@ -30,3 +30,4 @@ sleep 0.3
 screenshot imagen-salida-cueva
 sleep 7
 screenshot imagen-salida-adaptado
+fill 230 118 230 242 130 242 air

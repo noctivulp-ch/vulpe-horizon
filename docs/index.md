@@ -7,8 +7,8 @@
   `efectos/cielo-y-atmosfera.md` (01), `efectos/cielo-fractal.md` (02) `efectos/luz-de-superficie.md` (03), `efectos/sombras.md` (04), `efectos/niebla-y-nubes.md` (05) `efectos/aurora.md` (06), `efectos/taa.md` (09), `efectos/bloom.md` (10),
   `efectos/exposicion-tonemap-gradacion.md` (11), `efectos/agua.md` (07) ,
   `efectos/oclusion-ambiental.md` (08), `efectos/menas-brillantes.md` (12),
-  `efectos/aislamiento-de-color.md` (13), `efectos/rayos-del-fractal.md` (14) y
-  `efectos/vegetacion-ondulante.md` (15, desactivado).
+  `efectos/aislamiento-de-color.md` (13), `efectos/rayos-del-fractal.md` (14),
+  `efectos/vegetacion-ondulante.md` (15, desactivado) y `efectos/lluvia-y-nieve.md` (16).
 - `observaciones-del-gestor.md`: lo que llega del gestor fuera de la especificación.
 
 ## Carpetas añadidas a las del ADR 0002

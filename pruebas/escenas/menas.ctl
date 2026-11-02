@@ -30,3 +30,4 @@ command tp @s 232.5 119 235.5
 look -90 -4
 sleep 3
 screenshot menas-lejos
+fill 230 118 230 242 130 242 air
