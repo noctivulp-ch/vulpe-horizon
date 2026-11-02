@@ -1,10 +1,11 @@
 // Operadores de mapeo de tonos, intercambiables: misma firma (lineal HDR -> lineal 0..1).
 // Porqué: docs/efectos/nucleo.md §Color y docs/decisiones/0004-codificacion-del-picture.md
 
-const COL_TONEMAP_VULPE: u32 = 0u;
-const COL_TONEMAP_REINHARD_LUMINANCIA: u32 = 1u;
-const COL_TONEMAP_ACES: u32 = 2u;
-const COL_TONEMAP_REINHARD_CANAL: u32 = 3u;
+// Para el mapeo final (opción «Mapeo de tonos»). El de la codificación del «picture» es
+// col_tonemap_reinhard_maximo, aparte (ADR 0004).
+const COL_TONEMAP_FILMICO: u32 = 0u;
+const COL_TONEMAP_ACES: u32 = 1u;
+const COL_TONEMAP_REINHARD_MAXIMO: u32 = 2u;
 
 // Reinhard extendido (Reinhard et al. 2002, ec. 4) por canal; `blanco` es el valor que llega a 1.
 fn col_tonemap_reinhard_canal(c: vec3<f32>, blanco: f32) -> vec3<f32> {
@@ -55,12 +56,19 @@ fn col_tonemap_aces(c: vec3<f32>) -> vec3<f32> {
     return mat_saturar3((c * (a * c + b)) / (c * (cc * c + d) + e));
 }
 
+// Curva fílmica racional de Hejl, Burgess y Dawson (difundida por Duiker; Hable 2010): lleva ya la gamma de
+// pantalla, así que se devuelve a lineal para que todos los operadores tengan la misma firma.
+fn col_tonemap_filmico(c: vec3<f32>) -> vec3<f32> {
+    let x = max(c - 0.004, vec3<f32>(0.0));
+    let pantalla = (x * (6.2 * x + 0.5)) / (x * (6.2 * x + 1.7) + 0.06);
+    return col_srgb_a_lineal(mat_saturar3(pantalla));
+}
+
 // Elige operador; el resto del pack solo llama a esta.
 fn col_tonemap(c: vec3<f32>, operador: u32, blanco: f32) -> vec3<f32> {
     switch operador {
-        case COL_TONEMAP_REINHARD_LUMINANCIA: { return col_tonemap_reinhard_luminancia(c, blanco); }
         case COL_TONEMAP_ACES: { return col_tonemap_aces(c); }
-        case COL_TONEMAP_REINHARD_CANAL: { return col_tonemap_reinhard_canal(c, blanco); }
-        default: { return col_tonemap_reinhard_maximo(c, blanco); }
+        case COL_TONEMAP_REINHARD_MAXIMO: { return col_tonemap_reinhard_maximo(c, blanco); }
+        default: { return col_tonemap_filmico(c); }
     }
 }

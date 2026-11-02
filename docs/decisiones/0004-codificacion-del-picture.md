@@ -37,8 +37,8 @@ codificar(L) = sRGB( T( L · E ) )        decodificar(v) = T⁻¹( lineal(v) ) /
   forma cerrada (el canal máximo de la salida es la curva del de la entrada). Es también el mapeo de tonos
   final por defecto.
 
-La primera pasada post decodifica a luz lineal en coma flotante; todo el post trabaja ahí; la última
-vuelve a aplicar `E`, la corrección de exposición del jugador, la gradación y `T`.
+La composición decodifica a luz lineal en coma flotante; todo el post trabaja ahí; la última aplica la exposición
+(desde el 11, automática mezclada con `E`), la gradación y el mapeo de tonos elegido.
 
 ## Por qué así
 
