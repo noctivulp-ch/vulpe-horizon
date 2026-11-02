@@ -22,7 +22,10 @@ en medio el TAA sigue recibiendo la composición en `previous`.
   el primer fotograma o tras una pausa, la medida sin mezclar.
 - **Curva:** `k / ln(L + 1 + c)` con k = 0,2 y c = 0,002: E ≈ 3,2 de día (L medida ≈ 0,06) y tope ≈ 100 cuando L →
   0. Medido en el juego: L ≈ 0,0625 de día y ≈ 0,0094 de noche.
-- **Mezcla con la exposición previa (desviación, duda para A):** la noche medida es solo ~6,6 veces más oscura
+- **Calibración (decisión de A, `0fcece2`):** objetivo de brillo medio de la imagen final, medido como media del
+  cuarto central de la pantalla (por la viñeta): día ≈ 146/255 y noche ≈ 17–18/255. Ajustado con la exposición
+  previa (`OPC_EV_DIA` 3,1 y `OPC_EV_NOCHE` 5,6), que entra en la media: medido **146,7 de día y 17,6 de noche**.
+- **Mezcla con la exposición previa (aceptada por A):** la noche medida es solo ~6,6 veces más oscura
   que el día (la niebla iluminada por la luna y la aurora suben la media), y ninguna curva compresiva puede dar
   más de esa razón de exposición: con la automática sola la noche salía casi negra (E ≈ 18 frente a ≈ 104 de la
   previa analítica, que se había afinado con las referencias). La exposición final es la media en log de la
@@ -44,10 +47,12 @@ tonos → saturación y contraste → sRGB → tramado.
 - **Nitidez** a la manera de CAS (AMD 2019) con cantidad 0,35, **al principio** sobre `previous` en espacio
   comprimido: la pasada final no puede leer su propio resultado, y la imagen es HDR.
 - **Mapeo de tonos:** opción con fílmico (Hejl-Burgess-Dawson, devuelto a lineal para que todos tengan la misma
-  firma), ACES (Narkowicz) y Reinhard sobre el canal máximo. **Por defecto Reinhard (desviación):** el fílmico y
-  el ACES llevan el cielo de día a un blanco grisáceo (su hombro desatura) y la especificación pide que los
-  brillos no salten a blanco; el Reinhard sobre el canal máximo conserva tono y saturación (comparados en la
-  misma vista). Sin AgX.
+  firma), ACES (Narkowicz) y Reinhard extendido **sobre la luminancia**. **Por defecto Reinhard** (aceptado por A
+  como provisional, con la condición de ir sobre la luminancia y que el día no quede plano). Antes iba sobre el
+  canal máximo; sobre la luminancia el cielo sale más azul y luminoso y la hierba más viva (comparados en la misma
+  vista). **Prueba que pidió A** con el fílmico y la exposición bajando hasta que el cenit quedara en 0,4–0,6:
+  con −2 pasos el cenit vale (0,56; 0,61; 0,69), luminancia 0,6, y sigue azul grisáceo, mucho menos saturado que
+  con el Reinhard, y la hierba más oscura: no era solo la exposición, el hombro del fílmico desatura. Sin AgX.
 - **Saturación y contraste** (opciones −1…+1, 0) después del mapeo: `mix(luma, c, 1 + s)` y potencia alrededor de
   0,18 con exponente `1 + 0,5·contraste`.
 - **Tramado** triangular de ±1 nivel con dos canales del ruido azul.
