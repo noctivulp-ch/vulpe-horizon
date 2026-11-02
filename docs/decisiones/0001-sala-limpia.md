@@ -31,3 +31,9 @@ Diseño de sala limpia con dos agentes y un gestor:
 Cada lote que cruza la muralla queda en el historial git del repo de la especificación; lo que B recibe del
 gestor fuera de él (observaciones) se anota en `docs/observaciones-del-gestor.md`. Así se puede demostrar
 de dónde sale cada parte.
+
+## Licencia e identidad (2026-11-01)
+
+El dueño eligió **GPL-3.0 o posterior** y la identidad **noctivulp-ch** (la de AppCreator/Patreon), no la
+de juegos: el repo la fija con `include.path = ~/.config/git/id-patreon` en su `.git/config`, y los commits
+anteriores se reescribieron con ella (eran locales, sin publicar).
