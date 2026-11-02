@@ -177,7 +177,7 @@ name = "TAA"
 
 [[post]]
 file = "etapas/post/07-final.wgsl"
-files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/nitidez.wgsl", "adaptadores/post.wgsl", "adaptadores/imagen.wgsl"]
+files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/nitidez.wgsl", "nucleo/imagen/aislamiento.wgsl", "opciones/aislamiento.wgsl", "adaptadores/post.wgsl", "adaptadores/imagen.wgsl"]
 name = "Final"
 
 # --- Opciones -------------------------------------------------------------------------------
@@ -272,6 +272,32 @@ default = 1.0
 min = 0.0
 max = 4.0
 step = 0.1
+
+[[options]]
+id = "aislamiento"
+name = "Aislamiento de color"
+description = "El mundo casi en gris y un solo color, en manchas grandes (el abrigo rojo)."
+type = "bool"
+default = true
+
+[[options]]
+id = "aislamiento_matiz"
+name = "Color aislado (matiz)"
+description = "Grados: 0 rojo, 30 naranja, 120 verde, 210 azul agua."
+type = "float"
+default = 0.0
+min = 0.0
+max = 360.0
+step = 5.0
+
+[[options]]
+id = "aislamiento_rango"
+name = "Amplitud del color"
+type = "float"
+default = 20.0
+min = 0.0
+max = 100.0
+step = 5.0
 
 [[options]]
 id = "imagen_tramado"
@@ -657,7 +683,7 @@ items = ["sombras_penumbra", "nubes_sombras", "ao", "ao_fuerza"]
 id = "imagen"
 name = "Imagen"
 description = "Exposición, color y mapeo de tonos."
-items = ["taa", "taa_nitidez", "imagen_exposicion", "imagen_saturacion", "imagen_contraste", "imagen_tonemap", "bloom_fuerza", "imagen_tramado"]
+items = ["taa", "taa_nitidez", "imagen_exposicion", "imagen_saturacion", "imagen_contraste", "imagen_tonemap", "bloom_fuerza", "aislamiento", "aislamiento_matiz", "aislamiento_rango", "imagen_tramado"]
 
 [[pages]]
 id = "depuracion"

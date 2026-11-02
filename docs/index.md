@@ -6,7 +6,8 @@
   Empezar por `efectos/nucleo.md` (base matemática, ruido, color, adaptadores y herramientas). Luego
   `efectos/cielo-y-atmosfera.md` (01), `efectos/cielo-fractal.md` (02) `efectos/luz-de-superficie.md` (03), `efectos/sombras.md` (04), `efectos/niebla-y-nubes.md` (05) `efectos/aurora.md` (06), `efectos/taa.md` (09), `efectos/bloom.md` (10),
   `efectos/exposicion-tonemap-gradacion.md` (11), `efectos/agua.md` (07) ,
-  `efectos/oclusion-ambiental.md` (08) y `efectos/menas-brillantes.md` (12).
+  `efectos/oclusion-ambiental.md` (08), `efectos/menas-brillantes.md` (12) y
+  `efectos/aislamiento-de-color.md` (13).
 - `observaciones-del-gestor.md`: lo que llega del gestor fuera de la especificación.
 
 ## Carpetas añadidas a las del ADR 0002
