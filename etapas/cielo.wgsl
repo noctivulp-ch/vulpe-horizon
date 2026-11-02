@@ -24,7 +24,7 @@ fn sky(input: SkyInput) -> vec4<f32> {
     let fractal = opc_fractal();
     if fractal.activo && noche > 0.0 {
         let mascara = estrellas / max(ajustes.estrellas.brillo, 1e-9);
-        let escena = CieFractalEscena(dir, frame.sun_direction, noche, mascara);
+        let escena = CieFractalEscena(adp_cielo_jitter(dir), frame.sun_direction, noche, mascara);
         fondo += cie_fractal(escena, adp_fractal_ajustes(fractal, adp_cielo_medio(ajustes)));
     }
     let disco = atm_disco(dot(dir, sol.direccion), OPC_SOL_DISCO_RADIO, 0.15) * (1.0 - frame.rain);

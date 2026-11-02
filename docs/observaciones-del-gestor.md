@@ -87,3 +87,16 @@ en `scene_depth`; la niebla de post no ve la lluvia.
 
 A ha terminado las 16 especificaciones, todas revisadas. Recomendación del gestor: tras la aurora, el 09
 (TAA), que limpia el grano del 04, el 05 y el 06.
+
+## 2026-11-02 — revisión de 8287b4e (aurora)
+
+Mejora clara: el cuerpo de la figura se ilumina, se ven las rayas que convergen hacia arriba y la vista de
+conos se parece a `dbg_conos.png`. La semilla 8 escorzada no cuenta como fallo.
+
+Observación (frente a `ruidov_noche.png`): en la referencia, dentro de la figura se distinguen **puntos y
+filamentos brillantes sobre una cortina más oscura y translúcida**, que pierde brillo hacia abajo y deja ver el
+fondo. En la nuestra el interior es una **lámina crema casi uniforme y opaca**, sin apenas variación entre
+filamentos y relleno ni de arriba abajo. Mirar si el arreglo del peso dejó la cortina demasiado saturada (06,
+líneas 25–27 y 37–38). No urge: volver a mirarlo con el TAA (09) y el aislamiento de color (13).
+
+La duda de la ventana al cielo está con A. Siguiente: 09 (TAA), luego 07–16.

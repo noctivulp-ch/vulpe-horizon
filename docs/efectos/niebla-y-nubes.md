@@ -15,9 +15,8 @@ se aplica. También cierra dos pendientes: las **sombras de nubes** del 04 en el
 sobre el cielo, que se desvanece por encima de la capa de nubes** (01).
 
 **Ganchos:** el de la aurora (06) está en `vol_tramo_niebla` (ver `docs/efectos/aurora.md`); los rayos del
-fractal (14) ya no van en este bucle (son un desenfoque radial de la pasada final). **Fuera por ahora:** el ruido azul
-desplazado con R2 (lo trae el 09): hasta entonces el primer paso se desplaza con ruido blanco PCG por píxel y
-fotograma (`rui_blanco_pixel`) y se ve grano fino. Con IGN se veían **estrías paralelas** dentro de las nubes
+fractal (14) ya no van en este bucle (son un desenfoque radial de la pasada final). **Fuera por ahora:** el primer paso se desplaza con
+ruido azul desplazado con R2 (09, `adp_ruido_azul`). Con IGN se veían **estrías paralelas** dentro de las nubes
 (observación del gestor): su estructura diagonal se alineaba entre píxeles vecinos.
 
 ## Por qué del código
