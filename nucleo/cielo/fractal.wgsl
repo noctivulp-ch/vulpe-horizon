@@ -19,8 +19,8 @@ struct CieFractalEscena {
     estrellas: f32,         // máscara de estrellas 0..1 en esta dirección
 }
 
-// Aporte de una instancia (relleno «Original»): t² · caída ancha · ganancia, con el tono de la paleta.
-fn cie_fractal_aporte(inst: CieFractalInstancia, punto: CieFractalPunto, a: CieFractalAjustes) -> vec3<f32> {
+// Valor de iteración t de la instancia en un punto de su plano (0 sin escape).
+fn cie_fractal_t(inst: CieFractalInstancia, punto: CieFractalPunto, a: CieFractalAjustes) -> f32 {
     var p = punto.q * 6.0 / inst.escala;
     let cg = cos(inst.giro);
     let sg = sin(inst.giro);
@@ -30,7 +30,19 @@ fn cie_fractal_aporte(inst: CieFractalInstancia, punto: CieFractalPunto, a: CieF
     let paso = select(0.01, 0.02 * inst.zoom, inst.es_zoom);
     let c = inst.forma + vec2<f32>(cos(ang), sin(ang)) * a.mutacion * paso;
     let iteraciones = select(a.iteraciones, a.iteraciones * 3, inst.es_zoom);
-    let t = cie_tiempo_de_escape(p, CieConjunto(c, inst.es_zoom, inst.zoom, iteraciones, a.dibujo));
+    return cie_tiempo_de_escape(p, CieConjunto(c, inst.es_zoom, inst.zoom, iteraciones, a.dibujo));
+}
+
+// Máscara de silueta de la instancia (la de la aurora, 06): `smoothstep(0,03; 0,30; t)` × caída ancha × lejos
+// del polo.
+fn cie_fractal_silueta(inst: CieFractalInstancia, punto: CieFractalPunto, a: CieFractalAjustes) -> f32 {
+    let t = cie_fractal_t(inst, punto, a);
+    return smoothstep(0.03, 0.30, t) * exp2(-punto.q2 / inst.alcance) * punto.lejos_del_polo;
+}
+
+// Aporte de una instancia (relleno «Original»): t² · caída ancha · ganancia, con el tono de la paleta.
+fn cie_fractal_aporte(inst: CieFractalInstancia, punto: CieFractalPunto, a: CieFractalAjustes) -> vec3<f32> {
+    let t = cie_fractal_t(inst, punto, a);
     if t <= 0.0 {
         return vec3<f32>(0.0);
     }

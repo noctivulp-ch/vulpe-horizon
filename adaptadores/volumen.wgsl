@@ -45,12 +45,12 @@ fn adp_volumen_ajustes() -> VolAjustes {
     let con_niebla = o.niebla && frame.in_water < 0.5;
     let mapa = LuzMapa(frame.shadow_view_proj, frame.shadow_distortion);
     return VolAjustes(niebla, adp_nubes(), o.alcance, o.pasos, o.pasos_nubes, con_niebla, o.nubes,
-                      frame.has_shadow == 1u, o.sombra_nubes, mapa);
+                      frame.has_shadow == 1u, o.sombra_nubes, mapa, adp_aurora(o.alcance));
 }
 
 fn adp_volumen(uv: vec2<f32>, pixel: vec2<f32>) -> VolResultado {
     return vol_integrar(adp_volumen_rayo(uv, pixel), adp_volumen_luz(), adp_volumen_ajustes(),
-                        shadow_map, shadow_sampler, ruido2d, ruido2d_sampler, ruido3d);
+                        shadow_map, shadow_sampler, ruido2d, ruido2d_sampler, ruido3d, mapa_aurora, linear_sampler);
 }
 
 // Salida de la pasada de volumen: luz ya expuesta (no se pierde en media precisión) y transmitancia.
@@ -80,5 +80,5 @@ fn adp_volumen_reescalado(pixel: vec2<f32>, distancia: f32) -> VolResultado {
         pesos += w;
     }
     let v = suma / max(pesos, 1e-6);
-    return VolResultado(v.rgb / adp_codificacion().exposicion, v.a);
+    return VolResultado(v.rgb / adp_codificacion().exposicion, v.a, 0.0);
 }
