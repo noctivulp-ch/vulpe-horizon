@@ -81,6 +81,10 @@ stars = false
 #file = "etapas/vertice.wgsl"
 #files = ["nucleo/superficie/viento.wgsl", "adaptadores/vertice.wgsl"]
 
+[weather]           # lluvia y nieve (16)
+file = "etapas/clima.wgsl"
+files = ["nucleo/luz/curvas.wgsl", "nucleo/volumen/fase.wgsl", "nucleo/volumen/medios.wgsl", "opciones/clima.wgsl", "adaptadores/clima.wgsl"]
+
 [material]
 file = "etapas/material.wgsl"
 fog = false         # la niebla es nuestra (subsistema 05)
@@ -465,6 +469,15 @@ max = 100.0
 step = 5.0
 
 [[options]]
+id = "clima_opacidad"
+name = "Opacidad de la lluvia y la nieve"
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
 id = "luz_cielo"
 name = "Brillo de la luz de cielo"
 type = "float"
@@ -699,7 +712,7 @@ items = ["agua_olas", "agua_claridad", "agua_refraccion"]
 id = "luz"
 name = "Luz"
 description = "Cielo, bloques, dispersión, brillos y charcos."
-items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "sss", "reflejos_pantalla", "charcos", "menas", "menas_intensidad"]
+items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "sss", "reflejos_pantalla", "charcos", "menas", "menas_intensidad", "clima_opacidad"]
 
 [[pages]]
 id = "sombras"
