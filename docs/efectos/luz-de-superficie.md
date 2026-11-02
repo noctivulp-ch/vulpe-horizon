@@ -134,3 +134,22 @@ bloque, luz mínima al aire libre, brillo del SSS, especular del sol y emisión 
 
 naga: material 3331 expresiones, 3 lecturas de textura (las lecturas se cuentan por sitio en el código, no
 por ejecución: un bucle de 100 lecturas cuenta 1; medido con un pack de ensayo).
+
+## Colores de la luz de bloque (fase 2, falta 03.1)
+
+`[[lights]]` en el manifiesto con las familias de la especificación 03 §«Colores de la luz de bloque»: fuego normal
+(el cálido por defecto), de almas (cian frío), velas teñidas, redstone (rojo), lámpara de redstone / piedra luminosa /
+brillacho / calabaza (amarillo cálido claro), lava y magma (naranja intenso), linterna marina / conducto / faro / vara
+del End (blanco frío), amatista / obsidiana llorosa / ancla / portal (violeta), liquen y bayas luminosas (verde
+amarillento) y las tres ranaluces. `adp_color_luz_bloque` ya leía `block_light_color`; ahora tiene datos.
+
+**Purkinje junto a las fuentes:** en una cueva a oscuras con antorchas, el efecto Purkinje (11) se llevaba todos los
+colores al azul y la antorcha normal salía tan fría como la de almas. Se apaga con la luz de bloque en la cámara
+(`1 − smoothstep(0,15; 0,6; eye_light_smooth.x)`): junto a una fuente el ojo no está en visión escotópica.
+
+**Visto** (`hoja-luces.png`, escena `pruebas/escenas/luces.ctl`, sin y con el aislamiento de color): la antorcha de
+almas cian y la lámpara de redstone amarilla, que tiñen el suelo cercano de su color. La antorcha normal y la
+amatista quedaron fuera del encuadre en la captura final.
+
+**Dato del motor:** `horizon-ctl fill` y `setblock` cambian solo el cliente (el servidor lo deshace, como el `tp`);
+las escenas usan `command fill` / `command setblock`, de uno en uno con pausa.
