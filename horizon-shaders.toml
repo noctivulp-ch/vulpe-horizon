@@ -696,6 +696,56 @@ sprites = ["block/snow", "block/powder_snow", "block/amethyst_block", "block/cob
 id = 7
 sprites = ["block/*_ore", "block/gilded_blackstone"]
 
+# --- Colores de la luz de bloque (03.1): block_light_color en el material ---------------------
+
+[[lights]]          # fuego de almas: cian azulado frío
+color = [0.35, 0.8, 1.0]
+blocks = ["soul_torch", "soul_wall_torch", "soul_lantern", "soul_campfire", "soul_fire"]
+
+[[lights]]          # fuego normal: el cálido por defecto
+color = [1.0, 0.5, 0.25]
+blocks = ["torch", "wall_torch", "lantern", "campfire", "fire", "candle", "candle_cake"]
+
+[[lights]]          # velas teñidas: cálido levemente teñido
+color = [1.0, 0.55, 0.35]
+blocks = ["*_candle", "*_candle_cake"]
+
+[[lights]]          # redstone: rojo
+color = [1.0, 0.15, 0.08]
+blocks = ["redstone_torch", "redstone_wall_torch", "redstone_ore", "deepslate_redstone_ore", "redstone_block", "repeater", "comparator"]
+
+[[lights]]          # lámpara de redstone, piedra luminosa, brillacho, calabaza: amarillo cálido claro
+color = [1.0, 0.75, 0.4]
+blocks = ["redstone_lamp", "glowstone", "shroomlight", "jack_o_lantern"]
+
+[[lights]]          # lava y magma: naranja intenso
+color = [1.0, 0.35, 0.08]
+blocks = ["lava", "magma_block"]
+
+[[lights]]          # linterna marina, conducto, faro, vara del End: blanco frío
+color = [0.8, 0.95, 1.0]
+blocks = ["sea_lantern", "conduit", "beacon", "end_rod"]
+
+[[lights]]          # amatista, obsidiana llorosa, ancla, portal: violeta
+color = [0.7, 0.35, 1.0]
+blocks = ["amethyst_cluster", "*_amethyst_bud", "crying_obsidian", "respawn_anchor", "nether_portal"]
+
+[[lights]]          # liquen y bayas luminosas: verde amarillento pálido
+color = [0.75, 0.95, 0.5]
+blocks = ["glow_lichen", "cave_vines", "cave_vines_plant"]
+
+[[lights]]          # ranaluces
+color = [1.0, 0.85, 0.4]
+blocks = ["ochre_froglight"]
+
+[[lights]]
+color = [1.0, 0.7, 0.85]
+blocks = ["pearlescent_froglight"]
+
+[[lights]]
+color = [0.6, 1.0, 0.6]
+blocks = ["verdant_froglight"]
+
 # --- Menú -----------------------------------------------------------------------------------
 
 [[pages]]

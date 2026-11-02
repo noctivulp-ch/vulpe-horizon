@@ -17,9 +17,9 @@ look 0 -15
 sleep 8
 screenshot imagen-noche
 time 6000
-fill 230 118 230 242 130 242 stone
-fill 231 119 231 241 129 241 air
-setblock 240 119 240 glowstone
+command fill 230 118 230 242 130 242 stone
+command fill 231 119 231 241 129 241 air
+command setblock 240 119 240 glowstone
 command tp @s 233.5 119 233.5
 look -45 10
 sleep 10
@@ -30,4 +30,4 @@ sleep 0.3
 screenshot imagen-salida-cueva
 sleep 7
 screenshot imagen-salida-adaptado
-fill 230 118 230 242 130 242 air
+command fill 230 118 230 242 130 242 air
