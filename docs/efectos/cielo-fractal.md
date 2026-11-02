@@ -84,9 +84,10 @@ figuras más brillantes y opacas que la referencia, que las quiere del orden de 
 
 ## Opciones
 
-Página «Cielo fractal» (13): activado, cambios por noche, cobertura 5–80 (45), máximo de conjuntos 1–8 (6),
-semilla 0–15 (8), paleta, brillo 0–200 (40), techo 0–200 (150), saturación 0–100 (70), contraste 0–300 (60),
-mutación 0–100 (25), hueco 0–400 (40), dibujo original/suave. Valores por defecto de la especificación.
+Presupuesto de `convenciones.md` (2026-11-02), página «Cielo fractal» (8): activado, cambios por noche,
+cobertura 5–80 (45), máximo de conjuntos 1–8 (6), semilla 0–15 (8), paleta, brillo 0–200 (40), saturación
+0–100 (70). Techo (150), contraste (60), mutación (25), hueco (40) y dibujo (original) pasan a constantes
+(`opciones/fractal.wgsl`).
 
 **Omitidas en esta versión** (la especificación lo permite): el modo manual y su figura colocada a mano, y
 el relleno «salpicadura» (la especificación no describe su comportamiento: duda pasada al gestor). El dibujo

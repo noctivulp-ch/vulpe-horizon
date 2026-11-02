@@ -75,8 +75,8 @@ Solo en caras hacia la luz, en plantas cruzadas o con SSS, y con algo de luz de 
 
 ## Opciones
 
-Página «Sombras»: penumbra básica/variable, penumbra mínima (0–10) y máxima (0–40 texels), muestras del
-filtro (4–16), sombras de color. La resolución y la distancia del mapa son del manifiesto y el jugador no
+Página «Sombras» (presupuesto de `convenciones.md`): penumbra básica/variable y sombras de nubes. Penumbra
+mínima y máxima, muestras y sombras de color pasan a constantes (`opciones/sombras.wgsl`). La resolución y la distancia del mapa son del manifiesto y el jugador no
 puede cambiarlas (limitación de Horizon que recoge la especificación).
 
 ## Coste medido

@@ -10,9 +10,6 @@ fn sky(input: SkyInput) -> vec4<f32> {
     // Bajo el horizonte la atmósfera se evalúa mirando al horizonte: en Minecraft el terreno acaba antes que
     // el horizonte del planeta y lo que se ve detrás tiene que fundirse con la bruma, no con el suelo del
     // planeta (que dejaba una banda oscura). Porqué: docs/efectos/cielo-y-atmosfera.md §Montaje
-    // Solo hasta el ángulo en que se ve el final de la distancia de renderizado (crece con la altura de la
-    // cámara): más abajo ya es suelo.
-    let borde = adp_cielo_borde_del_mundo();
     let dir_atm = normalize(vec3<f32>(dir.x, max(dir.y, 0.0), dir.z));
     let atm = adp_dispersion(dir_atm, sol, luna, ajustes);
 
@@ -33,9 +30,10 @@ fn sky(input: SkyInput) -> vec4<f32> {
     let disco = atm_disco(dot(dir, sol.direccion), OPC_SOL_DISCO_RADIO, 0.15) * (1.0 - frame.rain);
     fondo += sol.irradiancia * OPC_SOL_DISCO_BRILLO * disco;
 
-    // Bajo el horizonte la bruma sigue entera unos grados y el «suelo» llega despacio: si no, el terreno que
-    // acaba antes del horizonte (el mar lejano) quedaba contra una franja gris.
-    let suelo = cie_factor_suelo(dir.y + borde, 0.08);
+    // Bajo el horizonte: bruma cerca de él y suelo al mirar más abajo, con la misma regla de ángulo que la
+    // niebla de borde (05). Así el terreno que acaba antes del horizonte se funde con lo que hay detrás a
+    // cualquier altura de la cámara.
+    let suelo = cie_peso_bruma_horizonte(dir.y);
     var cielo = atm.luz * mix(0.8, 1.0, suelo) + fondo * atm.transmitancia * cie_factor_suelo(dir.y, 0.03);
     cielo = mix(cie_color_bajo_horizonte(adp_cielo_medio(ajustes), adp_suelo(ajustes), 0.35), cielo, suelo);
     cielo = col_saturar(cielo, OPC_CIELO_SATURACION) * OPC_CIELO_BRILLO_DIBUJO;

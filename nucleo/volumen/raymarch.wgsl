@@ -3,8 +3,9 @@
 struct VolRayo {
     camara: vec3<f32>,      // posición absoluta de la cámara
     dir: vec3<f32>,         // unitaria
-    escena: f32,            // distancia a lo que hay detrás, bloques (enorme en el cielo)
+    escena: f32,            // distancia a lo que hay detrás, bloques
     ruido: f32,             // 0..1 por píxel y fotograma
+    cielo: bool,            // el píxel es cielo (ya lleva su atmósfera: no se le integra aire)
 }
 
 struct VolLuz {
@@ -63,7 +64,7 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
     let nubes_cerca = vol_sombra_nubes(rayo.camara + rayo.dir * t0, luz.direccion, a.nubes, t2, s2);
     let nubes_lejos = vol_sombra_nubes(rayo.camara + rayo.dir * t1, luz.direccion, a.nubes, t2, s2);
     // El cielo ya lleva su atmósfera (01): el aire solo se integra delante del terreno.
-    let bruma = select(a.niebla.bruma, 0.0, rayo.escena > 1e8);
+    let bruma = select(a.niebla.bruma, 0.0, rayo.cielo);
     let ambiente = mix(luz.suelo, luz.cielo, 0.7);
     let f = 10.0;
     var anterior = 0.0;
@@ -88,7 +89,7 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
         let sol = luz.irradiancia * visible;
         let fuente_aire = aire.rayleigh * (sol * fase_aire_r + ambiente) + aire.mie * (sol * fase_aire_m + ambiente);
         let fuente_niebla = niebla * (sol * vol_fase_niebla(cos_luz)
-                          + luz.cielo * a.niebla.ambiente * mix(0.05, 0.15, rayo.dir.y * 0.5 + 0.5));
+                          + luz.cielo * a.niebla.ambiente * mix(0.015, 0.05, rayo.dir.y * 0.5 + 0.5));
         let sigma = (col_luminancia(aire.rayleigh) + aire.mie * 1.1) + niebla;
         vol_tramo(r, fuente_aire + fuente_niebla, sigma, paso);
     }

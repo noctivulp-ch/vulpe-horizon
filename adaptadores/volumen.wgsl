@@ -7,13 +7,19 @@ fn adp_volumen_rayo(uv: vec2<f32>, pixel: vec2<f32>) -> VolRayo {
     var escena = 1e9;
     if d <= 0.0 {
         dir = normalize(view_position(uv, 1e-4));
+        // Cielo mirando hacia abajo (más allá de la distancia de renderizado): el rayo acaba en el plano del
+        // mar, como si el suelo siguiera. Sin esto la niebla se integraba cientos de bloques bajo el mundo,
+        // donde las manchas ya no caen con la altura, y daba un velo opaco visto desde encima de las nubes.
+        if dir.y < 0.0 {
+            escena = max(frame.camera_position.y - VOL_MAR, 0.0) / -dir.y;
+        }
     } else {
         let p = view_position(uv, d);
         escena = length(p);
         dir = p / escena;
     }
     let ruido = rui_blanco_pixel(pixel, frame.frame_index);
-    return VolRayo(frame.camera_position, dir, escena, ruido);
+    return VolRayo(frame.camera_position, dir, escena, ruido, d <= 0.0);
 }
 
 fn adp_volumen_luz() -> VolLuz {
@@ -33,9 +39,9 @@ fn adp_volumen_ajustes() -> VolAjustes {
     // Tormenta de nieve: lluvia en un bioma donde nieva (precipitation 2): densa y blanca.
     let nieve = select(0.0, frame.rain, frame.precipitation == 2u);
     let uniforme = (h.uniforme + lluvia * 0.5 + nieve * 1.2) * mix(0.05, 1.0, fuera);
-    let manchas = (h.manchas + lluvia * 0.4 + nieve * 0.5 + clamp(frame.downfall - 0.6, 0.0, 0.4) * smoothstep(0.5, 0.9, frame.temperature)) * fuera;
+    let manchas = (h.manchas + lluvia * 0.4 + nieve * 0.5 + clamp(frame.downfall - 0.85, 0.0, 0.15) * 2.5 * smoothstep(0.5, 0.9, frame.temperature)) * fuera;
     let viento = vec3<f32>(OPC_VIENTO.x, 0.0, OPC_VIENTO.y) * o.viento * frame.time * 0.5;
-    let niebla = VolAjustesNiebla(uniforme, manchas, o.cantidad, o.bruma, o.caida, viento, mix(1.0, 4.0, nieve));
+    let niebla = VolAjustesNiebla(uniforme, manchas, o.cantidad, o.bruma, o.caida, viento, mix(1.0, 8.0, nieve));
     let con_niebla = o.niebla && frame.in_water < 0.5;
     let mapa = LuzMapa(frame.shadow_view_proj, frame.shadow_distortion);
     return VolAjustes(niebla, adp_nubes(), o.alcance, o.pasos, o.pasos_nubes, con_niebla, o.nubes,

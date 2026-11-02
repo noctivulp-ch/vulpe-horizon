@@ -70,9 +70,10 @@ Perfil `e^(−grosor/alcance)·cantidad` con alcance de 0,05 a 1,5 bloques; colo
 saturado ×1,5 por lo que no pasa; fase de dos lóbulos de Henyey-Greenstein (g 0,85 y 0,4) normalizada a
 ~1 de lado y ~10 a contraluz. La directa total es `mix(SSS, albedo, N·L × sombra)`.
 
-**Alfombras y capas de nieve:** Horizon da el id por sprite, y la alfombra usa el sprite de la lana y la
-capa de nieve el del bloque de nieve: no se pueden separar de sus bloques. Las alfombras quedan sin SSS y
-las capas de nieve con el débil del bloque.
+**Alfombras y capas de nieve (decidido: aceptarlo, la primera opción de A):** Horizon da el id por sprite
+(`[[materials]] blocks` tampoco lo separa) y la alfombra usa el sprite de la lana y la capa de nieve el del
+bloque de nieve. Las alfombras quedan sin SSS como la lana, y las capas de nieve con el débil del bloque.
+Distinguirlas por la altura de la cara superior solo serviría para esa cara y se notaría poco.
 
 ### Especular y LabPBR
 
@@ -114,11 +115,17 @@ bloques, y 4 pasos de bisección; las posiciones se reconstruyen con `projection
 dirección reflejada × curva de la luz de cielo del punto. Por Fresnel con rugosidad sobre el F0 del dato. Sin
 paquete PBR solo lo usan los charcos.
 
+**Rugosidad:** la normal de microfaceta se muestrea de la VNDF de GGX (Heitz 2018, `sup_muestrear_vndf`) con
+dos números al azar por píxel y fotograma, en una base ortonormal alrededor de la normal (Duff et al. 2017);
+el TAA (09) promediará el ruido. Los charcos (suavidad 0,97) son casi espejo y la desviación apenas se nota;
+**no se ha podido ver en superficies rugosas** sin un paquete LabPBR.
+
 ## Opciones
 
-Página «Luz»: brillo de la luz de cielo y de bloque (0–2), color de la luz de bloque, luz mínima en cuevas
-(0,5) y al aire libre (0), SSS (apagado, lista, LabPBR, ambas), su brillo, brillo especular del sol, emisión
-LabPBR, reflejos de pantalla (apagados, bajos, altos) y charcos.
+Página «Luz» (presupuesto de `convenciones.md`): luz de cielo y de bloque (0–2), luz mínima en cuevas, SSS
+(apagado, lista, LabPBR, ambas), reflejos de pantalla (apagados, bajos, altos) y charcos. Color de la luz de
+bloque, luz mínima al aire libre, brillo del SSS, especular del sol y emisión LabPBR pasan a constantes
+(`opciones/luz.wgsl`).
 
 ## Coste
 
