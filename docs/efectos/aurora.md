@@ -142,3 +142,13 @@ que convergen hacia arriba) sobre un fondo oscuro. **Siguen sin salir** los punt
 referencia: a esa elevación cada píxel integra todavía ~0,23 R del disco, unos 30 téxeles del mapa, y el detalle de
 un téxel se pierde en la suma. En la referencia la cámara mira al horizonte y la luna no está en pantalla; a las
 18000 la luna está en el cenit y su halo entra siempre en la vista a 45°.
+
+**En las condiciones de la referencia** (dato del gestor: hora 14000, sur, horizonte, campo de visión 110; escena
+`pruebas/escenas/aurora-referencia.ctl`, hoja `hoja-aurora-frente-referencia.png` con la referencia abajo a la
+derecha; semilla 8, la de por defecto, y la de la referencia puede ser otra):
+- **Al horizonte:** la disposición se parece: cortinas en la mitad de arriba con vetas verticales marcadas, el paisaje
+  oscuro en silueta, sin el halo de la luna en el encuadre.
+- **A −40° y −55°:** la figura entera como una banda luminosa con vetas; la luna, baja por el este, entra por la
+  izquierda.
+- **Lo que falta sigue igual:** la referencia tiene dentro de la figura puntos y filamentos nítidos y muy
+  brillantes; la nuestra, luz suave con vetas. El contraste general y la disposición ya se parecen.
