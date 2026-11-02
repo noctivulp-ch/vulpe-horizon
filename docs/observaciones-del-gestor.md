@@ -55,7 +55,7 @@ Respuestas de la API (comprobadas por el gestor en el renderizador; para el 07):
 - El pase translúcido mezcla `Surface.color` con alfa estándar (src·a + dst·(1−a)), descarta a < 0,01 y
   luego aplica la niebla del motor si no está apagada.
 
-Respuestas de A en la especificación (commit 9aa2fa7):
+Respuestas de A en la especificación (commit dd519dd, antes 9aa2fa7: el gestor reescribió el historial de la especificación; tabla en `../vulpe-horizon-spec/historial-reescrito.md`):
 - **Presupuesto de opciones** (`convenciones.md`): 48 imprescindibles por subsistema; lo demás, constante.
 - **Niebla nocturna:** tapa el cielo casi entero **a propósito** (la aurora, 06, existe por eso):
   transmitancia al cenit ≈ 10–15 % desde Y ≈ 70, < 3 % al horizonte; más oscura que el cielo nocturno

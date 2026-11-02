@@ -62,11 +62,15 @@ de la especificación tomada literal, no se veía nada en nuestra escala de luz;
 
 ### Ventana
 
-La ventana suma el color del mapa en la dirección de vista; ese color es la radiancia del fractal del cielo y
-sumado tal cual no se notaba: se multiplica por `VOL_AURORA_VENTANA_ESCALA` = 12. **Aun así no se aprecia**
-(diferencia media entre «Aurora: sin ventana» y la normal: 2,7/255, casi todo ruido). Duda para A: a través
-de un cono la dirección de vista cae en zonas del disco sin fractal; ¿el color de la ventana es el del mapa en
-la dirección de vista o en el punto del cono?
+Respuesta de A (especificación 06 §7, `8873b86`): con la dirección de vista el mapa se lee lejos de la línea de la
+que baja el cono, donde no hay fractal; por eso no se veía. Ahora se usa **el color del cono**: durante el tramo,
+cada muestra acumula el color del mapa en su punto (`rel.xz / R`, la misma lectura que la luz de la cortina)
+pesado por despeje × largo, y al final se normaliza por la ventana. El peso es el de Vulpe (ventana / largo del
+cono × 2 × ruido del despeje × noche), sumado sin la transmitancia de delante, y el color se escala por la
+intensidad de las cortinas × 0,6 (`VOL_AURORA_VENTANA_ESCALA`), como propone A, para que los filamentos dentro del
+cono no queden por debajo de la niebla. **Visto:** trazos y puntos brillantes del fractal dentro de los conos,
+sobre la cortina (diferencia con «sin ventana» de hasta 135/255, media 4,4; antes 2,7 de puro ruido). Da además
+los «puntos y filamentos brillantes sobre una cortina más oscura» que el gestor echaba en falta.
 
 ### Depuración
 
@@ -92,4 +96,5 @@ Noche mirando la figura (1830×1040, RTX 3050 Ti portátil): 6,09 ms de GPU con 
   200–300 bloques de altura, se ve muy escorzada y se lee más como una lámina (`aurora-sur.png`).
 - **Conos** (`aurora-conos.png`): zonas y rayos rojos que bajan desde tramos de la línea del fractal, como en
   `dbg_conos.png`.
-- **No visto:** la ventana al cielo (ver §Ventana) y el suelo medido del mod nativo.
+- **Ventana** (`aurora-sin-ventana.png` frente a `aurora-semilla3.png`): ver §Ventana.
+- **No visto:** el suelo medido del mod nativo.
