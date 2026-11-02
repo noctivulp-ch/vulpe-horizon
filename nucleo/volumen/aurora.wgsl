@@ -27,7 +27,7 @@ const VOL_AURORA_TAMANO_RUIDO: f32 = 96.0;      // bloques
 const VOL_AURORA_VENTANA: f32 = 2.0;
 // Fracción de la intensidad de las cortinas con que se ve el fractal por la ventana (especificación 06 §7):
 // el color del mapa es el cielo fractal, calibrado muy tenue. Porqué: docs/efectos/aurora.md §Ventana
-const VOL_AURORA_VENTANA_ESCALA: f32 = 0.6;
+const VOL_AURORA_VENTANA_ESCALA: f32 = 1.5;
 const VOL_AURORA_MUESTRAS: i32 = 4;
 const VOL_AURORA_VETAS: f32 = 0.3;
 const VOL_AURORA_GROSOR_VETAS: f32 = 6.0;       // bloques
