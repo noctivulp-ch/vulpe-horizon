@@ -8,7 +8,7 @@ especificación de `../vulpe-horizon-spec/` y la bibliografía pública, sin có
 Organización por función y principios SOLID: ver
 [docs/decisiones/0002-estructura-por-funcion.md](docs/decisiones/0002-estructura-por-funcion.md).
 
-Licencia: **pendiente de decidir por el dueño** antes de publicar.
+Licencia: **GPL-3.0 o posterior** ([LICENSE](LICENSE)), decisión del dueño (2026-11-01). Autor: noctivulp-ch.
 
 ## Probar
 
