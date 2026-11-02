@@ -30,6 +30,9 @@ fn post(input: PostInput) -> vec4<f32> {
     c = col_gradar(c, o.gradacion);
     c = mat_saturar3(c);
     var salida = col_lineal_a_srgb(c);
+    if aislamiento {
+        salida = img_aislar(salida, p.uv, previous, linear_sampler, opc_aislamiento(e.exposicion));
+    }
     if o.tramado {
         // Tramado triangular de ±1 nivel con dos ruidos azules.
         let t = adp_ruido_azul(p.pixel, 1u) + adp_ruido_azul(p.pixel, 2u) - 1.0;
