@@ -12,8 +12,10 @@ superficies lisas y metales, LabPBR completo (suavidad, F0, metales predefinidos
 normales), emisión sin PBR por téxeles brillantes, humedad y charcos, y `set_surface` para post.
 
 **Pendiente:** los **reflejos en espacio de pantalla** van en la pasada post de composición, que nace con el
-subsistema 05; la sombra es provisional (luz de cielo de Minecraft) hasta el 04, y el grosor del SSS con
-ella.
+subsistema 05. La sombra y el grosor del SSS vienen del 04 (`docs/efectos/sombras.md`).
+
+**Luz de cielo ×1,8** (`OPC_LUZ_CIELO_BASE`): la tabla da cielo/sol ≈ 0,08 a mediodía y las sombras salían
+oscuras; ×1,8 lo lleva al 0,1–0,2 de `convenciones.md` y deja las sombras azuladas, no negras.
 
 ## Por qué del código
 

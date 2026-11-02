@@ -35,12 +35,14 @@ shared = [
     "nucleo/cielo/composicion.wgsl",
     "nucleo/cielo/fractal_colocacion.wgsl",
     "nucleo/superficie/datos.wgsl",
+    "nucleo/luz/sombras.wgsl",
     "opciones/depuracion.wgsl",
     "opciones/imagen.wgsl",
     "opciones/exposicion.wgsl",
     "opciones/cielo.wgsl",
     "opciones/fractal.wgsl",
     "opciones/luz.wgsl",
+    "opciones/sombras.wgsl",
     "adaptadores/marco.wgsl",
     "adaptadores/atmosfera.wgsl",
     "adaptadores/fractal.wgsl",
@@ -69,8 +71,13 @@ files = [
     "nucleo/superficie/emision.wgsl",
     "nucleo/luz/curvas.wgsl",
     "nucleo/luz/difusa.wgsl",
+    "adaptadores/sombras.wgsl",
     "adaptadores/material.wgsl",
 ]
+
+[shadow]
+resolution = 2048
+distance = 128.0
 
 [[post]]
 file = "etapas/post/01-final.wgsl"
@@ -387,6 +394,47 @@ type = "choice"
 values = ["Charcos y mojado", "Solo charcos", "Solo mojado", "Apagado"]
 default = "Charcos y mojado"
 
+[[options]]
+id = "sombras_penumbra"
+name = "Penumbra"
+description = "Básica: borde suave fijo. Variable: dura al pie del objeto, difusa lejos de él."
+type = "choice"
+values = ["Básica", "Variable"]
+default = "Variable"
+
+[[options]]
+id = "sombras_penumbra_min"
+name = "Penumbra mínima"
+type = "float"
+default = 5.0
+min = 0.0
+max = 10.0
+step = 0.5
+
+[[options]]
+id = "sombras_penumbra_max"
+name = "Penumbra máxima"
+type = "float"
+default = 20.0
+min = 0.0
+max = 40.0
+step = 1.0
+
+[[options]]
+id = "sombras_muestras"
+name = "Muestras del filtro"
+type = "int"
+default = 8
+min = 4
+max = 16
+
+[[options]]
+id = "sombras_color"
+name = "Sombras de color"
+description = "El agua y el cristal de colores tiñen la luz que pasa."
+type = "bool"
+default = true
+
 [[textures]]
 id = "atmosfera"
 file = "texturas/atmosfera.png"
@@ -430,7 +478,7 @@ sprites = ["block/snow", "block/powder_snow", "block/amethyst_block", "block/cob
 [[pages]]
 id = "principal"
 name = "Vulpe"
-items = ["page:cielo", "page:fractal", "page:luz", "page:imagen", "page:depuracion"]
+items = ["page:cielo", "page:fractal", "page:luz", "page:sombras", "page:imagen", "page:depuracion"]
 
 [[pages]]
 id = "cielo"
@@ -449,6 +497,12 @@ id = "luz"
 name = "Luz"
 description = "Cielo, bloques, dispersión, brillos y charcos."
 items = ["luz_cielo", "luz_bloque", "luz_bloque_color", "luz_minima_cuevas", "luz_minima_exterior", "sss", "sss_brillo", "especular_sol", "emision_labpbr", "charcos"]
+
+[[pages]]
+id = "sombras"
+name = "Sombras"
+description = "Penumbra, filtro y sombras de color."
+items = ["sombras_penumbra", "sombras_penumbra_min", "sombras_penumbra_max", "sombras_muestras", "sombras_color"]
 
 [[pages]]
 id = "imagen"

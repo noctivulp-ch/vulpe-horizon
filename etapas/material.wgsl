@@ -4,13 +4,18 @@ fn material(input: MaterialInput) -> Surface {
     let o = opc_luz();
     var p = adp_material_punto(input, o);
     let luces = adp_luces(o);
-    let sombra = adp_sombra(p);
+    // La sombra solo se busca donde puede verse: cara hacia la luz o con SSS, y con algo de cielo.
+    let hacia_luz = p.cruzada || dot(p.normal_cara, luces.direccion) > -0.05 || p.pbr.sss > 0.0;
+    var sombra = AdpSombra(vec3<f32>(0.0), 2.0);
+    if hacia_luz && p.luz_cielo > 0.02 {
+        sombra = adp_sombra(p);
+    }
 
     // Humedad: más oscuro, más liso; en los charcos, normal plana y suavidad máxima.
     var albedo = p.albedo;
     var n = p.normal;
     var m = p.pbr;
-    if (o.charcos || o.mojado) && p.fluido == 0u && !m.metal {
+    if (o.charcos || o.mojado) && frame.wetness > 0.0 && p.fluido == 0u && !m.metal {
         let h = sup_humedad(frame.wetness, p.luz_cielo, p.mundo, p.normal_cara.y, adp_tiempo().segundos);
         let mojado = select(0.0, h.mojado, o.mojado);
         let charco = select(0.0, h.charco, o.charcos);
