@@ -153,3 +153,18 @@ amatista quedaron fuera del encuadre en la captura final.
 
 **Dato del motor:** `horizon-ctl fill` y `setblock` cambian solo el cliente (el servidor lo deshace, como el `tp`);
 las escenas usan `command fill` / `command setblock`, de uno en uno con pausa.
+
+## Estaciones (fase 2, falta 03.2)
+
+`nucleo/superficie/estaciones.wgsl` + `adp_material_punto`: sobre el albedo de los bloques con color de bioma (tinte
+no blanco), un tinte por estación (verano sin cambio, otoño, invierno con desaturación del 35 % y un leve malva,
+primavera más fresca), 24 días por estación con el último cuarto fundido con la siguiente; las hojas (id 1) con su
+propio tinte, más marcado. Un tinte multiplicativo no saca naranja de un verde (su rojo es bajo): en las hojas la mitad
+del efecto lleva el color hacia el tono del tinte conservando su luminancia. El número de día sale de `frame.mods[0].z`;
+**sin mod nativo, fijo en la estación inicial** (opción). Solo en el Overworld.
+
+**Visto** (`hoja-estaciones.png`, cambiando la estación inicial): verano tal cual; otoño con las hojas ocres y pardo
+anaranjadas; invierno apagado y grisáceo; primavera verde más fresco. La hierba cambia poco (su tinte es suave a
+propósito). **Sin ver:** el paso de una estación a otra con el día del mod nativo.
+
+Opciones: estaciones sí/no y estación inicial, página «Luz». Van 53.
