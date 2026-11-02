@@ -23,6 +23,7 @@ shared = [
     "nucleo/color/gradacion.wgsl",
     "nucleo/color/codificacion.wgsl",
     "nucleo/color/exposicion.wgsl",
+    "nucleo/color/purkinje.wgsl",
     "nucleo/atmosfera/parametros.wgsl",
     "nucleo/atmosfera/geometria.wgsl",
     "nucleo/atmosfera/fase.wgsl",
@@ -139,13 +140,27 @@ files = [
 name = "Composición"
 
 [[post]]
-file = "etapas/post/04-taa.wgsl"
+file = "etapas/post/04-bloom-bajada.wgsl"
+files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "adaptadores/post.wgsl", "adaptadores/imagen.wgsl"]
+name = "Bloom: bajada"
+output = "bloom"
+scale = 0.25
+
+[[post]]
+file = "etapas/post/05-bloom-ancho.wgsl"
+files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "adaptadores/post.wgsl", "adaptadores/imagen.wgsl"]
+name = "Bloom: ancho"
+output = "bloom2"
+scale = 0.25
+
+[[post]]
+file = "etapas/post/06-taa.wgsl"
 files = ["nucleo/imagen/taa.wgsl", "adaptadores/taa.wgsl"]
 name = "TAA"
 
 [[post]]
-file = "etapas/post/05-final.wgsl"
-files = ["adaptadores/post.wgsl"]
+file = "etapas/post/07-final.wgsl"
+files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/nitidez.wgsl", "adaptadores/post.wgsl", "adaptadores/imagen.wgsl"]
 name = "Final"
 
 # --- Opciones -------------------------------------------------------------------------------
@@ -168,30 +183,30 @@ step = 0.05
 
 [[options]]
 id = "imagen_exposicion"
-name = "Exposición"
-description = "Pasos de exposición sobre la imagen final (0 neutro)."
+name = "Compensación de exposición"
+description = "Pasos sobre la exposición automática (0 neutro; −2 = ×0,25, +2 = ×4)."
 type = "float"
 default = 0.0
-min = -3.0
-max = 3.0
+min = -2.0
+max = 2.0
 step = 0.1
 
 [[options]]
 id = "imagen_saturacion"
 name = "Saturación"
 type = "float"
-default = 1.0
-min = 0.0
-max = 2.0
+default = 0.0
+min = -1.0
+max = 1.0
 step = 0.05
 
 [[options]]
 id = "imagen_contraste"
 name = "Contraste"
 type = "float"
-default = 1.0
-min = 0.5
-max = 1.5
+default = 0.0
+min = -1.0
+max = 1.0
 step = 0.05
 
 [[options]]
@@ -199,8 +214,18 @@ id = "imagen_tonemap"
 name = "Mapeo de tonos"
 description = "Cómo se comprimen los brillos por encima de 1."
 type = "choice"
-values = ["Vulpe", "Reinhard (luminancia)", "ACES", "Reinhard (por canal)"]
-default = "Vulpe"
+values = ["Fílmico", "ACES", "Reinhard"]
+default = "Reinhard"
+
+[[options]]
+id = "bloom_fuerza"
+name = "Fuerza del bloom"
+description = "El halo de lo muy brillante: sol, lava, antorchas de noche."
+type = "float"
+default = 1.0
+min = 0.0
+max = 4.0
+step = 0.1
 
 [[options]]
 id = "imagen_tramado"
@@ -542,7 +567,7 @@ items = ["sombras_penumbra", "nubes_sombras"]
 id = "imagen"
 name = "Imagen"
 description = "Exposición, color y mapeo de tonos."
-items = ["taa", "taa_nitidez", "imagen_exposicion", "imagen_saturacion", "imagen_contraste", "imagen_tonemap", "imagen_tramado"]
+items = ["taa", "taa_nitidez", "imagen_exposicion", "imagen_saturacion", "imagen_contraste", "imagen_tonemap", "bloom_fuerza", "imagen_tramado"]
 
 [[pages]]
 id = "depuracion"

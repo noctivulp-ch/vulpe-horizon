@@ -25,3 +25,9 @@ fn col_saturar(c: vec3<f32>, saturacion: f32) -> vec3<f32> {
     let l = col_luminancia(c);
     return max(mix(vec3<f32>(l), c, saturacion), vec3<f32>(0.0));
 }
+
+// Balance de blancos: divide por el color de un cuerpo negro a la temperatura elegida, relativo al de
+// referencia (6500 K neutro). Los colores llegan normalizados a luminancia 1.
+fn col_balance_blancos(c: vec3<f32>, referencia: vec3<f32>, elegido: vec3<f32>) -> vec3<f32> {
+    return c * referencia / max(elegido, vec3<f32>(1e-4));
+}

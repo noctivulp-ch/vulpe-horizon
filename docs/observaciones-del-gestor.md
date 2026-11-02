@@ -100,3 +100,11 @@ filamentos y relleno ni de arriba abajo. Mirar si el arreglo del peso dejó la c
 líneas 25–27 y 37–38). No urge: volver a mirarlo con el TAA (09) y el aislamiento de color (13).
 
 La duda de la ventana al cielo está con A. Siguiente: 09 (TAA), luego 07–16.
+
+## 2026-11-02 — tras el 09
+
+- 09 bien; la aurora deja ver las vetas con el TAA.
+- Respuesta de A a la ventana al cielo: especificación 06 §7 (`8873b86`): usar el color del cono, no el de la
+  dirección de vista. En §6, el peso de la luz de la cortina tiene que saturar en cada muestra (ya hecho).
+- El gestor reescribió el historial de `vulpe-horizon-spec` (todo noctivulp-ch, firmado): los hashes viejos se
+  traducen con `../vulpe-horizon-spec/historial-reescrito.md`.
