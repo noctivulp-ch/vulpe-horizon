@@ -57,6 +57,12 @@ código (medido): el presupuesto de 64 por etapa no aprieta.
 
 - **Aire:** Rayleigh (0,5; 1,2; 2,9)·10⁻⁴ y Mie 1·10⁻⁴ por bloque al nivel del mar, altura de escala 600
   bloques. Afinado a ojo: azula y aclara lo lejano sin velar lo cercano.
+- **Niebla uniforme pegada al suelo (desviación, duda para A):** además de la caída desde Y = 320, la uniforme
+  decae con una altura de escala de 70 bloques sobre «mar + 20» (`VOL_UNIFORME_ALTURA`), y la de noche es
+  0,6. Con la uniforme constante hasta 320, mirar arriba de noche atravesaba ~240 bloques de niebla densa
+  (τ ≈ 5) y **tapaba del todo las estrellas y el cielo fractal**, que en la referencia de Vulpe
+  (`forge_cielo.png`) se ven de noche. Así sigue densa a ras de suelo y el cielo se intuye atenuado. Con el
+  mod nativo debería ser la altura media del terreno (`frame.mods[0].w`) en vez del mar.
 - **Niebla:** extinción 0,02 por bloque con densidad relativa 1; manchas de ruido 3D (celdas de 96×40×96
   bloques) umbralizadas, que caen por encima del mar + 24; caída global `exp(−0,025·(y − 320))`.
   Luz: sol × sombra × fase + ambiente ×0,1–0,25 (más mirando arriba). El ambiente es bajo a propósito:
@@ -76,7 +82,7 @@ Once perfiles (despejado, cúmulos pequeños, grandes, ambos, altoestratos, mixt
 cobertura de cada capa; uno por cuarto de día sorteado con PCG del número de día (`frame.mods[0].z`; 0 sin
 mod: se repite cada día), fundido con el siguiente en el último 20 % del cuarto. Con lluvia se mezcla hacia
 perfiles de lluvia (cobertura 0,65–0,95, densidad ×1,3–1,8). **Horario de la niebla** (relativo): amanecer
-uniforme 0,06 y manchas 0,5; mediodía 0; atardecer uniforme 0,1; noche uniforme 1 y manchas 0,15;
+uniforme 0,06 y manchas 0,5; mediodía 0; atardecer uniforme 0,1; noche uniforme 0,6 y manchas 0,15;
 transiciones de 0,08 de día. Lluvia: +0,5 uniforme y +0,4 manchas (× opción). Biomas húmedos: más manchas
 con `downfall` alto y temperatura templada. En cuevas (luz de cielo en la cámara baja) la niebla queda al 5 %.
 

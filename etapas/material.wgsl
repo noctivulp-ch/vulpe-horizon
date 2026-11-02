@@ -59,8 +59,10 @@ fn material(input: MaterialInput) -> Surface {
     let f_ambiente = sup_fresnel_schlick_rugosidad(max(dot(n, p.vista), 0.0), m.f0, m.rugosidad);
     var especular = sup_especular(n, p.vista, l, m.rugosidad, m.f0) * max(dot(n, l), 0.0) * luces.directa * sombra.luz * o.especular_sol;
     var reflejo = vec3<f32>(0.0);
-    let visible = smoothstep(0.45, 0.7, m.suavidad) * select(1.0, 1.0, m.metal);
-    if visible > 0.0 || m.metal {
+    let visible = smoothstep(0.45, 0.7, m.suavidad);
+    // Superficies lisas y sólidas: su reflejo lo pone el trazado de pantalla de la composición.
+    let por_pantalla = o.pasos_reflejo > 0 && !p.translucido && m.suavidad >= OPC_SUAVIDAD_REFLEJO_PANTALLA;
+    if (visible > 0.0 || m.metal) && !por_pantalla {
         let r = reflect(-p.vista, n);
         let horizonte = adp_tabla(frame.sun_direction.y, ATM_FILA_HORIZONTE) * opc_cielo().sol_color;
         let cielo_r = mix(horizonte, luces.cielo * 2.0, sqrt(max(r.y, 0.0)));
@@ -87,7 +89,7 @@ fn material(input: MaterialInput) -> Surface {
 
     if !p.translucido {
         let total = col_luminancia(directa + indirecta) + 1e-6;
-        set_surface(n, m.suavidad, sup_empaquetar_dato(m.f0.g, col_luminancia(indirecta) / total));
+        set_surface(n, m.suavidad, sup_empaquetar_dato(m.f0.g, col_luminancia(indirecta) / total, p.luz_cielo));
     }
     return adp_material_salida(color, p.alfa, p);
 }

@@ -11,8 +11,8 @@ con refuerzo y color de `[[lights]]`, luz mínima, especular GGX del sol, reflej
 superficies lisas y metales, LabPBR completo (suavidad, F0, metales predefinidos, SSS, porosidad, emisión,
 normales), emisión sin PBR por téxeles brillantes, humedad y charcos, y `set_surface` para post.
 
-**Pendiente:** los **reflejos en espacio de pantalla** van en la pasada post de composición, que nace con el
-subsistema 05. La sombra y el grosor del SSS vienen del 04 (`docs/efectos/sombras.md`).
+Los **reflejos en espacio de pantalla** van en la pasada post de composición (05). La sombra y el grosor del
+SSS vienen del 04 (`docs/efectos/sombras.md`).
 
 **Luz de cielo ×1,8** (`OPC_LUZ_CIELO_BASE`): la tabla da cielo/sol ≈ 0,08 a mediodía y las sombras salían
 oscuras; ×1,8 lo lleva al 0,1–0,2 de `convenciones.md` y deja las sombras azuladas, no negras.
@@ -98,14 +98,27 @@ suavidad 0,97, F0 0,02, normal de la cara. Ruido procedural (`nucleo/ruido`), si
 ### Datos para post
 
 `set_surface(normal, suavidad, dato)`: `scene_surface` es de 32 bits por canal (Horizon guarda la normal
-como bits de un f32), así que el dato lleva **F0 y la fracción indirecta en 8 bits cada uno**
-(`nucleo/superficie/datos.wgsl`), como proponía la especificación.
+como bits de un f32), así que el dato lleva **F0, la fracción indirecta y la luz de cielo de Minecraft en 8
+bits cada uno** (24 bits: entero exacto en un f32; `nucleo/superficie/datos.wgsl`). La especificación
+proponía los dos primeros; la luz de cielo hace falta para el reflejo de cielo de los rayos que no impactan.
+
+### Reflejos de pantalla
+
+En la composición (`adaptadores/reflejo.wgsl`, `nucleo/superficie/reflejo_pantalla.wgsl`), para el terreno
+sólido con suavidad ≥ 0,7 (`OPC_SUAVIDAD_REFLEJO_PANTALLA`): el material **no** pone su reflejo aproximado
+del cielo en esas superficies (lo sustituye el trazado, no se suma). Trazado del rayo reflejado en el espacio
+de la escena, 16 pasos (32 en «altos») crecientes al cuadrado hasta 48 bloques, el primero desplazado por
+ruido, impacto cuando el rayo pasa por detrás de la profundidad de la escena con un grosor de 0,3 + 0,15·t
+bloques, y 4 pasos de bisección; las posiciones se reconstruyen con `projection·view` y su inversa (datos de
+`frame`). Se funde en el 8 % del borde de la pantalla. Sin impacto, el cielo aproximado de la tabla en la
+dirección reflejada × curva de la luz de cielo del punto. Por Fresnel con rugosidad sobre el F0 del dato. Sin
+paquete PBR solo lo usan los charcos.
 
 ## Opciones
 
 Página «Luz»: brillo de la luz de cielo y de bloque (0–2), color de la luz de bloque, luz mínima en cuevas
 (0,5) y al aire libre (0), SSS (apagado, lista, LabPBR, ambas), su brillo, brillo especular del sol, emisión
-LabPBR y charcos. «Reflejos de pantalla» llegará con la pasada de composición.
+LabPBR, reflejos de pantalla (apagados, bajos, altos) y charcos.
 
 ## Coste
 

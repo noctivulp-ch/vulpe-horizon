@@ -50,3 +50,4 @@ fn adp_post_distancia(p: AdpPixel) -> f32 {
 fn adp_post_salida(color: vec3<f32>, alfa: f32) -> vec4<f32> {
     return vec4<f32>(color, alfa);
 }
+
