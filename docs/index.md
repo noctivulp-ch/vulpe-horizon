@@ -12,6 +12,8 @@
   `efectos/otras-dimensiones.md` (17).
 - `observaciones-del-gestor.md`: lo que llega del gestor fuera de la especificación.
 
+- [Metodología](metodologia.md): cómo se trabaja (sala limpia, pruebas, criterios) y dónde se quedó.
+
 ## Carpetas añadidas a las del ADR 0002
 
 - `texturas/`: PNG del `[[textures]]` del manifiesto. Son **generadas**: cada una dice en su documento de
