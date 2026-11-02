@@ -45,6 +45,7 @@ shared = [
     "opciones/exposicion.wgsl",
     "opciones/cielo.wgsl",
     "opciones/fractal.wgsl",
+    "opciones/aurora.wgsl",
     "opciones/luz.wgsl",
     "opciones/sombras.wgsl",
     "opciones/volumen.wgsl",
@@ -60,6 +61,7 @@ files = [
     "nucleo/cielo/fractal_conjunto.wgsl",
     "nucleo/cielo/fractal_paleta.wgsl",
     "nucleo/cielo/fractal.wgsl",
+    "adaptadores/fractal_dibujo.wgsl",
     "adaptadores/cielo.wgsl",
 ]
 name = "Cielo"
@@ -87,12 +89,30 @@ resolution = 2048
 distance = 128.0
 
 [[post]]
-file = "etapas/post/01-volumen.wgsl"
+file = "etapas/post/01-aurora.wgsl"
+files = [
+    "nucleo/cielo/fractal_conjunto.wgsl",
+    "nucleo/cielo/fractal_paleta.wgsl",
+    "nucleo/cielo/fractal.wgsl",
+    "nucleo/cielo/aurora_mapa.wgsl",
+    "nucleo/volumen/aurora.wgsl",
+    "adaptadores/fractal_dibujo.wgsl",
+    "adaptadores/aurora.wgsl",
+    "adaptadores/aurora_mapa.wgsl",
+]
+name = "Mapa de la aurora"
+output = "mapa_aurora"
+scale = 0.25
+
+[[post]]
+file = "etapas/post/02-volumen.wgsl"
 files = [
     "nucleo/volumen/fase.wgsl",
     "nucleo/volumen/medios.wgsl",
+    "nucleo/volumen/aurora.wgsl",
     "nucleo/volumen/raymarch.wgsl",
     "adaptadores/post.wgsl",
+    "adaptadores/aurora.wgsl",
     "adaptadores/volumen.wgsl",
 ]
 name = "Volumen"
@@ -100,22 +120,24 @@ output = "volumen"
 scale = 0.5
 
 [[post]]
-file = "etapas/post/02-composicion.wgsl"
+file = "etapas/post/03-composicion.wgsl"
 files = [
     "nucleo/superficie/brdf.wgsl",
     "nucleo/superficie/reflejo_pantalla.wgsl",
     "nucleo/luz/curvas.wgsl",
     "nucleo/volumen/fase.wgsl",
     "nucleo/volumen/medios.wgsl",
+    "nucleo/volumen/aurora.wgsl",
     "nucleo/volumen/raymarch.wgsl",
     "adaptadores/post.wgsl",
+    "adaptadores/aurora.wgsl",
     "adaptadores/volumen.wgsl",
     "adaptadores/reflejo.wgsl",
 ]
 name = "Composición"
 
 [[post]]
-file = "etapas/post/03-final.wgsl"
+file = "etapas/post/04-final.wgsl"
 files = ["adaptadores/post.wgsl"]
 name = "Final"
 
@@ -196,6 +218,23 @@ id = "estrellas"
 name = "Estrellas"
 type = "bool"
 default = true
+
+[[options]]
+id = "aurora"
+name = "Aurora"
+description = "De noche, las figuras del cielo fractal emiten luz dentro de la niebla y abren huecos en ella."
+type = "bool"
+default = true
+
+[[options]]
+id = "aurora_brillo"
+name = "Brillo de la aurora"
+description = "Ajuste relativo, en %."
+type = "float"
+default = 0.0
+min = -90.0
+max = 200.0
+step = 5.0
 
 [[options]]
 id = "fractal"
@@ -450,7 +489,7 @@ items = ["cielo_brillo", "luna_brillo", "estrellas"]
 id = "fractal"
 name = "Cielo fractal"
 description = "Las constelaciones de fractales de la noche."
-items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_paleta", "fractal_brillo", "fractal_saturacion"]
+items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_paleta", "fractal_brillo", "fractal_saturacion", "aurora", "aurora_brillo"]
 
 [[pages]]
 id = "niebla"

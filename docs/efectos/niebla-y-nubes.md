@@ -14,7 +14,8 @@ reescalado bilateral por profundidad, niebla de borde. `[material] fog = false`:
 se aplica. También cierra dos pendientes: las **sombras de nubes** del 04 en el material, y la **lluvia
 sobre el cielo, que se desvanece por encima de la capa de nubes** (01).
 
-**Fuera por ahora:** los ganchos de la aurora (06) y los rayos del fractal (14) en el bucle; el ruido azul
+**Ganchos:** el de la aurora (06) está en `vol_tramo_niebla` (ver `docs/efectos/aurora.md`); los rayos del
+fractal (14) ya no van en este bucle (son un desenfoque radial de la pasada final). **Fuera por ahora:** el ruido azul
 desplazado con R2 (lo trae el 09): hasta entonces el primer paso se desplaza con ruido blanco PCG por píxel y
 fotograma (`rui_blanco_pixel`) y se ve grano fino. Con IGN se veían **estrías paralelas** dentro de las nubes
 (observación del gestor): su estructura diagonal se alineaba entre píxeles vecinos.
@@ -23,7 +24,8 @@ fotograma (`rui_blanco_pixel`) y se ve grano fino. Con IGN se veían **estrías 
 
 ### Pasadas
 
-`etapas/post/01-volumen.wgsl` (`output = "volumen"`, `scale = 0.5`), `02-composicion.wgsl`, `03-final.wgsl`.
+`etapas/post/02-volumen.wgsl` (`output = "volumen"`, `scale = 0.5`), `03-composicion.wgsl`, `04-final.wgsl`
+(la 01 es el mapa de la aurora, 06).
 La composición lee la escena de `scene_color`, no de `input.color`: tras una pasada con destino propio no
 está claro qué le llega en `previous`, y así no depende de ello. Sale **luz lineal en coma flotante**; la
 final ya no decodifica, solo expone, grada y mapea.

@@ -29,3 +29,21 @@ fn rui_valor3(p: vec3<f32>) -> f32 {
     let x11 = mix(n011, n111, f.x);
     return mix(mix(x00, x10, f.y), mix(x01, x11, f.y), f.z);
 }
+
+// Ruido de valor 2D con sus derivadas analíticas (Í. Quílez, «Value noise derivatives»).
+// x = valor en [0, 1], yz = gradiente respecto a p.
+fn rui_valor2_derivadas(p: vec2<f32>) -> vec3<f32> {
+    let i = vec2<i32>(floor(p));
+    let f = fract(p);
+    let u = mat_escalon_quintico2(f);
+    let du = 30.0 * f * f * (f * (f - 2.0) + 1.0);
+    let a = rui_hash21(i);
+    let b = rui_hash21(i + vec2<i32>(1, 0));
+    let c = rui_hash21(i + vec2<i32>(0, 1));
+    let d = rui_hash21(i + vec2<i32>(1, 1));
+    let k1 = b - a;
+    let k2 = c - a;
+    let k4 = a - b - c + d;
+    let v = a + k1 * u.x + k2 * u.y + k4 * u.x * u.y;
+    return vec3<f32>(v, du * vec2<f32>(k1 + k4 * u.y, k2 + k4 * u.x));
+}

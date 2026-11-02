@@ -26,6 +26,7 @@ struct VolAjustes {
     con_sombra: bool,
     sombra_nubes: f32,      // 0..1
     mapa: LuzMapa,
+    aurora: VolAurora,
 }
 
 const VOL_NUBES_DISTANCIA: f32 = 6000.0;   // bloques: más allá las nubes no se integran
@@ -33,6 +34,7 @@ const VOL_NUBES_DISTANCIA: f32 = 6000.0;   // bloques: más allá las nubes no s
 struct VolResultado {
     luz: vec3<f32>,
     transmitancia: f32,
+    ventana: f32,           // bloques de cono de la aurora atravesados (06)
 }
 
 // Integración analítica de un tramo (Hillaire 2015), con la extinción gris del medio.
@@ -55,7 +57,8 @@ fn vol_losa(camara_y: f32, dir_y: f32, y0: f32, y1: f32) -> vec2<f32> {
 
 // Aire y niebla en [t0, t1] (por debajo del plano de nubes).
 fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolRayo, luz: VolLuz, a: VolAjustes,
-                    mapa: texture_depth_2d, comparacion: sampler_comparison, t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>) {
+                    mapa: texture_depth_2d, comparacion: sampler_comparison, t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>,
+                    ta: texture_2d<f32>, sa: sampler) {
     let cos_luz = dot(rayo.dir, luz.direccion);
     let fase_aire_r = atm_fase_rayleigh(cos_luz);
     let fase_aire_m = vol_hg(cos_luz, 0.76);
@@ -73,11 +76,19 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
         let t = t0 + (pow(f, u) - 1.0) / (f - 1.0) * largo;
         let siguiente = (pow(f, (f32(i) + 1.0) / f32(a.pasos_niebla)) - 1.0) / (f - 1.0) * largo;
         let paso = max(siguiente - anterior, 1e-3);
+        let desde = t0 + anterior;
         anterior = siguiente;
         let p_rel = rayo.dir * t;
         let mundo = rayo.camara + p_rel;
         let aire = vol_aire(mundo.y, bruma);
-        let niebla = vol_niebla(mundo, a.niebla, t3);
+        var niebla = vol_niebla(mundo, a.niebla, t3);
+        // Aurora (06): luz de las cortinas y niebla que despejan los conos en el tramo del paso que cruza el velo.
+        if a.aurora.activa && niebla > 0.0 {
+            let au = vol_aurora_tramo(rayo.camara, rayo.dir, desde, t0 + siguiente, rayo.ruido, niebla, (*r).transmitancia, a.aurora, ta, sa);
+            (*r).luz += au.luz;
+            (*r).ventana += au.ventana;
+            niebla *= 1.0 - au.despeje * au.fraccion;
+        }
         var visible = 1.0;
         if a.con_sombra {
             let m = luz_posicion_mapa(a.mapa, p_rel);
@@ -136,8 +147,8 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: 
 // se solapan: se integran en el orden en que el rayo los cruza (de delante hacia atrás), esté la cámara por
 // debajo, dentro o por encima de cada capa.
 fn vol_integrar(rayo: VolRayo, luz: VolLuz, a: VolAjustes, mapa: texture_depth_2d, comparacion: sampler_comparison,
-                t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>) -> VolResultado {
-    var r = VolResultado(vec3<f32>(0.0), 1.0);
+                t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>, ta: texture_2d<f32>, sa: sampler) -> VolResultado {
+    var r = VolResultado(vec3<f32>(0.0), 1.0, 0.0);
     var inicio = array<f32, 4>(1e30, 1e30, 1e30, 1e30);
     var fin = array<f32, 4>(0.0, 0.0, 0.0, 0.0);
     if a.con_niebla {
@@ -177,10 +188,13 @@ fn vol_integrar(rayo: VolRayo, luz: VolLuz, a: VolAjustes, mapa: texture_depth_2
             continue;
         }
         if elegido == 0 {
-            vol_tramo_niebla(&r, inicio[0], fin[0], rayo, luz, a, mapa, comparacion, t2, s2, t3);
+            vol_tramo_niebla(&r, inicio[0], fin[0], rayo, luz, a, mapa, comparacion, t2, s2, t3, ta, sa);
         } else {
             vol_tramo_nubes(&r, elegido - 1, inicio[elegido], fin[elegido], rayo, luz, a, t2, s2, t3);
         }
+    }
+    if a.aurora.activa {
+        r.luz += vol_aurora_ventana(rayo.camara, rayo.dir, r.ventana, a.aurora, ta, sa);
     }
     return r;
 }
