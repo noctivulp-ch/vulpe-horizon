@@ -1,0 +1,15 @@
+// Ajustes de las vistas de depuración. Porqué: docs/efectos/nucleo.md §Vistas de depuración
+override depuracion_vista: u32 = 0u;
+
+const OPC_VISTA_NORMAL: u32 = 0u;
+const OPC_VISTA_PROFUNDIDAD: u32 = 1u;
+const OPC_VISTA_RUIDO: u32 = 2u;
+const OPC_VISTA_TRAMADO: u32 = 3u;
+
+struct OpcDepuracion {
+    vista: u32,
+}
+
+fn opc_depuracion() -> OpcDepuracion {
+    return OpcDepuracion(depuracion_vista);
+}

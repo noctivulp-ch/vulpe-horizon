@@ -1,0 +1,115 @@
+# Vulpe para Horizon. Estructura: docs/decisiones/0002-estructura-por-funcion.md
+# Orden de `shared` = orden de dependencias: matemática → ruido → color → resto del núcleo →
+# opciones → adaptadores comunes. Cada etapa añade en `files` su adaptador propio.
+schema = 1
+id = "vulpe"
+name = "Vulpe"
+version = "0.1.0"
+api = "0.1"
+description = "Vulpe para Horizon, escrito en sala limpia."
+authors = ["noctivulp-ch"]
+shared = [
+    "nucleo/matematica/constantes.wgsl",
+    "nucleo/matematica/utilidades.wgsl",
+    "nucleo/matematica/proyeccion.wgsl",
+    "nucleo/ruido/hash.wgsl",
+    "nucleo/ruido/valor.wgsl",
+    "nucleo/ruido/fbm.wgsl",
+    "nucleo/ruido/tramado.wgsl",
+    "nucleo/color/espacios.wgsl",
+    "nucleo/color/luminancia.wgsl",
+    "nucleo/color/tonemap.wgsl",
+    "nucleo/color/gradacion.wgsl",
+    "opciones/depuracion.wgsl",
+    "opciones/imagen.wgsl",
+    "adaptadores/marco.wgsl",
+]
+
+[sky]
+file = "etapas/cielo.wgsl"
+files = ["adaptadores/cielo.wgsl"]
+name = "Cielo"
+
+[material]
+file = "etapas/material.wgsl"
+files = ["adaptadores/material.wgsl"]
+
+[[post]]
+file = "etapas/post/01-final.wgsl"
+files = ["adaptadores/post.wgsl"]
+name = "Final"
+
+# --- Opciones -------------------------------------------------------------------------------
+
+[[options]]
+id = "imagen_exposicion"
+name = "Exposición"
+description = "Pasos de exposición sobre la imagen final (0 neutro)."
+type = "float"
+default = 0.0
+min = -3.0
+max = 3.0
+step = 0.1
+
+[[options]]
+id = "imagen_saturacion"
+name = "Saturación"
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
+id = "imagen_contraste"
+name = "Contraste"
+type = "float"
+default = 1.0
+min = 0.5
+max = 1.5
+step = 0.05
+
+[[options]]
+id = "imagen_tonemap"
+name = "Mapeo de tonos"
+description = "Cómo se comprimen los brillos por encima de 1."
+type = "choice"
+values = ["Ninguno", "Reinhard", "ACES"]
+default = "Ninguno"
+
+[[options]]
+id = "imagen_tramado"
+name = "Tramado"
+description = "Ruido de un octavo de bit que borra las bandas de los degradados."
+type = "bool"
+default = true
+
+[[options]]
+id = "depuracion_vista"
+name = "Vista de depuración"
+type = "choice"
+values = ["Normal", "Distancia", "Ruido fBm", "Tramado"]
+default = "Normal"
+
+# --- Menú -----------------------------------------------------------------------------------
+
+[[pages]]
+id = "principal"
+name = "Vulpe"
+items = ["page:imagen", "page:depuracion"]
+
+[[pages]]
+id = "imagen"
+name = "Imagen"
+description = "Exposición, color y mapeo de tonos."
+items = ["imagen_exposicion", "imagen_saturacion", "imagen_contraste", "imagen_tonemap", "imagen_tramado"]
+
+[[pages]]
+id = "depuracion"
+name = "Depuración"
+description = "Vistas para comprobar el núcleo."
+columns = 1
+items = ["depuracion_vista"]
+
+[budget]
+gpu_ms = 1.0
