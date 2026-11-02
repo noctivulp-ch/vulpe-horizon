@@ -4,7 +4,8 @@ Especificación: `../vulpe-horizon-spec/subsistemas/15-vegetacion-ondulante.md`.
 
 ## Estado: escrito y validado, desactivado
 
-`horizon-shader check` acepta la etapa `[vertex]`, pero **el juego instalado (nightly-2026-11-01-c9d474d) no la conoce**:
+`horizon-shader check` acepta la etapa `[vertex]`, pero **el juego instalado (nightly-2026-11-01-c9d474d, de las 17:07)
+es anterior a ella** (entró a las 17:17, PR #5928; dato del gestor): no es un fallo de Horizon, es la versión. El juego
 rechaza el pack entero con «TOML parse error … `[vertex]`». La sección está comentada en el manifiesto (con su porqué)
 y las dos opciones van como `override` sin entrada de menú. **Sin ver en el juego.** No hay una versión más nueva
 instalada (la otra es la del 29 de octubre); instalar otra la decide el dueño.
