@@ -51,6 +51,7 @@ shared = [
     "opciones/sombras.wgsl",
     "opciones/volumen.wgsl",
     "opciones/taa.wgsl",
+    "opciones/oclusion.wgsl",
     "adaptadores/marco.wgsl",
     "adaptadores/atmosfera.wgsl",
     "adaptadores/fractal.wgsl",
@@ -148,6 +149,8 @@ files = [
     "adaptadores/aurora.wgsl",
     "adaptadores/volumen.wgsl",
     "adaptadores/reflejo.wgsl",
+    "nucleo/luz/oclusion.wgsl",
+    "adaptadores/oclusion.wgsl",
 ]
 name = "Composición"
 
@@ -446,6 +449,23 @@ values = ["Charcos y mojado", "Solo charcos", "Solo mojado", "Apagado"]
 default = "Charcos y mojado"
 
 [[options]]
+id = "ao"
+name = "Oclusión ambiental"
+description = "Rincones, juntas y huecos algo más oscuros. Apagada: solo la de vértice del juego."
+type = "choice"
+values = ["Apagada", "Normal", "Alta"]
+default = "Normal"
+
+[[options]]
+id = "ao_fuerza"
+name = "Fuerza de la oclusión"
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
 id = "sombras_penumbra"
 name = "Penumbra"
 description = "Básica: borde suave fijo. Variable: dura al pie del objeto, difusa lejos de él."
@@ -608,8 +628,8 @@ items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "sss", "reflejos_pantal
 [[pages]]
 id = "sombras"
 name = "Sombras"
-description = "Penumbra y sombras de nubes."
-items = ["sombras_penumbra", "nubes_sombras"]
+description = "Penumbra, sombras de nubes y oclusión ambiental."
+items = ["sombras_penumbra", "nubes_sombras", "ao", "ao_fuerza"]
 
 [[pages]]
 id = "imagen"
