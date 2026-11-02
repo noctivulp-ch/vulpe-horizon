@@ -13,7 +13,8 @@ const VOL_ESCALA_ALTO: f32 = 9000.0;
 
 struct VolNubes {
     perfil: VolPerfil,
-    viento: vec2<f32>,  // desplazamiento acumulado, bloques
+    viento: vec2<f32>,      // desplazamiento acumulado, bloques
+    direccion: vec2<f32>,   // dirección del viento, unitaria (inclinación de los cúmulos)
 }
 
 // Cobertura 0..1 de la capa `i` (0, 1, 2) en el punto horizontal `xz` (mundo).

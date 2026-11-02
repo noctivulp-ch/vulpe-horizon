@@ -11,3 +11,10 @@ fn rui_tramado_ign(pixel: vec2<f32>) -> f32 {
 fn rui_tramado_direccion(dir: vec3<f32>) -> f32 {
     return rui_u32_a_unidad(rui_pcg3(bitcast<vec3<u32>>(dir)).x);
 }
+
+// Ruido blanco por píxel y fotograma (PCG): sin la estructura diagonal del IGN, que en los raymarch de pocos
+// pasos se veía como estrías paralelas. Resultado en [0, 1).
+fn rui_blanco_pixel(pixel: vec2<f32>, fotograma: u32) -> f32 {
+    let p = vec2<u32>(pixel);
+    return rui_u32_a_unidad(rui_pcg(p.x + rui_pcg(p.y + rui_pcg(fotograma))));
+}

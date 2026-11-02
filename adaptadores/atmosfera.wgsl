@@ -16,14 +16,14 @@ fn adp_observador() -> vec3<f32> {
 fn adp_luz_sol(ajustes: OpcCielo) -> AtmLuz {
     let d = frame.sun_direction;
     let color = ajustes.sol_color * ajustes.brillo;
-    let multiple = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * OPC_MULTIPLE_REFUERZO;
+    let multiple = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * ATM_MULTIPLE;
     return AtmLuz(d, ATM_IRRADIANCIA_SOL * color, multiple * color);
 }
 
 fn adp_luz_luna(ajustes: OpcCielo) -> AtmLuz {
     let d = frame.moon_direction;
     let color = ajustes.luna_color * ajustes.luna_proporcion * ajustes.brillo;
-    let multiple = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * OPC_MULTIPLE_REFUERZO;
+    let multiple = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * ATM_MULTIPLE;
     return AtmLuz(d, ATM_IRRADIANCIA_SOL * color, multiple * color);
 }
 

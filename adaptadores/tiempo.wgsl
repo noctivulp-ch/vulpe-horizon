@@ -10,7 +10,9 @@ fn adp_momento(o: OpcVolumen) -> VolMomento {
 fn adp_nubes() -> VolNubes {
     let o = opc_volumen();
     let viento = OPC_VIENTO * o.viento * frame.time;
-    return VolNubes(vol_perfil_del_momento(adp_momento(o)), viento);
+    var perfil = vol_perfil_del_momento(adp_momento(o));
+    perfil.cobertura *= o.capas;
+    return VolNubes(perfil, viento, normalize(OPC_VIENTO));
 }
 
 fn adp_sombra_nubes(mundo: vec3<f32>) -> f32 {
