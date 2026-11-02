@@ -33,17 +33,25 @@ shared = [
     "nucleo/atmosfera/tabla.wgsl",
     "nucleo/cielo/estrellas.wgsl",
     "nucleo/cielo/composicion.wgsl",
+    "nucleo/cielo/fractal_colocacion.wgsl",
     "opciones/depuracion.wgsl",
     "opciones/imagen.wgsl",
     "opciones/exposicion.wgsl",
     "opciones/cielo.wgsl",
+    "opciones/fractal.wgsl",
     "adaptadores/marco.wgsl",
     "adaptadores/atmosfera.wgsl",
+    "adaptadores/fractal.wgsl",
 ]
 
 [sky]
 file = "etapas/cielo.wgsl"
-files = ["adaptadores/cielo.wgsl"]
+files = [
+    "nucleo/cielo/fractal_conjunto.wgsl",
+    "nucleo/cielo/fractal_paleta.wgsl",
+    "nucleo/cielo/fractal.wgsl",
+    "adaptadores/cielo.wgsl",
+]
 name = "Cielo"
 clouds = false      # las nubes son del subsistema 05
 sun = false         # el disco del sol es nuestro (subsistema 01); la luna la dibuja Horizon
@@ -165,6 +173,122 @@ min = -2.0
 max = 2.0
 step = 0.1
 
+[[options]]
+id = "fractal"
+name = "Cielo fractal"
+description = "Conjuntos de Julia y del Mandelbrot en el cielo de noche."
+type = "bool"
+default = true
+
+[[options]]
+id = "fractal_cambios_noche"
+name = "Cambios por noche"
+description = "Apagado: el mismo cielo siempre (por mundo, con el mod Vulpe Companion)."
+type = "bool"
+default = true
+
+[[options]]
+id = "fractal_cobertura"
+name = "Cobertura del cielo"
+description = "Cuánto cielo cubren entre todas: pocas y pequeñas, o figuras que lo llenan."
+type = "float"
+default = 45.0
+min = 5.0
+max = 80.0
+step = 5.0
+
+[[options]]
+id = "fractal_conjuntos"
+name = "Máximo de conjuntos"
+type = "int"
+default = 6
+min = 1
+max = 8
+
+[[options]]
+id = "fractal_semilla"
+name = "Semilla"
+description = "Rebaraja el reparto."
+type = "int"
+default = 8
+min = 0
+max = 15
+
+[[options]]
+id = "fractal_paleta"
+name = "Paleta"
+type = "choice"
+values = ["Aurora", "Brasa", "Hielo", "Monocromo", "Del cielo", "Cielo invertido"]
+default = "Cielo invertido"
+
+[[options]]
+id = "fractal_brillo"
+name = "Brillo"
+description = "Invisible a la izquierda, foco a la derecha."
+type = "float"
+default = 40.0
+min = 0.0
+max = 200.0
+step = 5.0
+
+[[options]]
+id = "fractal_techo"
+name = "Techo"
+description = "Acota el pico de brillo (0: sin techo)."
+type = "float"
+default = 150.0
+min = 0.0
+max = 200.0
+step = 5.0
+
+[[options]]
+id = "fractal_saturacion"
+name = "Saturación"
+description = "Gris a la izquierda, carta de ajuste a la derecha."
+type = "float"
+default = 70.0
+min = 0.0
+max = 100.0
+step = 5.0
+
+[[options]]
+id = "fractal_contraste"
+name = "Contraste"
+description = "Bajo: color en los filamentos finos. Alto: concentrado."
+type = "float"
+default = 60.0
+min = 0.0
+max = 300.0
+step = 10.0
+
+[[options]]
+id = "fractal_mutacion"
+name = "Mutación"
+description = "Cuánto respiran las figuras de una noche a otra."
+type = "float"
+default = 25.0
+min = 0.0
+max = 100.0
+step = 5.0
+
+[[options]]
+id = "fractal_hueco"
+name = "Hueco de los astros"
+description = "Ceñido al disco a la izquierda, cono amplio a la derecha."
+type = "float"
+default = 40.0
+min = 0.0
+max = 400.0
+step = 10.0
+
+[[options]]
+id = "fractal_dibujo"
+name = "Dibujo"
+description = "Original: las líneas de la cuenta entera. Suave: conteo suavizado."
+type = "choice"
+values = ["Original", "Suave"]
+default = "Original"
+
 [[textures]]
 id = "atmosfera"
 file = "texturas/atmosfera.png"
@@ -182,13 +306,19 @@ wrap = "clamp"
 [[pages]]
 id = "principal"
 name = "Vulpe"
-items = ["page:cielo", "page:imagen", "page:depuracion"]
+items = ["page:cielo", "page:fractal", "page:imagen", "page:depuracion"]
 
 [[pages]]
 id = "cielo"
 name = "Cielo"
 description = "Atmósfera, sol, luna y estrellas."
 items = ["cielo_brillo", "cielo_bruma", "sol_temperatura", "luna_brillo", "estrellas", "estrellas_brillo"]
+
+[[pages]]
+id = "fractal"
+name = "Cielo fractal"
+description = "Las constelaciones de fractales de la noche."
+items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_paleta", "fractal_brillo", "fractal_techo", "fractal_saturacion", "fractal_contraste", "fractal_mutacion", "fractal_hueco", "fractal_dibujo"]
 
 [[pages]]
 id = "imagen"

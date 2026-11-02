@@ -15,3 +15,12 @@ fn adp_cielo_salida(luz: vec3<f32>, dir: vec3<f32>) -> vec4<f32> {
     let tramado = (rui_tramado_direccion(dir) - 0.5) / 255.0;
     return vec4<f32>(v + tramado, 1.0);
 }
+
+// Ajustes completos del cielo fractal (solo la etapa sky dibuja el fractal; el sorteo es compartido).
+fn adp_fractal_ajustes(o: OpcFractal, cielo_medio: vec3<f32>) -> CieFractalAjustes {
+    return CieFractalAjustes(
+        adp_fractal_sorteo(o),
+        CiePaleta(o.paleta, o.contraste, o.saturacion, cielo_medio),
+        o.dibujo, OPC_FRACTAL_ITERACIONES, o.mutacion, o.brillo, o.techo, o.hueco,
+    );
+}
