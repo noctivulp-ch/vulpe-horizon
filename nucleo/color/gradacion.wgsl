@@ -1,0 +1,21 @@
+// Ajustes de gradación sobre color lineal. Porqué: docs/efectos/nucleo.md §Color
+
+struct ColParametrosGradacion {
+    exposicion: f32,    // en pasos (EV)
+    saturacion: f32,    // 1 neutro
+    contraste: f32,     // 1 neutro, pivote en el gris medio
+}
+
+fn col_gradacion_neutra() -> ColParametrosGradacion {
+    return ColParametrosGradacion(0.0, 1.0, 1.0);
+}
+
+fn col_gradar(c_entrada: vec3<f32>, g: ColParametrosGradacion) -> vec3<f32> {
+    var c = c_entrada * exp2(g.exposicion);
+    let l = col_luminancia(c);
+    c = mix(vec3<f32>(l), c, g.saturacion);
+    // Contraste en log2 alrededor del gris medio (0,18).
+    let gris = 0.18;
+    c = gris * pow(max(c, vec3<f32>(0.0)) / gris, vec3<f32>(g.contraste));
+    return max(c, vec3<f32>(0.0));
+}

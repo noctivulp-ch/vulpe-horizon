@@ -12,7 +12,10 @@ Licencia: **pendiente de decidir por el dueño** antes de publicar.
 
 ## Probar
 
-- Validar: `../trabajo/horizon-shader-build/target/release/horizon-shader check .`
-- En el juego: `HORIZON_SHADER_PACK=$PWD horizon-ctl launch --world VulpePrueba --seed 1 --creative --wait`
-  (`horizon-ctl` está en `~/.local/share/horizon-launcher/versions/<versión>/`), luego `time`, `look`,
-  `screenshot`. La recarga en caliente aplica cada archivo guardado.
+- Validar: `tools/validar.sh` (monta el pack en `build/vulpe/` y pasa `horizon-shader check`; ver
+  [ADR 0003](docs/decisiones/0003-pack-montado-en-build.md)).
+- En el juego: `tools/probar.sh base [--dejar-abierto]` valida, abre Horizon con el pack, recorre
+  `pruebas/escenas/base.ctl` y guarda las capturas en `pruebas/capturas/`. La recarga en caliente aplica
+  cada archivo guardado.
+
+Documentación: [docs/index.md](docs/index.md).
