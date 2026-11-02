@@ -120,3 +120,25 @@ fn adp_material_salida(color: vec3<f32>, alfa: f32, p: AdpPunto) -> Surface {
     let tramado = (rui_tramado_ign(p.pixel) - 0.5) / 255.0;
     return Surface(vec4<f32>(v + tramado, alfa));
 }
+
+// Menas brillantes (12): las 16 muestras del sprite a mip 0 (block_texture lee el mismo sprite: sin mezcla con los
+// vecinos del atlas) y la emisión que resulta, con el albedo aclarado en el carbón.
+struct AdpMena {
+    emision: f32,
+    albedo: vec3<f32>,
+}
+
+fn adp_mena(input: MaterialInput, albedo: vec3<f32>) -> AdpMena {
+    let o = opc_menas();
+    if !o.activas || input.material != OPC_MAT_MENA {
+        return AdpMena(0.0, albedo);
+    }
+    var m: array<vec3<f32>, 16>;
+    for (var k = 0; k < 16; k++) {
+        let uv = (vec2<f32>(f32(k / 4), f32(k % 4)) + 0.5) * 0.25;
+        m[k] = block_texture_level(uv, 0.0).rgb;
+    }
+    let r = sup_mena(input.albedo.rgb, m, OPC_MENAS_SENSIBILIDAD * 0.01, OPC_MENAS_CARBON);
+    let aclarado = mix(albedo, max(albedo, vec3<f32>(col_srgb_a_lineal(vec3<f32>(0.3)).x)), r.oscuro);
+    return AdpMena(min(r.mascara * o.intensidad, 0.99), aclarado);
+}

@@ -85,6 +85,8 @@ files = [
     "nucleo/superficie/sss.wgsl",
     "nucleo/superficie/humedad.wgsl",
     "nucleo/superficie/emision.wgsl",
+    "nucleo/superficie/menas.wgsl",
+    "opciones/menas.wgsl",
     "nucleo/luz/curvas.wgsl",
     "nucleo/luz/difusa.wgsl",
     "adaptadores/sombras.wgsl",
@@ -397,6 +399,22 @@ max = 100.0
 step = 5.0
 
 [[options]]
+id = "menas"
+name = "Menas brillantes"
+description = "El mineral de las menas brilla tenue con su color en la oscuridad."
+type = "bool"
+default = true
+
+[[options]]
+id = "menas_intensidad"
+name = "Intensidad de las menas"
+type = "float"
+default = 60.0
+min = 0.0
+max = 100.0
+step = 5.0
+
+[[options]]
 id = "luz_cielo"
 name = "Brillo de la luz de cielo"
 type = "float"
@@ -587,6 +605,10 @@ sprites = ["block/glow_lichen", "block/pink_petals*", "block/*_amethyst_bud", "b
 id = 6
 sprites = ["block/snow", "block/powder_snow", "block/amethyst_block", "block/cobweb", "block/*coral*", "block/*_mushroom_block", "block/mushroom_block_inside", "block/mushroom_stem"]
 
+[[materials]]       # menas (12); los restos ancestrales no
+id = 7
+sprites = ["block/*_ore", "block/gilded_blackstone"]
+
 # --- Menú -----------------------------------------------------------------------------------
 
 [[pages]]
@@ -623,7 +645,7 @@ items = ["agua_olas", "agua_claridad", "agua_refraccion"]
 id = "luz"
 name = "Luz"
 description = "Cielo, bloques, dispersión, brillos y charcos."
-items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "sss", "reflejos_pantalla", "charcos"]
+items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "sss", "reflejos_pantalla", "charcos", "menas", "menas_intensidad"]
 
 [[pages]]
 id = "sombras"
