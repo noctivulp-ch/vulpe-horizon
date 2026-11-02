@@ -25,9 +25,9 @@ const VOL_AURORA_DESPEJE: f32 = 1.0;
 const VOL_AURORA_RUIDO: f32 = 0.8;
 const VOL_AURORA_TAMANO_RUIDO: f32 = 96.0;      // bloques
 const VOL_AURORA_VENTANA: f32 = 2.0;
-// El color del mapa es la radiancia del fractal del cielo (del orden de las estrellas tenues en nuestra
-// escala): sumado tal cual la ventana no se veía. Porqué: docs/efectos/aurora.md §Ventana
-const VOL_AURORA_VENTANA_ESCALA: f32 = 12.0;
+// Fracción de la intensidad de las cortinas con que se ve el fractal por la ventana (especificación 06 §7):
+// el color del mapa es el cielo fractal, calibrado muy tenue. Porqué: docs/efectos/aurora.md §Ventana
+const VOL_AURORA_VENTANA_ESCALA: f32 = 0.6;
 const VOL_AURORA_MUESTRAS: i32 = 4;
 const VOL_AURORA_VETAS: f32 = 0.3;
 const VOL_AURORA_GROSOR_VETAS: f32 = 6.0;       // bloques
@@ -137,13 +137,14 @@ struct VolAuroraTramo {
     despeje: f32,           // medio en el tramo
     fraccion: f32,          // parte del paso del raymarch que ocupa el tramo
     ventana: f32,           // bloques de cono atravesados
+    color_ventana: vec3<f32>, // color del mapa en las muestras, pesado por despeje × largo (sin normalizar)
 }
 
 // Lo que aporta la aurora en el paso [ta, tb] del raymarch: solo el tramo exacto que cruza la franja del
 // velo, con varias muestras (un punto por paso caía unas veces dentro y otras fuera: era el parpadeo).
 fn vol_aurora_tramo(camara: vec3<f32>, dir: vec3<f32>, ta: f32, tb: f32, ruido: f32, sigma: f32, transmitancia: f32,
                     a: VolAurora, t: texture_2d<f32>, s: sampler) -> VolAuroraTramo {
-    var r = VolAuroraTramo(vec3<f32>(0.0), 0.0, 0.0, 0.0);
+    var r = VolAuroraTramo(vec3<f32>(0.0), 0.0, 0.0, 0.0, vec3<f32>(0.0));
     let y0 = min(a.base, a.tope - vol_aurora_largo_cono(a));
     let y1 = a.tope + 24.0;
     var t0 = ta;
@@ -167,6 +168,10 @@ fn vol_aurora_tramo(camara: vec3<f32>, dir: vec3<f32>, ta: f32, tb: f32, ruido: 
         let y = camara.y + rel.y;
         let despeje = vol_aurora_despeje(rel, y, a, t, s);
         let luz = vol_aurora_luz(rel, y, a, t, s);
+        // Color del cono para la ventana (§7): el del mapa en el punto de la muestra, la misma lectura que la luz.
+        if despeje > 0.0 && length(rel.xz) < a.radio {
+            r.color_ventana += vol_aurora_mapa(t, s, rel.xz / a.radio).rgb * despeje * muestra;
+        }
         r.luz += luz * (1.0 - exp(-sigma * VOL_AURORA_DENSIDAD * (1.0 - despeje) * muestra)) * transmitancia;
         if a.depuracion == VOL_AURORA_DEPURAR_CONOS {
             r.luz += vec3<f32>(despeje * muestra * 2e-3, 0.0, 0.0) * transmitancia;
@@ -180,7 +185,8 @@ fn vol_aurora_tramo(camara: vec3<f32>, dir: vec3<f32>, ta: f32, tb: f32, ruido: 
 
 // La ventana al cielo al final del rayo: el fractal visto a través de los conos atravesados, sumado por
 // encima de la niebla de delante (sin pesarlo por la transmitancia: pesado no se veía).
-fn vol_aurora_ventana(camara: vec3<f32>, dir: vec3<f32>, ventana: f32, a: VolAurora, t: texture_2d<f32>, s: sampler) -> vec3<f32> {
+// `color_acumulado`: Σ color · despeje · largo de las muestras; se normaliza por la ventana.
+fn vol_aurora_ventana(camara: vec3<f32>, dir: vec3<f32>, ventana: f32, color_acumulado: vec3<f32>, a: VolAurora) -> vec3<f32> {
     if ventana <= 0.0 || dir.y <= 0.0 || a.depuracion == VOL_AURORA_DEPURAR_SIN_VENTANA {
         return vec3<f32>(0.0);
     }
@@ -188,5 +194,6 @@ fn vol_aurora_ventana(camara: vec3<f32>, dir: vec3<f32>, ventana: f32, a: VolAur
     let medio = 0.5 * (a.base + a.tope);
     let rel = dir * max((medio - camara.y) / dir.y, 0.0);
     let ruido = vol_aurora_ruido_despeje(rel, a);
-    return vol_aurora_mapa(t, s, dir.xz).rgb * a.noche * f * ruido * VOL_AURORA_VENTANA_ESCALA;
+    let color = color_acumulado / max(ventana, 1e-4);
+    return color * a.noche * f * ruido * a.intensidad * VOL_AURORA_VENTANA_ESCALA;
 }

@@ -80,5 +80,5 @@ fn adp_volumen_reescalado(pixel: vec2<f32>, distancia: f32) -> VolResultado {
         pesos += w;
     }
     let v = suma / max(pesos, 1e-6);
-    return VolResultado(v.rgb / adp_codificacion().exposicion, v.a, 0.0);
+    return VolResultado(v.rgb / adp_codificacion().exposicion, v.a, 0.0, vec3<f32>(0.0));
 }

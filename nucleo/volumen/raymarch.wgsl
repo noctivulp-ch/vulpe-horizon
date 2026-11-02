@@ -35,6 +35,7 @@ struct VolResultado {
     luz: vec3<f32>,
     transmitancia: f32,
     ventana: f32,           // bloques de cono de la aurora atravesados (06)
+    color_ventana: vec3<f32>, // color de esos conos, pesado
 }
 
 // Integración analítica de un tramo (Hillaire 2015), con la extinción gris del medio.
@@ -87,6 +88,7 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
             let au = vol_aurora_tramo(rayo.camara, rayo.dir, desde, t0 + siguiente, rayo.ruido, niebla, (*r).transmitancia, a.aurora, ta, sa);
             (*r).luz += au.luz;
             (*r).ventana += au.ventana;
+            (*r).color_ventana += au.color_ventana;
             niebla *= 1.0 - au.despeje * au.fraccion;
         }
         var visible = 1.0;
@@ -148,7 +150,7 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: 
 // debajo, dentro o por encima de cada capa.
 fn vol_integrar(rayo: VolRayo, luz: VolLuz, a: VolAjustes, mapa: texture_depth_2d, comparacion: sampler_comparison,
                 t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>, ta: texture_2d<f32>, sa: sampler) -> VolResultado {
-    var r = VolResultado(vec3<f32>(0.0), 1.0, 0.0);
+    var r = VolResultado(vec3<f32>(0.0), 1.0, 0.0, vec3<f32>(0.0));
     var inicio = array<f32, 4>(1e30, 1e30, 1e30, 1e30);
     var fin = array<f32, 4>(0.0, 0.0, 0.0, 0.0);
     if a.con_niebla {
@@ -194,7 +196,7 @@ fn vol_integrar(rayo: VolRayo, luz: VolLuz, a: VolAjustes, mapa: texture_depth_2
         }
     }
     if a.aurora.activa {
-        r.luz += vol_aurora_ventana(rayo.camara, rayo.dir, r.ventana, a.aurora, ta, sa);
+        r.luz += vol_aurora_ventana(rayo.camara, rayo.dir, r.ventana, r.color_ventana, a.aurora);
     }
     return r;
 }
