@@ -2,7 +2,7 @@
 // mapa. Solo en post. Porqué: docs/efectos/aurora.md §Adaptadores
 
 // Escala de la luz emitida en la escala común: el mapa trae la radiancia del fractal del cielo.
-const ADP_AURORA_ESCALA: f32 = 1.5;
+const ADP_AURORA_ESCALA: f32 = 0.5;
 
 // Las vistas de depuración de la aurora van en la opción de depuración del pack.
 fn adp_aurora_depuracion() -> u32 {

@@ -24,7 +24,8 @@ en medio el TAA sigue recibiendo la composición en `previous`.
   0. Medido en el juego: L ≈ 0,0625 de día y ≈ 0,0094 de noche.
 - **Calibración (decisión de A, `0fcece2`):** objetivo de brillo medio de la imagen final, medido como media del
   cuarto central de la pantalla (por la viñeta): día ≈ 146/255 y noche ≈ 17–18/255. Ajustado con la exposición
-  previa (`OPC_EV_DIA` 3,1 y `OPC_EV_NOCHE` 5,6), que entra en la media: medido **146,7 de día y 17,6 de noche**.
+  previa (`OPC_EV_DIA` 3,1 y `OPC_EV_NOCHE` 5,1 tras oscurecer la niebla de noche), que entra en la media: medido **148,3 de
+  día y 17,9 de noche**.
 - **Mezcla con la exposición previa (aceptada por A):** la noche medida es solo ~6,6 veces más oscura
   que el día (la niebla iluminada por la luna y la aurora suben la media), y ninguna curva compresiva puede dar
   más de esa razón de exposición: con la automática sola la noche salía casi negra (E ≈ 18 frente a ≈ 104 de la

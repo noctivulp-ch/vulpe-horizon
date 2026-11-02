@@ -71,8 +71,8 @@ código (medido): el presupuesto de 64 por etapa no aprieta.
   existe por eso). Uniforme hasta Y = 320 (sin pegarla al suelo: se probó y se deshizo), densidad relativa
   0,38 de noche: σ = 0,0076 por bloque, que da τ ≈ 2,2 al cenit desde Y = 70 (≈11 % de transmitancia; A pide
   10–15 %) y τ ≈ 3,9 hacia el horizonte en los 512 bloques del alcance (≈2 %; A pide < 3 %). **Brillo:** la
-  niebla tiene una fase propia (`vol_fase_niebla`: 96 % de Henyey-Greenstein con g = 0,9, el resto difuso y
-  hacia atrás) y ambiente ×0,015–0,05 del cielo: fuera del halo de la luna queda más oscura que el cielo
+  niebla tiene una fase propia (`vol_fase_niebla`: 98,5 % de Henyey-Greenstein con g = 0,95, el resto difuso y
+  hacia atrás) y ambiente ×0,005–0,015 del cielo (oscurecida otra vez por el 06 §7 bis): fuera del halo de la luna queda más oscura que el cielo
   despejado. Medido en el juego: 16–34/255 lejos del halo frente a 3–17 de `aurora_off_noche.png`; aún algo
   más clara y gris que la referencia.
 - **Niebla:** extinción 0,02 por bloque con densidad relativa 1; manchas de ruido 3D (celdas de 96×40×96
