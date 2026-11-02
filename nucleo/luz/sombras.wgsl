@@ -75,3 +75,16 @@ fn luz_tinte_translucido(color: vec4<f32>, agua: vec3<f32>) -> vec3<f32> {
     let c = color.rgb / max(max(color.r, max(color.g, color.b)), 1e-3);
     return mix(vec3<f32>(1.0), c * c, color.a);
 }
+
+// Dónde guarda el mapa un punto relativo a la cámara, con la fórmula de distorsión que documenta el motor
+// (xy/(|xy|·k + 1 − k)); para quien no tiene a mano el ayudante del motor (el bucle del volumen).
+struct LuzMapa {
+    vista_proyeccion: mat4x4<f32>,
+    distorsion: f32,
+}
+
+fn luz_posicion_mapa(m: LuzMapa, p: vec3<f32>) -> vec3<f32> {
+    let clip = m.vista_proyeccion * vec4<f32>(p, 1.0);
+    let xy = clip.xy / (length(clip.xy) * m.distorsion + 1.0 - m.distorsion);
+    return vec3<f32>(xy.x * 0.5 + 0.5, 0.5 - xy.y * 0.5, min(clip.z, 1.0));
+}

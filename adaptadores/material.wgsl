@@ -90,15 +90,9 @@ struct AdpLuces {
 fn adp_luces(o: OpcLuz) -> AdpLuces {
     let c = opc_cielo();
     let d = frame.light_direction;
-    var directa: vec3<f32>;
-    if dot(d, frame.sun_direction) > 0.0 {
-        directa = adp_tabla(d.y, ATM_FILA_SOL) * c.sol_color * c.brillo;
-    } else {
-        directa = adp_tabla(d.y, ATM_FILA_SOL) * c.luna_color * c.luna_proporcion * c.brillo;
-    }
-    // Lluvia: el cielo cubierto apaga el sol y vuelve gris la luz de cielo.
+    let directa = adp_irradiancia_astro(c);
+    // Lluvia: el cielo cubierto vuelve gris la luz de cielo.
     let cubierto = clamp(frame.rain, 0.0, 1.0);
-    directa *= 1.0 - 0.9 * cubierto;
     var cielo = adp_cielo_medio(c) * o.cielo * OPC_LUZ_CIELO_BASE;
     cielo = mix(cielo, vec3<f32>(col_luminancia(cielo)) * 0.8, cubierto) * (1.0 - 0.5 * frame.thunder);
     return AdpLuces(d, directa, cielo, adp_suelo(c) * o.cielo * OPC_LUZ_CIELO_BASE);
@@ -111,7 +105,8 @@ struct AdpSombra {
 
 fn adp_sombra(p: AdpPunto) -> AdpSombra {
     let r = adp_sombra_punto(AdpEntradaSombra(p.posicion, p.normal_cara, p.luz_cielo, p.pixel), opc_sombras());
-    return AdpSombra(r.luz, r.grosor);
+    let nubes = mix(1.0, adp_sombra_nubes(p.mundo), opc_volumen().sombra_nubes);
+    return AdpSombra(r.luz * nubes, r.grosor);
 }
 
 // Color de la luz de bloque: el de [[lights]] cercano, si lo hay.

@@ -40,11 +40,26 @@ fn adp_suelo(ajustes: OpcCielo) -> vec3<f32> {
     return (sol + luna) * ajustes.brillo;
 }
 
+// Por encima de la capa de nubes baja la lluvia deja de velar el cielo (especificación 01).
 fn adp_lluvia(ajustes: OpcCielo) -> CieLluvia {
-    return CieLluvia(frame.rain, frame.thunder, adp_cielo_medio(ajustes));
+    let bajo = vol_bajo_las_nubes(frame.camera_position.y);
+    return CieLluvia(frame.rain * bajo, frame.thunder * bajo, adp_cielo_medio(ajustes));
 }
 
 // La dispersión del núcleo con la tabla de transmitancia del pack.
 fn adp_dispersion(dir: vec3<f32>, sol: AtmLuz, luna: AtmLuz, ajustes: OpcCielo) -> AtmResultado {
     return atm_dispersion(adp_observador(), dir, sol, luna, atm_tierra(), AtmAjustes(ajustes.bruma, 12), transmitancia, transmitancia_sampler);
+}
+
+// Irradiancia del astro que da sombra (frame.light_direction: el sol de día, la luna de noche), tras la
+// atmósfera, con el cielo cubierto por la lluvia.
+fn adp_irradiancia_astro(c: OpcCielo) -> vec3<f32> {
+    let d = frame.light_direction;
+    var e: vec3<f32>;
+    if dot(d, frame.sun_direction) > 0.0 {
+        e = adp_tabla(d.y, ATM_FILA_SOL) * c.sol_color * c.brillo;
+    } else {
+        e = adp_tabla(d.y, ATM_FILA_SOL) * c.luna_color * c.luna_proporcion * c.brillo;
+    }
+    return e * (1.0 - 0.9 * clamp(frame.rain, 0.0, 1.0));
 }

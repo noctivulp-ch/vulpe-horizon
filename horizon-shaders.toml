@@ -36,6 +36,10 @@ shared = [
     "nucleo/cielo/fractal_colocacion.wgsl",
     "nucleo/superficie/datos.wgsl",
     "nucleo/luz/sombras.wgsl",
+    "nucleo/volumen/ruido.wgsl",
+    "nucleo/volumen/tiempo.wgsl",
+    "nucleo/volumen/capas.wgsl",
+    "nucleo/volumen/borde.wgsl",
     "opciones/depuracion.wgsl",
     "opciones/imagen.wgsl",
     "opciones/exposicion.wgsl",
@@ -43,9 +47,11 @@ shared = [
     "opciones/fractal.wgsl",
     "opciones/luz.wgsl",
     "opciones/sombras.wgsl",
+    "opciones/volumen.wgsl",
     "adaptadores/marco.wgsl",
     "adaptadores/atmosfera.wgsl",
     "adaptadores/fractal.wgsl",
+    "adaptadores/tiempo.wgsl",
 ]
 
 [sky]
@@ -63,6 +69,7 @@ stars = false
 
 [material]
 file = "etapas/material.wgsl"
+fog = false         # la niebla es nuestra (subsistema 05)
 files = [
     "nucleo/superficie/brdf.wgsl",
     "nucleo/superficie/labpbr.wgsl",
@@ -80,7 +87,31 @@ resolution = 2048
 distance = 128.0
 
 [[post]]
-file = "etapas/post/01-final.wgsl"
+file = "etapas/post/01-volumen.wgsl"
+files = [
+    "nucleo/volumen/fase.wgsl",
+    "nucleo/volumen/medios.wgsl",
+    "nucleo/volumen/raymarch.wgsl",
+    "adaptadores/post.wgsl",
+    "adaptadores/volumen.wgsl",
+]
+name = "Volumen"
+output = "volumen"
+scale = 0.5
+
+[[post]]
+file = "etapas/post/02-composicion.wgsl"
+files = [
+    "nucleo/volumen/fase.wgsl",
+    "nucleo/volumen/medios.wgsl",
+    "nucleo/volumen/raymarch.wgsl",
+    "adaptadores/post.wgsl",
+    "adaptadores/volumen.wgsl",
+]
+name = "Composición"
+
+[[post]]
+file = "etapas/post/03-final.wgsl"
 files = ["adaptadores/post.wgsl"]
 name = "Final"
 
@@ -435,11 +466,125 @@ description = "El agua y el cristal de colores tiñen la luz que pasa."
 type = "bool"
 default = true
 
+[[options]]
+id = "niebla"
+name = "Niebla volumétrica"
+type = "bool"
+default = true
+
+[[options]]
+id = "niebla_pasos"
+name = "Calidad de la niebla"
+description = "Pasos del rayo."
+type = "int"
+default = 8
+min = 4
+max = 16
+
+[[options]]
+id = "niebla_cantidad"
+name = "Cantidad de niebla"
+description = "Multiplica la niebla de cada hora."
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
+id = "niebla_lluvia"
+name = "Niebla con lluvia"
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
+id = "niebla_bruma"
+name = "Bruma"
+description = "Perspectiva aérea: cuánto se azula y aclara lo lejano."
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
+id = "niebla_caida"
+name = "Caída de la niebla con la altura"
+description = "Por mil y bloque, desde Y = 320 (0: sin caída)."
+type = "float"
+default = 25.0
+min = 0.0
+max = 100.0
+step = 5.0
+
+[[options]]
+id = "niebla_alcance"
+name = "Alcance de la niebla"
+description = "Bloques: la niebla tiene la misma densidad con cualquier distancia de renderizado."
+type = "float"
+default = 512.0
+min = 256.0
+max = 2048.0
+step = 64.0
+
+[[options]]
+id = "nubes"
+name = "Nubes"
+type = "bool"
+default = true
+
+[[options]]
+id = "nubes_calidad"
+name = "Calidad de las nubes"
+type = "choice"
+values = ["Baja", "Media", "Alta"]
+default = "Media"
+
+[[options]]
+id = "nubes_viento"
+name = "Velocidad del viento"
+type = "float"
+default = 1.0
+min = 0.0
+max = 3.0
+step = 0.1
+
+[[options]]
+id = "nubes_sombras"
+name = "Sombras de nubes"
+type = "float"
+default = 100.0
+min = 0.0
+max = 100.0
+step = 5.0
+
+[[options]]
+id = "tiempo_aleatorio"
+name = "Tiempo diario aleatorio"
+description = "Apagado: siempre el mismo cielo de nubes."
+type = "bool"
+default = true
+
 [[textures]]
 id = "atmosfera"
 file = "texturas/atmosfera.png"
 filter = "linear"
 wrap = "clamp"
+
+[[textures]]
+id = "ruido2d"
+file = "texturas/ruido2d.png"
+filter = "linear"
+wrap = "repeat"
+
+[[textures]]
+id = "ruido3d"
+file = "texturas/ruido3d.png"
+filter = "nearest"
+wrap = "repeat"
 
 [[textures]]
 id = "transmitancia"
@@ -478,7 +623,7 @@ sprites = ["block/snow", "block/powder_snow", "block/amethyst_block", "block/cob
 [[pages]]
 id = "principal"
 name = "Vulpe"
-items = ["page:cielo", "page:fractal", "page:luz", "page:sombras", "page:imagen", "page:depuracion"]
+items = ["page:cielo", "page:fractal", "page:niebla", "page:luz", "page:sombras", "page:imagen", "page:depuracion"]
 
 [[pages]]
 id = "cielo"
@@ -491,6 +636,12 @@ id = "fractal"
 name = "Cielo fractal"
 description = "Las constelaciones de fractales de la noche."
 items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_paleta", "fractal_brillo", "fractal_techo", "fractal_saturacion", "fractal_contraste", "fractal_mutacion", "fractal_hueco", "fractal_dibujo"]
+
+[[pages]]
+id = "niebla"
+name = "Niebla y nubes"
+description = "Niebla volumétrica, bruma, nubes y tiempo."
+items = ["niebla", "niebla_pasos", "niebla_cantidad", "niebla_lluvia", "niebla_bruma", "niebla_caida", "niebla_alcance", "nubes", "nubes_calidad", "nubes_viento", "nubes_sombras", "tiempo_aleatorio"]
 
 [[pages]]
 id = "luz"

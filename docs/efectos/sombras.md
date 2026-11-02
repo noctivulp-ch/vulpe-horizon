@@ -11,8 +11,9 @@ opción «básica», sesgo por la normal, corrección de fugas en interiores, so
 y fundido a la sombra aproximada por la luz de cielo al borde del mapa. La sombra da también el **grosor**
 hasta el ocluyente, que usa el SSS del 03.
 
-**Pendiente:** las **sombras de nubes** (§5) dependen del 05; el tinte del agua es un color fijo hasta el 07
-(absorción y profundidad del agua).
+**Sombras de nubes** (§5): con el 05, el material multiplica la luz del sol por `vol_sombra_nubes` (la
+cobertura donde el rayo hacia la luz cruza la mitad de cada capa baja, `e^(−3·c²)`), escalada por la opción.
+**Pendiente:** el tinte del agua es un color fijo hasta el 07 (absorción y profundidad del agua).
 
 ## Por qué del código
 

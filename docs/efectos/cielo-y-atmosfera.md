@@ -102,8 +102,9 @@ de la tabla a secas salía casi blanco con la exposición del día. La dispersi�
 al 60 % (perspectiva aérea hasta el suelo del planeta).
 
 **Lluvia:** mezcla hacia un gris (35 % del color medio del cielo) ×1,1, ×(1 − 0,6·tormenta), con peso
-`lluvia · mix(0,75; 1; e^(−4·max(dir.y, 0)))`, mayor hacia el horizonte. Pendiente: anularla por encima de
-la capa de nubes cuando exista el subsistema 05.
+`lluvia · mix(0,75; 1; e^(−4·max(dir.y, 0)))`, mayor hacia el horizonte; la lluvia y la tormenta se
+multiplican por `vol_bajo_las_nubes(y de la cámara)`, que cae de 1 a 0 entre la base y el techo de la capa
+de cúmulos pequeños (05): por encima de las nubes el cielo ya no se vela.
 
 Se escribe codificado (ADR 0004) con un tramado de ±½ nivel por dirección (`rui_tramado_direccion`): la
 etapa `sky` no tiene coordenada de píxel.
