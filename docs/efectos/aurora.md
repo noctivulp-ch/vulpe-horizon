@@ -160,4 +160,4 @@ derecha; semilla 8, la de por defecto, y la de la referencia puede ser otra):
 la derecha después, abajo a la izquierda a −40°, abajo a la derecha la referencia; hora 14000, sur, horizonte, 110°):
 en la mitad de arriba aparecen **formas y puntos nítidos y brillantes del fractal** entre las cortinas verticales,
 como en la referencia. Se ven algo en escalón (el mapa es de ¼ de resolución). Coste de noche con la aurora a la
-vista: 8,6 ms de GPU (sin cambio apreciable).
+vista: 9,4 ms de GPU con todo (campo de visión 110, mirando a la aurora).
