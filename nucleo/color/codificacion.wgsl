@@ -6,9 +6,9 @@ struct ColCodificacion {
 }
 
 fn col_codificar_escena(luz: vec3<f32>, k: ColCodificacion) -> vec3<f32> {
-    return col_lineal_a_srgb(col_tonemap_reinhard_canal(luz * k.exposicion, k.blanco));
+    return col_lineal_a_srgb(col_tonemap_reinhard_maximo(luz * k.exposicion, k.blanco));
 }
 
 fn col_decodificar_escena(valor: vec3<f32>, k: ColCodificacion) -> vec3<f32> {
-    return col_tonemap_reinhard_canal_inversa(col_srgb_a_lineal(valor), k.blanco) / k.exposicion;
+    return col_tonemap_reinhard_maximo_inversa(col_srgb_a_lineal(valor), k.blanco) / k.exposicion;
 }

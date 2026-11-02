@@ -14,7 +14,9 @@ const OPC_SOL_DISCO_BRILLO: f32 = 12.0;     // radiancia del disco / irradiancia
 const OPC_ESTRELLAS_BRILLO: f32 = 0.004;
 const OPC_MULTIPLE_REFUERZO: f32 = 0.4;
 const OPC_BRUMA_BASE: f32 = 5.0;
-const OPC_CIELO_SATURACION: f32 = 1.5;
+const OPC_CIELO_SATURACION: f32 = 1.0;
+// Brillo propio del cielo dibujado (no de la luz ambiente que da al terreno): docs/efectos/cielo-y-atmosfera.md §Montaje
+const OPC_CIELO_BRILLO_DIBUJO: f32 = 2.0;
 
 struct OpcCielo {
     brillo: f32,            // multiplicador

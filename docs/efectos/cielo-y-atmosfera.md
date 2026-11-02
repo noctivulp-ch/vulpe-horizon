@@ -23,7 +23,7 @@ este modelo (3,57). La luna es 1/300 del sol (artístico, como pide la especific
 ### Exposición previa
 
 `nucleo/color/exposicion.wgsl` + `opciones/exposicion.wgsl`. Ver ADR 0004: la escena se guarda expuesta.
-La exposición previa va de 2^6,7 de noche a 2^3 de día, interpolada en EV con la altura del sol
+La exposición previa va de 2^6,7 de noche a 2^2 de día (2^6 sin cielo a la vista, ver 03), interpolada en EV con la altura del sol
 (`smoothstep(−0,2; 0,15)`), afinada mirando el juego: cielo de mediodía azul medio, noche azul muy oscuro
 como `referencias/uns_cielo-noche_sinfractal.png`. Es analítica y no lee nada de post, porque `sky` y
 `material` no pueden leer destinos de post. La exposición automática (11) corregirá sobre ella.
@@ -45,9 +45,12 @@ como `referencias/uns_cielo-noche_sinfractal.png`. Es analítica y no lee nada d
   término cuatro veces hasta converger.
 - **Aerosoles ×5** sobre Hillaire (`OPC_BRUMA_BASE`) por defecto: con el aire limpio el halo del sol era
   pequeño y apagado, y la referencia (`base_Bliss-UNS_dia_r1.png`) lo quiere amplio y blanco.
-- **Saturación ×1,5 del cielo** (`OPC_CIELO_SATURACION`) antes de codificar. La física da un cenit de
-  proporción ~1 : 2 : 4,5 (R:G:B), pero el mapeo de tonos por canal de la codificación lo comprime a
-  ~1 : 1,6 : 2,4 y se ve pálido. Se compensa solo en el cielo, sin tocar entidades ni luna.
+- **Saturación del cielo** (`OPC_CIELO_SATURACION`): fue ×1,5 mientras la codificación usaba Reinhard por
+  canal (comprimía el cenit de ~1 : 2 : 4,5 a ~1 : 1,6 : 2,4); con el Reinhard sobre el canal máximo
+  (ADR 0004) vuelve a 1.
+- **Brillo propio del cielo dibujado ×2** (`OPC_CIELO_BRILLO_DIBUJO`), no de la luz que da al terreno: al
+  encender la luz de superficie (03) la exposición de día bajó de 2³ a 2² para que la hierba al sol no se
+  lavase, y el cielo, que se había afinado con 2³, lo compensa.
 - **Luna:** el mismo modelo con la dirección de la luna y color de cuerpo negro de 10 000 K; solo se
   integra con el sol por debajo de 0,1 de seno (`atm_astros_activos`): con el sol alto no aporta nada
   visible y costaba casi el doble. El sol, por debajo de −0,35 de seno.

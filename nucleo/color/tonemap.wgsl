@@ -4,9 +4,9 @@
 const COL_TONEMAP_VULPE: u32 = 0u;
 const COL_TONEMAP_REINHARD_LUMINANCIA: u32 = 1u;
 const COL_TONEMAP_ACES: u32 = 2u;
+const COL_TONEMAP_REINHARD_CANAL: u32 = 3u;
 
 // Reinhard extendido (Reinhard et al. 2002, ec. 4) por canal; `blanco` es el valor que llega a 1.
-// Es el de la codificación del «picture» (ADR 0004).
 fn col_tonemap_reinhard_canal(c: vec3<f32>, blanco: f32) -> vec3<f32> {
     let x = max(c, vec3<f32>(0.0));
     return mat_saturar3(x * (1.0 + x / (blanco * blanco)) / (1.0 + x));
@@ -19,6 +19,23 @@ fn col_tonemap_reinhard_canal_inversa(y_entrada: vec3<f32>, blanco: f32) -> vec3
     let uno_menos = 1.0 - y;
     let w2 = blanco * blanco;
     return 2.0 * y / (uno_menos + sqrt(uno_menos * uno_menos + 4.0 * y / w2));
+}
+
+// Reinhard extendido sobre el canal máximo: los tres canales se escalan por igual (conserva tono y
+// saturación) y ninguno pasa de 1. Es el de la codificación del «picture» (ADR 0004).
+fn col_tonemap_reinhard_maximo(c: vec3<f32>, blanco: f32) -> vec3<f32> {
+    let x = max(c, vec3<f32>(0.0));
+    let m = max(x.r, max(x.g, x.b));
+    let y = m * (1.0 + m / (blanco * blanco)) / (1.0 + m);
+    return mat_saturar3(x * (y / max(m, 1e-9)));
+}
+
+// Inversa exacta: el canal máximo de la salida es el mapeo del de la entrada.
+fn col_tonemap_reinhard_maximo_inversa(y_entrada: vec3<f32>, blanco: f32) -> vec3<f32> {
+    let y = mat_saturar3(y_entrada);
+    let my = max(y.r, max(y.g, y.b));
+    let m = col_tonemap_reinhard_canal_inversa(vec3<f32>(my), blanco).x;
+    return y * (m / max(my, 1e-9));
 }
 
 // Reinhard extendido sobre la luminancia, reescalando el color para no desaturar.
@@ -43,6 +60,7 @@ fn col_tonemap(c: vec3<f32>, operador: u32, blanco: f32) -> vec3<f32> {
     switch operador {
         case COL_TONEMAP_REINHARD_LUMINANCIA: { return col_tonemap_reinhard_luminancia(c, blanco); }
         case COL_TONEMAP_ACES: { return col_tonemap_aces(c); }
-        default: { return col_tonemap_reinhard_canal(c, blanco); }
+        case COL_TONEMAP_REINHARD_CANAL: { return col_tonemap_reinhard_canal(c, blanco); }
+        default: { return col_tonemap_reinhard_maximo(c, blanco); }
     }
 }

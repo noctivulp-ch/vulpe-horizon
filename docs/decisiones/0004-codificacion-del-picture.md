@@ -32,8 +32,10 @@ codificar(L) = sRGB( T( L · E ) )        decodificar(v) = T⁻¹( lineal(v) ) /
   ≈ 1; ver `docs/efectos/cielo-y-atmosfera.md` §Escala).
 - `E`: **exposición previa**, función analítica de `frame` (altura del sol y de la luna) idéntica en todas
   las etapas (`adp_exposicion_previa`, en `shared`).
-- `T`: Reinhard extendido **por canal** con punto blanco `W` (Reinhard et al. 2002, ec. 4), invertible en
-  forma cerrada. Es también el mapeo de tonos final por defecto.
+- `T`: Reinhard extendido **sobre el canal máximo** con punto blanco `W` (Reinhard et al. 2002, ec. 4): se
+  calcula la curva sobre `max(r, g, b)` y los tres canales se escalan por el mismo factor. Invertible en
+  forma cerrada (el canal máximo de la salida es la curva del de la entrada). Es también el mapeo de tonos
+  final por defecto.
 
 La primera pasada post decodifica a luz lineal en coma flotante; todo el post trabaja ahí; la última
 vuelve a aplicar `E`, la corrección de exposición del jugador, la gradación y `T`.
@@ -50,6 +52,12 @@ vuelve a aplicar `E`, la corrección de exposición del jugador, la gradación y
    unas 20 veces el blanco), lo que deja algo para el bloom.
 4. Mientras la etapa `material` sea la de vanilla (hasta el subsistema 03) su salida pasa tal cual: ya es
    un valor de pantalla y la ida y vuelta la deja igual.
+
+**Por qué el canal máximo y no por canal (cambio del 2026-11-01, al encender la luz de superficie):** con
+Reinhard por canal la hierba al sol salía gris verdosa y las hojas pálidas: cada canal se comprime por su
+cuenta y lo brillante pierde saturación (el cielo necesitaba un refuerzo de saturación ×1,5 para
+disimularlo). Sobre el canal máximo se conservan tono y saturación y ningún canal pasa de 1; el refuerzo del
+cielo ya no hace falta. Queda como opción «Reinhard (por canal)».
 
 ## Consecuencias
 

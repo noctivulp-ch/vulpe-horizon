@@ -1,16 +1,128 @@
-// MaterialInput -> superficie del núcleo, y vuelta a Surface. Porqué: docs/efectos/nucleo.md §Adaptadores
+// MaterialInput -> punto de superficie del núcleo, y vuelta a Surface (codificada, ADR 0004).
+// Porqué: docs/efectos/luz-de-superficie.md §Adaptadores
 
-struct AdpSuperficie {
-    albedo: vec4<f32>,      // textura por tinte (bioma, sombreado de cara, oclusión)
-    luz_vanilla: vec3<f32>, // color del mapa de luz de vanilla para este punto
-    posicion: vec3<f32>,    // relativa a la cámara, en bloques
-    normal: vec3<f32>,
+struct AdpPunto {
+    albedo: vec3<f32>,      // lineal, sin el sombreado por cara de vanilla
+    alfa: f32,
+    normal_cara: vec3<f32>, // geométrica
+    normal: vec3<f32>,      // con el mapa de normales, si lo hay
+    vista: vec3<f32>,       // hacia la cámara
+    posicion: vec3<f32>,    // relativa a la cámara
+    mundo: vec3<f32>,
+    luz_bloque: f32,
+    luz_cielo: f32,
+    material: u32,
+    emision_bloque: f32,
+    translucido: bool,
+    fluido: u32,
+    cruzada: bool,          // planta de planos cruzados: N·L fijo
+    pbr: SupMaterial,
+    pixel: vec2<f32>,
 }
 
-fn adp_material_superficie(input: MaterialInput) -> AdpSuperficie {
-    return AdpSuperficie(input.albedo * input.tint, input.lightmap, input.position, input.normal);
+fn adp_es_cruzada(m: u32) -> bool {
+    return m == OPC_MAT_PLANTA_FUERTE || m == OPC_MAT_PLANTA_MEDIA;
 }
 
-fn adp_material_salida(color: vec4<f32>) -> Surface {
-    return Surface(color);
+// El tinte de vanilla lleva un sombreado fijo por cara (arriba 1; abajo 0,5; norte/sur 0,8; este/oeste
+// 0,6) que se sumaría al direccional real: se divide.
+fn adp_sombreado_vanilla(n: vec3<f32>) -> f32 {
+    let n2 = n * n;
+    return select(0.5, 1.0, n.y > 0.0) * n2.y + 0.8 * n2.z + 0.6 * n2.x;
+}
+
+fn adp_sss_lista(m: u32) -> f32 {
+    switch m {
+        case 1u, 2u, 3u: { return 0.9; }
+        case 4u, 5u: { return 0.6; }
+        case 6u: { return 0.3; }
+        default: { return 0.0; }
+    }
+}
+
+fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
+    var p: AdpPunto;
+    p.material = input.material;
+    p.cruzada = adp_es_cruzada(input.material);
+    var tinte = input.tint.rgb;
+    if !p.cruzada {
+        tinte /= max(adp_sombreado_vanilla(input.normal), 0.5);
+    }
+    p.albedo = col_srgb_a_lineal(mat_saturar3(input.albedo.rgb * tinte));
+    p.alfa = input.albedo.a;
+    p.normal_cara = input.normal;
+    p.posicion = input.position;
+    p.mundo = input.position + frame.camera_position;
+    p.vista = normalize(-input.position);
+    p.luz_bloque = input.light.x;
+    p.luz_cielo = input.light.y;
+    p.emision_bloque = input.emission;
+    p.translucido = input.translucent;
+    p.fluido = input.fluid;
+    p.pixel = input.screen * frame.resolution;
+
+    let con_pbr = block_pbr_maps();
+    if con_pbr {
+        p.pbr = sup_labpbr(block_specular_map(input.uv), p.albedo);
+        p.normal = sup_normal_mapa(block_normal_map(input.uv), input.normal, input.tangent);
+    } else {
+        p.pbr = SupMaterial(0.15, 0.7225, vec3<f32>(0.04), false, 0.0, 0.0, 0.0);
+        p.normal = input.normal;
+    }
+    var sss = 0.0;
+    if o.sss_lista {
+        sss = adp_sss_lista(input.material);
+    }
+    if o.sss_labpbr && con_pbr && p.pbr.sss > 0.0 {
+        sss = p.pbr.sss;
+    }
+    p.pbr.sss = sss * o.sss_brillo;
+    return p;
+}
+
+struct AdpLuces {
+    direccion: vec3<f32>,   // hacia el astro que da sombra (sol de día, luna de noche)
+    directa: vec3<f32>,     // irradiancia perpendicular tras la atmósfera (π = sol de mediodía)
+    cielo: vec3<f32>,       // radiancia media del cielo (ambiente)
+    suelo: vec3<f32>,
+}
+
+fn adp_luces(o: OpcLuz) -> AdpLuces {
+    let c = opc_cielo();
+    let d = frame.light_direction;
+    var directa: vec3<f32>;
+    if dot(d, frame.sun_direction) > 0.0 {
+        directa = adp_tabla(d.y, ATM_FILA_SOL) * c.sol_color * c.brillo;
+    } else {
+        directa = adp_tabla(d.y, ATM_FILA_SOL) * c.luna_color * c.luna_proporcion * c.brillo;
+    }
+    // Lluvia: el cielo cubierto apaga el sol y vuelve gris la luz de cielo.
+    let cubierto = clamp(frame.rain, 0.0, 1.0);
+    directa *= 1.0 - 0.9 * cubierto;
+    var cielo = adp_cielo_medio(c) * o.cielo;
+    cielo = mix(cielo, vec3<f32>(col_luminancia(cielo)) * 0.8, cubierto) * (1.0 - 0.5 * frame.thunder);
+    return AdpLuces(d, directa, cielo, adp_suelo(c) * o.cielo);
+}
+
+// Sombra provisional hasta el subsistema 04: la luz de cielo de Minecraft (sin cielo, sin sol).
+struct AdpSombra {
+    luz: vec3<f32>,         // 0..1 por canal
+    grosor: f32,            // distancia al ocluyente hacia la luz, bloques
+}
+
+fn adp_sombra(p: AdpPunto) -> AdpSombra {
+    let s = smoothstep(0.86, 0.97, p.luz_cielo);
+    return AdpSombra(vec3<f32>(s), mix(2.0, 0.0, s));
+}
+
+// Color de la luz de bloque: el de [[lights]] cercano, si lo hay.
+fn adp_color_luz_bloque(p: AdpPunto, o: OpcLuz) -> vec3<f32> {
+    let tinte = block_light_color(p.posicion);
+    return mix(o.bloque_color, tinte.rgb, min(tinte.a, 1.0));
+}
+
+fn adp_material_salida(color: vec3<f32>, alfa: f32, p: AdpPunto) -> Surface {
+    let v = col_codificar_escena(color, adp_codificacion());
+    let tramado = (rui_tramado_ign(p.pixel) - 0.5) / 255.0;
+    return Surface(vec4<f32>(v + tramado, alfa));
 }

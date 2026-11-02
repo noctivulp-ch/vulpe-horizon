@@ -26,6 +26,7 @@ fn adp_factor_noche() -> f32 {
 
 // La misma en todas las etapas: es la clave de la codificación del «picture» (ADR 0004).
 fn adp_codificacion() -> ColCodificacion {
-    let e = col_exposicion_previa(ColParametrosExposicion(frame.sun_direction.y, OPC_EV_DIA, OPC_EV_NOCHE));
+    let p = ColParametrosExposicion(frame.sun_direction.y, frame.eye_light_smooth.y, OPC_EV_DIA, OPC_EV_NOCHE, OPC_EV_INTERIOR);
+    let e = col_exposicion_previa(p);
     return ColCodificacion(e, OPC_BLANCO);
 }
