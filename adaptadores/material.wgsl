@@ -49,6 +49,14 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
         tinte /= max(adp_sombreado_vanilla(input.normal), 0.5);
     }
     p.albedo = col_srgb_a_lineal(mat_saturar3(input.albedo.rgb * tinte));
+    // Estaciones (03.2): solo los bloques con color de bioma (tinte no blanco), y las hojas con su propio tinte. Sin
+    // número de día (sin mod nativo), fija en la estación inicial.
+    let con_bioma = max(abs(input.tint.r - input.tint.g), abs(input.tint.g - input.tint.b)) > 0.03;
+    if estaciones && con_bioma && adp_es_superficie() {
+        let con_mod = frame.mods[0].x > 0.5;
+        let dia = select(0.0, frame.mods[0].z + frame.day_time, con_mod);
+        p.albedo = sup_estacion(p.albedo, dia, OPC_ESTACION_DIAS, i32(estacion_inicial), input.material == OPC_MAT_HOJAS);
+    }
     p.alfa = input.albedo.a;
     p.normal_cara = input.normal;
     p.posicion = input.position;
