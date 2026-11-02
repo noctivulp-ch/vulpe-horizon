@@ -62,15 +62,18 @@ de la especificación tomada literal, no se veía nada en nuestra escala de luz;
 
 ### Ventana
 
-Respuesta de A (especificación 06 §7, `8873b86`): con la dirección de vista el mapa se lee lejos de la línea de la
-que baja el cono, donde no hay fractal; por eso no se veía. Ahora se usa **el color del cono**: durante el tramo,
-cada muestra acumula el color del mapa en su punto (`rel.xz / R`, la misma lectura que la luz de la cortina)
-pesado por despeje × largo, y al final se normaliza por la ventana. El peso es el de Vulpe (ventana / largo del
-cono × 2 × ruido del despeje × noche), sumado sin la transmitancia de delante, y el color se escala por la
-intensidad de las cortinas × 0,6 (`VOL_AURORA_VENTANA_ESCALA`), como propone A, para que los filamentos dentro del
-cono no queden por debajo de la niebla. **Visto:** trazos y puntos brillantes del fractal dentro de los conos,
-sobre la cortina (diferencia con «sin ventana» de hasta 135/255, media 4,4; antes 2,7 de puro ruido). Da además
-los «puntos y filamentos brillantes sobre una cortina más oscura» que el gestor echaba en falta.
+Especificación 06 §7 y §7 bis, **corregidos por A** (`239f0d0`, `9eeb952`): los puntos nítidos de la referencia son la
+ventana, y salen nítidos porque se lee el mapa en la **dirección de vista** (`dir.xz`, el disco del cielo): una lectura
+por píxel, sin integrar a lo largo del rayo. Así está ahora. El color de los conos atravesados (lo que había hasta
+el 2026-11-02, siguiendo la primera respuesta) queda como alternativa (`VOL_AURORA_VENTANA_CONO`).
+
+Peso: `clamp(ventana / largo_cono, 0, 1) · 2 × ruido del despeje × noche`, sumado al final del rayo sin pesar por la
+transmitancia. **Escala:** el color del mapa es el cielo fractal (muy tenue en nuestra escala); sin escalar no se
+veía (diferencia 1/255), así que se multiplica por la intensidad de las cortinas × 4 (`VOL_AURORA_VENTANA_ESCALA`),
+la vía que da la especificación «en vez de subir VENTANA sin límite».
+
+**Muestreo de la cortina:** comprobado igual que en Vulpe (§7 bis): 4 muestras estratificadas por cuartos del trozo
+recortado con desfase áureo, peso casi saturado, y el total por la transmitancia al principio del paso.
 
 ### Depuración
 
@@ -152,3 +155,9 @@ derecha; semilla 8, la de por defecto, y la de la referencia puede ser otra):
   izquierda.
 - **Lo que falta sigue igual:** la referencia tiene dentro de la figura puntos y filamentos nítidos y muy
   brillantes; la nuestra, luz suave con vetas. El contraste general y la disposición ya se parecen.
+
+**Con la ventana en la dirección de vista** (`hoja-aurora-frente-referencia.png`: arriba a la izquierda antes, arriba a
+la derecha después, abajo a la izquierda a −40°, abajo a la derecha la referencia; hora 14000, sur, horizonte, 110°):
+en la mitad de arriba aparecen **formas y puntos nítidos y brillantes del fractal** entre las cortinas verticales,
+como en la referencia. Se ven algo en escalón (el mapa es de ¼ de resolución). Coste de noche con la aurora a la
+vista: 8,6 ms de GPU (sin cambio apreciable).

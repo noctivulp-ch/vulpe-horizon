@@ -196,7 +196,7 @@ fn vol_integrar(rayo: VolRayo, luz: VolLuz, a: VolAjustes, mapa: texture_depth_2
         }
     }
     if a.aurora.activa {
-        r.luz += vol_aurora_ventana(rayo.camara, rayo.dir, r.ventana, r.color_ventana, a.aurora);
+        r.luz += vol_aurora_ventana(rayo.camara, rayo.dir, r.ventana, r.color_ventana, a.aurora, ta, sa);
     }
     return r;
 }
