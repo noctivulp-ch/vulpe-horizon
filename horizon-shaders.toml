@@ -52,6 +52,7 @@ shared = [
     "opciones/volumen.wgsl",
     "opciones/taa.wgsl",
     "opciones/oclusion.wgsl",
+    "opciones/viento.wgsl",
     "adaptadores/marco.wgsl",
     "adaptadores/atmosfera.wgsl",
     "adaptadores/fractal.wgsl",
@@ -72,6 +73,13 @@ name = "Cielo"
 clouds = false      # las nubes son del subsistema 05
 sun = false         # el disco del sol es nuestro (subsistema 01); la luna la dibuja Horizon
 stars = false
+
+# Vegetación ondulante (15): el juego instalado (nightly-2026-11-01-c9d474d) no conoce aún [vertex] y rechaza el
+# pack entero; horizon-shader check sí lo acepta. Se activa quitando los # cuando el juego lo admita.
+# Ver docs/efectos/vegetacion-ondulante.md.
+#[vertex]
+#file = "etapas/vertice.wgsl"
+#files = ["nucleo/superficie/viento.wgsl", "adaptadores/vertice.wgsl"]
 
 [material]
 file = "etapas/material.wgsl"
@@ -622,6 +630,10 @@ filter = "linear"
 wrap = "clamp"
 
 # --- Materiales (ids de MaterialInput.material; ver opciones/luz.wgsl) -------------------------
+
+[[materials]]       # mitad superior de las plantas de dos bloques (15: ondula entera); SSS fuerte, cruzada
+id = 8
+sprites = ["block/tall_grass_top", "block/large_fern_top", "block/sunflower_top", "block/rose_bush_top", "block/lilac_top", "block/peony_top", "block/pitcher_plant_top", "block/tall_seagrass_top", "block/small_dripleaf_top"]
 
 [[materials]]       # hojas: SSS fuerte
 id = 1
