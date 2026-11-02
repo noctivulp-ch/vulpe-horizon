@@ -11,9 +11,10 @@ Especificación: `../vulpe-horizon-spec/subsistemas/16-lluvia-y-nieve.md`. Captu
   más el astro tras la atmósfera × sombra × fase × luz de cielo, más la antorcha con la curva de luz de bloque y el
   color por defecto de 03; × 1,3 para que la gota quede algo más clara que lo que tapa. Fase de Henyey-Greenstein
   g = 0,75 para la lluvia (brilla a contraluz) y 0,1 para la nieve.
-- **Sombra:** la etapa `weather` **no tiene** el mapa de sombras ni `shadow_position` (el comprobador da «unknown
-  identifier», en contra de lo que dice la referencia de la API): sombra aproximada por la luz de cielo de
-  Minecraft, como más allá del mapa en el 04.
+- **Sombra:** el comprobador compilado (`trabajo/horizon-shader-build`) y el juego instalado son anteriores a
+  `shadow_position` en la etapa `weather` (entró el 2026-11-02 a las 00:53, dato del gestor): «unknown identifier».
+  Mientras tanto, sombra aproximada por la luz de cielo de Minecraft, como más allá del mapa en el 04. Con una
+  versión más nueva, usar `shadow_position` + el mapa.
 - **Alfa:** el de la textura × opción × 0,28 (lluvia) o 0,75 (nieve).
 - **Niebla:** la de post no ve las cortinas (no escriben profundidad, dato del gestor): el alfa se atenúa aquí con
   `e^(−σ·distancia)`, σ de la niebla uniforme del momento (horario del 05 + lluvia) más 0,004.
