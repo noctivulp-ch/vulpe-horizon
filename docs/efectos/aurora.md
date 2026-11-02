@@ -98,3 +98,21 @@ Noche mirando la figura (1830×1040, RTX 3050 Ti portátil): 6,09 ms de GPU con 
   `dbg_conos.png`.
 - **Ventana** (`aurora-sin-ventana.png` frente a `aurora-semilla3.png`): ver §Ventana.
 - **No visto:** el suelo medido del mod nativo.
+
+## Comparación con la referencia, ya con el aislamiento de color (2026-11-02)
+
+`hoja-aurora-frente-referencia.png`: a la izquierda la nuestra (semilla 3, mirando al sur un poco hacia arriba),
+a la derecha `referencias/ruidov_noche.png`.
+
+- **Ajustes hechos:** la luz de las cortinas ×3 (`ADP_AURORA_ESCALA` 0,5 → 1,5) y la ventana ×2,5
+  (`VOL_AURORA_VENTANA_ESCALA` 0,6 → 1,5): con el 13 en gris y la exposición calibrada (11) las cortinas quedaban
+  apenas por encima de la niebla iluminada por la luna; ahora destacan como en la referencia.
+- **Probado y descartado:** el mapa a ½ resolución con 48 iteraciones: +0,6 ms y no se gana detalle a la vista.
+- **Lo que sigue sin parecerse:** en la referencia, dentro de cada figura se ven **puntos y filamentos nítidos y muy
+  brillantes** sobre una cortina oscura con vetas, y el fondo entre figuras es casi negro. En la nuestra la luz sale
+  como **manchas suaves** con vetas finas, sin puntos nítidos. Diagnóstico: mirando desde el suelo a ~30° el rayo
+  cruza la franja del velo (96 bloques de alto) a lo largo de ~190 bloques horizontales, es decir, ~0,4 del radio del
+  disco: cada píxel integra un trozo grande del mapa y el detalle del fractal se emborrona. Sospecho que en Vulpe los
+  puntos nítidos son la **ventana** (el fractal visto a través de los conos) o el borde superior del velo con un
+  perfil más estrecho. **Duda para A:** ¿de dónde salen los puntos nítidos de la referencia, y cuánto del velo se
+  integra por píxel en Vulpe?
