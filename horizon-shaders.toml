@@ -138,6 +138,7 @@ files = [
     "nucleo/volumen/aurora.wgsl",
     "nucleo/volumen/raymarch.wgsl",
     "nucleo/volumen/agua.wgsl",
+    "nucleo/volumen/dimensiones.wgsl",
     "adaptadores/post.wgsl",
     "adaptadores/aurora.wgsl",
     "adaptadores/volumen.wgsl",
@@ -159,6 +160,7 @@ files = [
     "nucleo/volumen/aurora.wgsl",
     "nucleo/volumen/raymarch.wgsl",
     "nucleo/volumen/agua.wgsl",
+    "nucleo/volumen/dimensiones.wgsl",
     "adaptadores/post.wgsl",
     "adaptadores/aurora.wgsl",
     "adaptadores/volumen.wgsl",
@@ -589,6 +591,24 @@ max = 2.0
 step = 0.05
 
 [[options]]
+id = "niebla_nether"
+name = "Niebla del Nether"
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
+id = "niebla_end"
+name = "Niebla del End"
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
 id = "nubes"
 name = "Nubes"
 description = "Qué capas de nubes se dibujan."
@@ -699,7 +719,7 @@ items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conju
 id = "niebla"
 name = "Niebla y nubes"
 description = "Niebla volumétrica y nubes."
-items = ["niebla", "niebla_pasos", "niebla_cantidad", "niebla_lluvia", "nubes", "nubes_calidad"]
+items = ["niebla", "niebla_pasos", "niebla_cantidad", "niebla_lluvia", "nubes", "nubes_calidad", "niebla_nether", "niebla_end"]
 
 [[pages]]
 id = "agua"

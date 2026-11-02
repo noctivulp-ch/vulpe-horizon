@@ -21,12 +21,18 @@ fn adp_factor_dia() -> f32 {
 
 // 1 de noche cerrada, 0 de día (convenciones: aparece con el sol bajando del horizonte).
 fn adp_factor_noche() -> f32 {
-    return clamp(-frame.sun_direction.y * 2.0, 0.0, 1.0);
+    return select(0.0, clamp(-frame.sun_direction.y * 2.0, 0.0, 1.0), adp_es_superficie());
 }
 
 // La misma en todas las etapas: es la clave de la codificación del «picture» (ADR 0004).
 fn adp_codificacion() -> ColCodificacion {
     let p = ColParametrosExposicion(frame.sun_direction.y, frame.eye_light_smooth.y, OPC_EV_DIA, OPC_EV_NOCHE, OPC_EV_INTERIOR);
-    let e = col_exposicion_previa(p);
+    var e = col_exposicion_previa(p);
+    // Fuera del Overworld no hay sol: un valor fijo por dimensión (17); la automática corrige.
+    if frame.dimension == -1 {
+        e = exp2(OPC_EV_NETHER);
+    } else if frame.dimension != 0 {
+        e = exp2(OPC_EV_END);
+    }
     return ColCodificacion(e, OPC_BLANCO);
 }

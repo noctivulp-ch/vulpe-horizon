@@ -15,6 +15,9 @@ override reflejos_pantalla: u32 = 1u;       // apagado, bajo, alto
 const OPC_LUZ_BLOQUE: f32 = 0.012;          // superficie blanca junto a una antorcha (antes del refuerzo)
 const OPC_LUZ_BLOQUE_REFUERZO: f32 = 3.0;
 const OPC_LUZ_MINIMA: f32 = 0.0004;
+// Ambiente de las otras dimensiones (17), en la misma escala.
+const OPC_AMBIENTE_NETHER: f32 = 0.0035;
+const OPC_AMBIENTE_END: f32 = 0.002;
 const OPC_EMISION: f32 = 0.05;
 // La luz de cielo de la tabla (≈0,08 del sol a mediodía) se refuerza hasta el 0,1–0,2 de convenciones.md.
 const OPC_LUZ_CIELO_BASE: f32 = 1.8;

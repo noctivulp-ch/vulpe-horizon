@@ -81,6 +81,7 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
 }
 
 struct AdpLuces {
+    fija: bool,             // ambiente de dimensión (17): no depende de la luz de cielo de Minecraft
     direccion: vec3<f32>,   // hacia el astro que da sombra (sol de día, luna de noche)
     directa: vec3<f32>,     // irradiancia perpendicular tras la atmósfera (π = sol de mediodía)
     cielo: vec3<f32>,       // radiancia media del cielo (ambiente)
@@ -88,6 +89,16 @@ struct AdpLuces {
 }
 
 fn adp_luces(o: OpcLuz) -> AdpLuces {
+    if !adp_es_superficie() {
+        // Nether y End (17): sin sol ni cielo; un ambiente propio, hemisférico (en el Nether, más desde abajo).
+        let fc = frame.fog_color;
+        if frame.dimension == -1 {
+            let bruma = col_srgb_a_lineal(fc / max(max(fc.r, max(fc.g, fc.b)), 1e-3));
+            return AdpLuces(true, vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(0.0), bruma * OPC_AMBIENTE_NETHER * 0.6, bruma * OPC_AMBIENTE_NETHER * 1.4);
+        }
+        let azul = vec3<f32>(0.55, 0.6, 1.0) * OPC_AMBIENTE_END;
+        return AdpLuces(true, vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(0.0), azul, azul * 0.7);
+    }
     let c = opc_cielo();
     let d = frame.light_direction;
     let directa = adp_irradiancia_astro(c);
@@ -95,7 +106,7 @@ fn adp_luces(o: OpcLuz) -> AdpLuces {
     let cubierto = clamp(frame.rain, 0.0, 1.0);
     var cielo = adp_cielo_medio(c) * o.cielo * OPC_LUZ_CIELO_BASE;
     cielo = mix(cielo, vec3<f32>(col_luminancia(cielo)) * 0.8, cubierto) * (1.0 - 0.5 * frame.thunder);
-    return AdpLuces(d, directa, cielo, adp_suelo(c) * o.cielo * OPC_LUZ_CIELO_BASE);
+    return AdpLuces(false, d, directa, cielo, adp_suelo(c) * o.cielo * OPC_LUZ_CIELO_BASE);
 }
 
 struct AdpSombra {

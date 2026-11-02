@@ -8,7 +8,8 @@
   `efectos/exposicion-tonemap-gradacion.md` (11), `efectos/agua.md` (07) ,
   `efectos/oclusion-ambiental.md` (08), `efectos/menas-brillantes.md` (12),
   `efectos/aislamiento-de-color.md` (13), `efectos/rayos-del-fractal.md` (14),
-  `efectos/vegetacion-ondulante.md` (15, desactivado) y `efectos/lluvia-y-nieve.md` (16).
+  `efectos/vegetacion-ondulante.md` (15, desactivado) , `efectos/lluvia-y-nieve.md` (16) y
+  `efectos/otras-dimensiones.md` (17).
 - `observaciones-del-gestor.md`: lo que llega del gestor fuera de la especificación.
 
 ## Carpetas añadidas a las del ADR 0002

@@ -27,7 +27,7 @@ fn adp_post_direccion(p: AdpPixel) -> vec3<f32> {
 
 // Niebla de borde: el cielo aproximado en la dirección del píxel y cuánto pesa.
 fn adp_post_borde(p: AdpPixel, dir: vec3<f32>) -> vec4<f32> {
-    if p.es_cielo {
+    if p.es_cielo || !adp_es_superficie() {
         return vec4<f32>(0.0);
     }
     let pos = view_position(p.uv, p.profundidad);
