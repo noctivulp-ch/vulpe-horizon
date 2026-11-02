@@ -4,6 +4,9 @@ fn material(input: MaterialInput) -> Surface {
     let o = opc_luz();
     var p = adp_material_punto(input, o);
     let luces = adp_luces(o);
+    if p.fluido == 1u && p.translucido {
+        return agua(input, p, luces);
+    }
     // La sombra solo se busca donde puede verse: cara hacia la luz o con SSS, y con algo de cielo.
     let hacia_luz = p.cruzada || dot(p.normal_cara, luces.direccion) > -0.05 || p.pbr.sss > 0.0;
     var sombra = AdpSombra(vec3<f32>(0.0), 2.0);
@@ -92,4 +95,42 @@ fn material(input: MaterialInput) -> Surface {
         set_surface(n, m.suavidad, sup_empaquetar_dato(m.f0.g, col_luminancia(indirecta) / total, p.luz_cielo));
     }
     return adp_material_salida(color, p.alfa, p);
+}
+
+// El agua (subsistema 07): olas, refracción absorbida, reflejo con Fresnel y especular del sol, o la superficie
+// vista desde abajo. Sale opaca: lo de detrás ya va dentro. Porqué: docs/efectos/agua.md
+fn agua(input: MaterialInput, p: AdpPunto, luces: AdpLuces) -> Surface {
+    let oa = adp_agua_opciones();
+    let medio = agu_medio(oa.claridad);
+    let dist = length(p.posicion);
+    var n = p.normal_cara;
+    if abs(p.normal_cara.y) > 0.9 {
+        n = agu_normal(p.mundo.xz, dist, oa.olas, ruido2d, ruido2d_sampler);
+        n = select(n, -n, p.normal_cara.y < 0.0);
+    }
+    let v = p.vista;
+    let cos_v = max(dot(n, v), 0.0);
+    let ambiente = luces.cielo * luz_curva_cielo(p.luz_cielo) + vec3<f32>(OPC_LUZ_MINIMA * 2.0);
+    let refr = adp_agua_refraccion(p, n, oa.refraccion);
+    // Absorción mínima en zonas oscuras: el agua tiene color propio aunque no haya luz de cielo.
+    let minima = mix(4.0, 0.0, smoothstep(0.2, 0.8, p.luz_cielo));
+    let a_traves = agu_a_traves(refr.color, max(refr.distancia, minima), ambiente, medio);
+
+    if input.face == 0u {
+        // Desde abajo: fuera del cono de Snell, reflexión total (agua profunda); dentro, lo de arriba.
+        let f = agu_fresnel_dentro(cos_v);
+        let hondo = medio.color_disperso * ambiente * 0.3;
+        return adp_material_salida(mix(refr.color, hondo, f), 1.0, p);
+    }
+    let r = reflect(-v, n);
+    let f = agu_fresnel(cos_v);
+    var reflejo = adp_agua_reflejo(p, n, r, luces) * luz_curva_cielo(max(p.luz_cielo, 0.3));
+    let sombra = adp_sombra(p);
+    let especular = sup_especular(n, v, luces.direccion, 0.02, vec3<f32>(0.02)) * max(dot(n, luces.direccion), 0.0)
+                  * luces.directa * sombra.luz;
+    var color = mix(a_traves, reflejo, f) + especular;
+    if OPC_AGUA_TEXTURA {
+        color = mix(color, p.albedo * ambiente, 0.3);
+    }
+    return adp_material_salida(color, 1.0, p);
 }

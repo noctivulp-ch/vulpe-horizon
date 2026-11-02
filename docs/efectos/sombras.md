@@ -13,7 +13,7 @@ hasta el ocluyente, que usa el SSS del 03.
 
 **Sombras de nubes** (§5): con el 05, el material multiplica la luz del sol por `vol_sombra_nubes` (la
 cobertura donde el rayo hacia la luz cruza la mitad de cada capa baja, `e^(−3·c²)`), escalada por la opción.
-**Pendiente:** el tinte del agua es un color fijo hasta el 07 (absorción y profundidad del agua).
+**Agua:** desde el 07, absorción por el grosor de agua hacia la luz y cáusticas (ver `docs/efectos/agua.md`).
 
 ## Por qué del código
 

@@ -49,6 +49,14 @@ fn adp_volumen_ajustes() -> VolAjustes {
 }
 
 fn adp_volumen(uv: vec2<f32>, pixel: vec2<f32>) -> VolResultado {
+    if frame.in_water > 0.5 {
+        // Con la cámara bajo el agua, la niebla del agua sustituye a la de aire (07).
+        let oa = opc_agua(adp_tiempo().segundos, frame.rain);
+        let superficie = select(frame.camera_position.y + 8.0, frame.water_plane, frame.has_reflection == 1u);
+        let agua = VolAgua(superficie, agu_medio(oa.claridad), vec3<f32>(OPC_LUZ_MINIMA * 40.0 * OPC_AGUA_MINIMO));
+        return vol_agua(adp_volumen_rayo(uv, pixel), adp_volumen_luz(), agua, LuzMapa(frame.shadow_view_proj, frame.shadow_distortion),
+                        shadow_map, shadow_sampler, frame.has_shadow == 1u);
+    }
     return vol_integrar(adp_volumen_rayo(uv, pixel), adp_volumen_luz(), adp_volumen_ajustes(),
                         shadow_map, shadow_sampler, ruido2d, ruido2d_sampler, ruido3d, mapa_aurora, linear_sampler);
 }

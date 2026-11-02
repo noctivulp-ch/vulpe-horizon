@@ -1,7 +1,7 @@
 # Niebla y nubes (subsistema 05): cúmulos de mañana, cenit, jirones al amanecer, bruma al atardecer, niebla
 # de noche, lluvia, sobre las nubes y tormenta de nieve.
 close
-tp 170.5 77 166.5
+command tp @s 170.5 77 166.5
 command weather clear
 time 3000
 look 0 -30
@@ -24,20 +24,20 @@ sleep 2
 screenshot niebla-noche
 time 3000
 look 30 10
-tp 170.5 900 166.5
+command tp @s 170.5 900 166.5
 sleep 1
 screenshot niebla-sobre-nubes
-tp 170.5 77 166.5
+command tp @s 170.5 77 166.5
 time 6000
 command weather rain
 sleep 10
 look 0 -10
 screenshot niebla-lluvia
-tp -502 100 -762
+command tp @s -502 100 -762
 wait-ready
 sleep 6
 look 0 10
 screenshot niebla-nieve
 command weather clear
-tp 170.5 77 166.5
+command tp @s 170.5 77 166.5
 wait-ready

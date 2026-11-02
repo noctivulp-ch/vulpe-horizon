@@ -1,6 +1,6 @@
 # TAA (subsistema 09): nubes con la cámara quieta, terreno con sombras, noche con la aurora y girando.
 close
-tp 170.5 77 166.5
+command tp @s 170.5 77 166.5
 command weather clear
 time 3000
 look 0 -30

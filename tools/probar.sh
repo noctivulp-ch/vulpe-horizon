@@ -3,6 +3,7 @@
 # Uso: tools/probar.sh ESCENA [--dejar-abierto]
 #   ESCENA: nombre de pruebas/escenas/<nombre>.ctl (una orden de horizon-ctl por línea; `#` comenta;
 #   `screenshot NOMBRE` guarda en pruebas/capturas/NOMBRE.png). El HUD se oculta al lanzar.
+#   Para mover al jugador, `command tp @s X Y Z`: el `tp` de horizon-ctl lo deshace el servidor.
 # Si ya hay un Horizon abierto se reutiliza (la recarga en caliente ya tiene el pack al día) solo si
 # lo abrió este script; si no, se aborta para no pisar la partida de nadie.
 set -euo pipefail

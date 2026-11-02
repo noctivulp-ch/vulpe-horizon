@@ -1,0 +1,68 @@
+// El agua en el pase translúcido: lo que hay detrás (opaque_depth, opaque_color), el espejo de Horizon y el cielo
+// del pack. Solo en material. Porqué: docs/efectos/agua.md §Adaptadores
+
+fn adp_agua_opciones() -> OpcAgua {
+    return opc_agua(adp_tiempo().segundos, frame.rain);
+}
+
+// Posición relativa a la cámara del punto de pantalla `uv` con la profundidad invertida `d`.
+fn adp_agua_posicion(uv: vec2<f32>, d: f32) -> vec3<f32> {
+    let inv = frame.view_inverse * frame.projection_inverse;
+    return mat_proyectar(inv, vec3<f32>(mat_uv_a_ndc(uv), d));
+}
+
+fn adp_agua_profundidad_opaca(uv: vec2<f32>) -> f32 {
+    let lado = vec2<f32>(textureDimensions(opaque_depth));
+    return textureLoad(opaque_depth, vec2<i32>(clamp(uv * lado, vec2<f32>(0.0), lado - 1.0)), 0);
+}
+
+fn adp_agua_color_opaco(uv: vec2<f32>) -> vec3<f32> {
+    let lado = vec2<f32>(textureDimensions(opaque_color));
+    let c = textureLoad(opaque_color, vec2<i32>(clamp(uv * lado, vec2<f32>(0.0), lado - 1.0)), 0).rgb;
+    return col_decodificar_escena(c, adp_codificacion());
+}
+
+struct AdpRefraccion {
+    color: vec3<f32>,       // lo que hay detrás, en luz lineal
+    distancia: f32,         // bloques de agua atravesados a lo largo de la vista
+}
+
+// Refracción falsa en pantalla (Sousa 2005): desplazamiento por la normal tangente, menor con la distancia y junto
+// al borde; si en el punto desplazado lo que hay está delante del agua, sin desplazar.
+fn adp_agua_refraccion(p: AdpPunto, n: vec3<f32>, cantidad: f32) -> AdpRefraccion {
+    let uv0 = p.pixel / frame.resolution;
+    let dist = length(p.posicion);
+    let borde = smoothstep(0.0, 0.1, min(min(uv0.x, 1.0 - uv0.x), min(uv0.y, 1.0 - uv0.y)));
+    let desplazamiento = (n.xz - p.normal_cara.xz) * cantidad * borde / (1.0 + dist * 0.05);
+    var uv = uv0 + desplazamiento;
+    var d = adp_agua_profundidad_opaca(uv);
+    // Profundidad invertida: mayor = más cerca. Si lo desplazado está delante del agua, no refractar ahí.
+    let d_agua = mat_proyectar(frame.projection * frame.view, p.posicion).z;
+    if d > d_agua {
+        uv = uv0;
+        d = adp_agua_profundidad_opaca(uv);
+    }
+    var distancia = 200.0;
+    if d > 0.0 {
+        distancia = max(length(adp_agua_posicion(uv, d)) - dist, 0.0);
+    }
+    return AdpRefraccion(adp_agua_color_opaco(uv), distancia);
+}
+
+// Lo que se refleja: el espejo de Horizon con su cielo vanilla sustituido por el del pack.
+fn adp_agua_reflejo(p: AdpPunto, n: vec3<f32>, r: vec3<f32>, luces: AdpLuces) -> vec3<f32> {
+    let c = opc_cielo();
+    let horizonte = adp_tabla(frame.sun_direction.y, ATM_FILA_HORIZONTE) * c.sol_color * c.brillo;
+    var cielo = vol_cielo_aproximado(horizonte, adp_cielo_medio(c), max(r.y, 0.0)) * OPC_CIELO_BRILLO_DIBUJO;
+    // Disco del sol reflejado se hace con el especular; nubes reflejadas: la cobertura en la dirección reflejada.
+    if frame.has_reflection == 1u && abs(p.mundo.y - frame.water_plane) < 1.5 {
+        let uv = p.pixel / frame.resolution + (n.xz - p.normal_cara.xz) * 0.03;
+        let texel = textureSampleLevel(reflection, reflection_sampler, uv, 0.0);
+        let peso = agu_peso_cielo(texel.rgb, r.y, frame.sky_color, frame.fog_color);
+        var terreno = col_decodificar_escena(texel.rgb, adp_codificacion());
+        // Alfa < 0,75: bloque emisivo (marca de HDR del motor): reforzarlo.
+        terreno *= select(1.0, 3.0, texel.a < 0.75);
+        return mix(terreno, cielo, peso);
+    }
+    return cielo;
+}

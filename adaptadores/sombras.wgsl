@@ -33,6 +33,10 @@ fn adp_sombra_aproximada(luz_cielo: f32) -> f32 {
     return smoothstep(0.86, 0.97, luz_cielo);
 }
 
+fn adp_agua_opciones_sombra() -> OpcAgua {
+    return opc_agua(adp_tiempo().segundos, frame.rain);
+}
+
 fn adp_sombra_punto(e: AdpEntradaSombra, o: OpcSombras) -> AdpResultadoSombra {
     let aproximada = adp_sombra_aproximada(e.luz_cielo);
     // Sin luz de cielo no hay sol (corrección de fugas, 2.ª parte).
@@ -62,7 +66,18 @@ fn adp_sombra_punto(e: AdpEntradaSombra, o: OpcSombras) -> AdpResultadoSombra {
         if detras < 1.0 {
             let lado = vec2<f32>(textureDimensions(shadow_color));
             let c = textureLoad(shadow_color, vec2<i32>(clamp(mapa.xy * lado, vec2<f32>(0.0), lado - 1.0)), 0);
-            luz *= mix(luz_tinte_translucido(c, OPC_AGUA_TINTE), vec3<f32>(1.0), detras);
+            var tinte = luz_tinte_translucido(c, vec3<f32>(1.0));
+            if c.a >= 0.999 {
+                // Agua (07): absorción por los bloques de agua hacia la luz (diferencia de profundidades de los dos
+                // mapas) y cáusticas, fundidas en el primer bloque.
+                let lado_t = vec2<f32>(textureDimensions(shadow_map_translucent));
+                let d_t = textureLoad(shadow_map_translucent, vec2<i32>(clamp(mapa.xy * lado_t, vec2<f32>(0.0), lado_t - 1.0)), 0);
+                let grosor = max(mapa.z - d_t, 0.0) * adp_bloques_por_profundidad();
+                let oa = adp_agua_opciones_sombra();
+                let caus = agu_causticas((pos + frame.camera_position).xz, oa.olas, ruido2d, ruido2d_sampler);
+                tinte = agu_transmitancia(agu_medio(oa.claridad), grosor) * mix(1.0, caus, smoothstep(0.0, 1.0, grosor) * OPC_AGUA_CAUSTICAS);
+            }
+            luz *= mix(tinte, vec3<f32>(1.0), detras);
         }
     }
     // Más allá del mapa: fundido al aproximado en el último 20 % (el mapa cubre un cuadrado).

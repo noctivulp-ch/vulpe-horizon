@@ -76,6 +76,9 @@ stars = false
 file = "etapas/material.wgsl"
 fog = false         # la niebla es nuestra (subsistema 05)
 files = [
+    "nucleo/agua/optica.wgsl",
+    "nucleo/agua/olas.wgsl",
+    "opciones/agua.wgsl",
     "nucleo/superficie/brdf.wgsl",
     "nucleo/superficie/labpbr.wgsl",
     "nucleo/superficie/sss.wgsl",
@@ -85,7 +88,10 @@ files = [
     "nucleo/luz/difusa.wgsl",
     "adaptadores/sombras.wgsl",
     "adaptadores/material.wgsl",
+    "adaptadores/agua.wgsl",
 ]
+
+[reflection]        # el espejo del agua (07): se dibuja siempre que el material lo lee
 
 [shadow]
 resolution = 2048
@@ -110,10 +116,13 @@ scale = 0.25
 [[post]]
 file = "etapas/post/02-volumen.wgsl"
 files = [
+    "nucleo/agua/optica.wgsl",
+    "opciones/agua.wgsl",
     "nucleo/volumen/fase.wgsl",
     "nucleo/volumen/medios.wgsl",
     "nucleo/volumen/aurora.wgsl",
     "nucleo/volumen/raymarch.wgsl",
+    "nucleo/volumen/agua.wgsl",
     "adaptadores/post.wgsl",
     "adaptadores/aurora.wgsl",
     "adaptadores/volumen.wgsl",
@@ -125,6 +134,8 @@ scale = 0.5
 [[post]]
 file = "etapas/post/03-composicion.wgsl"
 files = [
+    "nucleo/agua/optica.wgsl",
+    "opciones/agua.wgsl",
     "nucleo/superficie/brdf.wgsl",
     "nucleo/superficie/reflejo_pantalla.wgsl",
     "nucleo/luz/curvas.wgsl",
@@ -132,6 +143,7 @@ files = [
     "nucleo/volumen/medios.wgsl",
     "nucleo/volumen/aurora.wgsl",
     "nucleo/volumen/raymarch.wgsl",
+    "nucleo/volumen/agua.wgsl",
     "adaptadores/post.wgsl",
     "adaptadores/aurora.wgsl",
     "adaptadores/volumen.wgsl",
@@ -164,6 +176,35 @@ files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/im
 name = "Final"
 
 # --- Opciones -------------------------------------------------------------------------------
+
+[[options]]
+id = "agua_olas"
+name = "Fuerza de las olas"
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
+id = "agua_claridad"
+name = "Claridad del agua"
+description = "Cuánta agua hace falta para que se vuelva opaca."
+type = "float"
+default = 1.0
+min = 0.25
+max = 4.0
+step = 0.05
+
+[[options]]
+id = "agua_refraccion"
+name = "Refracción"
+description = "Cuánto deforma el agua lo que hay debajo."
+type = "float"
+default = 50.0
+min = 0.0
+max = 100.0
+step = 5.0
 
 [[options]]
 id = "taa"
@@ -531,7 +572,7 @@ sprites = ["block/snow", "block/powder_snow", "block/amethyst_block", "block/cob
 [[pages]]
 id = "principal"
 name = "Vulpe"
-items = ["page:cielo", "page:fractal", "page:niebla", "page:luz", "page:sombras", "page:imagen", "page:depuracion"]
+items = ["page:cielo", "page:fractal", "page:niebla", "page:agua", "page:luz", "page:sombras", "page:imagen", "page:depuracion"]
 
 [[pages]]
 id = "cielo"
@@ -550,6 +591,13 @@ id = "niebla"
 name = "Niebla y nubes"
 description = "Niebla volumétrica y nubes."
 items = ["niebla", "niebla_pasos", "niebla_cantidad", "niebla_lluvia", "nubes", "nubes_calidad"]
+
+[[pages]]
+id = "agua"
+name = "Agua"
+description = "Olas, claridad y refracción."
+columns = 1
+items = ["agua_olas", "agua_claridad", "agua_refraccion"]
 
 [[pages]]
 id = "luz"
