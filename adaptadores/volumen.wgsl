@@ -100,3 +100,20 @@ fn adp_volumen_reescalado(pixel: vec2<f32>, distancia: f32) -> VolResultado {
     let v = suma / max(pesos, 1e-6);
     return VolResultado(v.rgb / adp_codificacion().exposicion, v.a, 0.0, vec3<f32>(0.0));
 }
+
+// Cámara dentro de lava o de nieve en polvo (05 §«Cámara dentro de lava…»): niebla exponencial por distancia sobre todo,
+// como la de vanilla que el pack apaga. Porqué: docs/efectos/niebla-y-nubes.md §Lava y nieve en polvo
+fn adp_niebla_inmersion(color: vec3<f32>, distancia: f32) -> vec3<f32> {
+    let lava = max(frame.in_lava, select(0.0, 1.0, frame.eye_in == 2u));
+    let nieve = select(0.0, 1.0, frame.eye_in == 3u);
+    if lava <= 0.0 && nieve <= 0.0 {
+        return color;
+    }
+    let e = adp_codificacion().exposicion;
+    // Colores en la escala de la escena: la lava, brillante (como su emisión); la nieve, la luz que entra.
+    let c_lava = vec3<f32>(1.0, 0.35, 0.08) * 1.5 / e;
+    let c_nieve = vec3<f32>(0.8, 0.88, 1.0) * 0.8 / e;
+    var c = mix(color, c_nieve, (1.0 - exp(-distancia / 1.2)) * nieve);
+    c = mix(c, c_lava, (1.0 - exp(-distancia / 0.5)) * lava);
+    return c;
+}

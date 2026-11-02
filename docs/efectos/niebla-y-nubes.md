@@ -125,3 +125,14 @@ nubes van en la página de sombras (04). Bruma, caída, alcance, viento y tiempo
 RTX 3050 Ti portátil, 1830×1040, sin límite de FPS. Vista de mañana mirando las nubes con algo de terreno:
 4,5–4,8 ms de GPU con todo; volumen ~0,9 ms y composición ~0,2 sobre la misma vista con las pasadas
 vacías. Plano de terreno de día: 7,1 ms (6,0 sin el 05). Noche con niebla: +0,9 ms.
+
+## Lava y nieve en polvo (fase 2, falta 05.1)
+
+Con la niebla de vanilla apagada desaparecía también la de inmersión. `adp_niebla_inmersion` (composición, tras el
+volumen): niebla exponencial por distancia sobre todo, escena y cielo; en lava (`in_lava` o `eye_in == 2`) naranja
+intenso con escala de 0,5 bloques; en nieve en polvo (`eye_in == 3`) blanco azulado con 1,2 bloques. El brillo lo
+compensa en parte la exposición automática.
+
+**Visto** (`hoja-inmersion.png`, dentro de una caja de cristal rellena con `command fill`, aislamiento de color
+apagado): en lava, todo naranja a un bloque (encima, el fuego de vanilla); en nieve en polvo, gris azulado claro con la
+escarcha de vanilla en los bordes.
