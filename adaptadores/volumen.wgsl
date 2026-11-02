@@ -121,3 +121,16 @@ fn adp_niebla_inmersion(color: vec3<f32>, distancia: f32) -> vec3<f32> {
     c = mix(c, c_lava, (1.0 - exp(-distancia / 0.5)) * lava);
     return c;
 }
+
+// Transmitancia para componer la escena: con la cámara bajo el agua, por canal (Beer-Lambert con la absorción del
+// agua a lo largo de la vista, la misma del raymarch del agua): el rojo se pierde antes que el verde y el azul (07.1).
+// El destino del volumen solo guarda una transmitancia, la luminancia. Porqué: docs/efectos/agua.md §Bajo el agua
+fn adp_transmitancia_compuesta(v: VolResultado, distancia: f32) -> vec3<f32> {
+    if frame.in_water <= 0.5 {
+        return vec3<f32>(v.transmitancia);
+    }
+    let oa = opc_agua(adp_tiempo().segundos, frame.rain);
+    let m = agu_medio(oa.claridad);
+    let d = min(distancia, 96.0);
+    return exp(-(m.absorcion * 0.45 + vec3<f32>(m.dispersion)) * d);
+}
