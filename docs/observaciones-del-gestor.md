@@ -65,3 +65,25 @@ Respuestas de A en la especificación (commit 9aa2fa7):
   preferencia: aceptarlo.
 
 Las especificaciones 06, 07 y 08 han pasado la revisión del gestor.
+
+## 2026-11-02 — revisión del 06 (aurora)
+
+La rugosidad del 03 queda bien cerrada; el comprobador de contaminación sigue a 0.
+
+Lo que se ve (`hoja-aurora.png` frente a `referencias/ruidov_noche.png`):
+- En la referencia la luz llena **el cuerpo de la figura** (filamentos y textura fina dentro) y cuelgan
+  **cortinas altas** (de altura en pantalla parecida a la anchura de la figura) con **vetas verticales**.
+- En la nuestra: una franja estrecha que sigue el **borde** de la silueta, como un ribete, con el interior
+  oscuro; sin extensión vertical ni vetas.
+- El dorado frente al gris es normal (la referencia lleva el aislamiento de color del 13).
+
+Partes de la especificación que el gestor cree incumplidas: el aspecto y el orden de brillo de arriba abajo;
+qué guarda el rgb del mapa (el color en el interior de la figura, no solo en la línea); §3–4, de qué depende la
+emisión de un punto frente a dónde la pone el gancho; y hacer las dos comprobaciones de las líneas 32–35 (conos
+en rojo y sin/con ventana) con capturas en la hoja.
+
+Dato del motor (especificación 16, comprobado por el gestor en el renderizador): la etapa `weather` no escribe
+en `scene_depth`; la niebla de post no ve la lluvia.
+
+A ha terminado las 16 especificaciones, todas revisadas. Recomendación del gestor: tras la aurora, el 09
+(TAA), que limpia el grano del 04, el 05 y el 06.

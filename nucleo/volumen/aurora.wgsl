@@ -10,7 +10,11 @@ struct VolAurora {
     tope: f32,              // Y del borde superior
     intensidad: f32,        // multiplicador de la luz emitida (incluye el ajuste del usuario)
     dia: f32,               // día del mundo (mueve el ruido del despeje)
+    depuracion: u32,        // 0 nada, 1 conos en rojo, 2 sin ventana
 }
+
+const VOL_AURORA_DEPURAR_CONOS: u32 = 1u;
+const VOL_AURORA_DEPURAR_SIN_VENTANA: u32 = 2u;
 
 // Constantes de Vulpe (prioridad baja en la especificación: no son opciones).
 const VOL_AURORA_ALCANCE_CONO: f32 = 1.0;       // del velo
@@ -21,9 +25,18 @@ const VOL_AURORA_DESPEJE: f32 = 1.0;
 const VOL_AURORA_RUIDO: f32 = 0.8;
 const VOL_AURORA_TAMANO_RUIDO: f32 = 96.0;      // bloques
 const VOL_AURORA_VENTANA: f32 = 2.0;
+// El color del mapa es la radiancia del fractal del cielo (del orden de las estrellas tenues en nuestra
+// escala): sumado tal cual la ventana no se veía. Porqué: docs/efectos/aurora.md §Ventana
+const VOL_AURORA_VENTANA_ESCALA: f32 = 12.0;
 const VOL_AURORA_MUESTRAS: i32 = 4;
 const VOL_AURORA_VETAS: f32 = 0.3;
 const VOL_AURORA_GROSOR_VETAS: f32 = 6.0;       // bloques
+// La «densidad» con la que la especificación pesa la luz de la cortina está en las unidades de niebla de
+// Vulpe, mucho mayores que nuestra extinción física (≈0,0076 por bloque de noche): con esta, el peso
+// 1 − e^(−σ·largo) no pasaba de ~0,15 y la luz solo salía donde el rayo recorre mucho velo (un ribete en el
+// borde). Se multiplica la extinción de la niebla para la cortina: así satura casi en cada muestra, como en
+// Vulpe, y la cortina brilla en toda su altura. Porqué: docs/efectos/aurora.md §Peso de la luz
+const VOL_AURORA_DENSIDAD: f32 = 25.0;
 
 fn vol_aurora_largo_cono(a: VolAurora) -> f32 {
     return (a.tope - a.base) * VOL_AURORA_ALCANCE_CONO;
@@ -154,7 +167,10 @@ fn vol_aurora_tramo(camara: vec3<f32>, dir: vec3<f32>, ta: f32, tb: f32, ruido: 
         let y = camara.y + rel.y;
         let despeje = vol_aurora_despeje(rel, y, a, t, s);
         let luz = vol_aurora_luz(rel, y, a, t, s);
-        r.luz += luz * (1.0 - exp(-sigma * (1.0 - despeje) * muestra)) * transmitancia;
+        r.luz += luz * (1.0 - exp(-sigma * VOL_AURORA_DENSIDAD * (1.0 - despeje) * muestra)) * transmitancia;
+        if a.depuracion == VOL_AURORA_DEPURAR_CONOS {
+            r.luz += vec3<f32>(despeje * muestra * 2e-3, 0.0, 0.0) * transmitancia;
+        }
         r.despeje += despeje / f32(VOL_AURORA_MUESTRAS);
         r.ventana += despeje * muestra;
     }
@@ -165,12 +181,12 @@ fn vol_aurora_tramo(camara: vec3<f32>, dir: vec3<f32>, ta: f32, tb: f32, ruido: 
 // La ventana al cielo al final del rayo: el fractal visto a través de los conos atravesados, sumado por
 // encima de la niebla de delante (sin pesarlo por la transmitancia: pesado no se veía).
 fn vol_aurora_ventana(camara: vec3<f32>, dir: vec3<f32>, ventana: f32, a: VolAurora, t: texture_2d<f32>, s: sampler) -> vec3<f32> {
-    if ventana <= 0.0 || dir.y <= 0.0 {
+    if ventana <= 0.0 || dir.y <= 0.0 || a.depuracion == VOL_AURORA_DEPURAR_SIN_VENTANA {
         return vec3<f32>(0.0);
     }
     let f = clamp(ventana / max(vol_aurora_largo_cono(a), 1.0), 0.0, 1.0) * VOL_AURORA_VENTANA;
     let medio = 0.5 * (a.base + a.tope);
     let rel = dir * max((medio - camara.y) / dir.y, 0.0);
     let ruido = vol_aurora_ruido_despeje(rel, a);
-    return vol_aurora_mapa(t, s, dir.xz).rgb * a.noche * f * ruido;
+    return vol_aurora_mapa(t, s, dir.xz).rgb * a.noche * f * ruido * VOL_AURORA_VENTANA_ESCALA;
 }

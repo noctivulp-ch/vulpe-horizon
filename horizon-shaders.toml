@@ -190,7 +190,7 @@ default = true
 id = "depuracion_vista"
 name = "Vista de depuración"
 type = "choice"
-values = ["Normal", "Distancia", "Ruido fBm", "Tramado"]
+values = ["Normal", "Distancia", "Ruido fBm", "Tramado", "Aurora: conos", "Aurora: sin ventana"]
 default = "Normal"
 
 [[options]]
