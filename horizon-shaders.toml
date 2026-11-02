@@ -177,7 +177,7 @@ name = "TAA"
 
 [[post]]
 file = "etapas/post/07-final.wgsl"
-files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/nitidez.wgsl", "nucleo/imagen/aislamiento.wgsl", "opciones/aislamiento.wgsl", "adaptadores/post.wgsl", "adaptadores/imagen.wgsl"]
+files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/nitidez.wgsl", "nucleo/imagen/aislamiento.wgsl", "opciones/aislamiento.wgsl", "nucleo/volumen/fase.wgsl", "nucleo/imagen/rayos.wgsl", "opciones/rayos.wgsl", "adaptadores/post.wgsl", "adaptadores/imagen.wgsl", "adaptadores/rayos.wgsl"]
 name = "Final"
 
 # --- Opciones -------------------------------------------------------------------------------
@@ -355,6 +355,22 @@ default = 0.0
 min = -90.0
 max = 200.0
 step = 5.0
+
+[[options]]
+id = "rayos"
+name = "Rayos del fractal"
+description = "De noche, haces de luz que salen de la figura del cielo fractal."
+type = "bool"
+default = false
+
+[[options]]
+id = "rayos_intensidad"
+name = "Intensidad de los rayos"
+type = "float"
+default = 200.0
+min = 10.0
+max = 400.0
+step = 10.0
 
 [[options]]
 id = "fractal"
@@ -652,7 +668,7 @@ items = ["cielo_brillo", "luna_brillo", "estrellas"]
 id = "fractal"
 name = "Cielo fractal"
 description = "Las constelaciones de fractales de la noche."
-items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_paleta", "fractal_brillo", "fractal_saturacion", "aurora", "aurora_brillo"]
+items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_paleta", "fractal_brillo", "fractal_saturacion", "aurora", "aurora_brillo", "rayos", "rayos_intensidad"]
 
 [[pages]]
 id = "niebla"
