@@ -28,4 +28,8 @@ Opacidad de la lluvia y la nieve (imprescindible), página «Luz». Van 49.
 
 - **Visto:** lluvia de día como cortinas finas casi transparentes sobre el cielo cubierto; de noche, vetas tenues;
   nieve en el bioma nevado como copos blancos opacos.
-- **No visto:** el brillo a contraluz del sol (el cielo cubierto apaga el sol al 10 %, 03), junto a antorchas.
+- **Junto a antorchas** (`clima-lluvia-antorchas.png` frente a `clima-sin-lluvia-antorchas.png`): de noche, las
+  cortinas se iluminan en un halo claro alrededor de cada antorcha y se ven como vetas; lejos de ellas, casi nada.
+- **A contraluz del sol** (`clima-lluvia-contraluz.png`, atardecer mirando al oeste): no se distingue brillo hacia
+  delante, porque con lluvia el sol queda al 10 % (cielo cubierto, 03) y no hay contraluz que recoger. Es lo
+  esperable con el cielo cerrado; solo se vería con lluvia y sol a la vez (paso de una tormenta).

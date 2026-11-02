@@ -31,4 +31,6 @@ Menas brillantes sí/no e intensidad (60 %), en la página «Luz». Sensibilidad
 - **Visto** en la oscuridad: carbón (gris), hierro (beige), oro, diamante, redstone, lapislázuli, esmeralda y cobre
   de piedra y de pizarra profunda, cuarzo y oro del Nether y piedra negra dorada; solo brilla el mineral, con su
   color, y la roca queda a cero; de lejos se siguen distinguiendo las vetas.
-- **No visto:** de día al aire libre, menas de mods.
+- **De día al aire libre** (`menas-dia.png`): el brillo apenas se nota, como pide la especificación (la emisión es
+  moderada); con el aislamiento de color encendido las menas salen en gris como todo lo demás.
+- **No visto:** menas de mods.
