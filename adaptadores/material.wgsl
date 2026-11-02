@@ -21,7 +21,7 @@ struct AdpPunto {
 }
 
 fn adp_es_cruzada(m: u32) -> bool {
-    return m == OPC_MAT_PLANTA_FUERTE || m == OPC_MAT_PLANTA_MEDIA;
+    return m == OPC_MAT_PLANTA_FUERTE || m == OPC_MAT_PLANTA_MEDIA || m == OPC_MAT_PLANTA_ALTA_ARRIBA;
 }
 
 // El tinte de vanilla lleva un sombreado fijo por cara (arriba 1; abajo 0,5; norte/sur 0,8; este/oeste
@@ -33,7 +33,7 @@ fn adp_sombreado_vanilla(n: vec3<f32>) -> f32 {
 
 fn adp_sss_lista(m: u32) -> f32 {
     switch m {
-        case 1u, 2u, 3u: { return 0.9; }
+        case 1u, 2u, 3u, 8u: { return 0.9; }
         case 4u, 5u: { return 0.6; }
         case 6u: { return 0.3; }
         default: { return 0.0; }
