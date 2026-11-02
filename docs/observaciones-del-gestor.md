@@ -122,3 +122,9 @@ gestor.
 - Decisiones de A (`0fcece2`): exposición con la media en log aceptada, objetivo día ≈ 146/255 y noche ≈ 17–18/255
   medido en el centro (hecho: 146,7 y 17,6); Reinhard provisional sobre la luminancia (hecho) y prueba del fílmico
   con el cenit en 0,4–0,6 (hecha: sigue desaturado); bloom de niebla al cuadrado aceptado.
+
+## 2026-11-02 — cierre de la aurora
+
+El gestor da la aurora por cerrada en lo esencial (`c4d8d10`: puntos y filamentos nítidos sobre la cortina, en la
+disposición de la referencia). En espera: lo único abierto es el 15 (vegetación ondulante) y la sombra de la lluvia
+(16), que dependen de que el dueño decida actualizar Horizon.
