@@ -35,18 +35,50 @@ fn img_bloom_grupo(a: vec3<f32>, b: vec3<f32>, c: vec3<f32>, d: vec3<f32>, peso:
     return m * w;
 }
 
-// Desenfoque ancho: 32 lecturas en un disco de Vogel fijo (sin rotar: el bloom no pasa por el TAA después),
-// radio `radio` en uv (de altura), pesos gaussianos por distancia.
-fn img_bloom_ancho(t: texture_2d<f32>, s: sampler, uv: vec2<f32>, radio: f32, aspecto: f32) -> vec3<f32> {
-    var suma = vec3<f32>(0.0);
-    var pesos = 0.0;
-    for (var i = 0; i < 32; i++) {
-        let r = sqrt((f32(i) + 0.5) / 32.0);
-        let a = f32(i) * 2.39996323;
-        let o = vec2<f32>(cos(a) / aspecto, sin(a)) * r * radio;
-        let w = exp(-r * r * 2.5);
-        suma += textureSampleLevel(t, s, uv + o, 0.0).rgb * w;
-        pesos += w;
+// Desenfoque ancho: anillos concéntricos de lecturas bilineales con pesos gaussianos, con `anillos` anillos y tantas
+// muestras por anillo que la separación entre lecturas no pasa de ~2 téxeles (con 32 lecturas en un disco de Vogel una
+// fuente pequeña y brillante salía repetida en copias: los «palitos» que vio el dueño). `giro` (0..1, por píxel) gira
+// cada anillo para que el patrón no se alinee entre píxeles. Radio en uv del alto. Desenfoca los cuatro canales.
+fn img_bloom_ancho(t: texture_2d<f32>, s: sampler, uv: vec2<f32>, radio: f32, aspecto: f32, anillos: i32, giro: f32) -> vec4<f32> {
+    let lado = vec2<f32>(textureDimensions(t));
+    let radio_tx = radio * lado.y;
+    var suma = textureSampleLevel(t, s, uv, 0.0);
+    var pesos = 1.0;
+    for (var k = 1; k <= anillos; k++) {
+        let r = f32(k) / f32(anillos);
+        let n = max(i32(ceil(MAT_TAU * r * radio_tx / 2.0)), 6);
+        // Gaussiana que llega a 0 en el borde: cortada en r = 1 dejaba un disco de borde recortado alrededor de las fuentes.
+        let w = exp(-r * r * 2.5) * (1.0 - r * r) * (1.0 - r * r);
+        let desfase = (giro + f32(k) * 0.618034) * MAT_TAU / f32(n);
+        var anillo = vec4<f32>(0.0);
+        for (var j = 0; j < n; j++) {
+            let a = f32(j) * MAT_TAU / f32(n) + desfase;
+            anillo += textureSampleLevel(t, s, uv + vec2<f32>(cos(a) / aspecto, sin(a)) * r * radio, 0.0);
+        }
+        // Peso del anillo proporcional a su área (su número de muestras) por la gaussiana.
+        suma += anillo * w;
+        pesos += f32(n) * w;
+    }
+    return suma / pesos;
+}
+
+// Opacidad de la niebla en las fuentes de luz de alrededor: media de `1 − a` de `niebla` pesada por la luminancia de
+// `luz`, en los mismos anillos que el desenfoque ancho. Es la niebla que dispersa la luz de esas fuentes.
+fn img_opacidad_fuentes(luz: texture_2d<f32>, niebla: texture_2d<f32>, s: sampler, uv: vec2<f32>, radio: f32, aspecto: f32, anillos: i32, giro: f32) -> f32 {
+    var suma = 0.0;
+    var pesos = 1e-6;
+    for (var k = 0; k <= anillos; k++) {
+        let r = f32(k) / f32(anillos);
+        let n = select(max(i32(ceil(MAT_TAU * r * f32(anillos))), 6), 1, k == 0);
+        let w = exp(-r * r * 2.5) * (1.0 - r * r) * (1.0 - r * r);
+        let desfase = (giro + f32(k) * 0.618034) * MAT_TAU / f32(n);
+        for (var j = 0; j < n; j++) {
+            let a = f32(j) * MAT_TAU / f32(n) + desfase;
+            let p = uv + vec2<f32>(cos(a) / aspecto, sin(a)) * r * radio;
+            let l = col_luminancia(textureSampleLevel(luz, s, p, 0.0).rgb) * w;
+            suma += (1.0 - textureSampleLevel(niebla, s, p, 0.0).a) * l;
+            pesos += l;
+        }
     }
     return suma / pesos;
 }
