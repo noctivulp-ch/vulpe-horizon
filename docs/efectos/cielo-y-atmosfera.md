@@ -148,17 +148,37 @@ violeta-magenta en lugar de rosa salmón poco saturado sobre la sombra gris azul
   sRGB aún responde), que caía en el hueco entre 680 y 550 nm; el término de dispersión múltiple global leía
   la tabla ya teñida de magenta; y la luna saliendo en dirección antisolar (`-sun_direction`) metía un halo Mie
   naranja dentro de la sombra de la Tierra.
-- **Arreglo (`dispersion.wgsl`, `adaptadores/atmosfera.wgsl`, `opciones/cielo.wgsl`):**
-  1. En `atm_aporte_sol`, se ensancha la respuesta del canal verde a la transmitancia enrojecida (~600 nm,
-     `OPC_VENUS_VERDE_NARANJA`) y al azul estratosférico (`OPC_VENUS_VERDE_AZUL`), se atenúa el exceso de rojo
-     de 680 nm cuando hay ozono estratosférico (`OPC_VENUS_ROJO_OZONO`), y se añade un refuerzo de dispersión
-     múltiple local cálido (`OPC_VENUS_COLOR`, `OPC_VENUS_MULTIPLE_LOCAL`) proporcional a la luz enrojecida
-     (`hacia.r - hacia.b`) en la atmósfera baja y media (`OPC_VENUS_ALTURA_FIN`), garantizando `G >= min(R, B)`
-     (nunca `B > G` en la banda cálida ni magenta en el cielo superior).
-  2. En `atm_hacia_sol`, el terminador antisolar incorpora la extinción del limbo troposférico bajo
-     (`OPC_SOMBRA_LIMBO`), penumbra suave y refracción rasante (`OPC_REFRACCION_HORIZONTE`) para mantener la
-     sombra de la Tierra (0–4°) bajo el cinturón iluminado (5–18°) entre 0° y −4° de elevación solar.
-  3. En `atm_multiple_crepusculo` y `adp_luz_luna`, la dispersión múltiple ambiente del crepúsculo conserva el
-     tono gris azulado de la bóveda (`OPC_SOMBRA_TIERRA_COLOR`, `OPC_SOMBRA_TIERRA_PISO`) para iluminar la
-     sombra de la Tierra hacia sRGB ~(110, 120, 150), y la luna entra tras el crepúsculo civil
-     (`OPC_LUNA_CREPUSCULO_INICIO`..`OPC_LUNA_CREPUSCULO_FIN`).
+- **Hallazgos tras `795414d` (por qué la banda rosa no llegaba a la imagen final):**
+  1. **Bordes invertidos en `smoothstep(edge0, edge1, x)` (`edge0 > edge1` en `dispersion.wgsl`):** en WGSL /
+     SPIR-V (`GLSL.std.450 SmoothStep`), `edge0 > edge1` es comportamiento indefinido y evaluaba a `0,0`,
+     anulando `anti` y `refrac` y dejando `limbo` fijo en `0,024`.
+  2. **Muestreo de `transmitancia.png` hundido en el muro de aerosoles (`mu - limbo`):** al restar `limbo` a
+     `mu_tabla`, los puntos sobre la sombra de la Tierra muestreaban rayos rasantes por la troposfera baja (con
+     aerosoles ×5 opacos) en lugar del haz enrojecido por Chappuis sobre el limbo, apagando `hacia_sol` a las
+     12900 y 13000.
+  3. **Ponderación vectorial por `medio.rayleigh` en `venus_local` y piso ambiente excesivo:** a 6–18 km de
+     altura (5–18° de elevación visual) los aerosoles ya han caído (`MIE_H = 1,2 km`) y `medio.rayleigh` tiene
+     proporción `B/R ≈ 5,71`, por lo que multiplicar `medio.rayleigh * (1,0; 0,38; 0,30)` producía un término
+     azul (`B ≈ 1,7·R`) en vez de salmón; solo por debajo de ~3 km (donde domina `medio.mie` escalar y donde
+     los árboles tapan el horizonte salvo en el hueco del extremo derecho del encuadre) asomaba un tono rosado.
+     Además, `OPC_SOMBRA_TIERRA_PISO = 0,013` era ~8 veces mayor que la dispersión múltiple natural del
+     crepúsculo (`~0,0017`), inundando toda la columna con el gris azulado `OPC_SOMBRA_TIERRA_COLOR`, y
+     `adp_irradiancia_astro` pasaba a la luna sin el peso crepuscular en cuanto `sun_direction.y <= 0`.
+  4. **Pipeline posterior (qué probar después si la banda aún queda tenue):** en `02-volumen` (`vol_horario`),
+     la rampa de niebla nocturna (`smoothstep(0,5; 0,6; f) * 0,38`) arranca ya en `f = 0,50` (12000 ticks),
+     dejando a las 12800–13000 una transmitancia de niebla `t ≈ 0,25–0,65` hacia el horizonte y activando el
+     desenfoque ancho de `adp_bloom_final` (`(1 − t)²`, salvo en el 5 % del borde de pantalla donde `borde → 0`);
+     y en `07-final`, `col_purkinje` aplica el tinte escotópico azulado `(0,61; 1,06; 1,52)` con peso global de
+     escena (`L₀ / (L₀ + L_adaptada)`, que sube cuando la mitad inferior del encuadre son árboles en sombra) a
+     todos los píxeles por igual, incluido el cielo crepuscular aún mesópico/fotópico. Si tras corregir el
+     núcleo la banda sigue lavándose en post, el siguiente paso es retrasar el inicio de `noche` en
+     `vol_horario` a `f = 0,545` (~13080 ticks) y atenuar `col_purkinje` por la luminancia local del píxel.
+- **Arreglo aplicado (`dispersion.wgsl`, `adaptadores/atmosfera.wgsl`, `opciones/cielo.wgsl`):**
+  1. Todos los `smoothstep` usan `edge0 < edge1` (`1.0 - smoothstep(...)`).
+  2. En `atm_aporte_sol`, `venus_local` usa la densidad escalar del aire (`medio.rayleigh.g + medio.mie`) y un
+     perfil vertical acotado a la banda media (`1,5–18 km`), con `OPC_VENUS_ROJO_OZONO = 0,25`,
+     `OPC_VENUS_COLOR = (1,0; 0,54; 0,45)` y `OPC_VENUS_MULTIPLE_LOCAL = 3,2`.
+  3. En `atm_hacia_sol`, `limbo` eleva el corte de la sombra de la Tierra (`umbral`) pero `mu_tabla` muestrea el
+     haz rasante sobre el limbo troposférico (`horizonte + v.sombra_limbo * anti + 0,002`).
+  4. `OPC_SOMBRA_TIERRA_PISO` baja a `0,0022` con caída gradual hacia −4°, y `adp_irradiancia_astro` aplica el
+     mismo fundido crepuscular de la luna que `adp_luz_luna`.
