@@ -19,10 +19,15 @@ const OPC_BASTONES_L0: f32 = 0.0015;       // luminancia de escena a la que los 
 const OPC_PURKINJE: f32 = 1.0;
 const OPC_BALANCE_K: f32 = 6500.0;
 const OPC_NITIDEZ: f32 = 0.35;
-const OPC_BLOOM: f32 = 0.08;                // fracción de la imagen desenfocada con fuerza 1
+const OPC_BLOOM: f32 = 0.3;                 // peso con que se suma el desenfoque con fuerza 1 (paridad 10), por la viñeta
+const OPC_BLOOM_VINETA_CENTRO: f32 = 1.5;   // viñeta propia del bloom: ×1,5 en el centro (0,45)…
+const OPC_BLOOM_VINETA_ESQUINA: f32 = 0.5;  // …y ×0,5 en las esquinas (0,15)
+const OPC_BLOOM_NUCLEO: f32 = 0.75;         // parte del núcleo compacto en el desenfoque (el resto, el ancho)
 const OPC_BLOOM_NIEBLA: f32 = 1.0;
 const OPC_BLOOM_NIEBLA_AGUA: f32 = 1.0;
-const OPC_BLOOM_RADIO: f32 = 0.125;         // del alto de la pantalla
+const OPC_BLOOM_RADIO: f32 = 0.06;          // del alto de la pantalla (cola del halo; paridad 10: 97,6 % en 0,06)
+const OPC_BLOOM_ANILLOS: i32 = 12;           // anillos del desenfoque ancho (las muestras por anillo salen del radio)
+const OPC_BLOOM_ANILLOS_NIEBLA: i32 = 6;     // anillos del desenfoque de la niebla que pesa el bloom de niebla (es suave)
 
 struct OpcImagen {
     compensacion: f32,      // multiplicador
