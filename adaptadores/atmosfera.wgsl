@@ -65,7 +65,8 @@ fn adp_irradiancia_astro(c: OpcCielo) -> vec3<f32> {
     if dot(d, frame.sun_direction) > 0.0 {
         e = adp_tabla(d.y, ATM_FILA_SOL) * c.sol_color * c.brillo;
     } else {
-        e = adp_tabla(d.y, ATM_FILA_SOL) * c.luna_color * c.luna_proporcion * c.brillo;
+        let peso = 1.0 - smoothstep(c.venus.luna_inicio, c.venus.luna_fin, frame.sun_direction.y);
+        e = adp_tabla(d.y, ATM_FILA_SOL) * c.luna_color * (c.luna_proporcion * peso) * c.brillo;
     }
     return e * (1.0 - 0.9 * clamp(frame.rain, 0.0, 1.0));
 }
