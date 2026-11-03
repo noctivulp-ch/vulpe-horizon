@@ -134,4 +134,31 @@ de la GPU y falsea las medidas. Durante el banco se pone a `minimized` y luego s
 
 - La niebla de vanilla del terreno lejano tiene su propio color (franja blanquecina en el horizonte): la
   quita el subsistema 05.
-- El lado opuesto al sol en el crepúsculo sale violeta-magenta, más que el rosado del «cinturón de Venus».
+
+## Cinturón de Venus (fase 2, falta 01.1)
+
+En el crepúsculo (sol entre 0° y −4°), mirando al lado opuesto al sol, la banda sobre el horizonte salía
+violeta-magenta en lugar de rosa salmón poco saturado sobre la sombra gris azulada de la Tierra:
+
+- **Causa del magenta:** con tres longitudes de onda discretas (680, 550 y 440 nm), el camino largo rasante
+  por la capa de ozono absorbe con fuerza el canal verde (550 nm) pero apenas el rojo evaluado a 680 nm (lejos
+  del pico de Chappuis en ~600 nm), mientras que en la estratosfera sin aerosoles la sección eficaz de
+  Rayleigh multiplica el azul residual por ~5,7 frente al rojo (`G < min(R, B)`, rojo + azul sin verde =
+  magenta). Además, cuando la luz pierde el azul el pico real se desplaza al naranja (~600 nm, donde el verde
+  sRGB aún responde), que caía en el hueco entre 680 y 550 nm; el término de dispersión múltiple global leía
+  la tabla ya teñida de magenta; y la luna saliendo en dirección antisolar (`-sun_direction`) metía un halo Mie
+  naranja dentro de la sombra de la Tierra.
+- **Arreglo (`dispersion.wgsl`, `adaptadores/atmosfera.wgsl`, `opciones/cielo.wgsl`):**
+  1. En `atm_aporte_sol`, se ensancha la respuesta del canal verde a la transmitancia enrojecida (~600 nm,
+     `OPC_VENUS_VERDE_NARANJA`) y al azul estratosférico (`OPC_VENUS_VERDE_AZUL`), se atenúa el exceso de rojo
+     de 680 nm cuando hay ozono estratosférico (`OPC_VENUS_ROJO_OZONO`), y se añade un refuerzo de dispersión
+     múltiple local cálido (`OPC_VENUS_COLOR`, `OPC_VENUS_MULTIPLE_LOCAL`) proporcional a la luz enrojecida
+     (`hacia.r - hacia.b`) en la atmósfera baja y media (`OPC_VENUS_ALTURA_FIN`), garantizando `G >= min(R, B)`
+     (nunca `B > G` en la banda cálida ni magenta en el cielo superior).
+  2. En `atm_hacia_sol`, el terminador antisolar incorpora la extinción del limbo troposférico bajo
+     (`OPC_SOMBRA_LIMBO`), penumbra suave y refracción rasante (`OPC_REFRACCION_HORIZONTE`) para mantener la
+     sombra de la Tierra (0–4°) bajo el cinturón iluminado (5–18°) entre 0° y −4° de elevación solar.
+  3. En `atm_multiple_crepusculo` y `adp_luz_luna`, la dispersión múltiple ambiente del crepúsculo conserva el
+     tono gris azulado de la bóveda (`OPC_SOMBRA_TIERRA_COLOR`, `OPC_SOMBRA_TIERRA_PISO`) para iluminar la
+     sombra de la Tierra hacia sRGB ~(110, 120, 150), y la luna entra tras el crepúsculo civil
+     (`OPC_LUNA_CREPUSCULO_INICIO`..`OPC_LUNA_CREPUSCULO_FIN`).
