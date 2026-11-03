@@ -3,18 +3,31 @@
 // Porqué: docs/efectos/niebla-y-nubes.md §Nubes
 
 const VOL_MAR: f32 = 63.0;
-// Base y espesor (bloques sobre el mar): cúmulos pequeños, cúmulos grandes, altoestratos.
-const VOL_BASE: vec3<f32> = vec3<f32>(175.0, 450.0, 2000.0);
+// Base y espesor (bloques sobre el mar): cúmulos pequeños (Y 250..350), grandes (Y 500..700), altoestratos (Y 2000).
+const VOL_BASE: vec3<f32> = vec3<f32>(187.0, 437.0, 1937.0);
 const VOL_ESPESOR: vec3<f32> = vec3<f32>(100.0, 200.0, 12.0);
-// Tamaño de un periodo de la textura de ruido 2D, en bloques, por uso.
-const VOL_ESCALA_ZONAS: f32 = 6000.0;   // dónde hay nubes
-const VOL_ESCALA_FORMA: f32 = 3200.0;   // forma de los cúmulos (el canal G trae 16 celdas: ~200 bloques)
-const VOL_ESCALA_ALTO: f32 = 9000.0;
+
+struct VolFormaNubes {
+    escala_zonas: f32,
+    escala_forma: vec2<f32>,
+    escala_alto: f32,
+    escala_erosion: vec2<f32>,
+    inclinacion: f32,
+    base_redondeo: f32,
+    caida_altura: f32,
+    cupula_desde: f32,
+    cupula_potencia: f32,
+    erosion_fuerza: f32,
+    sigma: vec3<f32>,
+    tramo_max: f32,
+    sombra_tau: f32,
+}
 
 struct VolNubes {
     perfil: VolPerfil,
     viento: vec2<f32>,      // desplazamiento acumulado, bloques
     direccion: vec2<f32>,   // dirección del viento, unitaria (inclinación de los cúmulos)
+    forma: VolFormaNubes,
 }
 
 // Cobertura 0..1 de la capa `i` (0, 1, 2) en el punto horizontal `xz` (mundo).
@@ -25,13 +38,18 @@ fn vol_cobertura(xz_entrada: vec2<f32>, i: i32, n: VolNubes, t: texture_2d<f32>,
         return 0.0;
     }
     if i == 2 {
-        let b = vol_ruido2d(t, s, xz / VOL_ESCALA_ALTO + vol_ruido2d(t, s, xz / 20000.0).rg * 0.3).b;
-        return smoothstep(1.0 - cob, 1.0 - cob + 0.25, b);
+        let b = vol_ruido2d(t, s, xz / n.forma.escala_alto + vol_ruido2d(t, s, xz / (n.forma.escala_alto * 2.2)).rg * 0.3).b;
+        let u_alto = (b - 0.32) * 2.8;
+        let umbral_alto = 0.72 - cob * 0.28;
+        return smoothstep(umbral_alto, umbral_alto + 0.35, u_alto);
     }
-    let zonas = vol_ruido2d(t, s, xz / VOL_ESCALA_ZONAS).r;
-    let forma = vol_ruido2d(t, s, xz / VOL_ESCALA_FORMA + f32(i) * 0.37).g;
-    let v = forma * 0.7 + zonas * 0.6 - 0.3;
-    return smoothstep(1.0 - cob, 1.0 - cob + 0.18, v);
+    let escala_f = n.forma.escala_forma[i];
+    let zonas = vol_ruido2d(t, s, xz / n.forma.escala_zonas).b;
+    let muestra_forma = vol_ruido2d(t, s, xz / escala_f + f32(i) * 0.37);
+    let forma = muestra_forma.r * 0.75 + muestra_forma.a * 0.25;
+    let u = (forma * 0.7 + zonas * 0.3 - 0.36) * 3.2;
+    let umbral = 0.68 - cob * 0.22;
+    return sqrt(smoothstep(umbral, umbral + 0.48, u));
 }
 
 // Transmitancia de las nubes hacia la luz en el punto `mundo`: la cobertura donde el rayo hacia la luz
@@ -46,7 +64,7 @@ fn vol_sombra_nubes(mundo: vec3<f32>, luz: vec3<f32>, n: VolNubes, t: texture_2d
         if mundo.y < h {
             let p = mundo + luz * ((h - mundo.y) / luz.y);
             let c = vol_cobertura(p.xz, i, n, t, s);
-            tau += c * c * 3.0 * n.perfil.densidad[i];
+            tau += c * c * n.forma.sombra_tau * n.perfil.densidad[i];
         }
     }
     return exp(-tau);
