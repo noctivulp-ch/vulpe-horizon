@@ -45,7 +45,7 @@ fn atm_peso_crepusculo(seno_sol: f32, v: AtmVenus) -> f32 {
 fn atm_multiple_crepusculo(base: vec3<f32>, seno_sol: f32, v: AtmVenus) -> vec3<f32> {
     let crep = atm_peso_crepusculo(seno_sol, v);
     let lum = col_luminancia(base);
-    let piso = v.sombra_piso * smoothstep(-0.14, -0.06, seno_sol) * (1.0 - smoothstep(0.02, 0.14, seno_sol));
+    let piso = v.sombra_piso * smoothstep(-0.12, -0.01, seno_sol) * (1.0 - smoothstep(0.02, 0.14, seno_sol));
     let sombra = max(lum, piso) * v.sombra_color;
     return mix(base, sombra, crep);
 }
@@ -62,7 +62,7 @@ fn atm_aporte_luz(cos_vista: f32, medio: AtmMedio, hacia: vec3<f32>, luz: AtmLuz
 // cálida en la banda del cinturón de Venus. Porqué: docs/efectos/cielo-y-atmosfera.md §Cinturón de Venus
 fn atm_aporte_sol(cos_vista: f32, altura: f32, medio: AtmMedio, hacia: vec3<f32>, sol: AtmLuz, p: AtmParametros, v: AtmVenus) -> vec3<f32> {
     let crep = atm_peso_crepusculo(sol.direccion.y, v);
-    let anti = smoothstep(-0.1, -0.5, cos_vista) * crep;
+    let anti = (1.0 - smoothstep(-0.5, -0.1, cos_vista)) * crep;
     let enrojecida = max(hacia.r - hacia.b, 0.0);
     let verde_piso = hacia.r * v.verde_naranja + hacia.b * v.verde_azul;
     var hacia_corr = hacia;
@@ -71,8 +71,9 @@ fn atm_aporte_sol(cos_vista: f32, altura: f32, medio: AtmMedio, hacia: vec3<f32>
     hacia_corr.r = hacia.r * (1.0 - v.rojo_ozono * clamp(azul_estrat, 0.0, 1.0));
 
     let fase = medio.rayleigh * atm_fase_rayleigh(cos_vista) + vec3<f32>(medio.mie * atm_fase_cornette_shanks(cos_vista, p.mie_asimetria));
-    let banda_h = 1.0 - smoothstep(v.altura_fin * 0.45, v.altura_fin, altura);
-    let venus_local = (medio.rayleigh + vec3<f32>(medio.mie)) * enrojecida * banda_h * v.color * (v.multiple_local * (0.2 + 0.8 * anti));
+    let banda_h = smoothstep(1500.0, 4500.0, altura) * (1.0 - smoothstep(v.altura_fin * 0.5, v.altura_fin, altura));
+    let densidad_aire = medio.rayleigh.g + medio.mie;
+    let venus_local = densidad_aire * enrojecida * banda_h * v.color * (v.multiple_local * (0.15 + 0.85 * anti));
     var aporte = (fase * hacia_corr + venus_local) * sol.irradiancia + (medio.rayleigh + vec3<f32>(medio.mie)) * sol.multiple;
     aporte.g = max(aporte.g, min(aporte.r, aporte.b));
     return aporte;
@@ -109,15 +110,15 @@ fn atm_hacia_sol(pos: vec3<f32>, dir_sol: vec3<f32>, cos_sol: f32, p: AtmParamet
     let mu = dot(pos, dir_sol) / r;
     let horizonte = -sqrt(max(1.0 - (p.radio_planeta / r) * (p.radio_planeta / r), 0.0));
     let crep = atm_peso_crepusculo(dir_sol.y, v);
-    let anti = smoothstep(-0.1, -0.5, cos_sol) * crep;
-    let limbo = v.sombra_limbo * (1.0 - smoothstep(0.0, -0.05, dir_sol.y)) * anti;
-    let refrac = v.refraccion * smoothstep(-0.01, -0.08, dir_sol.y) * anti;
+    let anti = (1.0 - smoothstep(-0.5, -0.1, cos_sol)) * crep;
+    let limbo = v.sombra_limbo * (1.0 - smoothstep(-0.05, 0.01, dir_sol.y)) * anti;
+    let refrac = v.refraccion * (1.0 - smoothstep(-0.08, -0.01, dir_sol.y)) * anti;
     let umbral = horizonte + limbo - refrac;
     let penumbra = smoothstep(umbral - 0.004, umbral + 0.010, mu);
     if penumbra <= 0.0 {
         return vec3<f32>(0.0);
     }
-    let mu_tabla = max(mu - limbo + refrac, horizonte + 0.002);
+    let mu_tabla = max(mu + refrac, horizonte + v.sombra_limbo * anti + 0.002);
     let c = textureSampleLevel(tabla, muestreo, atm_transmitancia_uv(r, mu_tabla, p), 0.0).rgb;
     return atm_transmitancia_decodificar(c) * penumbra;
 }
