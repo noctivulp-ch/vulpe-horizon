@@ -16,13 +16,19 @@ fn adp_observador() -> vec3<f32> {
 fn adp_luz_sol(ajustes: OpcCielo) -> AtmLuz {
     let d = frame.sun_direction;
     let color = ajustes.sol_color * ajustes.brillo;
-    let multiple = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * ATM_MULTIPLE;
+    let base = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * ATM_MULTIPLE;
+    // En el crepúsculo el ambiente mantiene el gris azulado de la bóveda sobre la sombra de la Tierra (01.1).
+    // Porqué: docs/efectos/cielo-y-atmosfera.md §Cinturón de Venus
+    let multiple = atm_multiple_crepusculo(base, d.y, ajustes.venus);
     return AtmLuz(d, ATM_IRRADIANCIA_SOL * color, multiple * color);
 }
 
 fn adp_luz_luna(ajustes: OpcCielo) -> AtmLuz {
     let d = frame.moon_direction;
-    let color = ajustes.luna_color * ajustes.luna_proporcion * ajustes.brillo;
+    // La luna sale por el horizonte antisolar: entra tras el crepúsculo civil para que su halo Mie no pinte de naranja
+    // la sombra de la Tierra (01.1). Porqué: docs/efectos/cielo-y-atmosfera.md §Cinturón de Venus
+    let peso = 1.0 - smoothstep(ajustes.venus.luna_inicio, ajustes.venus.luna_fin, frame.sun_direction.y);
+    let color = ajustes.luna_color * (ajustes.luna_proporcion * peso) * ajustes.brillo;
     let multiple = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * ATM_MULTIPLE;
     return AtmLuz(d, ATM_IRRADIANCIA_SOL * color, multiple * color);
 }
@@ -48,7 +54,7 @@ fn adp_lluvia(ajustes: OpcCielo) -> CieLluvia {
 
 // La dispersión del núcleo con la tabla de transmitancia del pack.
 fn adp_dispersion(dir: vec3<f32>, sol: AtmLuz, luna: AtmLuz, ajustes: OpcCielo) -> AtmResultado {
-    return atm_dispersion(adp_observador(), dir, sol, luna, atm_tierra(), AtmAjustes(ajustes.bruma, 12), transmitancia, transmitancia_sampler);
+    return atm_dispersion(adp_observador(), dir, sol, luna, atm_tierra(), AtmAjustes(ajustes.bruma, 12, ajustes.venus), transmitancia, transmitancia_sampler);
 }
 
 // Irradiancia del astro que da sombra (frame.light_direction: el sol de día, la luna de noche), tras la
