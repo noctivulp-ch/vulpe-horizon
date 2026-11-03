@@ -8,7 +8,7 @@
 # lo abrió este script; si no, se aborta para no pisar la partida de nadie.
 set -euo pipefail
 raiz="$(cd "$(dirname "$0")/.." && pwd)"
-ctl="${HORIZON_CTL:-$HOME/.local/share/horizon-launcher/versions/nightly-2026-11-01-c9d474d/horizon-ctl}"
+ctl="${HORIZON_CTL:-$HOME/.local/share/horizon-launcher/versions/nightly-2026-11-03-f42ef42/horizon-ctl}"
 escena="${1:?uso: tools/probar.sh ESCENA [--dejar-abierto]}"
 dejar="${2:-}"
 guion="$raiz/pruebas/escenas/$escena.ctl"
