@@ -17,20 +17,21 @@ const OPC_CIELO_SATURACION: f32 = 1.0;
 const OPC_CIELO_BRILLO_DIBUJO: f32 = 2.0;
 
 // Cinturón de Venus y sombra de la Tierra en el crepúsculo (01.1): docs/efectos/cielo-y-atmosfera.md §Cinturón de Venus
-const OPC_VENUS_SOL_MIN: f32 = -0.18;               // seno de elevación solar donde termina el crepúsculo (~-10°)
+const OPC_VENUS_SOL_MIN: f32 = -0.26;               // seno de elevación solar donde termina el crepúsculo (~-10°)
 const OPC_VENUS_SOL_MAX: f32 = 0.18;                // seno de elevación solar donde empieza el crepúsculo (~+10°)
 const OPC_VENUS_VERDE_NARANJA: f32 = 0.22;          // respuesta del verde al pico naranja (~600 nm) de la luz rasante
 const OPC_VENUS_VERDE_AZUL: f32 = 0.48;             // piso de verde respecto al azul estratosférico
 const OPC_VENUS_ROJO_OZONO: f32 = 0.25;             // absorción de Chappuis sobre el rojo (680 -> ~600 nm) en la estratosfera
-const OPC_VENUS_MULTIPLE_LOCAL: f32 = 3.2;          // refuerzo de dispersión múltiple cálida en la banda iluminada
-const OPC_VENUS_COLOR: vec3<f32> = vec3<f32>(1.0, 0.54, 0.45);
+const OPC_VENUS_MULTIPLE_LOCAL: f32 = 6.0;          // refuerzo de dispersión múltiple cálida en la banda iluminada
+const OPC_VENUS_COLOR: vec3<f32> = vec3<f32>(1.0, 0.56, 0.62);
 const OPC_VENUS_ALTURA_FIN: f32 = 18000.0;          // m: techo de la banda de dispersión múltiple cálida
 const OPC_SOMBRA_TIERRA_COLOR: vec3<f32> = vec3<f32>(0.46, 0.58, 0.88);
 const OPC_SOMBRA_TIERRA_PISO: f32 = 0.0022;         // radiancia ambiente mínima de la bóveda azul sobre la sombra
-const OPC_SOMBRA_LIMBO: f32 = 0.026;                // extinción de la troposfera baja en el terminador (coseno cenital)
+const OPC_SOMBRA_LIMBO: f32 = 0.008;                // extinción de la troposfera baja en el terminador (coseno cenital)
 const OPC_REFRACCION_HORIZONTE: f32 = 0.020;        // refracción rasante en el horizonte hacia el sol
 const OPC_LUNA_CREPUSCULO_INICIO: f32 = -0.16;      // el halo de la luna entra tras el crepúsculo civil
 const OPC_LUNA_CREPUSCULO_FIN: f32 = -0.05;
+const OPC_VENUS_ELEVACION_FIN: f32 = 0.34;          // seno de ~20°: por encima, el cielo vuelve al azul
 
 struct OpcCielo {
     brillo: f32,            // multiplicador
@@ -59,6 +60,7 @@ fn opc_cielo() -> OpcCielo {
         OPC_REFRACCION_HORIZONTE,
         OPC_LUNA_CREPUSCULO_INICIO,
         OPC_LUNA_CREPUSCULO_FIN,
+        OPC_VENUS_ELEVACION_FIN,
     );
     return OpcCielo(
         exp2(cielo_brillo),

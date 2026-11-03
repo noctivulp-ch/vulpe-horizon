@@ -22,6 +22,7 @@ struct AtmVenus {
     refraccion: f32,
     luna_inicio: f32,
     luna_fin: f32,
+    elevacion_fin: f32,     // seno de la elevación de la mirada donde acaba la banda del cinturón
 }
 
 struct AtmAjustes {
@@ -37,7 +38,7 @@ struct AtmResultado {
 
 // Peso continuo del crepúsculo por altura del sol. Porqué: docs/efectos/cielo-y-atmosfera.md §Cinturón de Venus
 fn atm_peso_crepusculo(seno_sol: f32, v: AtmVenus) -> f32 {
-    return smoothstep(v.sol_min, -0.07, seno_sol) * (1.0 - smoothstep(0.02, v.sol_max, seno_sol));
+    return smoothstep(v.sol_min, -0.04, seno_sol) * (1.0 - smoothstep(0.02, v.sol_max, seno_sol));
 }
 
 // Dispersión múltiple ambiente del sol: en el crepúsculo mantiene el gris azulado de la bóveda sobre la sombra de la
@@ -60,7 +61,8 @@ fn atm_aporte_luz(cos_vista: f32, medio: AtmMedio, hacia: vec3<f32>, luz: AtmLuz
 
 // Aporte del sol con corrección espectral de tres canales en el camino rasante por el ozono y dispersión múltiple
 // cálida en la banda del cinturón de Venus. Porqué: docs/efectos/cielo-y-atmosfera.md §Cinturón de Venus
-fn atm_aporte_sol(cos_vista: f32, altura: f32, medio: AtmMedio, hacia: vec3<f32>, sol: AtmLuz, p: AtmParametros, v: AtmVenus) -> vec3<f32> {
+// `vista_y`: seno de la elevación de la mirada; la banda del cinturón solo existe cerca del horizonte.
+fn atm_aporte_sol(cos_vista: f32, vista_y: f32, altura: f32, medio: AtmMedio, hacia: vec3<f32>, sol: AtmLuz, p: AtmParametros, v: AtmVenus) -> vec3<f32> {
     let crep = atm_peso_crepusculo(sol.direccion.y, v);
     let anti = (1.0 - smoothstep(-0.5, -0.1, cos_vista)) * crep;
     let enrojecida = max(hacia.r - hacia.b, 0.0);
@@ -73,7 +75,9 @@ fn atm_aporte_sol(cos_vista: f32, altura: f32, medio: AtmMedio, hacia: vec3<f32>
     let fase = medio.rayleigh * atm_fase_rayleigh(cos_vista) + vec3<f32>(medio.mie * atm_fase_cornette_shanks(cos_vista, p.mie_asimetria));
     let banda_h = smoothstep(1500.0, 4500.0, altura) * (1.0 - smoothstep(v.altura_fin * 0.5, v.altura_fin, altura));
     let densidad_aire = medio.rayleigh.g + medio.mie;
-    let venus_local = densidad_aire * enrojecida * banda_h * v.color * (v.multiple_local * (0.15 + 0.85 * anti));
+    // Solo en el lado antisolar y por debajo de ~20° de elevación de la mirada (01.1: el rosa llegaba al cenit).
+    let elevacion = 1.0 - smoothstep(v.elevacion_fin * 0.4, v.elevacion_fin, vista_y);
+    let venus_local = densidad_aire * enrojecida * banda_h * v.color * (v.multiple_local * anti * elevacion);
     var aporte = (fase * hacia_corr + venus_local) * sol.irradiancia + (medio.rayleigh + vec3<f32>(medio.mie)) * sol.multiple;
     aporte.g = max(aporte.g, min(aporte.r, aporte.b));
     return aporte;
@@ -148,7 +152,7 @@ fn atm_dispersion(origen: vec3<f32>, dir: vec3<f32>, sol: AtmLuz, luna: AtmLuz, 
         var fuente = vec3<f32>(0.0);
         if activos.sol {
             let hacia_sol = atm_hacia_sol(pos, sol.direccion, cos_sol, p, ajustes.venus, tabla, muestreo);
-            fuente += atm_aporte_sol(cos_sol, altura, medio, hacia_sol, sol, p, ajustes.venus);
+            fuente += atm_aporte_sol(cos_sol, dir.y, altura, medio, hacia_sol, sol, p, ajustes.venus);
         }
         if activos.luna {
             fuente += atm_aporte_luz(cos_luna, medio, atm_hacia_astro(pos, luna.direccion, p, tabla, muestreo), luna, p);

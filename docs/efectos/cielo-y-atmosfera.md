@@ -182,3 +182,18 @@ violeta-magenta en lugar de rosa salmón poco saturado sobre la sombra gris azul
      haz rasante sobre el limbo troposférico (`horizonte + v.sombra_limbo * anti + 0,002`).
   4. `OPC_SOMBRA_TIERRA_PISO` baja a `0,0022` con caída gradual hacia −4°, y `adp_irradiancia_astro` aplica el
      mismo fundido crepuscular de la luna que `adp_luz_luna`.
+
+### Ajuste del 2026-11-03 (observación del gestor: el rosa llegaba al cenit y saltaba entre 12800 y 12900)
+
+- **Hasta ~20° de elevación:** el refuerzo cálido de la banda (`venus_local`) se aplicaba a cualquier mirada con un
+  mínimo del 15 % y en toda la altura de 1,5–18 km, así que mirando arriba también se teñía. Ahora solo existe en el
+  lado antisolar (sin el 15 % de base) y se funde entre ~8° y ~20° de elevación de la mirada
+  (`OPC_VENUS_ELEVACION_FIN` = sen 20°). Medido a las 12700: a 2 % de la pantalla (cenit del encuadre) (45; 42; 44),
+  gris neutro, frente a (212; 156; 138) en la banda.
+- **El salto:** según la órbita de Minecraft el sol cruza el horizonte hacia las ~12790 ticks; la banda se apagaba
+  justo al ponerse porque el corte de la sombra de la Tierra por el limbo (`OPC_SOMBRA_LIMBO` 0,026 en coseno, ~1,5°)
+  la tapaba en cuanto el sol bajaba de 0. Con 0,008 y el peso del crepúsculo alargado (`OPC_VENUS_SOL_MIN` −0,26, el
+  fundido desde −0,04) la banda sigue tras la puesta y se apaga en ~150 ticks: en la banda (cerca del horizonte)
+  225 → 225 → 194 → 77 → 20 → 9 a las 12600, 12700, 12800, 12850, 12900, 12950 (`hoja-venus.png`).
+- **Tono:** `OPC_VENUS_COLOR` (1; 0,56; 0,62) y refuerzo `OPC_VENUS_MULTIPLE_LOCAL` 6: (225; 172; 149) a las 12700,
+  cerca del salmón (230; 180; 180) del objetivo, algo más cálido.

@@ -294,7 +294,7 @@ id = "aislamiento"
 name = "Aislamiento de color"
 description = "El mundo casi en gris y un solo color, en manchas grandes (el abrigo rojo)."
 type = "bool"
-default = true
+default = false
 
 [[options]]
 id = "aislamiento_matiz"
