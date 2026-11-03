@@ -111,17 +111,26 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
 // La capa de nubes `i` en [t0, t1].
 fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: f32, rayo: VolRayo, luz: VolLuz, a: VolAjustes,
                    t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>) {
-    let t1 = min(t1_entrada, VOL_NUBES_DISTANCIA);
+    let tope = select(min(t0 + a.nubes.forma.tramo_max, VOL_NUBES_DISTANCIA), VOL_NUBES_DISTANCIA, i == 2);
+    let t1 = min(t1_entrada, tope);
     if t1 <= t0 {
         return;
     }
     let cos_luz = dot(rayo.dir, luz.direccion);
     let y0 = VOL_MAR + VOL_BASE[i];
     let pasos = select(a.pasos_nubes, 3, i == 2);
-    let paso = (t1 - t0) / f32(pasos);
-    let sigma_nube = select(0.25, 0.03, i == 2);
+    let largo = t1 - t0;
+    let curvar = select(clamp((largo - 250.0) / 650.0, 0.0, 0.7), 0.0, i == 2);
+    let sigma_nube = a.nubes.forma.sigma[i];
+    var anterior = 0.0;
     for (var j = 0; j < pasos; j++) {
-        let t = t0 + paso * (f32(j) + rayo.ruido);
+        let u = (f32(j) + rayo.ruido) / f32(pasos);
+        let u1 = (f32(j) + 1.0) / f32(pasos);
+        let s = mix(u, u * u, curvar);
+        let siguiente = mix(u1, u1 * u1, curvar) * largo;
+        let paso = max(siguiente - anterior, 1e-3);
+        anterior = siguiente;
+        let t = t0 + s * largo;
         let mundo = rayo.camara + rayo.dir * t;
         let d = vol_nube(mundo, i, a.nubes, t2, s2, t3, true);
         if d <= 0.001 {

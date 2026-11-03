@@ -45,34 +45,36 @@ fn vol_niebla(mundo: vec3<f32>, a: VolAjustesNiebla, ruido3d: texture_2d<f32>) -
 // `erosion`: falso en las muestras de luz hacia el astro (solo cobertura y forma: la especificación lo prevé
 // para el presupuesto).
 fn vol_nube(mundo: vec3<f32>, i: i32, n: VolNubes, t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>, erosion: bool) -> f32 {
-    let h = (mundo.y - VOL_MAR - VOL_BASE[i]) / VOL_ESPESOR[i];
-    if h < 0.0 || h > 1.0 {
+    let dy = mundo.y - (VOL_MAR + VOL_BASE[i]);
+    let h = dy / VOL_ESPESOR[i];
+    if h <= 0.0 || h >= 1.0 {
         return 0.0;
     }
-    // Los cúmulos se inclinan algo con el viento al subir: un 20 % de su espesor en la dirección del viento.
-    // (Con el desplazamiento acumulado en vez de la dirección, la inclinación crecía con el tiempo y salían
-    // lágrimas tumbadas.)
-    let inclinado = mundo.xz + n.direccion * (h * VOL_ESPESOR[i] * 0.2);
+    let inclinado = mundo.xz + n.direccion * (h * VOL_ESPESOR[i] * n.forma.inclinacion);
     let cob = vol_cobertura(inclinado, i, n, t2, s2);
     if cob <= 0.0 {
         return 0.0;
     }
     if i == 2 {
-        return cob * smoothstep(0.0, 0.3, h) * (1.0 - smoothstep(0.7, 1.0, h));
+        return cob * smoothstep(0.0, 0.3, h) * (1.0 - smoothstep(0.7, 1.0, h)) * n.perfil.densidad[i];
     }
-    // Gradiente de altura: base plana redondeada en los primeros ~25 bloques, techo en cúpula. La cobertura
-    // se recorta con él (Schneider y Vos 2015): donde hay mucha cobertura la nube es alta; en el borde solo
-    // queda una franja baja. Así salen cúpulas y no columnas de paredes rectas.
-    let base = smoothstep(0.0, 25.0 / VOL_ESPESOR[i], h);
-    let techo = 1.0 - smoothstep(0.55, 1.0, h);
-    let gradiente = base * techo;
-    var d = clamp((cob - (1.0 - gradiente)) / max(gradiente, 0.05), 0.0, 1.0);
-    // Erosión con ruido 3D de dos frecuencias, más fuerte en los bordes (donde d es baja).
+    // El techo de cada cúmulo escala con su cobertura horizontal `cob` (cúpula sobre base plana); con `cob = 1`
+    // reproduce la envolvente vertical de paridad/05 §Perfil vertical de los cúmulos.
+    if h >= cob {
+        return 0.0;
+    }
+    let h_c = h / max(cob, 1e-3);
+    let base = 1.0 - pow(clamp(1.0 - dy / max(n.forma.base_redondeo * cob, 1.0), 0.0, 1.0), 5.0);
+    let u_techo = clamp((h_c - n.forma.cupula_desde) / max(1.0 - n.forma.cupula_desde, 1e-3), 0.0, 1.0);
+    let techo = 1.0 - pow(u_techo, n.forma.cupula_potencia);
+    var d = cob * base * exp(-n.forma.caida_altura * h) * techo;
     if erosion && d > 0.0 {
-        let p = vec3<f32>(inclinado.x, mundo.y, inclinado.y) / 220.0;
+        let p = vec3<f32>(inclinado.x, mundo.y, inclinado.y) / n.forma.escala_erosion[i];
         let r = vol_ruido3d(t3, p);
         let e = r.r * 0.6 + r.g * 0.3 + r.b * 0.1;
-        d = clamp((d - (1.0 - e) * 0.55 * (1.0 - d)) / max(1.0 - 0.3 * (1.0 - e), 0.3), 0.0, 1.0);
+        let peso = smoothstep(0.0, 0.25, h) * (1.0 - d);
+        let recorte = (1.0 - e) * n.forma.erosion_fuerza * peso;
+        d = clamp((d - recorte) / max(1.0 - 0.6 * recorte, 0.4), 0.0, 1.0);
     }
     return d * n.perfil.densidad[i];
 }

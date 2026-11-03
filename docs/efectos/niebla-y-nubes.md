@@ -58,7 +58,10 @@ código (medido): el presupuesto de 64 por etapa no aprieta.
   del mar. Antes seguía 512 bloques bajo el mundo, donde las manchas ya no caen con la altura, y desde encima
   de las nubes daba un velo opaco ruidoso (lo vio el gestor; la causa la encontró una sonda: `manchas` > 0
   por el término de bioma húmedo, `downfall` 0,8 del bosque).
-- **Nubes:** 14 pasos por capa baja (8/14/20 por calidad), 3 en los altoestratos. Luz: Beer con
+- **Nubes:** 14 pasos por capa baja (8/14/20 por calidad), 3 en los altoestratos. El tramo integrado dentro de cada
+  capa baja se acota a `OPC_NUBES_TRAMO_MAX` (900 bloques) y, cuando el tramo supera 250 bloques (mirada rasante o
+  cámara dentro de la capa), el reparto de pasos se curva (`mix(u, u², 0,7)`) para concentrar pasos de 20–30 bloques
+  cerca de la cámara en lugar de dar saltos uniformes de más de 400 bloques. Luz: Beer con
   dos muestras hacia el astro a 8 y 28 bloques **sin erosión** (solo cobertura y forma, como prevé la
   especificación para el presupuesto), fase con «powder», ambiente más oscuro en la base. Hasta 6000
   bloques, fundidas desde la mitad: cerca del horizonte cada paso abarcaba miles de bloques y dejaba vetas.
@@ -80,22 +83,47 @@ código (medido): el presupuesto de 64 por etapa no aprieta.
   Luz: sol × sombra × fase + ambiente ×0,1–0,25 (más mirando arriba). El ambiente es bajo a propósito:
   la referencia de noche (`nch_base.png`) es casi negra, con el resplandor de la luna; con más ambiente la
   niebla nocturna salía gris azulada clara.
-- **Nubes:** cobertura 2D de dos escalas (zonas de 6000 bloques, forma de 3200 con celdas de ~200) recortada
-  por un **gradiente de altura** (base redondeada en los primeros 25 bloques, techo en cúpula):
-  `(cobertura − (1 − gradiente))/gradiente` (Schneider y Vos 2015). Sin eso, con densidad casi constante
-  en altura, salían columnas de paredes rectas que, vistas desde abajo, convergían en el cenit como rayas.
-  Erosión 3D de dos frecuencias en los bordes. Techo que se estrecha desde el 55 % del espesor (desde el 25 %
-  salían conos). **Inclinación con el viento:** un 20 % del espesor en la *dirección* del viento; antes usaba el
-  desplazamiento acumulado, que crece con el tiempo, y salían lágrimas tumbadas (observación del gestor). Extinción 0,25 por bloque (0,03 los altoestratos): con 0,06
-  se veía la columna entera a través de la base.
-- **Capas:** base 175 / 450 / 2000 bloques sobre el mar (Y = 63), espesor 100 / 200 / 12.
+- **Nubes (corregidas en 05.4 frente a las formas de palo):**
+  - **Causa de los «palos»:** se juntaban tres cosas:
+    1. En `vol_cobertura`, el peso dominante (0,7) venía del canal G de `ruido2d.png` (fBm de 16 a 128 celdas en 3200
+       bloques: lóbulos de 25–50 bloques en XZ, constantes en Y), y la combinación `v` apenas tenía rango dinámico
+       (percentil 90 en 0,495 y 99 en 0,602), por lo que `smoothstep` solo recortaba crestas estrechas de 25–40 bloques
+       de diámetro horizontal frente a 100–200 bloques de espesor vertical (relación ancho/alto ≈ 0,2: columnas
+       verticales). Además, las oscilaciones de 50 bloques del canal G en 2D hendían cada nube de abajo arriba en
+       rebanadas paralelas (`|||`).
+    2. En `vol_nube`, `gradiente = base * techo` valía `1,0` en toda la franja central (`h ∈ [0,125; 0,55]`), de modo
+       que `d = (cob − (1 − gradiente)) / gradiente` no reducía la altura donde `cob` era pequeña: cualquier mota con
+       `cob = 0,1` se estiraba en vertical a lo largo de todo el centro de la capa y perdía la base (`1 − base > cob`),
+       quedando como un palo colgante; y donde `cob` saturaba rápido a `1,0` (`smoothstep` de ancho 0,18), las paredes
+       quedaban verticales.
+    3. La capa grande (`VOL_ESPESOR = 200`) usaba la misma escala horizontal que la pequeña (`100`), duplicando el
+       estiramiento vertical.
+  - **Solución y paridad (`paridad/05`):**
+    1. **Cobertura 2D ancha y suave (`vol_cobertura`):** las zonas de varios kilómetros leen el canal B (fBm de 2
+       celdas, escala `OPC_NUBES_ESCALA_ZONAS = 12000` bloques) y la forma de los cúmulos combina el canal R (fBm suave
+       de 4 celdas, 75 %) con el canal A (domos celulares de Worley de 8 celdas, 25 %), sin el confeti de alta
+       frecuencia del canal G en 2D, y con escala proporcional al espesor de cada capa (`OPC_NUBES_ESCALA_FORMA =
+       (3600, 6400)` bloques). La señal combinada se normaliza a `[0, 1]` y se umbraliza con una rampa ancha (`0,48`) y
+       raíz cuadrada para que `cob` crezca suavemente del borde al centro del cúmulo (mediana de ancho 240 y 370
+       bloques; relación ancho/alto ≈ 4,5–5,4).
+    2. **Perfil vertical y cúpula (`vol_nube`):** el techo local de la nube escala con su cobertura horizontal `cob`
+       (`h < cob`, `h_c = h / cob`), manteniendo la base anclada en `Y = 250` y `Y = 500`. La envolvente vertical es
+       `base · exp(−0,5 · h) · techo`, con `base = 1 − (1 − dy / (25 · cob))⁵` y `techo = 1 − ((h_c − 0,78) / 0,22)^{1,7}`.
+       Con la forma horizontal llena (`cob = 1`) reproduce los 40 puntos del vector de `paridad/05` §«Perfil vertical de
+       los cúmulos» (cúmulos pequeños Y = 252,5..347,5 y grandes Y = 505..695) con error medio `0,0006` y máximo `0,0050`.
+       Donde `cob < 1` (bordes y nubes menores), la nube se queda baja y pegada a la base plana en vez de formar palos.
+    3. **Erosión 3D e inclinación:** la erosión 3D (`OPC_NUBES_ESCALA_EROSION = (220, 360)`) se atenúa en la base
+       (`smoothstep(0, 0,25, h) · (1 − d)`) para conservar la base plana y esculpir coliflores 3D en los flancos y la
+       cúpula. La inclinación por el viento se modera a `OPC_NUBES_INCLINACION = 0,12` del espesor.
+- **Capas:** base 187 / 437 / 1937 bloques sobre el mar (`VOL_MAR = 63` → Y = 250 / 500 / 2000, como en `paridad/05`),
+  espesor 100 / 200 / 12.
 
 ### Tiempo (`nucleo/volumen/tiempo.wgsl`)
 
-Once perfiles (despejado, cúmulos pequeños, grandes, ambos, altoestratos, mixtos, nublado…) con la
-cobertura de cada capa; uno por cuarto de día sorteado con PCG del número de día (`frame.mods[0].z`; 0 sin
-mod: se repite cada día), fundido con el siguiente en el último 20 % del cuarto. Con lluvia se mezcla hacia
-perfiles de lluvia (cobertura 0,65–0,95, densidad ×1,3–1,8). **Horario de la niebla** (relativo): amanecer
+Los once perfiles medidos en `paridad/05` §«Tiempo diario: perfiles sorteados» (con sus coberturas `0..2` y densidades
+`0,1..0,5` por capa) y la secuencia por cuarto de día `dia + cuarto` centrada en `3000, 9000, 15000, 21000` (que
+reproduce exactamente las 64 filas de la tabla de paridad, y en `6000` mezcla el primer y segundo cuarto). Con lluvia se
+mezcla hacia los perfiles de lluvia por día de `paridad/05` §«Con lluvia». **Horario de la niebla** (relativo): amanecer
 uniforme 0,06 y manchas 0,5; mediodía 0; atardecer uniforme 0,1; noche uniforme 0,38 y manchas 0,15;
 transiciones de 0,08 de día. Lluvia: +0,5 uniforme y +0,4 manchas (× opción). Biomas húmedos: más manchas
 con `downfall` por encima de 0,85 (pantanos, junglas, manglares; el bosque normal, 0,8, ya no: sus manchas a
