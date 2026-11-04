@@ -3,7 +3,7 @@ override luz_cielo: f32 = 1.0;
 override luz_bloque: f32 = 1.0;
 const LUZ_BLOQUE_COLOR: u32 = 0u;        // cálido, neutro, frío
 override luz_minima_cuevas: f32 = 0.5;
-const LUZ_MINIMA_EXTERIOR: f32 = 0.0;
+override luz_minima_exterior: f32 = 0.0;
 override sss: u32 = 1u;                     // apagado, lista, LabPBR, ambos
 const SSS_BRILLO: f32 = 1.0;
 const ESPECULAR_SOL: f32 = 1.0;
@@ -57,7 +57,7 @@ fn opc_luz() -> OpcLuz {
         color = vec3<f32>(0.75, 0.85, 1.0);
     }
     return OpcLuz(
-        luz_cielo, luz_bloque, color, luz_minima_cuevas, LUZ_MINIMA_EXTERIOR,
+        luz_cielo, luz_bloque, color, luz_minima_cuevas, luz_minima_exterior,
         sss == 1u || sss == 3u, sss == 2u || sss == 3u, SSS_BRILLO,
         ESPECULAR_SOL, EMISION_LABPBR,
         charcos == 0u || charcos == 1u, charcos == 0u || charcos == 2u,

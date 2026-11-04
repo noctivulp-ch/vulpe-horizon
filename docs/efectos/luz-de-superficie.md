@@ -125,6 +125,9 @@ el TAA (09) promediará el ruido. Los charcos (suavidad 0,97) son casi espejo y 
 
 ## Opciones
 
+«Luz mínima al aire libre» (`luz_minima_exterior`, 0–1, por defecto 0) es opción desde el punto 5 de la fase 2b
+(ver `exposicion-tonemap-gradacion.md` §«Oscuridad mínima y máxima»).
+
 Página «Luz» (presupuesto de `convenciones.md`): luz de cielo y de bloque (0–2), luz mínima en cuevas, SSS
 (apagado, lista, LabPBR, ambas), reflejos de pantalla (apagados, bajos, altos) y charcos. Color de la luz de
 bloque, luz mínima al aire libre, brillo del SSS, especular del sol y emisión LabPBR pasan a constantes

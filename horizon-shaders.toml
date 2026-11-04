@@ -248,6 +248,26 @@ max = 1.0
 step = 0.05
 
 [[options]]
+id = "exposicion_oscuro"
+name = "Brillo de lo oscuro"
+description = "Pasos solo de noche y en cuevas: lo negra que es la oscuridad (0 neutro; −2 más negra, +2 más clara)."
+type = "float"
+default = 0.0
+min = -2.0
+max = 2.0
+step = 0.1
+
+[[options]]
+id = "exposicion_claro"
+name = "Brillo de lo claro"
+description = "Pasos solo de día y con mucha luz (0 neutro)."
+type = "float"
+default = 0.0
+min = -2.0
+max = 2.0
+step = 0.1
+
+[[options]]
 id = "imagen_exposicion"
 name = "Compensación de exposición"
 description = "Pasos sobre la exposición automática (0 neutro; −2 = ×0,25, +2 = ×4)."
@@ -516,6 +536,16 @@ type = "float"
 default = 1.0
 min = 0.0
 max = 2.0
+step = 0.05
+
+[[options]]
+id = "luz_minima_exterior"
+name = "Luz mínima al aire libre"
+description = "Luz que no baja de ahí fuera de las cuevas (de noche sin luna)."
+type = "float"
+default = 0.0
+min = 0.0
+max = 1.0
 step = 0.05
 
 [[options]]
@@ -802,7 +832,7 @@ items = ["agua_olas", "agua_claridad", "agua_refraccion"]
 id = "luz"
 name = "Luz"
 description = "Cielo, bloques, dispersión, brillos y charcos."
-items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "sss", "reflejos_pantalla", "charcos", "menas", "menas_intensidad", "clima_opacidad", "estaciones", "estacion_inicial"]
+items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "luz_minima_exterior", "sss", "reflejos_pantalla", "charcos", "menas", "menas_intensidad", "clima_opacidad", "estaciones", "estacion_inicial"]
 
 [[pages]]
 id = "sombras"
@@ -814,7 +844,7 @@ items = ["sombras_penumbra", "nubes_sombras", "ao", "ao_fuerza"]
 id = "imagen"
 name = "Imagen"
 description = "Exposición, color y mapeo de tonos."
-items = ["taa", "taa_nitidez", "imagen_exposicion", "imagen_saturacion", "imagen_contraste", "imagen_tonemap", "bloom_fuerza", "aislamiento", "aislamiento_matiz", "aislamiento_rango", "imagen_tramado"]
+items = ["taa", "taa_nitidez", "imagen_exposicion", "exposicion_oscuro", "exposicion_claro", "imagen_saturacion", "imagen_contraste", "imagen_tonemap", "bloom_fuerza", "aislamiento", "aislamiento_matiz", "aislamiento_rango", "imagen_tramado"]
 
 [[pages]]
 id = "depuracion"

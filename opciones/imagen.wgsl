@@ -1,5 +1,7 @@
 // Ajustes de la imagen final: exposición, bloom, tonos y gradación. Porqué: docs/efectos/exposicion-tonemap-gradacion.md §Opciones
 override imagen_exposicion: f32 = 0.0;      // compensación en pasos (EV): −2…+2 = ×0,25…×4
+override exposicion_oscuro: f32 = 0.0;      // pasos solo en lo oscuro (noche, cuevas): lo negra que es la noche
+override exposicion_claro: f32 = 0.0;       // pasos solo en lo claro (día)
 override imagen_saturacion: f32 = 0.0;      // −1…+1
 override imagen_contraste: f32 = 0.0;       // −1…+1
 override imagen_tonemap: u32 = 2u;          // fílmico, ACES, Reinhard (por defecto: conserva el tono del cielo)
@@ -12,6 +14,9 @@ const OPC_EXPOSICION_C: f32 = 0.002;        // tope en lo oscuro: k / ln(1 + c) 
 // Peso de la exposición automática frente a la previa analítica (en log): ver docs/efectos/
 // exposicion-tonemap-gradacion.md §Exposición (duda para la especificación).
 const OPC_EXPOSICION_PESO_AUTO: f32 = 0.5;
+// Entre estas luminancias medias (escala común) se pasa del ajuste de lo oscuro al de lo claro, en log.
+const OPC_EXPOSICION_L_OSCURO: f32 = 0.0003;
+const OPC_EXPOSICION_L_CLARO: f32 = 0.03;
 const OPC_ADAPTACION_SUBE: f32 = 1.5;       // s, hacia la luz
 const OPC_ADAPTACION_BAJA: f32 = 4.0;       // s, hacia la oscuridad
 const OPC_BASTONES_TAU: f32 = 10.0;         // s, la media lenta de los bastones
@@ -31,6 +36,8 @@ const OPC_BLOOM_ANILLOS_NIEBLA: i32 = 6;     // anillos del desenfoque de la nie
 
 struct OpcImagen {
     compensacion: f32,      // multiplicador
+    oscuro: f32,            // pasos en lo oscuro
+    claro: f32,             // pasos en lo claro
     gradacion: ColParametrosGradacion,
     tonemap: u32,
     tramado: bool,
@@ -40,6 +47,8 @@ struct OpcImagen {
 fn opc_imagen() -> OpcImagen {
     return OpcImagen(
         exp2(imagen_exposicion),
+        exposicion_oscuro,
+        exposicion_claro,
         ColParametrosGradacion(0.0, 1.0 + imagen_saturacion, 1.0 + 0.5 * imagen_contraste),
         imagen_tonemap,
         imagen_tramado,
