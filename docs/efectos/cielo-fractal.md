@@ -124,3 +124,25 @@ especificación no da la combinación exacta, y por la regla de la sala limpia n
 02 §3 la expresión del argumento del seno y la constante completa. Con ella, la herramienta dirá si se reproduce; si sí, el
 sorteo usaría ese hash (con los argumentos pequeños que ya pliega el original, que es lo que lo hace estable) y el PCG
 quedaría para lo demás.
+
+### Resuelto (2026-11-04): «Como el original» coincide en esta GPU
+
+A añadió en la especificación 02 §3 el hash exacto, `fract(sin(12,9898·s + 78,233·k) · 43758,5453)`, y en `paridad/02` sus
+valores crudos para 6 casos (semilla, día) × 10 índices, medidos en la GPU del dueño (RTX 3050 Ti, OpenGL). Su hallazgo:
+el resultado depende del seno de cada GPU (×43 758 convierte una millonésima de error en la tercera cifra), por eso
+ninguna combinación evaluada en la CPU podía acertar.
+
+**Comprobado en Horizon, en la misma máquina (Vulkan):** una pasada final temporal pintó cada valor del hash como 16 bits en
+blanco y negro (robusto a la viñeta y al tramado), con el argumento calculado como dos productos y luego la suma; leída de
+la captura, **coinciden los 60 valores** (p. ej., semilla 8, día 0: k = 1 → 0,353516, 3 conjuntos, como el original).
+
+- **Opción «Sorteo»** (`fractal_sorteo`, página del fractal, 59 opciones): «Como el original» (por defecto, requisito de
+  mismas salidas) usa ese hash; «Estable» el PCG de antes, igual en toda GPU pero con otro cielo.
+- **Dependencia de la GPU:** «Como el original» da el mismo cielo que Vulpe solo donde el seno de la GPU coincide; en otra
+  GPU, o con otro controlador, el sorteo puede cambiar (otra cantidad de conjuntos y otro reparto), igual que le pasa al
+  propio original. Si hiciera falta el mismo cielo en todas partes, la salida es que el mod nativo calcule la secuencia en
+  la CPU y la pase (decisión del dueño).
+- `tools/paridad/sorteo_fractal.py` incluye el hash de la especificación: en la CPU no coincide, como predice A.
+
+**Visto:** `hoja-fractal-sorteo.png` (cenit de noche con campo de 110°, semilla 8, día 0, sin mod): repartos distintos con
+«Como el original» y con «Estable».

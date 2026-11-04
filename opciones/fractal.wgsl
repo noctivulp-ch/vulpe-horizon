@@ -4,6 +4,7 @@ override fractal_cambios_noche: bool = true;
 override fractal_cobertura: f32 = 45.0;     // %
 override fractal_conjuntos: i32 = 6;
 override fractal_semilla: i32 = 8;
+override fractal_sorteo: u32 = 0u;          // como el original, estable
 override fractal_paleta: u32 = 5u;          // cielo invertido
 override fractal_brillo: f32 = 40.0;
 const FRACTAL_TECHO: f32 = 150.0;
@@ -31,6 +32,7 @@ struct OpcFractal {
     mutacion: f32,
     hueco: f32,
     dibujo: u32,
+    sorteo_original: bool,
 }
 
 fn opc_fractal() -> OpcFractal {
@@ -38,5 +40,6 @@ fn opc_fractal() -> OpcFractal {
         fractal, fractal_cambios_noche, fractal_cobertura, fractal_conjuntos, fractal_semilla, fractal_paleta,
         fractal_brillo * OPC_FRACTAL_ESCALA, FRACTAL_TECHO * OPC_FRACTAL_ESCALA * 4.0,
         fractal_saturacion * 0.01, FRACTAL_CONTRASTE * 0.01, FRACTAL_MUTACION * 0.01, FRACTAL_HUECO, FRACTAL_DIBUJO,
+        fractal_sorteo == 0u,
     );
 }
