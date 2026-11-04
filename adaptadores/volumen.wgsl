@@ -72,7 +72,7 @@ fn adp_volumen(uv: vec2<f32>, pixel: vec2<f32>) -> VolResultado {
         if plano.y > 0.5 {
             superficie = frame.camera_position.y + plano.x;
         }
-        let agua = VolAgua(superficie, agu_medio(oa.claridad), vec3<f32>(OPC_LUZ_MINIMA * 40.0 * OPC_AGUA_MINIMO));
+        let agua = VolAgua(superficie, opc_agua_medio(oa.claridad), vec3<f32>(OPC_LUZ_MINIMA * 40.0 * OPC_AGUA_MINIMO));
         return vol_agua(adp_volumen_rayo(uv, pixel), adp_volumen_luz(), agua, LuzMapa(frame.shadow_view_proj, frame.shadow_distortion),
                         shadow_map, shadow_sampler, frame.has_shadow == 1u);
     }
@@ -135,7 +135,7 @@ fn adp_transmitancia_compuesta(v: VolResultado, distancia: f32, uv: vec2<f32>) -
         return vec3<f32>(v.transmitancia);
     }
     let oa = opc_agua(adp_tiempo().segundos, frame.rain);
-    let m = agu_medio(oa.claridad);
+    let m = opc_agua_medio(oa.claridad);
     let d = min(distancia, 96.0);
-    return exp(-(m.absorcion * 0.45 + vec3<f32>(m.dispersion)) * d);
+    return exp(-m.absorcion * d);
 }

@@ -107,7 +107,7 @@ fn material(input: MaterialInput) -> Surface {
 // vista desde abajo. Sale opaca: lo de detrás ya va dentro. Porqué: docs/efectos/agua.md
 fn agua(input: MaterialInput, p: AdpPunto, luces: AdpLuces) -> Surface {
     let oa = adp_agua_opciones();
-    let medio = agu_medio(oa.claridad);
+    let medio = opc_agua_medio(oa.claridad);
     let dist = length(p.posicion);
     var n = p.normal_cara;
     if abs(p.normal_cara.y) > 0.9 {
@@ -124,12 +124,12 @@ fn agua(input: MaterialInput, p: AdpPunto, luces: AdpLuces) -> Surface {
 
     if input.face == 0u {
         // Desde abajo: fuera del cono de Snell, reflexión total (agua profunda); dentro, lo de arriba.
-        let f = agu_fresnel_dentro(cos_v);
+        let f = agu_fresnel_dentro(cos_v, OPC_AGUA_F0);
         let hondo = medio.color_disperso * ambiente * 0.3;
         return adp_material_salida(mix(refr.color, hondo, f), 1.0, p);
     }
     let r = reflect(-v, n);
-    let f = agu_fresnel(cos_v);
+    let f = agu_fresnel(cos_v, OPC_AGUA_F0);
     var reflejo = adp_agua_reflejo(p, n, r, luces) * luz_curva_cielo(max(p.luz_cielo, 0.3));
     let sombra = adp_sombra(p);
     let especular = sup_especular(n, v, luces.direccion, 0.02, vec3<f32>(0.02)) * max(dot(n, luces.direccion), 0.0)
