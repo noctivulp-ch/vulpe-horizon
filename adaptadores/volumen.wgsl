@@ -36,7 +36,7 @@ fn adp_volumen_luz() -> VolLuz {
 
 fn adp_volumen_ajustes(bajo_agua: bool) -> VolAjustes {
     let o = opc_volumen();
-    let h = vol_horario(frame.day_time);
+    let h = adp_horario();
     // En una cueva no entra la niebla de cielo: queda una tenue.
     let fuera = smoothstep(0.1, 0.7, frame.eye_light_smooth.y);
     let lluvia = frame.rain * o.lluvia;

@@ -5,32 +5,19 @@ struct VolPerfil {
     densidad: vec3<f32>,
 }
 
-// Los once perfiles del sorteo diario medidos en los vectores de paridad (paridad/05 §Tiempo diario).
-const VOL_SECUENCIA_PERFILES: array<u32, 18> = array<u32, 18>(
-    1u, 2u, 3u, 4u, 5u, 6u, 1u, 7u, 8u, 6u, 1u, 4u, 1u, 4u, 9u, 10u, 8u, 0u,
-);
-
-fn vol_perfil(i: u32) -> VolPerfil {
-    switch i {
-        case 1u: { return VolPerfil(vec3<f32>(1.0, 0.0, 0.0), vec3<f32>(0.5, 0.0, 0.0)); }     // cúmulos pequeños
-        case 2u: { return VolPerfil(vec3<f32>(0.0, 1.0, 1.0), vec3<f32>(0.0, 0.5, 0.5)); }     // grandes y altoestratos
-        case 3u: { return VolPerfil(vec3<f32>(0.0, 0.0, 2.0), vec3<f32>(0.0, 0.0, 0.3)); }     // altoestratos cubiertos
-        case 4u: { return VolPerfil(vec3<f32>(0.0, 1.9, 0.0), vec3<f32>(0.0, 0.2, 0.0)); }     // grandes extendidos
-        case 5u: { return VolPerfil(vec3<f32>(1.0, 0.1, 1.0), vec3<f32>(0.5, 0.5, 0.1)); }     // pequeños y altoestratos
-        case 6u: { return VolPerfil(vec3<f32>(0.0, 1.1, 0.0), vec3<f32>(0.0, 0.5, 0.0)); }     // solo cúmulos grandes
-        case 7u: { return VolPerfil(vec3<f32>(1.0, 0.0, 1.5), vec3<f32>(0.1, 0.1, 0.25)); }    // pequeños tenues y altoestratos
-        case 8u: { return VolPerfil(vec3<f32>(0.0, 0.0, 1.0), vec3<f32>(0.0, 0.0, 0.5)); }     // solo altoestratos
-        case 9u: { return VolPerfil(vec3<f32>(1.4, 0.0, 0.0), vec3<f32>(0.5, 0.0, 0.0)); }     // pequeños abundantes
-        case 10u: { return VolPerfil(vec3<f32>(1.0, 1.0, 0.0), vec3<f32>(0.25, 0.5, 0.0)); }   // pequeños y grandes
-        default: { return VolPerfil(vec3<f32>(0.0), vec3<f32>(0.0)); }                         // despejado
-    }
+// Qué perfiles toca mezclar en un momento: los índices en la tabla de perfiles y el peso del segundo.
+struct VolSorteo {
+    a: u32,
+    b: u32,
+    t: f32,
 }
 
-fn vol_indice_perfil(paso: u32) -> u32 {
+fn vol_indice_perfil(paso: u32, secuencia: array<u32, 18>, repite_desde: u32) -> u32 {
     if paso < 18u {
-        return VOL_SECUENCIA_PERFILES[paso];
+        return secuencia[paso];
     }
-    return VOL_SECUENCIA_PERFILES[4u + (paso - 4u) % 14u];
+    let n = 18u - repite_desde;
+    return secuencia[repite_desde + (paso - repite_desde) % n];
 }
 
 // Perfiles de lluvia por día (paridad/05 §Con lluvia), modulados por la intensidad.
@@ -65,18 +52,22 @@ struct VolMomento {
 }
 
 // Cuatro sorteos por día centrados en 3000, 9000, 15000 y 21000 (fracción 0,125; 0,375; 0,625 y 0,875).
-fn vol_perfil_del_momento(m: VolMomento) -> VolPerfil {
-    var base = vol_perfil(m.perfil_fijo);
-    let dia_u = u32(max(m.dia, 0.0));
-    if m.aleatorio {
-        let s = max(m.fraccion * 4.0 - 0.5, 0.0);
-        let cuarto = u32(floor(s));
-        let t = fract(s);
-        let a = vol_indice_perfil(dia_u + cuarto);
-        let b = vol_indice_perfil(dia_u + cuarto + 1u);
-        base = vol_mezclar_perfil(vol_perfil(a), vol_perfil(b), smoothstep(0.2, 0.8, t));
+fn vol_sorteo(m: VolMomento, secuencia: array<u32, 18>, repite_desde: u32, fundido: vec2<f32>) -> VolSorteo {
+    if !m.aleatorio {
+        return VolSorteo(m.perfil_fijo, m.perfil_fijo, 0.0);
     }
-    return vol_mezclar_perfil(base, vol_perfil_lluvia(dia_u, m.lluvia), smoothstep(0.0, 0.6, m.lluvia));
+    let dia_u = u32(max(m.dia, 0.0));
+    let s = max(m.fraccion * 4.0 - 0.5, 0.0);
+    let cuarto = u32(floor(s));
+    let a = vol_indice_perfil(dia_u + cuarto, secuencia, repite_desde);
+    let b = vol_indice_perfil(dia_u + cuarto + 1u, secuencia, repite_desde);
+    return VolSorteo(a, b, smoothstep(fundido.x, fundido.y, fract(s)));
+}
+
+// El perfil del momento a partir de los dos perfiles sorteados, con la lluvia.
+fn vol_perfil_del_momento(m: VolMomento, pa: VolPerfil, pb: VolPerfil, t: f32) -> VolPerfil {
+    let base = vol_mezclar_perfil(pa, pb, t);
+    return vol_mezclar_perfil(base, vol_perfil_lluvia(u32(max(m.dia, 0.0)), m.lluvia), smoothstep(0.0, 0.6, m.lluvia));
 }
 
 struct VolHorario {
@@ -84,14 +75,14 @@ struct VolHorario {
     manchas: f32,       // y de la niebla en manchas
 }
 
-// Densidades relativas por hora (especificación 05 §3): jirones al amanecer, nada a mediodía, bruma al
-// atardecer, niebla densa de noche. Transiciones de ~0,08 de día.
-fn vol_horario(fraccion: f32) -> VolHorario {
+// Densidades relativas por hora (especificación 05 §3), por franjas: amanecer, mediodía, atardecer y noche (x, y, z, w
+// de `uniforme` y `manchas`), con transiciones de `transicion` (fracción del día).
+fn vol_horario(fraccion: f32, uniforme: vec4<f32>, manchas: vec4<f32>, transicion: f32) -> VolHorario {
     let f = fract(fraccion);
-    let amanecer = 1.0 - smoothstep(0.0, 0.08, min(f, 1.0 - f) - 0.0);
-    let atardecer = 1.0 - smoothstep(0.0, 0.08, abs(f - 0.5));
-    let noche = smoothstep(0.5, 0.6, f) * (1.0 - smoothstep(0.92, 1.0, f));
-    let uniforme = amanecer * 0.06 + atardecer * 0.1 + noche * 0.38;
-    let manchas = amanecer * 0.5 + noche * 0.15;
-    return VolHorario(uniforme, manchas);
+    let amanecer = 1.0 - smoothstep(0.0, transicion, min(f, 1.0 - f));
+    let atardecer = 1.0 - smoothstep(0.0, transicion, abs(f - 0.5));
+    let noche = smoothstep(0.5, 0.5 + transicion * 1.25, f) * (1.0 - smoothstep(1.0 - transicion, 1.0, f));
+    let mediodia = max(1.0 - amanecer - atardecer - noche, 0.0) * (1.0 - smoothstep(0.5, 0.6, f));
+    let pesos = vec4<f32>(amanecer, mediodia, atardecer, noche);
+    return VolHorario(dot(pesos, uniforme), dot(pesos, manchas));
 }

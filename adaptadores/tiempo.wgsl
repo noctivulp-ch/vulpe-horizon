@@ -10,9 +10,17 @@ fn adp_momento(o: OpcVolumen) -> VolMomento {
 fn adp_nubes() -> VolNubes {
     let o = opc_volumen();
     let viento = OPC_VIENTO * o.viento * frame.time;
-    var perfil = vol_perfil_del_momento(adp_momento(o));
+    let m = adp_momento(o);
+    let s = vol_sorteo(m, OPC_TIEMPO_SECUENCIA, OPC_TIEMPO_SECUENCIA_REPITE_DESDE, OPC_TIEMPO_FUNDIDO);
+    let pa = VolPerfil(OPC_TIEMPO_COBERTURA[min(s.a, 10u)], OPC_TIEMPO_DENSIDAD[min(s.a, 10u)]);
+    let pb = VolPerfil(OPC_TIEMPO_COBERTURA[min(s.b, 10u)], OPC_TIEMPO_DENSIDAD[min(s.b, 10u)]);
+    var perfil = vol_perfil_del_momento(m, pa, pb, s.t);
     perfil.cobertura *= o.capas;
     return VolNubes(perfil, viento, normalize(OPC_VIENTO), o.forma_nubes);
+}
+
+fn adp_horario() -> VolHorario {
+    return vol_horario(frame.day_time, OPC_NIEBLA_HORARIO_UNIFORME, OPC_NIEBLA_HORARIO_MANCHAS, OPC_NIEBLA_HORARIO_TRANSICION);
 }
 
 fn adp_sombra_nubes(mundo: vec3<f32>) -> f32 {

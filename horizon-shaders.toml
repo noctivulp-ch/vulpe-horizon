@@ -50,6 +50,7 @@ shared = [
     "opciones/luz.wgsl",
     "opciones/sombras.wgsl",
     "opciones/volumen.wgsl",
+    "opciones/tiempo.wgsl",
     "opciones/taa.wgsl",
     "opciones/oclusion.wgsl",
     "opciones/viento.wgsl",
