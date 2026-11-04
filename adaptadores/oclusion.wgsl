@@ -13,7 +13,7 @@ fn adp_aplicar_oclusion(color: vec3<f32>, p: AdpPixel) -> vec3<f32> {
         return color;
     }
     let c = LuzAo(frame.view_inverse * frame.projection_inverse, frame.projection * frame.view, frame.resolution,
-                  OPC_AO_RADIO, o.muestras, o.fuerza, adp_ruido_azul(p.pixel, 3u));
+                  OPC_AO_RADIO_K, OPC_AO_RADIO_MIN, OPC_AO_RADIO_MAX, OPC_AO_ESCALA, o.muestras, o.fuerza, adp_ruido_azul(p.pixel, 3u));
     // La posición del punto con la misma reconstrucción que las muestras (no con view_position): una diferencia
     // mínima entre las dos daba autooclusión en las caras planas.
     let pos = luz_ao_posicion(c, scene_depth, (floor(p.pixel) + 0.5) / frame.resolution).xyz;
