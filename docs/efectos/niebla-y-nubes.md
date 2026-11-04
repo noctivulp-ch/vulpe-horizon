@@ -175,3 +175,24 @@ noche baja (`OPC_EV_NOCHE` 4,3) para seguir en el objetivo del 11: **17,3/255** 
 **Visto** (`hoja-niebla-noche.png`, a las 14000 mirando al sur, sin aurora ni aislamiento, frente a
 `aurora_off_noche.png`): antes, arriba (8; 11; 15) y gris; ahora (14; 21; 26), azul marino oscuro. La referencia
 arriba es (25; 40; 60): sigue algo más oscura y menos azul que ella, pero ya no gris.
+
+## Erosión (fase 2b, punto 6)
+
+Observación del dueño (2026-11-03): tras 99d1de4 las nubes quedaron «demasiado blandas, sin borde ni erosión».
+**Causa:** la erosión de 05.4 restaba `(1 − ruido) · 0,32 · (1 − d)` con un solo ruido de periodo 220–360 bloques (vóxel
+de 7–11 bloques): apenas mordía y no tenía detalle fino; con la cobertura en rampa ancha y raíz, la densidad crecía
+suave desde el borde y la nube se veía como una mancha difusa.
+
+**Ahora** (`vol_nube` en `nucleo/volumen/medios.wgsl`), la erosión de Schneider y Vos (2015) con `remap(d, ruido·k, 1)`,
+que recorta la envolvente y deja el borde nítido, en dos frecuencias:
+1. **gruesa** (canal R, Perlin-Worley, al periodo de antes `OPC_NUBES_ESCALA_EROSION`), fuerza 0,45
+   (`OPC_NUBES_EROSION_FUERZA`): los lóbulos. Con 0,55 se comía demasiada cobertura;
+2. **fina** (Worley G·0,625 + B·0,25 + fBm A·0,125, periodo 70 bloques, `OPC_NUBES_ESCALA_DETALLE`), fuerza 0,35
+   (`OPC_NUBES_DETALLE_FUERZA`): abajo tal cual (jirones) y desde el 10–60 % del alto del cúmulo invertida
+   (coliflores), como en Schneider;
+3. en la base solo un 40 % de las dos (`OPC_NUBES_EROSION_BASE`), para que siga plana.
+
+La fina solo se lee donde la gruesa deja densidad. Visto en `hoja-nubes-erosion.png` (recorrido `nubes-recorrido`,
+aislamiento encendido): cúmulos con lóbulos y borde definido desde el suelo en los seis rumbos y al cruzar la capa;
+las nubes grandes y lejanas siguen más lisas. **Presupuesto:** la pasada final queda en 62 de 64 lecturas de textura (el
+volumen va en `shared`); la siguiente lectura en `shared` habrá que pagarla quitando otra.
