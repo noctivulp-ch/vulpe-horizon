@@ -19,7 +19,9 @@ fn adp_vertice_ondulado(input: VertexInput) -> vec3<f32> {
     }
     let mundo = input.position + frame.camera_position;
     let cielo = select(max(input.light.y, 0.5), input.light.y, hojas);
-    let v = SupViento(frame.time * OPC_VIENTO_VELOCIDAD, ondulacion_fuerza * (1.0 + frame.rain) * cielo);
+    let v = SupViento(frame.time * OPC_VIENTO_VELOCIDAD, ondulacion_fuerza * (1.0 + frame.rain) * cielo,
+                      OPC_VIENTO_PLANTA_PERIODO, OPC_VIENTO_PLANTA_AMPLITUD, OPC_VIENTO_HOJA_PERIODO,
+                      OPC_VIENTO_HOJA_AMPLITUD, OPC_VIENTO_HOJA_VERTICAL);
     // La base de la mitad superior y la punta de la inferior están en la misma posición del mundo: la misma función
     // les da el mismo desplazamiento y no se separan.
     let d = select(sup_viento_planta(floor(mundo + 0.001) , v), sup_viento_hoja(mundo, v), hojas);
