@@ -25,7 +25,10 @@ const OPC_NUBES_BASE_REDONDEO: f32 = 25.0;                          // bloques d
 const OPC_NUBES_CAIDA_ALTURA: f32 = 0.5;                            // caída exponencial en altura del vector de paridad
 const OPC_NUBES_CUPULA_DESDE: f32 = 0.78;                           // inicio del cierre en cúpula
 const OPC_NUBES_CUPULA_POTENCIA: f32 = 1.7;                         // exponente del cierre en cúpula
-const OPC_NUBES_EROSION_FUERZA: f32 = 0.32;                         // erosión 3D en bordes y cúpula
+const OPC_NUBES_EROSION_FUERZA: f32 = 0.45;                         // erosión gruesa: recorte de la envolvente (lóbulos)
+const OPC_NUBES_EROSION_BASE: f32 = 0.4;                            // fracción de la erosión que queda en la base plana
+const OPC_NUBES_ESCALA_DETALLE: f32 = 70.0;                         // bloques: periodo del ruido 3D fino (coliflores)
+const OPC_NUBES_DETALLE_FUERZA: f32 = 0.35;                         // erosión fina
 const OPC_NUBES_SIGMA: vec3<f32> = vec3<f32>(0.45, 0.45, 0.06);     // extinción por bloque (con densidad 0,5 da ~0,225 y 0,03)
 const OPC_NUBES_TRAMO_MAX: f32 = 900.0;                             // bloques: tope del tramo integrado por capa baja
 const OPC_NUBES_SOMBRA_TAU: f32 = 6.0;                              // espesor óptico de la sombra en el suelo
@@ -60,6 +63,9 @@ fn opc_volumen() -> OpcVolumen {
         OPC_NUBES_CUPULA_DESDE,
         OPC_NUBES_CUPULA_POTENCIA,
         OPC_NUBES_EROSION_FUERZA,
+        OPC_NUBES_EROSION_BASE,
+        OPC_NUBES_ESCALA_DETALLE,
+        OPC_NUBES_DETALLE_FUERZA,
         OPC_NUBES_SIGMA,
         OPC_NUBES_TRAMO_MAX,
         OPC_NUBES_SOMBRA_TAU,

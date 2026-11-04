@@ -41,6 +41,11 @@ fn vol_niebla(mundo: vec3<f32>, a: VolAjustesNiebla, ruido3d: texture_2d<f32>) -
     return d * a.cantidad * VOL_NIEBLA_SIGMA;
 }
 
+// `remap(v, bajo, 1)`: lo que queda por encima de `bajo`, reescalado a 0..1.
+fn vol_remapear(v: f32, bajo: f32) -> f32 {
+    return clamp((v - bajo) / max(1.0 - bajo, 1e-3), 0.0, 1.0);
+}
+
 // Densidad 0..1 de la capa de nubes `i` en `mundo`: cobertura 2D × perfil vertical, erosionada en los bordes.
 // `erosion`: falso en las muestras de luz hacia el astro (solo cobertura y forma: la especificación lo prevé
 // para el presupuesto).
@@ -69,12 +74,19 @@ fn vol_nube(mundo: vec3<f32>, i: i32, n: VolNubes, t2: texture_2d<f32>, s2: samp
     let techo = 1.0 - pow(u_techo, n.forma.cupula_potencia);
     var d = cob * base * exp(-n.forma.caida_altura * h) * techo;
     if erosion && d > 0.0 {
-        let p = vec3<f32>(inclinado.x, mundo.y, inclinado.y) / n.forma.escala_erosion[i];
-        let r = vol_ruido3d(t3, p);
-        let e = r.r * 0.6 + r.g * 0.3 + r.b * 0.1;
-        let peso = smoothstep(0.0, 0.25, h) * (1.0 - d);
-        let recorte = (1.0 - e) * n.forma.erosion_fuerza * peso;
-        d = clamp((d - recorte) / max(1.0 - 0.6 * recorte, 0.4), 0.0, 1.0);
+        // Erosión de Schneider y Vos (2015): `remap(d, ruido · fuerza, 1)` recorta el borde de la envolvente y deja un
+        // borde nítido. Dos frecuencias: la gruesa (Perlin-Worley) hace los lóbulos; la fina (Worley), las coliflores
+        // arriba y los jirones abajo. En la base, menos (que siga plana). Porqué: docs/efectos/niebla-y-nubes.md §Erosión
+        let q = vec3<f32>(inclinado.x, mundo.y, inclinado.y);
+        let gruesa = vol_ruido3d(t3, q / n.forma.escala_erosion[i]).r;
+        let en_base = mix(n.forma.erosion_base, 1.0, smoothstep(0.0, 0.2, h_c));
+        d = vol_remapear(d, (1.0 - gruesa) * n.forma.erosion_fuerza * en_base);
+        if d > 0.0 {
+            let r = vol_ruido3d(t3, q / n.forma.escala_detalle);
+            let fina = r.g * 0.625 + r.b * 0.25 + r.a * 0.125;
+            let billow = mix(fina, 1.0 - fina, smoothstep(0.1, 0.6, h_c));
+            d = vol_remapear(d, billow * n.forma.detalle_fuerza * en_base);
+        }
     }
     return d * n.perfil.densidad[i];
 }
