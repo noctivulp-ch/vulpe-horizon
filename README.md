@@ -55,8 +55,8 @@ pasadas `post`). No es un port de un pack de OptiFine/Iris: está escrito desde 
 ## Instalación
 
 Necesita **Horizon** instalado con su lanzador ([instrucciones en su repo](https://github.com/horizon-rust/horizon)).
-La vegetación ondulante necesita una nightly de Horizon posterior al 2026-11-01 17:17 (UTC+1), que es
-cuando entró la etapa `vertex`. Mientras no esté publicada, esa parte va desactivada en el manifiesto.
+La vegetación ondulante usa la etapa `vertex`, que entró en Horizon el 2026-11-01 17:17 (UTC+1): hace falta una
+nightly posterior (probado con `nightly-2026-11-03-f42ef42`).
 
 ```bash
 git clone https://github.com/noctivulp-ch/vulpe-horizon.git
@@ -93,14 +93,14 @@ Después, una de estas tres:
 
 ## Progreso y calendario
 
-Empezado el **2026-11-01**. Cifras al 2026-11-02: unas 4 700 líneas de WGSL, 53 opciones de las 64
+Empezado el **2026-11-01**. Cifras al 2026-11-04: unas 5 100 líneas de WGSL, 58 opciones de las 64
 que admite Horizon.
 
 | Fase | Qué es | Estado | Fecha prevista |
 |---|---|---|---|
-| 1. Base | los 16 subsistemas especificados e implementados | **hecha** (15 de 16 en marcha; el 15, vegetación, espera la nightly de Horizon) | 2026-11-02 ✔ |
-| 2. Faltas | lo que le faltaba frente al original: 10 faltas | **en curso**: 6 de 10 hechas | 2026-11-04 |
-| 3. Paridad | mismas salidas que el original, medidas con tablas de prueba y capturas en escenas fijas | **en curso**: inventario y tablas de 01, 02, 03, 05, 06 y 11 | 2026-11-08 a 11-10 |
+| 1. Base | los 16 subsistemas especificados e implementados | **hecha** (los 16 en marcha; la vegetación, activa desde el 2026-11-03) | 2026-11-02 ✔ |
+| 2. Faltas | lo que le faltaba frente al original, y lo que vio el dueño jugando | **hecha** (las tres faltas de prioridad baja, 05.3, 07.2 y 15.1, pasan a la fase 6) | 2026-11-03 ✔ |
+| 3. Paridad | mismas salidas que el original, medidas con tablas de prueba y capturas en escenas fijas | **en curso**: las tablas de los 17 subsistemas están medidas; aplicadas las de agua, bloom y vegetación | 2026-11-08 a 11-10 |
 | 4. Flexibilidad | tantos ajustes como el original: presets que mueven varios parámetros, y un mod nativo para Horizon que pase el resto | por empezar | 2026-11-10 a 11-13 |
 | 5. Beta pública | primera versión empaquetada (`.hshader`) | — | ~2026-11-14 |
 | 6. Detalles finos | rendimiento, rincones sin ver, ajuste fino con jugadores | — | ~2026-11-20 |
