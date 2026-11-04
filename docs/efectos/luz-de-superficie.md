@@ -171,3 +171,25 @@ anaranjadas; invierno apagado y grisáceo; primavera verde más fresco. La hierb
 propósito). **Sin ver:** el paso de una estación a otra con el día del mod nativo.
 
 Opciones: estaciones sí/no y estación inicial, página «Luz». Van 53.
+
+## Luz de bloque y mínima según paridad 03 (fase 3, 2026-11-04)
+
+`paridad/03` mide la antorcha del original en la escala común: pegada a la fuente (nivel 15) ≈ 1,47 veces el sol de
+mediodía, a 3 bloques (nivel 12) 0,23. La nuestra era 0,036 pegada (0,012 × refuerzo 3), unas 40 veces menos, y la
+exposición previa de interior (`OPC_EV_INTERIOR` = 6) lo compensaba.
+
+- **Curva:** la tabla medida de 16 niveles (canal R; con el color por defecto (1; 0,5; 0,25) G y B salen de él),
+  interpolada (`LUZ_TABLA_BLOQUE` en `nucleo/luz/curvas.wgsl`); `OPC_LUZ_BLOQUE` = 1 la multiplica. Sale la fórmula
+  `(1 − √(1 − l))²` con refuerzo cúbico.
+- **Luz mínima de cueva:** `OPC_LUZ_MINIMA_CUEVA` = 0,00294 por unidad de la opción (con 0,6 da 0,001766, el del
+  original; con nuestro 0,5 por defecto, 0,00147). Antes 0,0004, unas 7 veces menos. `OPC_LUZ_MINIMA` queda para los otros
+  mínimos (agua, visión nocturna).
+- **Exposición de interior:** `OPC_EV_INTERIOR` 6 → 3. Con la curva del original (`paridad/11`) una sala iluminada por
+  una antorcha (paredes a nivel 8–11, L ≈ 0,05) se expondría ×2 y quedaría hacia 100/255.
+
+**Visto** (`hoja-antorcha.png`, escena `antorcha-cueva`: antorcha en el suelo de una caja de piedra cerrada, a 16, 8, 4,
+2 y 1 bloques, sin antorcha, y fuera de día y de noche; media del cuarto central): con la antorcha 55 / 108 / 123 / 127 /
+131 (antes 41 / 56 / 66 / 72 / 75, con la sala casi negra salvo junto a la llama); ahora la luz cálida llena la sala y cae
+con la distancia. Sin antorcha, 35 (las formas se distinguen). Fuera, día 170 y noche 19 en esa vista, sin cambios
+(probado con EV de interior 4,5: 129–149 dentro; 3,5: 114–136). **Sin ver:** antorchas al aire libre de noche (ahora
+dominan su entorno, como en el original) y las familias de color del 03.1.
