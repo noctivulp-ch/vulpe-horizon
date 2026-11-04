@@ -33,3 +33,11 @@ Opacidad de la lluvia y la nieve (imprescindible), página «Luz». Van 49.
 - **A contraluz del sol** (`clima-lluvia-contraluz.png`, atardecer mirando al oeste): no se distingue brillo hacia
   delante, porque con lluvia el sol queda al 10 % (cielo cubierto, 03) y no hay contraluz que recoger. Es lo
   esperable con el cielo cerrado; solo se vería con lluvia y sol a la vez (paso de una tormenta).
+
+## Sombra con el mapa (fase 2b, punto 7): no se puede todavía
+
+Comprobado el 2026-11-03: la referencia de Horizon da a la etapa `weather` solo `frame` en su grupo de recursos (ni
+`shadow_map` ni su comparador), así que `shadow_position` sola no sirve; además el comprobador compilado de
+`trabajo/horizon-shader-build` responde «unknown identifier: `shadow_position`» en esa etapa. Sigue la sombra aproximada
+por la luz de cielo. **Duda para el gestor:** pedir a Horizon el mapa de sombras en `weather`, o recompilar el
+comprobador si ya lo tiene.
