@@ -2,7 +2,7 @@
 """Comprueba un hash candidato para el sorteo del fractal contra la tabla de paridad/02 §«Sorteo del modo automático»:
 número de conjuntos (n) y desfase de paleta de cada uno, con la semilla de la especificación 02 §3
 (s = semilla·7,13 + 1 + día·13,71, sin mod), todo en coma flotante de 32 bits. Para «mismas salidas» hace falta la
-combinación exacta de semilla e índice dentro del `fract(sin(·)·43758,5…)`, que la especificación no da (duda para A).
+el hash de la especificación 02 §3 evaluado con el seno de la GPU: con el de la CPU no coincide.
 Uso: tools/paridad/sorteo_fractal.py
 """
 import numpy as np
@@ -27,6 +27,9 @@ def seno(x):
 
 # Combinaciones públicas habituales de un hash escalar de dos argumentos; ninguna reproduce la tabla (2026-11-04).
 CANDIDATOS = {
+    # El de la especificación 02 §3 (A, 2026-11-03). En la CPU con seno exacto no coincide: la tabla sale del seno de la
+    # GPU. En el juego (RTX 3050 Ti, Vulkan, 2026-11-04) coincidió en los 60 valores crudos (docs/efectos/cielo-fractal.md).
+    'especificación: sin(12,9898·s + 78,233·k)': lambda s, k: seno(f32(f32(12.9898) * s) + f32(f32(78.233) * k)),
     'sin(s·12,9898 + k·78,233)': lambda s, k: seno(s * f32(12.9898) + k * f32(78.233)),
     'sin(s + k·12,9898)': lambda s, k: seno(s + k * f32(12.9898)),
     'sin(s·k)': lambda s, k: seno(s * k),

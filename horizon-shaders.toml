@@ -444,6 +444,14 @@ min = 1
 max = 8
 
 [[options]]
+id = "fractal_sorteo"
+name = "Sorteo"
+description = "Como el original: misma semilla, mismo cielo que Vulpe en tu GPU (el seno de cada GPU cambia el sorteo). Estable: igual en todas las GPU, pero otro cielo."
+type = "choice"
+values = ["Como el original", "Estable"]
+default = "Como el original"
+
+[[options]]
 id = "fractal_semilla"
 name = "Semilla"
 description = "Rebaraja el reparto."
@@ -827,7 +835,7 @@ items = ["cielo_brillo", "luna_brillo", "estrellas"]
 id = "fractal"
 name = "Cielo fractal"
 description = "Las constelaciones de fractales de la noche."
-items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_paleta", "fractal_brillo", "fractal_saturacion", "aurora", "aurora_brillo", "rayos", "rayos_intensidad"]
+items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_sorteo", "fractal_paleta", "fractal_brillo", "fractal_saturacion", "aurora", "aurora_brillo", "rayos", "rayos_intensidad"]
 
 [[pages]]
 id = "niebla"
