@@ -23,7 +23,7 @@ fn adp_clima(input: WeatherInput) -> vec4<f32> {
     }
     // La niebla de post no ve las cortinas (no escriben profundidad): se atenúan aquí con la niebla uniforme del
     // momento y la distancia.
-    let h = vol_horario(frame.day_time);
+    let h = adp_horario();
     let sigma = (h.uniforme + frame.rain * 0.5) * VOL_NIEBLA_SIGMA * opc_volumen().cantidad + 0.004;
     alfa *= exp(-sigma * dist);
     return vec4<f32>(col_codificar_escena(luz, adp_codificacion()), clamp(alfa, 0.0, 1.0));

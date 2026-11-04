@@ -196,3 +196,24 @@ La fina solo se lee donde la gruesa deja densidad. Visto en `hoja-nubes-erosion.
 aislamiento encendido): cúmulos con lóbulos y borde definido desde el suelo en los seis rumbos y al cruzar la capa;
 las nubes grandes y lejanas siguen más lisas. **Presupuesto:** la pasada final queda en 62 de 64 lecturas de textura (el
 volumen va en `shared`); la siguiente lectura en `shared` habrá que pagarla quitando otra.
+
+## Tiempo como datos (fase 3, 2026-11-04)
+
+`paridad/05` (a): en el original el horario de la niebla (densidad uniforme y en manchas al amanecer, a mediodía, al
+atardecer y de noche: 8 ajustes) y el tiempo diario (perfiles propios de cobertura y densidad por capa) son ajustables; en
+el nuestro estaban escritos dentro de `nucleo/volumen/tiempo.wgsl`. Con el criterio de flexibilidad del dueño pasan a
+**constantes con nombre en `opciones/tiempo.wgsl`**, listas para un preset o para el mod nativo:
+
+- `OPC_NIEBLA_HORARIO_UNIFORME` y `OPC_NIEBLA_HORARIO_MANCHAS` (vec4: amanecer, mediodía, atardecer, noche) y
+  `OPC_NIEBLA_HORARIO_TRANSICION` (0,08 del día). Se añade la franja de mediodía (0, como antes; el original también da 0).
+- `OPC_TIEMPO_COBERTURA` y `OPC_TIEMPO_DENSIDAD` (los once perfiles), `OPC_TIEMPO_SECUENCIA` (el orden por cuarto de
+  día y desde dónde se repite) y `OPC_TIEMPO_FUNDIDO` (tramo del cuarto en que se funden; el original tiene una
+  «velocidad de la transición»).
+- El núcleo solo decide qué perfiles mezclar (`vol_sorteo`) y cómo (`vol_perfil_del_momento`, `vol_horario` con los
+  datos por parámetro); el adaptador (`adp_nubes`, `adp_horario`) lee las tablas.
+- **Sin opciones de menú:** van 58 de 64 y los 8 + 36 ajustes del original no caben; la fusión propuesta por A («cantidad»
+  + un preset de reparto) queda para la fase 4. Los perfiles de lluvia siguen en el núcleo (su lógica depende del día).
+
+**Visto** (escena `tiempo-horario`, amanecer, mediodía, atardecer y noche desde la pradera): mismo resultado que antes del
+cambio, medias de 89,3 / 147,4 / 107,4 / 12,8 antes y 89,7 / 147,5 / 107,4 / 12,8 después, ~1 nivel por píxel de
+diferencia (tramado y TAA).
