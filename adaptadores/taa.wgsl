@@ -61,7 +61,7 @@ fn adp_taa(input: PostInput) -> vec4<f32> {
     }
     // Movimiento en píxeles: más movimiento, caja más estrecha y más peso al fotograma actual.
     let movimiento = length((input.uv - uv_ant) * frame.resolution);
-    let gamma = mix(OPC_TAA_GAMMA, 0.75, smoothstep(0.0, 8.0, movimiento));
+    let gamma = mix(OPC_TAA_GAMMA, OPC_TAA_GAMMA_MOVIMIENTO, smoothstep(0.0, 8.0, movimiento));
     let h = img_recortar(img_a_ycocg(img_comprimir(h_crudo)), media, sigma * gamma);
     let alfa = mix(OPC_TAA_MEZCLA_QUIETO, OPC_TAA_MEZCLA_MOVIMIENTO, smoothstep(0.0, 6.0, movimiento));
     let a = img_a_ycocg(img_comprimir(actual));
