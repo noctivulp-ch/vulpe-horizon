@@ -10,7 +10,7 @@ fn post(input: PostInput) -> vec4<f32> {
     let borde = adp_post_borde(p, dir);
     c = mix(c, borde.rgb, borde.a);
     let v = adp_volumen_reescalado(p.pixel, adp_post_distancia(p));
-    c = c * adp_transmitancia_compuesta(v, adp_post_distancia(p)) + v.luz;
+    c = c * adp_transmitancia_compuesta(v, adp_post_distancia(p), p.uv) + v.luz;
     c = adp_niebla_inmersion(c, adp_post_distancia(p));
     return vec4<f32>(c, 1.0);
 }

@@ -2,7 +2,8 @@
 // (realimentación entre fotogramas sin compute), el bloom de niebla y los efectos de estado del jugador.
 // Porqué: docs/efectos/exposicion-tonemap-gradacion.md §Adaptadores y docs/efectos/bloom.md
 
-// Texeles de esquina: (0,0).a la luminancia adaptada; (1,0).a la de los bastones (más lenta).
+// Texeles de esquina: (0,0).a la luminancia adaptada; (1,0).a la de los bastones (más lenta); (2,0).a el nivel del
+// agua junto a la cámara (adaptadores/cruce_agua.wgsl).
 fn adp_estado(t: texture_2d<f32>) -> vec2<f32> {
     return vec2<f32>(textureLoad(t, vec2<i32>(0, 0), 0).a, textureLoad(t, vec2<i32>(1, 0), 0).a);
 }
@@ -12,8 +13,11 @@ fn adp_estado(t: texture_2d<f32>) -> vec2<f32> {
 fn adp_bloom_bajada(input: PostInput) -> vec4<f32> {
     let rgb = img_bloom_bajada(history, linear_sampler, input.uv);
     let texel = vec2<i32>(input.pixel);
-    if texel.y != 0 || texel.x > 1 {
+    if texel.y != 0 || texel.x > 2 {
         return vec4<f32>(rgb, 0.0);
+    }
+    if texel.x == 2 {
+        return vec4<f32>(rgb, adp_estado_agua(textureLoad(bloom2, texel, 0).a));
     }
     let anterior = adp_estado(bloom2);
     let l = img_luminancia_media(history, linear_sampler);
@@ -35,7 +39,7 @@ fn adp_bloom_ancho(input: PostInput) -> vec4<f32> {
     let niebla = img_opacidad_fuentes(bloom, volumen, linear_sampler, input.uv, OPC_BLOOM_RADIO, aspecto, OPC_BLOOM_ANILLOS_NIEBLA, giro);
     let texel = vec2<i32>(input.pixel);
     var alfa = niebla;
-    if texel.y == 0 && texel.x <= 1 {
+    if texel.y == 0 && texel.x <= 2 {
         alfa = textureLoad(bloom, texel, 0).a;
     }
     return vec4<f32>(rgb, alfa);

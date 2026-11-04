@@ -81,3 +81,32 @@ usan `command tp @s X Y Z` (anotado en `tools/probar.sh`).
 **Visto** (`agua-color.png`, escena `pruebas/escenas/agua-color.ctl`, lana roja y blanca a 2, 5 y 10 bloques, aislamiento
 apagado): a 2 bloques la roja sale rojo oscuro y la blanca blanca verdosa; a 5, la roja ya es pardo oscuro y la
 blanca verde azulada; a 10 se pierden en el azul.
+
+## Cruzar la superficie
+
+Observación del dueño (2026-11-03): «hay un punto medio en la entrada al agua en que se ve el fondo del mar
+claramente». **Causa (reproducida en `agua-cruce.ctl`):** con el ojo a 1–5 cm de la superficie (62,889 en el mar), el
+plano cercano de la cámara la corta. Con el ojo encima (`eye_in` aire) la parte de la pantalla cuyo plano cercano queda
+debajo no ve la superficie, y sin ella no hay ni refracción ni absorción: el fondo salía nítido y sin niebla. Con el ojo
+justo debajo pasa lo contrario arriba (se ve el aire, que es lo correcto).
+
+**Arreglo (`adaptadores/cruce_agua.wgsl`, constantes en `opciones/cruce_agua.wgsl`):** cerca de la superficie se decide
+**por píxel** si está bajo el agua según el punto del plano cercano de ese píxel (`adp_pixel_bajo_agua`), en el volumen
+(niebla del agua o del aire) y en la transmitancia de la composición.
+
+- **Dónde está la superficie.** Horizon da `water_plane` solo cuando el material lee el espejo `reflection`, que el pack
+  no usa (reflejos de pantalla; dibujar el espejo cuesta otra vista del mundo a ½). El nivel de una fuente es un entero
+  + 8/9: se toma el más cercano al ojo si está a menos de 0,2 bloques. No cubre el agua que fluye (otros niveles).
+- **Si de verdad hay agua** en ese nivel (sobre tierra no la hay), por orden:
+  1. una **sonda de profundidad** en la columna central, 0,03 en v al lado de la línea donde el nivel corta el plano
+     cercano: si la superficie está, la sonda la ve a la distancia esperada (centímetros);
+  2. si la línea no cae en la pantalla (mirando casi en vertical), el **mapa de sombras**: luz justo encima del nivel,
+     y justo debajo sombra solo en el translúcido, cuyo color tiene alfa 1 (fluido). Se mira 0,8 bloques **hacia la
+     luz**: bajo la cámara está la sombra del propio jugador y el mapa sólido la daba en sombra;
+  3. con el ojo en el agua, la superficie de encima;
+  4. lo confirmado en fotogramas anteriores para ese mismo nivel (texel (2,0).a de `bloom2`, escrito en la pasada 4).
+- Sin agua confirmada vale lo de siempre: `in_water`.
+
+Visto en `hoja-agua-cruce.png`: a 20° y a 85° hacia abajo, con el ojo en 65, 64, 62,92, 62,90, 62,88, 62,86, 62 y 61,
+ya no hay franja de fondo claro; con el ojo justo debajo se ve el cielo por encima de la línea, como debe. Sin ver: de
+noche (el mapa de sombras es el de la luna) y bajo árboles que tapen la luz (entonces quedan la sonda y la memoria).
