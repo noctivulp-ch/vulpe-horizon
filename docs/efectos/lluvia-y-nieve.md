@@ -40,3 +40,20 @@ Comprobado el 2026-11-03: la referencia de Horizon da a la etapa `weather` solo 
 `trabajo/horizon-shader-build` responde «unknown identifier: `shadow_position`» en esa etapa. Sigue la sombra aproximada
 por la luz de cielo. Confirmado por el gestor con la referencia del 2026-11-04 (`9abb7dc50`): límite de Horizon, en la lista de
 peticiones del dueño.
+
+## Paridad 16 (2026-11-04)
+
+En el original la pasada del clima solo escribe una máscara de opacidad, y la composición aclara ×1,2 lo que tapa
+cualquier gota y apaga el bloom de niebla en su píxel (del todo desde una opacidad de 0,2). En Horizon la etapa del clima
+no ve lo de detrás ni puede dejar una máscara para el post: se aproxima.
+
+- **Aclarado:** opacidad de la lluvia 0,28 → 0,5 (`OPC_LLUVIA_OPACIDAD`) y la gota ×2,0 la luz que recibe (antes ×1,3,
+  `OPC_LLUVIA_ACLARADO`). **Medido** (media del cuarto central contra la misma vista con «Opacidad de la lluvia» a 0,
+  de día mirando al horizonte): los píxeles que cambian más de un 3 % se aclaran un 10–12 % de media, frente al 20 % del
+  original. Subir más la opacidad o el aclarado casi no lo mueve (con 0,8 y ×2 sale lo mismo): la gota iluminada no
+  queda mucho más clara que el cielo que tapa. Para llegar al 20 % haría falta la máscara en el post (petición a Horizon).
+- **Bloom de niebla con lluvia:** antes ×(1 + 0,5·lluvia); ahora ×(1 − 0,1·lluvia) (`OPC_BLOOM_NIEBLA_LLUVIA`): sin
+  máscara, se quita la parte que cubren las gotas (~10 % de los píxeles en la medida).
+
+**Visto** (`lluvia-aclarado-*.png`, escena `lluvia-aclarado`): trazos claros, sin color propio, sobre el cielo y sobre
+las sombras del suelo. Las medidas varían ±2 puntos entre capturas: la lluvia y el cielo cambian entre ellas.
