@@ -15,7 +15,7 @@ fn adp_clima(input: WeatherInput) -> vec4<f32> {
     let cos_l = dot(vista, frame.light_direction);
     let fase = select(vol_hg(cos_l, 0.75), vol_hg(cos_l, 0.1), input.snow) * 4.0 * MAT_PI;
     let sol = adp_irradiancia_astro(c) / MAT_PI * sombra * fase * input.light.y;
-    let bloque = o.bloque_color * luz_curva_bloque(input.light.x, OPC_LUZ_BLOQUE_REFUERZO) * OPC_LUZ_BLOQUE * o.bloque;
+    let bloque = o.bloque_color * luz_curva_bloque(input.light.x) * OPC_LUZ_BLOQUE * o.bloque;
     var luz = (cielo * luz_curva_cielo(input.light.y) + sol + bloque) * OPC_LLUVIA_ACLARADO;
     var alfa = input.color.a * clima_opacidad * select(OPC_LLUVIA_OPACIDAD, OPC_NIEVE_OPACIDAD, input.snow);
     if input.snow {

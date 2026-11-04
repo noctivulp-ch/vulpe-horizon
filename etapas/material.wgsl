@@ -53,9 +53,9 @@ fn material(input: MaterialInput) -> Surface {
     if m.sss > 0.0 {
         sss_cielo = sup_sss_color(albedo, 0.5) * luces.cielo * curva_cielo * m.sss * mix(0.3, 0.8, p.vista.y * -0.5 + 0.5);
     }
-    let bloque = adp_color_luz_bloque(p, o) * luz_curva_bloque(p.luz_bloque, OPC_LUZ_BLOQUE_REFUERZO) * OPC_LUZ_BLOQUE * o.bloque;
+    let bloque = adp_color_luz_bloque(p, o) * luz_curva_bloque(p.luz_bloque) * OPC_LUZ_BLOQUE * o.bloque;
     let cielo_camara = frame.eye_light_smooth.y;
-    let minima = OPC_LUZ_MINIMA * (mix(o.minima_cuevas, o.minima_exterior, max(p.luz_cielo, cielo_camara)) + frame.night_vision * 20.0);
+    let minima = OPC_LUZ_MINIMA_CUEVA * (mix(o.minima_cuevas, o.minima_exterior, max(p.luz_cielo, cielo_camara)) + frame.night_vision * 20.0);
     let indirecta = albedo * (ambiente_cielo + bloque + vec3<f32>(minima)) + sss_cielo;
 
     // Especular del sol y reflejo del ambiente.
