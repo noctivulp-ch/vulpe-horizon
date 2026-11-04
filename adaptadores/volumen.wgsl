@@ -34,7 +34,7 @@ fn adp_volumen_luz() -> VolLuz {
     return VolLuz(frame.light_direction, adp_irradiancia_astro(c), cielo, adp_suelo(c) * OPC_LUZ_CIELO_BASE);
 }
 
-fn adp_volumen_ajustes() -> VolAjustes {
+fn adp_volumen_ajustes(bajo_agua: bool) -> VolAjustes {
     let o = opc_volumen();
     let h = vol_horario(frame.day_time);
     // En una cueva no entra la niebla de cielo: queda una tenue.
@@ -46,7 +46,7 @@ fn adp_volumen_ajustes() -> VolAjustes {
     let manchas = (h.manchas + lluvia * 0.4 + nieve * 0.5 + clamp(frame.downfall - 0.85, 0.0, 0.15) * 2.5 * smoothstep(0.5, 0.9, frame.temperature)) * fuera;
     let viento = vec3<f32>(OPC_VIENTO.x, 0.0, OPC_VIENTO.y) * o.viento * frame.time * 0.5;
     let niebla = VolAjustesNiebla(uniforme, manchas, o.cantidad, o.bruma, o.caida, viento, mix(1.0, 8.0, nieve));
-    let con_niebla = o.niebla && frame.in_water < 0.5;
+    let con_niebla = o.niebla && !bajo_agua;
     let mapa = LuzMapa(frame.shadow_view_proj, frame.shadow_distortion);
     return VolAjustes(niebla, adp_nubes(), o.alcance, o.pasos, o.pasos_nubes, con_niebla, o.nubes,
                       frame.has_shadow == 1u, o.sombra_nubes, mapa, adp_aurora(o.alcance));
@@ -63,15 +63,20 @@ fn adp_volumen(uv: vec2<f32>, pixel: vec2<f32>) -> VolResultado {
         }
         return vol_end(adp_volumen_rayo(uv, pixel), d, ruido3d);
     }
-    if frame.in_water > 0.5 {
+    let bajo_agua = adp_pixel_bajo_agua(uv);
+    if bajo_agua {
         // Con la cámara bajo el agua, la niebla del agua sustituye a la de aire (07).
         let oa = opc_agua(adp_tiempo().segundos, frame.rain);
-        let superficie = select(frame.camera_position.y + 8.0, frame.water_plane, frame.has_reflection == 1u);
+        let plano = adp_plano_agua_cercano();
+        var superficie = select(frame.camera_position.y + 8.0, frame.water_plane, frame.has_reflection == 1u);
+        if plano.y > 0.5 {
+            superficie = frame.camera_position.y + plano.x;
+        }
         let agua = VolAgua(superficie, agu_medio(oa.claridad), vec3<f32>(OPC_LUZ_MINIMA * 40.0 * OPC_AGUA_MINIMO));
         return vol_agua(adp_volumen_rayo(uv, pixel), adp_volumen_luz(), agua, LuzMapa(frame.shadow_view_proj, frame.shadow_distortion),
                         shadow_map, shadow_sampler, frame.has_shadow == 1u);
     }
-    return vol_integrar(adp_volumen_rayo(uv, pixel), adp_volumen_luz(), adp_volumen_ajustes(),
+    return vol_integrar(adp_volumen_rayo(uv, pixel), adp_volumen_luz(), adp_volumen_ajustes(bajo_agua),
                         shadow_map, shadow_sampler, ruido2d, ruido2d_sampler, ruido3d, mapa_aurora, linear_sampler);
 }
 
@@ -125,8 +130,8 @@ fn adp_niebla_inmersion(color: vec3<f32>, distancia: f32) -> vec3<f32> {
 // Transmitancia para componer la escena: con la cámara bajo el agua, por canal (Beer-Lambert con la absorción del
 // agua a lo largo de la vista, la misma del raymarch del agua): el rojo se pierde antes que el verde y el azul (07.1).
 // El destino del volumen solo guarda una transmitancia, la luminancia. Porqué: docs/efectos/agua.md §Bajo el agua
-fn adp_transmitancia_compuesta(v: VolResultado, distancia: f32) -> vec3<f32> {
-    if frame.in_water <= 0.5 {
+fn adp_transmitancia_compuesta(v: VolResultado, distancia: f32, uv: vec2<f32>) -> vec3<f32> {
+    if !adp_pixel_bajo_agua(uv) {
         return vec3<f32>(v.transmitancia);
     }
     let oa = opc_agua(adp_tiempo().segundos, frame.rain);
