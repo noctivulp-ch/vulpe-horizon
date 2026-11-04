@@ -8,10 +8,20 @@ fn agu_rotar(p: vec2<f32>, k: f32) -> vec2<f32> {
     return vec2<f32>(cos(a) * p.x - sin(a) * p.y, sin(a) * p.x + cos(a) * p.y);
 }
 
-// Oleaje en parches: ruido de muy baja frecuencia curvado en S (zonas movidas y zonas en calma).
-fn agu_parches(xz: vec2<f32>, t: texture_2d<f32>, s: sampler) -> f32 {
+// Curva que realza las crestas del oleaje amplio, medida en paridad/07 §2 (21 puntos de 0 a 1).
+const AGU_CURVA_CRESTAS = array<f32, 21>(0.0, 0.0001, 0.0014, 0.0072, 0.0219, 0.0495, 0.0931, 0.1535, 0.2297, 0.3188,
+    0.4167, 0.5184, 0.6187, 0.7128, 0.7965, 0.8669, 0.9220, 0.9614, 0.9858, 0.9975, 1.0);
+
+fn agu_curva_crestas(x: f32) -> f32 {
+    let f = clamp(x, 0.0, 1.0) * 20.0;
+    let i = min(i32(f), 19);
+    return mix(AGU_CURVA_CRESTAS[i], AGU_CURVA_CRESTAS[i + 1], f - f32(i));
+}
+
+// Oleaje en parches: ruido de muy baja frecuencia por la curva de crestas, con un mínimo (zonas movidas y en calma).
+fn agu_parches(xz: vec2<f32>, minimo: f32, t: texture_2d<f32>, s: sampler) -> f32 {
     let n = textureSampleLevel(t, s, xz / 1800.0, 0.0).r;
-    return smoothstep(0.3, 0.7, n) * 0.85 + 0.15;
+    return max(agu_curva_crestas(n), minimo);
 }
 
 // Altura (bloques) en el punto horizontal `xz` del mundo; `octavas` 2 o 3.
@@ -26,7 +36,7 @@ fn agu_altura(xz: vec2<f32>, o: AguOlas, octavas: i32, t: texture_2d<f32>, s: sa
         let q = agu_rotar(xz, f32(k)) / escalas[k] + viento[k] * o.tiempo * 0.01;
         h += (textureSampleLevel(t, s, q, 0.0).g - 0.5) * amplitud[k];
     }
-    return h * o.fuerza * agu_parches(xz, t, s);
+    return h * o.fuerza * agu_parches(xz, o.calma, t, s);
 }
 
 // Normal de las olas por diferencias finitas, con un paso que crece con la distancia (menos detalle que
@@ -48,7 +58,7 @@ fn agu_causticas(xz: vec2<f32>, o: AguOlas, t: texture_2d<f32>, s: sampler) -> f
         let q = agu_rotar(xz, f32(k)) / (18.0 + 10.0 * f32(k)) + vec2<f32>(0.8, -0.5) * o.tiempo * 0.02 * (1.0 + f32(k));
         let n = textureSampleLevel(t, s, q, 0.0).g;
         let linea = abs(abs(2.0 * n - 1.0) * 2.0 - 1.0);
-        c += exp(-linea * 6.0);
+        c += exp(-linea * 6.0 * o.agudeza);
     }
-    return mix(1.0, c * 1.6, agu_parches(xz, t, s));
+    return mix(1.0, c * 1.6, agu_parches(xz, o.calma, t, s));
 }

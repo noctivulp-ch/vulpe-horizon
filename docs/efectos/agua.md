@@ -20,18 +20,22 @@ Especificación: `../vulpe-horizon-spec/subsistemas/07-agua.md`. Capturas: `prue
 
 - **Olas** (`nucleo/agua/olas.wgsl`): 3 octavas del canal G de `ruido2d` con escalas anisótropas (220×90, 70×160,
   60×60 bloques), giradas 137,5° entre sí y desplazadas con el tiempo; oleaje en parches con el canal R a 1800
-  bloques curvado en S. Normal por diferencias finitas con paso que crece con la distancia y 2 octavas pasados 48
+  bloques pasado por la **curva de crestas medida** (`paridad/07` §2, tabla de 21 puntos interpolada,
+  `AGU_CURVA_CRESTAS`) con un mínimo de 0,30 (`OPC_AGUA_CALMA`; antes una S de 0,15 a 1). Normal por diferencias finitas con paso que crece con la distancia y 2 octavas pasados 48
   bloques. En caras verticales (cascadas), la normal geométrica. Fuerza × (1 + 0,8·lluvia).
 - **Refracción falsa** (Sousa 2005): desplazamiento en pantalla por la normal tangente × opción × 0,0006,
   decreciente con la distancia y en el 10 % del borde; si lo desplazado está delante del agua (profundidad
   invertida mayor que la de la superficie), sin desplazar. Profundidad a lo largo de la vista con `opaque_depth`
   reconstruida con `view_inverse · projection_inverse`. `opaque_color` y el espejo se **decodifican** (ADR 0004):
   son terreno dibujado por nuestro material.
-- **Absorción** (`nucleo/agua/optica.wgsl`): σ_a = (0,55; 0,13; 0,085) por bloque / claridad, la del agua pura
-  (Pope y Fry 1997) reforzada en verde y azul para que a 1 bloque sea casi incolora, a 3–5 verde azulada y a 10
-  azul oscura. Dispersión 0,035 gris con color (0,08; 0,45; 0,55) × ambiente. Absorción mínima de 4 bloques sin
+- **Absorción** (`OPC_AGUA_ABSORCION`, en `opciones/agua.wgsl`): extinción σ = (0,39; 0,108; 0,066) por bloque /
+  claridad, la **medida** en `paridad/07` §1 (transmitancia a 4 bloques 0,21; 0,65; 0,77). La misma en la
+  superficie, en el raymarch bajo el agua y en la composición por canal: antes eran (0,55; 0,13; 0,085), puestos a
+  ojo desde Pope y Fry 1997, y bajo el agua ese valor × 0,45 + la dispersión, porque con el de la superficie la niebla
+  se cerraba en pocos bloques. Dispersión 0,035 gris con color (0,08; 0,45; 0,55) × ambiente. Absorción mínima de 4 bloques sin
   luz de cielo.
-- **Reflejo:** Fresnel de Schlick F0 = 0,02. El alfa del espejo no distingue el cielo (dato del gestor): se detecta
+- **Reflejo:** Fresnel de Schlick con F0 = 0,02037 (`OPC_AGUA_F0`, n = 1,333; `paridad/07` §1 coincide con Schlick
+  en toda la tabla, 0,0225 a 45°, 0,439 a 81°). El alfa del espejo no distingue el cielo (dato del gestor): se detecta
   por el **parecido de color** con el degradado vanilla esperado (`frame.sky_color` arriba, `frame.fog_color` al
   horizonte) y la **elevación** reflejada, con la elevación sola si todo es oscuro (noche); ahí se pone el cielo del
   pack (horizonte → cielo medio de la tabla). Alfa < 0,75 (bloque emisivo): ×3. Sin espejo o fuera de su plano,
@@ -39,8 +43,7 @@ Especificación: `../vulpe-horizon-spec/subsistemas/07-agua.md`. Capturas: `prue
 - **Especular del sol:** GGX con rugosidad 0,02 sobre la normal de las olas (el reguero del atardecer).
 - **Desde abajo:** Fresnel desde dentro con el ángulo crítico de n = 1,333; fuera, reflexión total hacia un color
   de agua profunda.
-- **Niebla bajo el agua:** absorción × 0,45 a lo largo de la vista (con la de la superficie se cerraba en pocos
-  bloques: un muro azul), dispersión con la luz del sol × 0,5 y ambiente teñido. El destino del volumen guarda una sola
+- **Niebla bajo el agua:** la extinción medida a lo largo de la vista, dispersión con la luz del sol × 0,5 y ambiente teñido. El destino del volumen guarda una sola
   transmitancia (la luminancia); **la composición aplica la absorción por canal** con la distancia (Beer-Lambert con la
   misma absorción del raymarch, `adp_transmitancia_compuesta`; falta 07.1 de la fase 2).
 - Las funciones del agua van solo en material, volumen y composición, no en `shared`: las lecturas de textura
@@ -110,3 +113,15 @@ justo debajo pasa lo contrario arriba (se ve el aire, que es lo correcto).
 Visto en `hoja-agua-cruce.png`: a 20° y a 85° hacia abajo, con el ojo en 65, 64, 62,92, 62,90, 62,88, 62,86, 62 y 61,
 ya no hay franja de fondo claro; con el ojo justo debajo se ve el cielo por encima de la línea, como debe. Sin ver: de
 noche (el mapa de sombras es el de la luna) y bajo árboles que tapen la luz (entonces quedan la sonda y la memoria).
+
+## Paridad 07 (fase 2b, punto 4)
+
+Observación del dueño: superficie y fondo del mar «aún muy incompletos». Contra `paridad/07`: absorción, Fresnel y
+oleaje pasan a lo medido (arriba). Con ello, en `agua-orilla`/`agua-abajo` el agua de la orilla sale turquesa clara y
+transparente en vez de verdosa; bajo el agua (`agua-dentro*`) el azul es más limpio y el fondo se ve más lejos; en
+`agua-color` la lana roja a 5 bloques ya es casi negra (el rojo cae a 0,2 en 4 bloques) y la blanca azul celeste.
+Capturas con el aislamiento apagado.
+
+**Queda sin hacer (del inventario):** las partículas en suspensión o turbidez (en el original 0,05 por defecto, cuatro
+ajustes) y la espuma (apagada por defecto en el original). Los tres coeficientes de absorción son constantes con nombre,
+no opciones del menú (presupuesto de 64).

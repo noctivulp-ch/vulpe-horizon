@@ -13,9 +13,8 @@ fn vol_agua(rayo: VolRayo, luz: VolLuz, a: VolAgua, mapa_l: LuzMapa, mapa: textu
     let fin = min(rayo.escena, 96.0);
     let pasos = 8;
     let paso = fin / f32(pasos);
-    // A lo largo de la vista, algo menos de absorción que la de la superficie (que ya lleva el refuerzo verde
-    // azulado): la niebla se cierra en unas decenas de bloques.
-    let sigma = a.medio.absorcion * 0.45 + vec3<f32>(a.medio.dispersion);
+    // La extinción medida (paridad 07) es la total: la misma que la de la superficie.
+    let sigma = a.medio.absorcion;
     let fase = vol_fase_niebla(dot(rayo.dir, luz.direccion));
     var t_acum = vec3<f32>(1.0);
     var luz_acum = vec3<f32>(0.0);

@@ -4,6 +4,8 @@
 struct AguOlas {
     fuerza: f32,        // amplitud relativa (opción × lluvia)
     tiempo: f32,        // segundos × velocidad
+    calma: f32,         // escala mínima del oleaje en las zonas en calma
+    agudeza: f32,       // de las cáusticas (1 neutro)
 }
 
 struct AguMedio {
@@ -12,11 +14,10 @@ struct AguMedio {
     color_disperso: vec3<f32>,
 }
 
-// Agua pura reforzada en verde y azul (Pope y Fry 1997 da el rojo en pocos metros y el azul en decenas; aquí el
-// azul se absorbe más para que a 10 bloques sea azul oscuro). `claridad` divide la absorción.
-fn agu_medio(claridad: f32) -> AguMedio {
+// `absorcion` es la extinción total por bloque (la de la transmitancia medida, paridad 07); `claridad` la divide.
+fn agu_medio(claridad: f32, absorcion: vec3<f32>, dispersion: f32, color_disperso: vec3<f32>) -> AguMedio {
     let c = max(claridad, 0.05);
-    return AguMedio(vec3<f32>(0.55, 0.13, 0.085) / c, 0.035 / c, vec3<f32>(0.08, 0.45, 0.55));
+    return AguMedio(absorcion / c, dispersion / c, color_disperso);
 }
 
 fn agu_transmitancia(m: AguMedio, distancia: f32) -> vec3<f32> {
@@ -31,19 +32,19 @@ fn agu_a_traves(refractado: vec3<f32>, distancia: f32, ambiente: vec3<f32>, m: A
     return refractado * t + disperso;
 }
 
-// Fresnel de una interfaz agua-aire vista desde el lado del aire (Schlick, F0 = 0,02).
-fn agu_fresnel(cos_vista: f32) -> f32 {
-    return 0.02 + 0.98 * pow(1.0 - clamp(cos_vista, 0.0, 1.0), 5.0);
+// Fresnel de una interfaz agua-aire vista desde el lado del aire (Schlick).
+fn agu_fresnel(cos_vista: f32, f0: f32) -> f32 {
+    return f0 + (1.0 - f0) * pow(1.0 - clamp(cos_vista, 0.0, 1.0), 5.0);
 }
 
 // Vista desde dentro (n 1,333 → 1): por fuera del ángulo crítico (~48,6° de la normal) reflexión total.
-fn agu_fresnel_dentro(cos_vista: f32) -> f32 {
+fn agu_fresnel_dentro(cos_vista: f32, f0: f32) -> f32 {
     let seno2 = (1.0 - cos_vista * cos_vista) * 1.777;
     if seno2 >= 1.0 {
         return 1.0;
     }
     let cos_t = sqrt(1.0 - seno2);
-    return 0.02 + 0.98 * pow(1.0 - cos_t, 5.0);
+    return f0 + (1.0 - f0) * pow(1.0 - cos_t, 5.0);
 }
 
 // Peso 0..1 de que un téxel del espejo sea cielo vanilla: parecido de color con el degradado vanilla esperado en la
