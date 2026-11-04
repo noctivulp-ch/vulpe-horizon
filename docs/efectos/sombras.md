@@ -47,8 +47,8 @@ bloque, y la luz directa se multiplica por `smoothstep(0,02; 0,35; luz de cielo)
 1. Búsqueda: 8 lecturas crudas (`textureLoad`) en un disco de 1,5 bloques (2–24 texels); se promedian las
    que están delante del punto. Sin ocluyentes, iluminado sin filtrar.
 2. Penumbra = distancia al ocluyente (profundidad × bloques por unidad de profundidad, que se saca de la
-   tercera fila de `shadow_view_proj`: la proyección es ortográfica) × tan(1,5°), el sol aparente algo
-   mayor que el real. Acotada entre la mínima y la máxima de las opciones.
+   tercera fila de `shadow_view_proj`: la proyección es ortográfica) × 0,0197 más 0,051 bloques (desde 04.1;
+   antes × tan 1,5°, ver §«Paridad 04»). Acotada entre 1 y 30 texels.
 3. PCF: `muestras` comparaciones (8) en un disco de Vogel; cada una ya es un PCF bilineal 2×2.
 
 El disco gira con el ruido IGN por píxel desplazado por fotograma (secuencia áurea): el TAA (09) lo
@@ -87,3 +87,25 @@ vanilla sin mapa 2,35 ms de GPU; con mapa (lo dibuja el motor) 3,66; con el mate
 sobre vanilla. naga: material 3736 expresiones, 7 lecturas de textura (por sitio en el código).
 
 Probado sin efecto: salir antes en los téxeles que el test de alfa descarta (Horizon ya no los ilumina).
+
+## Paridad 04 (2026-11-04)
+
+`paridad/04` mide la sombra de un borde recto con el código del original sobre un mapa sintético: la anchura de la
+penumbra 10–90 % va de 0,075 bloques (ocluyente a 0,5) a 0,5 (a 16), casi lineal: **0,07 + 0,027·h**. El radio de filtro
+satura en 30 texels.
+
+- **Radio en bloques:** `mínimo + crecimiento · distancia al ocluyente`, 0,051 + 0,0197·h (`OPC_SOMBRA_PENUMBRA_MIN`,
+  `OPC_SOMBRA_PENUMBRA_CRECE`), pasado a texels con la densidad del mapa en el punto. Antes, `tan 1,5° · h` con un mínimo
+  de 2,25 texels: igual a 8 bloques, más dura con ocluyentes bajos y dependiente de la resolución.
+- **Tope** 20 → 30 texels (`SOMBRAS_PENUMBRA_MAX`), el del original.
+- **Herramienta:** `tools/paridad/penumbra.py` replica nuestro PCF (8 muestras de Vogel, 16 giros, comparación bilineal) y
+  da 0,085 / 0,097 / 0,125 / 0,179 / 0,285 / 0,501 bloques a h = 0,5 / 1 / 2 / 4 / 8 / 16 con 53 texels por bloque (cerca
+  de la cámara), frente a 0,075 / 0,1 / 0,125 / 0,2 / 0,325 / 0,5.
+- **El sesgo no se copia:** en el original un ocluyente a 0,25 bloques no da sombra, por su sesgo con un mapa de 512
+  texels; la propia tabla dice que manda la anchura. El nuestro (0,35 texels por la normal, 0,15 hacia la luz, con un
+  mapa de 2048) deja las sombras de contacto.
+- La opción «Penumbra» básica usa ahora el radio mínimo en bloques (0,051).
+
+**Visto** (`hoja-sombras-borde.png`, escena `sombras-borde`: losas a 1, 2, 4 y 8 bloques sobre piedra lisa a
+mediodía, desde arriba y de cerca): las cuatro sombras con borde de anchura creciente con la altura; frente a antes, casi
+igual a 4–8 bloques y algo más suave la de 1. **Sin ver:** la penumbra lejos de la cámara, donde pesa el tope de 30.

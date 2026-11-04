@@ -11,10 +11,10 @@ struct LuzPuntoSombra {
 
 struct LuzAjustesSombra {
     variable: bool,             // PCSS; si no, PCF de radio fijo (la penumbra mínima)
-    penumbra_min: f32,          // texels
-    penumbra_max: f32,          // texels
+    penumbra_min: f32,          // radio, bloques
+    penumbra_max: f32,          // radio, texels
     muestras: i32,
-    tamano_sol: f32,            // tangente del radio angular aparente del sol
+    penumbra_crece: f32,        // radio que crece por bloque de distancia al ocluyente
 }
 
 struct LuzSombra {
@@ -32,7 +32,7 @@ fn luz_vogel(i: i32, n: i32, giro: f32) -> vec2<f32> {
 fn luz_sombra(p: LuzPuntoSombra, a: LuzAjustesSombra, mapa: texture_depth_2d, comparacion: sampler_comparison) -> LuzSombra {
     let giro = p.ruido * MAT_TAU;
     let lado = vec2<f32>(p.resolucion);
-    var radio_texeles = a.penumbra_min;
+    var radio_texeles = clamp(a.penumbra_min * p.texeles_por_bloque, 1.0, a.penumbra_max);
     var grosor = 0.0;
     if a.variable {
         // 1. Búsqueda de ocluyentes: profundidad cruda en un disco de ~1,5 bloques.
@@ -52,10 +52,10 @@ fn luz_sombra(p: LuzPuntoSombra, a: LuzAjustesSombra, mapa: texture_depth_2d, co
         if cuenta == 0.0 {
             return LuzSombra(1.0, 0.0);
         }
-        // 2. Penumbra proporcional a la distancia al ocluyente y al tamaño aparente del sol.
+        // 2. Penumbra: un mínimo más una parte proporcional a la distancia al ocluyente, en bloques.
         grosor = (p.mapa.z - suma / cuenta) * p.bloques_por_profundidad;
-        let penumbra_bloques = grosor * a.tamano_sol;
-        radio_texeles = clamp(penumbra_bloques * p.texeles_por_bloque, a.penumbra_min, a.penumbra_max);
+        let penumbra_bloques = a.penumbra_min + grosor * a.penumbra_crece;
+        radio_texeles = clamp(penumbra_bloques * p.texeles_por_bloque, 1.0, a.penumbra_max);
     }
     // 3. PCF con ese radio: cada muestra ya es un PCF bilineal 2×2.
     var luz = 0.0;
