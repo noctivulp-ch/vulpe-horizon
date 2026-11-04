@@ -83,3 +83,23 @@ pasada de bloom, 49 en la final (por sitio en el código; límite 64).
   salir al sol** deslumbra (imagen lavada, `imagen-salida-cueva.png`) y en unos segundos se adapta
   (`imagen-salida-adaptado.png`).
 - **No visto:** la ceguera y la oscuridad del Warden.
+
+## Oscuridad mínima y máxima (fase 2b, punto 5)
+
+Observación del dueño (2026-11-03): «falta poder controlar la oscuridad mínima y máxima y efectos similares». Contra los
+inventarios de `paridad/11` (el original deja oscurecer y aclarar la curva de la exposición automática, dos ajustes) y
+`paridad/03` (luz mínima en cuevas, al aire libre y en el End):
+
+- **«Brillo de lo oscuro»** (`exposicion_oscuro`) y **«Brillo de lo claro»** (`exposicion_claro`), en pasos de −2 a +2:
+  se suman a la exposición según la luminancia media adaptada, en log entre `OPC_EXPOSICION_L_OSCURO` (0,0003) y
+  `OPC_EXPOSICION_L_CLARO` (0,03); antes de la primera medida, según la hora (`adp_factor_dia`). **Por qué así y no
+  dos multiplicadores de la curva como el original:** nuestra curva es otra (`k / ln(L + 1 + c)` mezclada con la previa),
+  y lo que el dueño pide es lo que se ve: lo negra que queda la noche y lo claro que queda el día, cada uno sin mover el
+  otro. La compensación general (`imagen_exposicion`) sigue moviendo las dos.
+- **«Luz mínima al aire libre»** (`luz_minima_exterior`, 0–1, 0 como el original): era una constante.
+- La luz mínima del End sigue en `OPC_AMBIENTE_END` (17).
+
+**Medido** (media del cuarto central, `oscuridad-*.png`, pradera de (170, 77, 166)): de noche 20,0/255 con 0 →
+15,4 con −1 y 36,8 con +1; de día 165,0 con 0 y 138,6 con «claro» −1. «Luz mínima al aire libre» a 1 no cambia la noche
+con luna (16,0 frente a 20,0, dentro de lo que varía entre capturas): su escala es la de la luz mínima (0,0004), solo
+pesa en una noche sin luna ni estrellas.
