@@ -103,3 +103,21 @@ inventarios de `paridad/11` (el original deja oscurecer y aclarar la curva de la
 15,4 con −1 y 36,8 con +1; de día 165,0 con 0 y 138,6 con «claro» −1. «Luz mínima al aire libre» a 1 no cambia la noche
 con luna (16,0 frente a 20,0, dentro de lo que varía entre capturas): su escala es la de la luz mínima (0,0004), solo
 pesa en una noche sin luna ni estrellas.
+
+## Fílmico según paridad 11 (fase 3, 2026-11-04)
+
+`paridad/11` da la salida del fílmico por defecto del original para entradas grises y un naranja. **Encaja con la curva
+pública de Hejl (2015)** con punto blanco 3,1, por canal (`col_tonemap_filmico`, `OPC_FILMICO_BLANCO`): error máximo
+0,009 en pantalla desde 0,01 de entrada (`tools/paridad/filmico.py`); en 0,005 da 0,002 frente a 0,010. La nuestra era la
+racional de Hejl y Dawson 2010, que daba 0,51 en el gris medio frente a 0,54 y 0,95 en 4 frente a 1.
+
+**El cielo gris con el fílmico venía de la exposición, no de la curva** (lo que apuntaba la paridad): nuestro día va a
+E ≈ 3, y el cielo llegaba a la curva por encima de 1, donde el fílmico por canal satura y desatura. Con la exposición
+×0,5 solo para el fílmico (`OPC_TONEMAP_EXPOSICION` = 0,5; 1 para ACES y Reinhard, cada curva responde distinto en los
+medios) el cielo de día queda azul (151, 173, 195 de media en el quinto superior) y la imagen donde la dejaba Reinhard.
+**Por eso el fílmico pasa a ser el valor por defecto** (requisito del dueño: mismas salidas), en vez de Reinhard.
+
+**Visto** (`hoja-tonemap.png`: Reinhard, a la izquierda, frente al fílmico, en la pradera de (170, 78, 150), con el
+aislamiento apagado; media del cuarto central): día 179 → 183, saturación 59 → 37 (el cielo, algo menos saturado pero
+azul); atardecer 136 → 133; noche 36 → 19, más cerca del objetivo de 17 (el pie del fílmico oscurece más que Reinhard). Con
+los valores por defecto (aislamiento encendido) 183 / 139 / 21. Con −1,5 pasos el día bajaba a 166 y la noche a 14.
