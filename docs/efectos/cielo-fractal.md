@@ -109,3 +109,18 @@ iteraciones en las ampliaciones.
 Semillas 1, 3, 5, 11 y 8: entre una y varias figuras, separadas, de las tres familias (dendritas y
 espirales de Julia, ampliación del Mandelbrot con sus bulbos); aparecen con la noche y se apartan de la luna.
 Cambiar el `override` en el WGSL no cambia nada: manda el `default` del manifiesto.
+
+## Sorteo frente a paridad 02 (fase 3, 2026-11-04): no se puede reproducir todavía
+
+`paridad/02` da el resultado del sorteo del original por semilla y día (cuántos conjuntos, sitio, forma, desfase de paleta,
+giro). Con el requisito de «mismas salidas», la misma semilla debería dar el mismo cielo. El procedimiento está en la
+especificación 02 §3 y el nuestro lo sigue; lo que cambia es el hash: el original usa un `fract(sin(·)·43758,5…)` de la
+semilla y un índice, y nosotros PCG (decidido en la fase 1 por estabilidad entre GPU: el `sin` de argumentos grandes
+redondea distinto en cada una).
+
+**Comprobado** con `tools/paridad/sorteo_fractal.py`: siete combinaciones públicas habituales de semilla e índice dentro del
+`fract(sin(·))` no reproducen la tabla (como mucho 4 de 12 en el número de conjuntos y 1 de 39 en el desfase de paleta). La
+especificación no da la combinación exacta, y por la regla de la sala limpia no se busca: **duda para A**, que anote en
+02 §3 la expresión del argumento del seno y la constante completa. Con ella, la herramienta dirá si se reproduce; si sí, el
+sorteo usaría ese hash (con los argumentos pequeños que ya pliega el original, que es lo que lo hace estable) y el PCG
+quedaría para lo demás.
