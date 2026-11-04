@@ -4,7 +4,7 @@ override exposicion_oscuro: f32 = 0.0;      // pasos solo en lo oscuro (noche, c
 override exposicion_claro: f32 = 0.0;       // pasos solo en lo claro (día)
 override imagen_saturacion: f32 = 0.0;      // −1…+1
 override imagen_contraste: f32 = 0.0;       // −1…+1
-override imagen_tonemap: u32 = 2u;          // fílmico, ACES, Reinhard (por defecto: conserva el tono del cielo)
+override imagen_tonemap: u32 = 0u;          // fílmico (el del original, paridad/11), ACES, Reinhard
 override imagen_tramado: bool = true;
 override bloom_fuerza: f32 = 1.0;           // ×
 
@@ -24,6 +24,10 @@ const OPC_BASTONES_L0: f32 = 0.0015;       // luminancia de escena a la que los 
 const OPC_PURKINJE: f32 = 1.0;
 const OPC_BALANCE_K: f32 = 6500.0;
 const OPC_NITIDEZ: f32 = 0.35;
+const OPC_FILMICO_BLANCO: f32 = 3.1;       // punto blanco del fílmico de Hejl 2015 (paridad/11)
+// Exposición propia de cada curva (fílmico, ACES, Reinhard): el fílmico da más en los medios tonos; con ×0,5 deja el día
+// y la noche donde los dejaba Reinhard y el cielo azul (lo que le llegaba a la curva venía demasiado expuesto).
+const OPC_TONEMAP_EXPOSICION = array<f32, 3>(0.5, 1.0, 1.0);
 const OPC_BLOOM: f32 = 0.3;                 // peso con que se suma el desenfoque con fuerza 1 (paridad 10), por la viñeta
 const OPC_BLOOM_VINETA_CENTRO: f32 = 1.5;   // viñeta propia del bloom: ×1,5 en el centro (0,45)…
 const OPC_BLOOM_VINETA_ESQUINA: f32 = 0.5;  // …y ×0,5 en las esquinas (0,15)

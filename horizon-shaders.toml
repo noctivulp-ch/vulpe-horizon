@@ -299,7 +299,7 @@ name = "Mapeo de tonos"
 description = "Cómo se comprimen los brillos por encima de 1."
 type = "choice"
 values = ["Fílmico", "ACES", "Reinhard"]
-default = "Reinhard"
+default = "Fílmico"
 
 [[options]]
 id = "bloom_fuerza"

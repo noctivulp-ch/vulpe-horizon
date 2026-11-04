@@ -56,19 +56,23 @@ fn col_tonemap_aces(c: vec3<f32>) -> vec3<f32> {
     return mat_saturar3((c * (a * c + b)) / (c * (cc * c + d) + e));
 }
 
-// Curva fílmica racional de Hejl, Burgess y Dawson (difundida por Duiker; Hable 2010): lleva ya la gamma de
-// pantalla, así que se devuelve a lineal para que todos los operadores tengan la misma firma.
-fn col_tonemap_filmico(c: vec3<f32>) -> vec3<f32> {
-    let x = max(c - 0.004, vec3<f32>(0.0));
-    let pantalla = (x * (6.2 * x + 0.5)) / (x * (6.2 * x + 1.7) + 0.06);
-    return col_srgb_a_lineal(mat_saturar3(pantalla));
+// Curva fílmica de Hejl (2015), la racional con punto blanco `blanco`, por canal; devuelve luz lineal. Con blanco 3,1
+// reproduce el fílmico por defecto del original (paridad/11: error ≤ 0,009 en pantalla desde 0,01 de entrada).
+fn col_hejl2015_parcial(x: vec4<f32>) -> vec4<f32> {
+    let a = 1.425 * x + 0.05;
+    return (x * a + 0.004) / (x * (a + 0.55) + 0.0491) - 0.0821;
+}
+
+fn col_tonemap_filmico(c: vec3<f32>, blanco: f32) -> vec3<f32> {
+    let v = col_hejl2015_parcial(vec4<f32>(max(c, vec3<f32>(0.0)), blanco));
+    return mat_saturar3(v.rgb / v.w);
 }
 
 // Elige operador; el resto del pack solo llama a esta.
-fn col_tonemap(c: vec3<f32>, operador: u32, blanco: f32) -> vec3<f32> {
+fn col_tonemap(c: vec3<f32>, operador: u32, blanco: f32, blanco_filmico: f32) -> vec3<f32> {
     switch operador {
         case COL_TONEMAP_ACES: { return col_tonemap_aces(c); }
         case COL_TONEMAP_REINHARD_LUMINANCIA: { return col_tonemap_reinhard_luminancia(c, blanco); }
-        default: { return col_tonemap_filmico(c); }
+        default: { return col_tonemap_filmico(c, blanco_filmico); }
     }
 }
