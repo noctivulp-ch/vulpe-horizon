@@ -11,10 +11,9 @@ Especificación: `../vulpe-horizon-spec/subsistemas/16-lluvia-y-nieve.md`. Captu
   más el astro tras la atmósfera × sombra × fase × luz de cielo, más la antorcha con la curva de luz de bloque y el
   color por defecto de 03; × 1,3 para que la gota quede algo más clara que lo que tapa. Fase de Henyey-Greenstein
   g = 0,75 para la lluvia (brilla a contraluz) y 0,1 para la nieve.
-- **Sombra:** el comprobador compilado (`trabajo/horizon-shader-build`) y el juego instalado son anteriores a
-  `shadow_position` en la etapa `weather` (entró el 2026-11-02 a las 00:53, dato del gestor): «unknown identifier».
-  Mientras tanto, sombra aproximada por la luz de cielo de Minecraft, como más allá del mapa en el 04. Con una
-  versión más nueva, usar `shadow_position` + el mapa.
+- **Sombra:** aproximada por la luz de cielo de Minecraft, como más allá del mapa en el 04. La etapa `weather` tiene el
+  ayudante `shadow_position` pero solo recibe `frame`, sin `shadow_map` ni comparador (referencia de Horizon del
+  2026-11-04): es un límite de Horizon, no de versión (ver §«Sombra con el mapa»).
 - **Alfa:** el de la textura × opción × 0,28 (lluvia) o 0,75 (nieve).
 - **Niebla:** la de post no ve las cortinas (no escriben profundidad, dato del gestor): el alfa se atenúa aquí con
   `e^(−σ·distancia)`, σ de la niebla uniforme del momento (horario del 05 + lluvia) más 0,004.
@@ -39,5 +38,5 @@ Opacidad de la lluvia y la nieve (imprescindible), página «Luz». Van 49.
 Comprobado el 2026-11-03: la referencia de Horizon da a la etapa `weather` solo `frame` en su grupo de recursos (ni
 `shadow_map` ni su comparador), así que `shadow_position` sola no sirve; además el comprobador compilado de
 `trabajo/horizon-shader-build` responde «unknown identifier: `shadow_position`» en esa etapa. Sigue la sombra aproximada
-por la luz de cielo. **Duda para el gestor:** pedir a Horizon el mapa de sombras en `weather`, o recompilar el
-comprobador si ya lo tiene.
+por la luz de cielo. Confirmado por el gestor con la referencia del 2026-11-04 (`9abb7dc50`): límite de Horizon, en la lista de
+peticiones del dueño.

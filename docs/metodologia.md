@@ -91,12 +91,13 @@ las líneas de la especificación que cree que se saltó. No le dice cómo arreg
 - Cada parámetro que no va al menú es una constante con nombre, agrupada en `opciones/`, para que
   convertirla en opción sea cambiar una línea del manifiesto.
 
-## Dónde se quedó (2026-11-02)
+## Dónde se quedó (2026-11-04)
 
-- **Fase 2:** hechas 17.1 (Nether y End), 03.1 (color de la luz de bloque), 05.1 (lava y nieve en polvo),
-  05.2 (niebla nocturna azul), 07.1 (absorción por canal bajo el agua) y 03.2 (estaciones). La 01.1
-  (cinturón de Venus) quedó a medias en la rama `wip/fase2-a-medias`, sin validar. Quedan las tres bajas.
-- **Fase 3:** A tiene el inventario y las tablas de 01, 02, 03, 05, 06 y 11, y la lista de capturas nuevas del
-  original que hacen falta. B aún no ha escrito la herramienta de comparación.
-- **Horizon:** la vegetación (15) y la sombra de la lluvia esperan una nightly posterior a
-  `nightly-2026-11-01-c9d474d`.
+- **Fase 2: hecha.** Las faltas 17.1 (Nether y End), 03.1 (color de la luz de bloque), 05.1 (lava y nieve en polvo),
+  05.2 (niebla nocturna azul), 07.1 (absorción por canal bajo el agua), 03.2 (estaciones) y 01.1 (cinturón de
+  Venus), y lo que vio el dueño jugando: bloom sin «palitos», cruce de la superficie del agua, agua según la paridad,
+  oscuridad mínima y máxima, erosión de las nubes y vegetación activa. Las tres bajas (05.3, 07.2, 15.1) pasan a la fase 6.
+- **Fase 3:** las tablas de los 17 subsistemas están medidas por extracción. Aplicadas por B: 07 (agua), 10 (bloom),
+  15 (vegetación) y los controles de 11. B aún no ha escrito la herramienta de comparación.
+- **Horizon:** la sombra de la lluvia con el mapa no se puede hacer: la etapa `weather` solo recibe `frame`, sin
+  `shadow_map` (límite de Horizon, en la lista de peticiones del dueño). Mientras, la aproxima la luz de cielo.
