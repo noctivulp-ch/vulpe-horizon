@@ -55,3 +55,23 @@ frente a ~7,1 antes del cambio (ruido de medida: la pasada es barata).
   muestra las vetas verticales que el grano tapaba.
 - **No visto:** el centelleo de los filamentos del fractal con la cámara en movimiento (quieto no centellea);
   entidades en movimiento (sin vectores de movimiento, pueden dejar estela leve: no probado).
+
+## Paridad 09 (2026-11-04)
+
+Contra `paridad/09` (el TAA del original ejecutado fotograma a fotograma):
+
+- **Mezcla en movimiento** 0,33 → **0,125** (`OPC_TAA_MEZCLA_MOVIMIENTO`): con sus valores por defecto el original no
+  cambia la mezcla al moverse.
+- **Caja de recorte** 1,1 → **1,25 σ** del vecindario 3×3 (`OPC_TAA_GAMMA`), y ya no se estrecha a 0,75 con el
+  movimiento (`OPC_TAA_GAMMA_MOVIMIENTO` = 1,25): el original usa siempre 1,25 (su ajuste del menú no tiene efecto).
+- **Remuestreo del historial:** Catmull-Rom con nitidez 0,75 en el original; la opción «Nitidez del TAA» pasa de 0,5 a
+  0,75 por defecto.
+- **Compresión por luminancia** (`c / (1 + L)` antes de mezclar, deshecha después): ya era la del original.
+- **FXAA: añadido de Vulpe para Horizon**, el original no tiene antialiasing espacial (`OPC_TAA_FXAA`). Se queda.
+- **Sin hacer:** la vuelta a la media del vecindario proporcional a cuánto movió el recorte el historial (anti-estelas
+  del original); la tabla no da su constante.
+
+**Visto** (`hoja-taa-movimiento.png`, escena `taa-movimiento`): varianza de la laplaciana (más = más nítido) quieta
+902 → 788 al llegar y 721 → 731 asentada; tras cinco giros de 3° seguidos, 642 → 493: con menos peso del fotograma nuevo
+el movimiento emborrona más, como en el original. `horizon-ctl` no captura a mitad de un giro continuo: lo de «girando»
+es justo después de los giros. **Sin ver:** estelas en movimiento real con el ratón.
