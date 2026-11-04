@@ -30,6 +30,8 @@ const OPC_BLOOM_VINETA_ESQUINA: f32 = 0.5;  // …y ×0,5 en las esquinas (0,15)
 const OPC_BLOOM_NUCLEO: f32 = 0.75;         // parte del núcleo compacto en el desenfoque (el resto, el ancho)
 const OPC_BLOOM_NIEBLA: f32 = 1.0;
 const OPC_BLOOM_NIEBLA_AGUA: f32 = 1.0;
+// Paridad 16: cada gota apaga el bloom de niebla en su píxel; sin máscara de gotas, se quita la parte que cubren (~10 %).
+const OPC_BLOOM_NIEBLA_LLUVIA: f32 = -0.1;
 const OPC_BLOOM_RADIO: f32 = 0.06;          // del alto de la pantalla (cola del halo; paridad 10: 97,6 % en 0,06)
 const OPC_BLOOM_ANILLOS: i32 = 12;           // anillos del desenfoque ancho (las muestras por anillo salen del radio)
 const OPC_BLOOM_ANILLOS_NIEBLA: i32 = 6;     // anillos del desenfoque de la niebla que pesa el bloom de niebla (es suave)

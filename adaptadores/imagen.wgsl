@@ -85,7 +85,7 @@ fn adp_bloom_final(color: vec3<f32>, uv: vec2<f32>, o: OpcImagen) -> vec3<f32> {
     // La niebla que dispersa la luz de una fuente es la que hay alrededor, no solo la del píxel: con la del píxel el
     // halo quedaba recortado por los objetos cercanos y parecía un disco desplazado. Porqué: docs/efectos/bloom.md §«Bloom de niebla».
     let t = 1.0 - max(1.0 - textureSampleLevel(volumen, linear_sampler, uv, 0.0).a, ancho4.a);
-    let mult = OPC_BLOOM_NIEBLA * (1.0 + 0.5 * frame.rain) + OPC_BLOOM_NIEBLA_AGUA * frame.in_water;
+    let mult = OPC_BLOOM_NIEBLA * (1.0 + OPC_BLOOM_NIEBLA_LLUVIA * frame.rain) + OPC_BLOOM_NIEBLA_AGUA * frame.in_water;
     let borde = smoothstep(0.0, 0.05, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));
     // Al cuadrado: solo la niebla espesa; la bruma de día (opacidad 0,2–0,4) mezclaba media imagen con el
     // desenfoque ancho y la lavaba.
