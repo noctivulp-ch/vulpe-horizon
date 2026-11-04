@@ -74,12 +74,10 @@ clouds = false      # las nubes son del subsistema 05
 sun = false         # el disco del sol es nuestro (subsistema 01); la luna la dibuja Horizon
 stars = false
 
-# Vegetación ondulante (15): el juego instalado (nightly-2026-11-01-c9d474d) no conoce aún [vertex] y rechaza el
-# pack entero; horizon-shader check sí lo acepta. Se activa quitando los # cuando el juego lo admita.
-# Ver docs/efectos/vegetacion-ondulante.md.
-#[vertex]
-#file = "etapas/vertice.wgsl"
-#files = ["nucleo/superficie/viento.wgsl", "adaptadores/vertice.wgsl"]
+# Vegetación ondulante (15). Ver docs/efectos/vegetacion-ondulante.md.
+[vertex]
+file = "etapas/vertice.wgsl"
+files = ["nucleo/superficie/viento.wgsl", "adaptadores/vertice.wgsl"]
 
 [weather]           # lluvia y nieve (16)
 file = "etapas/clima.wgsl"
@@ -539,6 +537,21 @@ max = 2.0
 step = 0.05
 
 [[options]]
+id = "ondulacion"
+name = "Vegetación ondulante"
+type = "bool"
+default = true
+
+[[options]]
+id = "ondulacion_fuerza"
+name = "Fuerza del viento"
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
 id = "luz_minima_exterior"
 name = "Luz mínima al aire libre"
 description = "Luz que no baja de ahí fuera de las cuevas (de noche sin luna)."
@@ -832,7 +845,7 @@ items = ["agua_olas", "agua_claridad", "agua_refraccion"]
 id = "luz"
 name = "Luz"
 description = "Cielo, bloques, dispersión, brillos y charcos."
-items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "luz_minima_exterior", "sss", "reflejos_pantalla", "charcos", "menas", "menas_intensidad", "clima_opacidad", "estaciones", "estacion_inicial"]
+items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "luz_minima_exterior", "sss", "reflejos_pantalla", "charcos", "menas", "menas_intensidad", "clima_opacidad", "estaciones", "estacion_inicial", "ondulacion", "ondulacion_fuerza"]
 
 [[pages]]
 id = "sombras"
