@@ -112,11 +112,7 @@ fn agua(input: MaterialInput, p: AdpPunto, luces: AdpLuces) -> Surface {
     let oa = adp_agua_opciones();
     let medio = opc_agua_medio(oa.claridad);
     let dist = length(p.posicion);
-    var n = p.normal_cara;
-    if abs(p.normal_cara.y) > 0.9 {
-        n = agu_normal(p.mundo.xz, dist, oa.olas, ruido2d, ruido2d_sampler);
-        n = select(n, -n, p.normal_cara.y < 0.0);
-    }
+    let n = agu_normal(p.mundo, p.normal_cara, dist, oa.olas, ruido2d, ruido2d_sampler);
     let v = p.vista;
     let cos_v = max(dot(n, v), 0.0);
     let ambiente = luces.cielo * luz_curva_cielo(p.luz_cielo) + vec3<f32>(OPC_LUZ_MINIMA * 2.0);
@@ -135,8 +131,8 @@ fn agua(input: MaterialInput, p: AdpPunto, luces: AdpLuces) -> Surface {
     let f = agu_fresnel(cos_v, OPC_AGUA_F0);
     var reflejo = adp_agua_reflejo(p, n, r, luces) * luz_curva_cielo(max(p.luz_cielo, 0.3));
     let sombra = adp_sombra(p);
-    let especular = sup_especular(n, v, luces.direccion, 0.02, vec3<f32>(0.02)) * max(dot(n, luces.direccion), 0.0)
-                  * luces.directa * sombra.luz;
+    let especular = sup_especular(n, v, luces.direccion, OPC_AGUA_ESPECULAR_RUGOSIDAD, vec3<f32>(OPC_AGUA_F0))
+                  * max(dot(n, luces.direccion), 0.0) * luces.directa * sombra.luz;
     var color = mix(a_traves, reflejo, f) + especular;
     if OPC_AGUA_TEXTURA {
         color = mix(color, p.albedo * ambiente, 0.3);

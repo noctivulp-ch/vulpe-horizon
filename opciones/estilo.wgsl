@@ -151,9 +151,9 @@ struct OpcModifAgua {
 }
 
 fn opc_estilo_agua() -> OpcModifAgua {
-    let abs_base = vec3<f32>(0.39, 0.108, 0.066);
+    let abs_base = vec3<f32>(0.39, 0.120, 0.055);
     let disp_base = 0.035;
-    let col_disp_base = vec3<f32>(0.08, 0.45, 0.55);
+    let col_disp_base = vec3<f32>(0.04, 0.22, 0.68);
     switch estilo_agua {
         case 1u: { // Clara: absorción ×0,5, claridad ×1,5
             return OpcModifAgua(abs_base * 0.5, 1.5, disp_base, 1.2, col_disp_base);

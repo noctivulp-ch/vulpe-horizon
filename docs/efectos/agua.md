@@ -145,3 +145,18 @@ habría superado el límite de 64 de Horizon.
 - En `etapas/post/07-final.wgsl`, la UV distorsionada se entrega directamente a `img_nitidez(previous, linear_sampler, gotas.uv, nitidez)`,
   reutilizando las muestras ya existentes de `previous`. La pasada final se mantiene exactamente en 62 lecturas de textura.
 
+## Paridad de agua (banco 2026-11-09, punto 6, encargo B-17.6)
+
+Discrepancias identificadas en la escena `agua-orilla` (diferencia media inicial de 34,5 / 255):
+1. **Normal de olas plana y escala errónea:** las escalas de periodo en `nucleo/agua/olas.wgsl` estaban fijadas en 220, 160 y 60 bloques, lo que amortiguaba el gradiente a pendientes de 0,005 radianes (0,28°), convirtiendo la superficie en una lámina lisa sin relieve. Se corrigen a decenas de bloques `(22, 9), (7, 16), (6, 6)` según la frecuencia nominal de 0,1 (`OPC_AGUA_FRECUENCIA_ONDAS`), devolviendo pendientes de 7° a 24° con ondulación visible en la superficie. En caras verticales (cascadas) se implementa proyección de plano lateral dominante con flujo descendente continuo (`OPC_AGUA_VELOCIDAD_CASCADA` = 1,8).
+2. **Destello solar:** con la normal plana y rugosidad microfacetaria de 0,02, el lóbulo especular GGX era un punto infinitesimal imperceptible. Al recuperar las pendientes de olas y ajustar la rugosidad efectiva del destello solar a 0,07 (`OPC_AGUA_ESPECULAR_RUGOSIDAD`), los destellos del sol cubren los frentes de onda en primer plano con brillo intenso.
+3. **Cáusticas en el fondo marino:**
+   - Se añade proyección oblicua a lo largo del rayo solar (`desp_solar = light_direction.xz * (grosor / sen_elevacion)`), desplazando el dibujo hacia donde los rayos penetraron la superficie (`fino/07 §4`).
+   - Se concentra la energía de crestas (`red = pow(c * 1.5, 1.4) * 1.8`) e interpola linealmente en el primer bloque de la orilla (`clamp(grosor, 0.0, 1.0)`).
+   - Se evalúa la absorción de Beer-Lambert a lo largo de la trayectoria oblicua solar (`grosor / sen_elevacion`).
+4. **Color del agua profunda:** el color disperso base se reorienta de turquesa `(0.08, 0.45, 0.55)` a azul oceánico profundo `(0.04, 0.22, 0.68)` y se refuerza la absorción del verde a 0,120 por bloque, eliminando el tinte turquesa pálido en aguas profundas y dejando la orilla clara y transparente.
+5. **Refracción y nubes reflejadas:**
+   - Se incorpora dispersión cromática simétrica del 25 % (`OPC_AGUA_DISPERSION_CROMATICA = 0.25`) en canales R y B y atenuación sublineal por distancia (`pow(dist, 0.75)`).
+   - Se evalúa la cobertura de nubes (`vol_cobertura`) en el vector reflejado de cielo, reflejando las nubes del cielo sobre el mar.
+
+

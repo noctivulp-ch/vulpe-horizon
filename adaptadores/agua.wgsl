@@ -27,13 +27,15 @@ struct AdpRefraccion {
     distancia: f32,         // bloques de agua atravesados a lo largo de la vista
 }
 
-// Refracción falsa en pantalla (Sousa 2005): desplazamiento por la normal tangente, menor con la distancia y junto
-// al borde; si en el punto desplazado lo que hay está delante del agua, sin desplazar.
+// Refracción en pantalla (Sousa 2005): desplazamiento por la normal tangente, caída sublineal por distancia,
+// viñeta suave en bordes y dispersión cromática (fino/07 §3).
 fn adp_agua_refraccion(p: AdpPunto, n: vec3<f32>, cantidad: f32) -> AdpRefraccion {
     let uv0 = p.pixel / frame.resolution;
     let dist = length(p.posicion);
-    let borde = smoothstep(0.0, 0.1, min(min(uv0.x, 1.0 - uv0.x), min(uv0.y, 1.0 - uv0.y)));
-    let desplazamiento = (n.xz - p.normal_cara.xz) * cantidad * borde / (1.0 + dist * 0.05);
+    // Caída sublineal por distancia y protección suave de bordes (fino/07 §3)
+    let dist_factor = select(1.0 + pow(dist, 0.75) * 0.08, 1.0 + dist * 0.015, frame.in_water > 0.5);
+    let borde = smoothstep(0.0, 0.08, min(min(uv0.x, 1.0 - uv0.x), min(uv0.y, 1.0 - uv0.y)));
+    let desplazamiento = (n.xz - p.normal_cara.xz) * cantidad * borde / dist_factor;
     var uv = uv0 + desplazamiento;
     var d = adp_agua_profundidad_opaca(uv);
     // Profundidad invertida: mayor = más cerca. Si lo desplazado está delante del agua, no refractar ahí.
@@ -46,15 +48,38 @@ fn adp_agua_refraccion(p: AdpPunto, n: vec3<f32>, cantidad: f32) -> AdpRefraccio
     if d > 0.0 {
         distancia = max(length(adp_agua_posicion(uv, d)) - dist, 0.0);
     }
-    return AdpRefraccion(adp_agua_color_opaco(uv), distancia);
+    // Dispersión cromática simétrica en R y B (fino/07 §3)
+    let desp_croma = (uv - uv0) * OPC_AGUA_DISPERSION_CROMATICA;
+    var uv_r = uv + desp_croma;
+    var uv_b = uv - desp_croma;
+    if adp_agua_profundidad_opaca(uv_r) > d_agua {
+        uv_r = uv;
+    }
+    if adp_agua_profundidad_opaca(uv_b) > d_agua {
+        uv_b = uv;
+    }
+    let col_g = adp_agua_color_opaco(uv).g;
+    let col_r = adp_agua_color_opaco(uv_r).r;
+    let col_b = adp_agua_color_opaco(uv_b).b;
+    return AdpRefraccion(vec3<f32>(col_r, col_g, col_b), distancia);
 }
 
-// Lo que se refleja: el espejo de Horizon con su cielo vanilla sustituido por el del pack.
+// Lo que se refleja: el espejo de Horizon con su cielo vanilla sustituido por el del pack y nubes reflejadas.
 fn adp_agua_reflejo(p: AdpPunto, n: vec3<f32>, r: vec3<f32>, luces: AdpLuces) -> vec3<f32> {
     let c = opc_cielo();
     let horizonte = adp_tabla(frame.sun_direction.y, ATM_FILA_HORIZONTE) * c.sol_color * c.brillo;
     var cielo = vol_cielo_aproximado(horizonte, adp_cielo_medio(c), max(r.y, 0.0)) * OPC_CIELO_BRILLO_DIBUJO;
-    // Disco del sol reflejado se hace con el especular; nubes reflejadas: la cobertura en la dirección reflejada.
+    // Nubes reflejadas en la dirección reflejada (subsistemas/07 §4)
+    if r.y > 0.02 && opc_volumen().nubes {
+        let nubes_cfg = adp_nubes();
+        let h_nube = VOL_MAR + VOL_BASE[1];
+        let t_plano = max((h_nube - p.mundo.y) / r.y, 0.0);
+        let pos_nube = p.mundo.xz + r.xz * t_plano;
+        let cob = vol_cobertura(pos_nube, 1, nubes_cfg, ruido2d, ruido2d_sampler);
+        let lum_cielo = col_luminancia(cielo + luces.cielo * 0.5);
+        cielo = mix(cielo, vec3<f32>(lum_cielo * 1.3), cob * 0.85);
+    }
+    // Disco del sol reflejado se hace con el especular
     if frame.has_reflection == 1u && abs(p.mundo.y - frame.water_plane) < 1.5 {
         let uv = p.pixel / frame.resolution + (n.xz - p.normal_cara.xz) * 0.03;
         let texel = textureSampleLevel(reflection, reflection_sampler, uv, 0.0);

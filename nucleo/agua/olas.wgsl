@@ -26,39 +26,61 @@ fn agu_parches(xz: vec2<f32>, minimo: f32, t: texture_2d<f32>, s: sampler) -> f3
 
 // Altura (bloques) en el punto horizontal `xz` del mundo; `octavas` 2 o 3.
 fn agu_altura(xz: vec2<f32>, o: AguOlas, octavas: i32, t: texture_2d<f32>, s: sampler) -> f32 {
-    // Escalas anisótropas (bloques por periodo de la textura, que trae 16 celdas en G): alargada en x,
-    // alargada en z, isótropa.
-    let escalas = array<vec2<f32>, 3>(vec2<f32>(220.0, 90.0), vec2<f32>(70.0, 160.0), vec2<f32>(60.0, 60.0));
+    // Escalas anisótropas en decenas de bloques (paridad/07 §a y subsistemas/07 §1):
+    // alargada en x, alargada en z, e isótropa.
+    let escalas = array<vec2<f32>, 3>(vec2<f32>(22.0, 9.0), vec2<f32>(7.0, 16.0), vec2<f32>(6.0, 6.0));
     let viento = array<vec2<f32>, 3>(vec2<f32>(1.1, 0.4), vec2<f32>(-0.5, 0.9), vec2<f32>(0.7, -0.6));
-    let amplitud = array<f32, 3>(0.10, 0.06, 0.03);
+    let amplitud = array<f32, 3>(0.12, 0.07, 0.035);
     var h = 0.0;
     for (var k = 0; k < octavas; k++) {
-        let q = agu_rotar(xz, f32(k)) / escalas[k] + viento[k] * o.tiempo * 0.01;
+        let q = agu_rotar(xz, f32(k)) / escalas[k] + viento[k] * o.tiempo * 0.02;
         h += (textureSampleLevel(t, s, q, 0.0).g - 0.5) * amplitud[k];
     }
     return h * o.fuerza * agu_parches(xz, o.calma, t, s);
 }
 
-// Normal de las olas por diferencias finitas, con un paso que crece con la distancia (menos detalle que
-// píxeles: no centellea) y dos octavas lejos.
-fn agu_normal(xz: vec2<f32>, distancia: f32, o: AguOlas, t: texture_2d<f32>, s: sampler) -> vec3<f32> {
-    let paso = clamp(distancia * 0.004, 0.05, 2.0);
+// Normal de las olas en superficies horizontales y caras verticales/cascadas (fino/07 §1).
+fn agu_normal(mundo: vec3<f32>, normal_geom: vec3<f32>, distancia: f32, o: AguOlas, t: texture_2d<f32>, s: sampler) -> vec3<f32> {
+    let paso = clamp(distancia * 0.005, 0.08, 1.5);
     let octavas = select(3, 2, distancia > 48.0);
+    let es_vertical = abs(normal_geom.y) < 0.75;
+    if es_vertical {
+        // Cascada / corriente vertical (fino/07 §1): flujo descendente y proyección lateral dominante
+        let usa_yz = abs(normal_geom.x) > abs(normal_geom.z);
+        let u_lat = select(mundo.x, mundo.z, usa_yz);
+        let v_lat = mundo.y * 0.45 + o.tiempo * OPC_AGUA_VELOCIDAD_CASCADA;
+        let coord0 = vec2<f32>(u_lat, v_lat);
+        let h0 = agu_altura(coord0, o, 2, t, s);
+        let hu = agu_altura(coord0 + vec2<f32>(paso, 0.0), o, 2, t, s);
+        let hv = agu_altura(coord0 + vec2<f32>(0.0, paso), o, 2, t, s);
+        let du = (h0 - hu) / paso;
+        let dv = (h0 - hv) / paso;
+        var pert = vec3<f32>(0.0);
+        if usa_yz {
+            pert = vec3<f32>(0.0, dv, du);
+        } else {
+            pert = vec3<f32>(du, dv, 0.0);
+        }
+        return normalize(normal_geom + pert * 0.6);
+    }
+    let xz = mundo.xz;
     let h0 = agu_altura(xz, o, octavas, t, s);
     let hx = agu_altura(xz + vec2<f32>(paso, 0.0), o, octavas, t, s);
     let hz = agu_altura(xz + vec2<f32>(0.0, paso), o, octavas, t, s);
-    return normalize(vec3<f32>(h0 - hx, paso, h0 - hz));
+    let n = normalize(vec3<f32>(h0 - hx, paso, h0 - hz));
+    return select(n, -n, normal_geom.y < 0.0);
 }
 
-// Cáusticas: las mismas octavas con el valor absoluto plegado (líneas finas) y una exponencial que concentra
-// el brillo en las crestas. Media ≈ 1.
+// Cáusticas: las mismas octavas con el valor absoluto plegado (líneas finas) y concentración exponencial
+// en redes nítidas de luz proyectadas (fino/07 §4).
 fn agu_causticas(xz: vec2<f32>, o: AguOlas, t: texture_2d<f32>, s: sampler) -> f32 {
     var c = 0.0;
     for (var k = 0; k < 2; k++) {
         let q = agu_rotar(xz, f32(k)) / (18.0 + 10.0 * f32(k)) + vec2<f32>(0.8, -0.5) * o.tiempo * 0.02 * (1.0 + f32(k));
         let n = textureSampleLevel(t, s, q, 0.0).g;
         let linea = abs(abs(2.0 * n - 1.0) * 2.0 - 1.0);
-        c += exp(-linea * 6.0 * o.agudeza);
+        c += exp(-linea * 7.5 * o.agudeza);
     }
-    return mix(1.0, c * 1.6, agu_parches(xz, o.calma, t, s));
+    let red = pow(c * 1.5, 1.4) * 1.8;
+    return mix(1.0, red, agu_parches(xz, o.calma, t, s));
 }

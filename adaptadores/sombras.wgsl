@@ -69,13 +69,17 @@ fn adp_sombra_punto(e: AdpEntradaSombra, o: OpcSombras) -> AdpResultadoSombra {
             var tinte = luz_tinte_translucido(c, vec3<f32>(1.0));
             if c.a >= 0.999 {
                 // Agua (07): absorción por los bloques de agua hacia la luz (diferencia de profundidades de los dos
-                // mapas) y cáusticas, fundidas en el primer bloque.
+                // mapas) y cáusticas con proyección oblicua solar (fino/07 §4), fundidas en el primer bloque.
                 let lado_t = vec2<f32>(textureDimensions(shadow_map_translucent));
                 let d_t = textureLoad(shadow_map_translucent, vec2<i32>(clamp(mapa.xy * lado_t, vec2<f32>(0.0), lado_t - 1.0)), 0);
                 let grosor = max(mapa.z - d_t, 0.0) * adp_bloques_por_profundidad();
                 let oa = adp_agua_opciones_sombra();
-                let caus = agu_causticas((pos + frame.camera_position).xz, oa.olas, ruido2d, ruido2d_sampler);
-                tinte = agu_transmitancia(opc_agua_medio(oa.claridad), grosor) * mix(1.0, caus, smoothstep(0.0, 1.0, grosor) * agua_causticas);
+                let sen_l = max(frame.light_direction.y, 0.15);
+                let desp_solar = frame.light_direction.xz * (grosor / sen_l);
+                let xz_caus = (pos + frame.camera_position).xz + desp_solar;
+                let caus = agu_causticas(xz_caus, oa.olas, ruido2d, ruido2d_sampler);
+                let camino_oblicuo = grosor / sen_l;
+                tinte = agu_transmitancia(opc_agua_medio(oa.claridad), camino_oblicuo) * mix(1.0, caus, clamp(grosor, 0.0, 1.0) * agua_causticas);
             }
             luz *= mix(mix(vec3<f32>(1.0), tinte, clamp(adp_mod_param(21u, 0.0, 1.0, VULPE_SOMBRAS_TENIDO_TRANSLUCIDOS, 1.0), 0.0, 1.0)), vec3<f32>(1.0), detras);
         }
