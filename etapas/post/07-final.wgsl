@@ -40,8 +40,10 @@ fn post(input: PostInput) -> vec4<f32> {
         default: {}
     }
     let o = opc_imagen();
-    var c = img_nitidez(previous, linear_sampler, p.uv, nitidez);
-    c = adp_bloom_final(c, p.uv, o);
+    let gotas = adp_gotas_camara(p.uv);
+    var c = img_nitidez(previous, linear_sampler, gotas.uv, nitidez);
+    c = c * (1.0 - gotas.borde * 0.3);
+    c = adp_bloom_final(c, gotas.uv, o);
     c = adp_estado_jugador(c, adp_post_distancia(p));
     let e = adp_exposicion(o);
     c *= e.exposicion * OPC_TONEMAP_EXPOSICION[min(o.tonemap, 2u)];

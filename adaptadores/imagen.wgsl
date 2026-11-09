@@ -104,3 +104,14 @@ fn adp_estado_jugador(color: vec3<f32>, distancia: f32) -> vec3<f32> {
     let alcance = mix(64.0, 4.0, efecto);
     return color * exp(-distancia / alcance * 2.0) * mix(1.0, 0.6, frame.darkness);
 }
+
+// Gotas en la cámara al salir del agua (07.2). Porqué: docs/efectos/agua.md §Gotas en la cámara
+fn adp_gotas_camara(uv: vec2<f32>) -> ImgGotasResultado {
+    if frame.eye_in != 0u || frame.in_water <= 0.001 {
+        return ImgGotasResultado(uv, 0.0);
+    }
+    let t_salida = -log2(clamp(frame.in_water, 0.001, 1.0)) * 0.25;
+    let aspecto = frame.resolution.x / max(frame.resolution.y, 1.0);
+    return img_gotas_lente(uv, aspecto, t_salida, opc_gotas());
+}
+

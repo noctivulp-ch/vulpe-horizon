@@ -125,3 +125,23 @@ Capturas con el aislamiento apagado.
 **Queda sin hacer (del inventario):** las partículas en suspensión o turbidez (en el original 0,05 por defecto, cuatro
 ajustes) y la espuma (apagada por defecto en el original). Los tres coeficientes de absorción son constantes con nombre,
 no opciones del menú (presupuesto de 64).
+
+## Gotas en la cámara al salir del agua (07.2, 2026-11-09)
+
+En el original, al salir del agua la cámara se distorsiona durante unos segundos con gotas que escurren hacia abajo.
+En `vulpe-horizon` la pasada final estaba en 62 de 64 lecturas de textura, por lo que una textura de gotas o de ruido
+habría superado el límite de 64 de Horizon.
+
+**Implementación sin lecturas de textura:**
+- `nucleo/imagen/gotas.wgsl` (`img_gotas_lente`): patrón procedural de gotas en dos capas (gotas principales con estela
+  que escurren en Y por columnas con velocidad asíncrona, y gotículas estáticas menores) generado puramente con aritmética
+  y hashes PCG (`rui_hash33`). Desvía la coordenada UV según la normal esférica de la gota y atenúa ligeramente el borde.
+- `opciones/gotas.wgsl`: constantes con nombre (`OPC_GOTAS_DURACION` = 2,5 s, `OPC_GOTAS_INTENSIDAD` = 0,5,
+  `OPC_GOTAS_REFRACCION` = 0,035, `OPC_GOTAS_VELOCIDAD` = 0,35).
+- Detección de salida en `adaptadores/imagen.wgsl` (`adp_gotas_camara`):
+  Cuando el ojo está en el aire (`frame.eye_in == 0u`) y `frame.in_water > 0`, la cámara acaba de salir del agua. Como
+  Horizon amortigua `in_water` con vida media exacta de 0,25 s ($2^{-t / 0,25}$), el tiempo transcurrido en segundos se
+  despeja de forma exacta: $t = -\log_2(\text{in\_water}) \times 0,25$.
+- En `etapas/post/07-final.wgsl`, la UV distorsionada se entrega directamente a `img_nitidez(previous, linear_sampler, gotas.uv, nitidez)`,
+  reutilizando las muestras ya existentes de `previous`. La pasada final se mantiene exactamente en 62 lecturas de textura.
+
