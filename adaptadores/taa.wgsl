@@ -62,7 +62,12 @@ fn adp_taa(input: PostInput) -> vec4<f32> {
     // Movimiento en píxeles: más movimiento, caja más estrecha y más peso al fotograma actual.
     let movimiento = length((input.uv - uv_ant) * frame.resolution);
     let gamma = mix(OPC_TAA_GAMMA, OPC_TAA_GAMMA_MOVIMIENTO, smoothstep(0.0, 8.0, movimiento));
-    let h = img_recortar(img_a_ycocg(img_comprimir(h_crudo)), media, sigma * gamma);
+    let h_comp = img_a_ycocg(img_comprimir(h_crudo));
+    let h_rec = img_recortar(h_comp, media, sigma * gamma);
+    // Mitigación de estelas por retroceso al primer momento (Salvi 2016, fino/09 §1):
+    let diff_recorte = length(h_rec - h_comp) / (length(h_comp) + 1e-4);
+    let peso_retroceso = smoothstep(0.05, 0.45, diff_recorte);
+    let h = mix(h_rec, media, peso_retroceso);
     let alfa = mix(OPC_TAA_MEZCLA_QUIETO, OPC_TAA_MEZCLA_MOVIMIENTO, smoothstep(0.0, 6.0, movimiento));
     let a = img_a_ycocg(img_comprimir(actual));
     let resultado = img_descomprimir(img_desde_ycocg(mix(h, a, alfa)));

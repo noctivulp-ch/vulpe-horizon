@@ -116,3 +116,12 @@ satura en 30 texels.
 **Visto** (`hoja-sombras-borde.png`, escena `sombras-borde`: losas a 1, 2, 4 y 8 bloques sobre piedra lisa a
 mediodía, desde arriba y de cerca): las cuatro sombras con borde de anchura creciente con la altura; frente a antes, casi
 igual a 4–8 bloques y algo más suave la de 1. **Sin ver:** la penumbra lejos de la cámara, donde pesa el tope de 30.
+
+## Paridad de sombras suaves de follaje (banco 2026-11-09, punto 8, encargo B-17.8)
+
+Discrepancias identificadas en la escena `niebla-amanecer`:
+1. **Borde dentado y escalonado por corte prematuro:** en `nucleo/luz/sombras.wgsl`, si la búsqueda no hallaba ocluyentes (`cuenta == 0.0`), el código devolvía 1,0 inmediatamente (`LuzSombra(1.0, 0.0)`). En bordes de copas de árboles y ramas dispersas, esto creaba saltos abruptos de 0,4 a 1,0 sin filtrado alguno, provocando sombras duras y pixeladas en el suelo. Se elimina el corte prematuro: cuando `cuenta == 0`, se ejecuta el bucle PCF completo con el radio mínimo de penumbra (`a.penumbra_min`), produciendo una caída suave y continua en las siluetas del follaje (`fino/04 §Lo que está mal 1`).
+2. **Distribución lineal en búsqueda y cuadrática en filtrado:** en la búsqueda de ocluyentes se adopta distribución radial lineal con el índice de muestra (`luz_vogel_lineal`) para densificar muestras cerca del centro y estimar con mayor precisión el bloqueo cercano (`fino/04 §1`), mientras el PCF conserva el espaciado por raíz cuadrada para cobertura superficial uniforme.
+3. **Crecimiento de penumbra en follaje a distancia:** se incrementa la tasa de crecimiento de penumbra `OPC_SOMBRA_PENUMBRA_CRECE` a 0,024 y el radio de búsqueda máxima a 36 texels, ampliando la penumbra del follaje a baja elevación solar sin perder la definición de contacto en troncos.
+4. **Antialiasing temporal en bordes y follaje (`adaptadores/taa.wgsl`):** se añade el retroceso adaptativo hacia el primer momento (media del vecindario 3×3, Salvi 2016) proporcional al exceso del recorte por varianza, suprimiendo estelas residuales y aliasing parpadeante en hojas en movimiento.
+
