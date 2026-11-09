@@ -17,6 +17,9 @@ fn adp_post_pixel(input: PostInput) -> AdpPixel {
 // composición no recibe el «picture» en input.color (la de volumen escribe su propio destino).
 fn adp_post_escena(p: AdpPixel) -> vec3<f32> {
     let c = textureLoad(scene_color, vec2<i32>(p.pixel), 0).rgb;
+    if opc_depuracion().vista == OPC_VISTA_RELIEVE {
+        return c;
+    }
     return col_decodificar_escena(c, adp_codificacion());
 }
 

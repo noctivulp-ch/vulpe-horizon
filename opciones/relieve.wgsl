@@ -4,6 +4,7 @@
 override relieve: f32 = 0.25;
 
 const OPC_RELIEVE_DISTANCIA: f32 = 12.0;
+const OPC_RELIEVE_PISO_ALTURA: f32 = 0.85;
 const OPC_RELIEVE_CELDAS: u32 = 16u;
 const OPC_RELIEVE_ESCALONADO: bool = false;
 
@@ -11,6 +12,7 @@ struct OpcRelieve {
     activa: bool,
     profundidad: f32,
     distancia: f32,
+    piso_altura: f32,
     celdas: u32,
     escalonado: bool,
 }
@@ -23,6 +25,7 @@ fn opc_relieve() -> OpcRelieve {
         activa,
         prof,
         dist,
+        OPC_RELIEVE_PISO_ALTURA,
         OPC_RELIEVE_CELDAS,
         OPC_RELIEVE_ESCALONADO,
     );

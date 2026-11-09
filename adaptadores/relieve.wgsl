@@ -10,6 +10,7 @@ fn adp_desplazamiento(input: DisplacementInput) -> f32 {
     let params = SupParametrosRelieve(
         o.profundidad,
         o.distancia,
+        o.piso_altura,
         o.celdas,
         o.escalonado,
     );

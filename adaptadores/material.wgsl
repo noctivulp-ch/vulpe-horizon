@@ -19,6 +19,9 @@ struct AdpPunto {
     pbr: SupMaterial,
     pixel: vec2<f32>,
     luz_colorida: vec3<f32>,
+    desplazado: f32,
+    altura_mapa: f32,
+    con_pbr: bool,
 }
 
 fn adp_es_cruzada(m: u32) -> bool {
@@ -70,16 +73,20 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
     p.fluido = input.fluid;
     p.pixel = input.screen * frame.resolution;
     p.luz_colorida = select(vec3<f32>(0.0), input.colored_light, o.luz_mano > 0u);
+    p.desplazado = input.displaced;
 
     let con_pbr = block_pbr_maps();
+    p.con_pbr = con_pbr;
     if con_pbr {
         p.pbr = sup_labpbr(block_specular_map(input.uv), p.albedo);
         let mapa_n = block_normal_map(input.uv);
-        p.normal = sup_normal_mapa(mapa_n, input.normal, input.tangent);
+        p.normal = sup_normal_mapa(mapa_n, input.normal, input.tangent, o.normales_intensidad);
         p.albedo *= 0.5 + 0.5 * mapa_n.b;
+        p.altura_mapa = sup_relieve_normalizar_altura(mapa_n.a, opc_relieve().piso_altura);
     } else {
         p.pbr = SupMaterial(0.15, 0.7225, vec3<f32>(0.04), false, 0.0, 0.0, 0.0);
         p.normal = input.normal;
+        p.altura_mapa = 1.0;
     }
     var sss = 0.0;
     if o.sss_lista {
@@ -139,6 +146,14 @@ fn adp_color_luz_bloque(p: AdpPunto, o: OpcLuz) -> vec3<f32> {
 }
 
 fn adp_material_salida(color: vec3<f32>, alfa: f32, p: AdpPunto) -> Surface {
+    if opc_depuracion().vista == OPC_VISTA_RELIEVE {
+        let dbg = vec3<f32>(
+            clamp(p.desplazado, 0.0, 1.0),
+            clamp(p.altura_mapa, 0.0, 1.0),
+            select(0.0, 1.0, p.con_pbr),
+        );
+        return Surface(vec4<f32>(dbg, alfa));
+    }
     let v = col_codificar_escena(color, adp_codificacion());
     let tramado = (rui_tramado_ign(p.pixel) - 0.5) / 255.0;
     return Surface(vec4<f32>(v + tramado, alfa));

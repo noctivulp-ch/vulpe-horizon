@@ -4,6 +4,9 @@
 fn post(input: PostInput) -> vec4<f32> {
     let p = adp_post_pixel(input);
     var c = adp_post_escena(p);
+    if opc_depuracion().vista == OPC_VISTA_RELIEVE {
+        return vec4<f32>(c, 1.0);
+    }
     c = adp_aplicar_oclusion(c, p);
     let dir = adp_post_direccion(p);
     let o = opc_luz();

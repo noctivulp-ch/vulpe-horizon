@@ -4,6 +4,7 @@
 struct SupParametrosRelieve {
     profundidad_max: f32,
     distancia_max: f32,
+    piso_altura: f32,
     celdas: u32,
     escalonado: bool,
 }
@@ -17,6 +18,11 @@ fn sup_relieve_atenuacion_distancia(distancia: f32, distancia_max: f32) -> f32 {
     return factor * factor;
 }
 
+fn sup_relieve_normalizar_altura(altura: f32, piso_altura: f32) -> f32 {
+    let piso = clamp(piso_altura, 0.0, 0.99);
+    return clamp((altura - piso) / (1.0 - piso), 0.0, 1.0);
+}
+
 fn sup_relieve_profundidad(
     altura: f32,
     distancia: f32,
@@ -26,7 +32,7 @@ fn sup_relieve_profundidad(
     if !sup_relieve_admite_material(material) || params.profundidad_max <= 0.0 {
         return 0.0;
     }
-    var h = clamp(altura, 0.0, 1.0);
+    var h = sup_relieve_normalizar_altura(altura, params.piso_altura);
     if h >= 0.999 {
         return 0.0;
     }

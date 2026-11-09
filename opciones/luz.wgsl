@@ -49,6 +49,7 @@ struct OpcLuz {
     pasos_reflejo: i32,     // 0 apagado
     suavidad_reflejo: f32,  // umbral de suavidad para trazado de pantalla (1 - rugosidad)
     luz_mano: u32,          // 0 apagada, 1 normal, 2 linterna
+    normales_intensidad: f32,
 }
 
 fn opc_luz() -> OpcLuz {
@@ -93,5 +94,6 @@ fn opc_luz() -> OpcLuz {
         con_charcos, con_mojado,
         pasos, suavidad,
         luz_mano,
+        normales_intensidad,
     );
 }

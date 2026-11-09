@@ -28,6 +28,12 @@ fn post(input: PostInput) -> vec4<f32> {
             // Lineal, con una ganancia fija: el pico del mapa (el techo del fractal) llega a ~1.
             return adp_post_salida(col_lineal_a_srgb(min(m * 600.0, vec3<f32>(1.0))), 1.0);
         }
+        case OPC_VISTA_RELIEVE: {
+            if p.es_cielo {
+                return adp_post_salida(vec3<f32>(0.0), 1.0);
+            }
+            return adp_post_salida(p.color, 1.0);
+        }
         default: {}
     }
     let o = opc_imagen();

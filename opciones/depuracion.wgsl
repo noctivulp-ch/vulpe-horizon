@@ -8,6 +8,7 @@ const OPC_VISTA_TRAMADO: u32 = 3u;
 const OPC_VISTA_AURORA_CONOS: u32 = 4u;         // la escena normal con el volumen de los conos en rojo
 const OPC_VISTA_AURORA_SIN_VENTANA: u32 = 5u;   // la escena normal sin la ventana al cielo
 const OPC_VISTA_AURORA_MAPA: u32 = 6u;          // el mapa de la aurora a pantalla completa (rgb, sin escala)
+const OPC_VISTA_RELIEVE: u32 = 7u;              // R = MaterialInput.displaced, G = altura LabPBR, B = 1 si hay mapas PBR
 
 struct OpcDepuracion {
     vista: u32,

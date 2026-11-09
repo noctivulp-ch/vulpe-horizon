@@ -55,8 +55,8 @@ fn sup_labpbr(especular: vec4<f32>, albedo: vec3<f32>) -> SupMaterial {
 }
 
 // Normal del mapa _n (rg en [0, 1], z reconstruida) llevada a ejes del mundo con la base de la cara.
-fn sup_normal_mapa(mapa: vec4<f32>, n: vec3<f32>, tangente: vec4<f32>) -> vec3<f32> {
-    let xy = mapa.rg * 2.0 - 1.0;
+fn sup_normal_mapa(mapa: vec4<f32>, n: vec3<f32>, tangente: vec4<f32>, intensidad: f32) -> vec3<f32> {
+    let xy = (mapa.rg * 2.0 - 1.0) * intensidad;
     let z = sqrt(max(1.0 - dot(xy, xy), 0.0));
     let t = tangente.xyz;
     let b = cross(n, t) * tangente.w;
