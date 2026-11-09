@@ -77,7 +77,7 @@ fn adp_sombra_punto(e: AdpEntradaSombra, o: OpcSombras) -> AdpResultadoSombra {
                 let caus = agu_causticas((pos + frame.camera_position).xz, oa.olas, ruido2d, ruido2d_sampler);
                 tinte = agu_transmitancia(opc_agua_medio(oa.claridad), grosor) * mix(1.0, caus, smoothstep(0.0, 1.0, grosor) * agua_causticas);
             }
-            luz *= mix(tinte, vec3<f32>(1.0), detras);
+            luz *= mix(mix(vec3<f32>(1.0), tinte, clamp(adp_mod_param(21u, 0.0, 1.0, VULPE_SOMBRAS_TENIDO_TRANSLUCIDOS, 1.0), 0.0, 1.0)), vec3<f32>(1.0), detras);
         }
     }
     // Más allá del mapa: fundido al aproximado en el último 20 % (el mapa cubre un cuadrado).

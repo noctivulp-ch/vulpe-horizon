@@ -56,12 +56,14 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
     // Estaciones (03.2): solo los bloques con color de bioma (tinte no blanco), y las hojas con su propio tinte. Con
     // mod nativo sigue la estación continua del mundo; sin mod nativo, queda fija en la estación inicial.
     let con_bioma = max(abs(input.tint.r - input.tint.g), abs(input.tint.g - input.tint.b)) > 0.03;
-    if estaciones && con_bioma && adp_es_superficie() {
+    let est_act = adp_mod_param(18u, 0.0, 1.0, VULPE_ESTACIONES_ACTIVA, 1.0) >= 0.5;
+    if estaciones && est_act && con_bioma && adp_es_superficie() {
         let m = adp_mod();
+        let est_dias = adp_mod_param(19u, 1.0, 120.0, VULPE_ESTACION_DURACION_DIAS, 24.0);
         if m.tiene_estacion {
             p.albedo = sup_estacion_mod(p.albedo, m.estacion, input.material == OPC_MAT_HOJAS);
         } else {
-            p.albedo = sup_estacion(p.albedo, 0.0, OPC_ESTACION_DIAS, i32(estacion_inicial), input.material == OPC_MAT_HOJAS);
+            p.albedo = sup_estacion(p.albedo, 0.0, est_dias, i32(estacion_inicial), input.material == OPC_MAT_HOJAS);
         }
     }
     p.alfa = input.albedo.a;

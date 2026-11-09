@@ -65,12 +65,15 @@ fn opc_cielo() -> OpcCielo {
         OPC_LUNA_CREPUSCULO_FIN,
         OPC_VENUS_ELEVACION_FIN,
     );
+    let brillo_mod = adp_mod_param(0u, 0.0, 5.0, VULPE_CIELO_BRILLO_MANUAL, 1.0);
+    let sol_mod = adp_mod_param(8u, 0.0, 10.0, VULPE_SOL_INTENSIDAD, 1.0);
+    let luna_mod = adp_mod_param(9u, 0.0, 5.0, VULPE_LUNA_INTENSIDAD, 1.0);
     return OpcCielo(
-        exp2(OPC_CIELO_BRILLO_DEFECTO) * mod_cielo.brillo,
+        exp2(OPC_CIELO_BRILLO_DEFECTO) * mod_cielo.brillo * brillo_mod,
         exp2(CIELO_BRUMA),
-        atm_cuerpo_negro(SOL_TEMPERATURA),
+        atm_cuerpo_negro(SOL_TEMPERATURA) * sol_mod,
         atm_cuerpo_negro(OPC_LUNA_TEMPERATURA),
-        OPC_LUNA_PROPORCION * exp2(OPC_LUNA_BRILLO_DEFECTO) * mod_noches.mult_luna,
+        OPC_LUNA_PROPORCION * exp2(OPC_LUNA_BRILLO_DEFECTO) * mod_noches.mult_luna * luna_mod,
         CieAjustesEstrellas(300.0, 0.99, OPC_ESTRELLAS_BRILLO * exp2(ESTRELLAS_BRILLO)),
         OPC_ESTRELLAS_DEFECTO,
         venus,

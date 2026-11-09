@@ -23,9 +23,12 @@ fn adp_rayos(uv: vec2<f32>, pixel: vec2<f32>, exposicion: f32) -> vec3<f32> {
     let origen = mat_ndc_a_uv(clip.xy / clip.w);
     let j = select(0, 1, convergente);
     let mr = opc_estilo_rayos();
+    let foco_mod = adp_mod_param(35u, 0.1, 10.0, VULPE_RAYOS_FOCO, 1.0);
+    let long_mod = adp_mod_param(36u, 0.1, 5.0, VULPE_RAYOS_LONGITUD, 1.0);
+    let caida_mod = adp_mod_param(37u, 0.1, 5.0, VULPE_RAYOS_CAIDA, 1.0);
     let r = ImgRayos(origen, convergente, o_rayos.intensidad * 0.01 * select(1.0, OPC_RAYOS_ESPALDAS * 0.01, convergente),
-                     OPC_RAYOS_FOCO[j] * 0.01 * mr.mult_foco, OPC_RAYOS_LONGITUD[j] * 0.01 * mr.mult_longitud,
-                     OPC_RAYOS_CAIDA * 0.01 * mr.mult_caida, OPC_RAYOS_UMBRAL[j] * 0.01 * mr.mult_umbral,
+                     OPC_RAYOS_FOCO[j] * 0.01 * mr.mult_foco * foco_mod, OPC_RAYOS_LONGITUD[j] * 0.01 * mr.mult_longitud * long_mod,
+                     OPC_RAYOS_CAIDA * 0.01 * mr.mult_caida * caida_mod, OPC_RAYOS_UMBRAL[j] * 0.01 * mr.mult_umbral,
                      OPC_RAYOS_NUCLEO[j] * 0.001 * mr.mult_limitador, o_rayos.muestras, OPC_RAYOS_OCLUSION * 0.01, exposicion,
                      adp_ruido_azul(pixel, 0u));
     // Fase de la niebla (05), normalizada a su valor de frente, más un término múltiple con lóbulo trasero.

@@ -21,9 +21,10 @@ fn adp_bloom_bajada(input: PostInput) -> vec4<f32> {
     }
     let anterior = adp_estado(bloom2);
     let l = img_luminancia_media(history, linear_sampler);
+    let vel_mod = max(adp_mod_param(33u, 0.1, 10.0, VULPE_ADAPTACION_VELOCIDAD, 1.0), 0.1);
     var estado = 0.0;
     if texel.x == 0 {
-        estado = img_adaptar(anterior.x, l, frame.delta_time, OPC_ADAPTACION_SUBE, OPC_ADAPTACION_BAJA);
+        estado = img_adaptar(anterior.x, l, frame.delta_time, OPC_ADAPTACION_SUBE / vel_mod, OPC_ADAPTACION_BAJA / vel_mod);
     } else {
         estado = img_adaptar(anterior.y, l, frame.delta_time, OPC_BASTONES_TAU, OPC_BASTONES_TAU);
     }

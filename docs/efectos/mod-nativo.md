@@ -13,9 +13,16 @@ Horizon entrega a los shaders un conjunto básico de variables uniformes en `Fra
 
 El mod nativo inyecta estos datos cada fotograma en `frame.mods` (`array<vec4<f32>, 8>`).
 
-## §Adaptador
+## §Adaptador y canal fijo (`constantes_mod.wgsl`)
 
-En `adaptadores/mod.wgsl`, la función `adp_mod() -> AdpModDatos` decodifica la cabecera y componentes según el formato v1:
+El pack incluye de serie en su raíz `constantes_mod.wgsl`, registrado como primer archivo de `shared` en `horizon-shaders.toml`, con los 38 parámetros finos en sus valores por defecto y `VULPE_FIXED_CHANNEL_ACTIVE = false`. Sin el mod (o en reposo), el pack compila y se ve idéntico.
+
+En `adaptadores/mod.wgsl`:
+- La función `adp_mod() -> AdpModDatos` decodifica la cabecera y los datos del mundo según el formato v1 (`frame.mods[0..3]`).
+- La función `adp_mod_param(id, min_val, max_val, fijo_val, def_val) -> f32` resuelve cada parámetro fino en el orden de prioridad de la especificación (`../vulpe-horizon-spec/flexibilidad/mod-nativo.md` §8):
+  1. Si el mod está activo (`1001.0`), `version_tabla == 1` y el `id` figura entre los ajustes en vivo (`frame.mods[4..7]`), decodifica `q` en `[min_val, max_val]`.
+  2. Si no está en vivo y el canal fijo está activo (`VULPE_FIXED_CHANNEL_ACTIVE` y `VULPE_PARAM_TABLE_VERSION == 1.0`), usa `fijo_val` de `constantes_mod.wgsl`.
+  3. En caso contrario, usa `def_val`.
 - Si `frame.mods[0].x` no coincide con la firma `1001.0`, se descarta todo el bloque y se devuelven los valores por defecto del pack sin mod (luna llena, día 0, estación desactivada/fija, sin rayo, estado sano).
 - Cuando la firma está presente, se leen las banderas de validez (`mods[0].z`):
   - **Bit 0 (tiempo):** `mods[1].x` (número de día acumulado) y `mods[1].y` (fase lunar 0..7).

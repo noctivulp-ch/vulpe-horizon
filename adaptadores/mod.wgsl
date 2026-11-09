@@ -97,6 +97,33 @@ fn adp_mod() -> AdpModDatos {
     );
 }
 
+// Devuelve si las constantes fijas de `constantes_mod.wgsl` están activas y coinciden con la tabla v1.
+fn adp_mod_fijo_valido() -> bool {
+    return VULPE_FIXED_CHANNEL_ACTIVE && abs(VULPE_PARAM_TABLE_VERSION - 1.0) < 0.01;
+}
+
+// Busca un parámetro fino por su `id` (0..37) en los ajustes en vivo de `frame.mods[4..7]`;
+// si no está en vivo, usa el valor del canal fijo si está activo; si no, usa el valor por defecto.
+fn adp_mod_param(id: u32, min_val: f32, max_val: f32, fijo_val: f32, def_val: f32) -> f32 {
+    let base = select(def_val, fijo_val, adp_mod_fijo_valido());
+    let m = adp_mod();
+    if !m.activo || m.version_tabla != 1u || m.ajustes_en_vivo == 0u {
+        return base;
+    }
+    let n = min(m.ajustes_en_vivo, 16u);
+    for (var i = 0u; i < n; i++) {
+        let code_f = frame.mods[4u + (i / 4u)][i % 4u];
+        if code_f >= 0.0 {
+            let code = u32(round(code_f));
+            if (code / 4096u) == id {
+                let q = min(code % 4096u, 4095u);
+                return min_val + (max_val - min_val) * (f32(q) / 4095.0);
+            }
+        }
+    }
+    return base;
+}
+
 // Vista de depuración del mod nativo (OPC_VISTA_MOD_NATIVO):
 // Pinta en pantalla la firma (franja superior), fase lunar (franja central) y estación continua (franja inferior).
 // También codifica en la esquina superior izquierda (uv < 0.04) los valores normalizados en RGB:
@@ -149,7 +176,8 @@ fn adp_mod_depuracion(uv: vec2<f32>) -> vec3<f32> {
                     return select(vec3<f32>(0.15, 0.05, 0.05), vec3<f32>(1.0, 0.3, 0.3), bit_activo);
                 }
                 default: { // Bit 4: Canal fijo (púrpura)
-                    return select(vec3<f32>(0.1, 0.05, 0.15), vec3<f32>(0.8, 0.3, 1.0), bit_activo);
+                    let fijo_activo = bit_activo || (VULPE_FIXED_CHANNEL_ACTIVE && abs(VULPE_PARAM_TABLE_VERSION - 1.0) < 0.01);
+                    return select(vec3<f32>(0.1, 0.05, 0.15), vec3<f32>(0.8, 0.3, 1.0), fijo_activo);
                 }
             }
         }

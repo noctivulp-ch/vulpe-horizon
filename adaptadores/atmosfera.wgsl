@@ -68,10 +68,21 @@ fn adp_lluvia(ajustes: OpcCielo) -> CieLluvia {
 fn adp_dispersion(dir: vec3<f32>, sol: AtmLuz, luna: AtmLuz, ajustes: OpcCielo) -> AtmResultado {
     var p = atm_tierra();
     let mc = opc_estilo_cielo();
-    p.rayleigh_dispersion *= mc.aire;
-    p.mie_dispersion *= mc.aerosoles;
-    p.mie_absorcion *= mc.aerosoles;
-    p.mie_asimetria = mc.asimetria;
+    let aire_mod = vec3<f32>(
+        adp_mod_param(1u, 0.0, 2.0, VULPE_AIRE_COLOR_R, 1.0),
+        adp_mod_param(2u, 0.0, 2.0, VULPE_AIRE_COLOR_G, 1.0),
+        adp_mod_param(3u, 0.0, 2.0, VULPE_AIRE_COLOR_B, 1.0),
+    );
+    let aero_mod = (
+        adp_mod_param(4u, 0.0, 5.0, VULPE_BRUMA_AEROSOLES_R, 1.0) +
+        adp_mod_param(5u, 0.0, 5.0, VULPE_BRUMA_AEROSOLES_G, 1.0) +
+        adp_mod_param(6u, 0.0, 5.0, VULPE_BRUMA_AEROSOLES_B, 1.0)
+    ) / 3.0;
+    let asim_mod = adp_mod_param(7u, 0.0, 1.0, VULPE_HALO_ASIMETRIA, 0.8);
+    p.rayleigh_dispersion *= mc.aire * aire_mod;
+    p.mie_dispersion *= mc.aerosoles * aero_mod;
+    p.mie_absorcion *= mc.aerosoles * aero_mod;
+    p.mie_asimetria = clamp(mc.asimetria + (asim_mod - 0.8), 0.0, 0.99);
     return atm_dispersion(adp_observador(), dir, sol, luna, p, AtmAjustes(ajustes.bruma, 12, ajustes.venus), transmitancia, transmitancia_sampler);
 }
 

@@ -39,6 +39,10 @@ fn opc_sombras() -> OpcSombras {
             busqueda = 16;
         }
     }
+    let busq_mod = adp_mod_param(20u, 1.0, 64.0, VULPE_SOMBRAS_PROFUNDIDAD_BUSQUEDA, 16.0);
+    if busqueda > 0 && abs(busq_mod - 16.0) > 0.01 {
+        busqueda = clamp(i32(round(f32(busqueda) * (busq_mod / 16.0))), 1, 64);
+    }
     return OpcSombras(
         LuzAjustesSombra(variable, OPC_SOMBRA_PENUMBRA_MIN, SOMBRAS_PENUMBRA_MAX, muestras, OPC_SOMBRA_PENUMBRA_CRECE, busqueda),
         SOMBRAS_COLOR,

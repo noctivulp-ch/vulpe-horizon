@@ -83,12 +83,16 @@ fn opc_luz() -> OpcLuz {
     let con_charcos = charcos == 1u || charcos == 2u;
     let con_mojado = charcos == 1u || charcos == 3u;
 
+    let amb_mod = adp_mod_param(15u, 0.0, 5.0, VULPE_LUZ_AMBIENTE_BRILLO, 1.0);
+    let min_ext_mod = adp_mod_param(16u, 0.0, 1.0, VULPE_LUZ_MINIMA_EXTERIOR, 0.05) - 0.05;
+    let bloq_mod = adp_mod_param(17u, 0.0, 5.0, VULPE_LUZ_BLOQUE_INTENSIDAD, 1.0);
+
     return OpcLuz(
-        OPC_LUZ_CIELO_DEFECTO,
-        OPC_LUZ_BLOQUE_DEFECTO * mod_bloque.intensidad,
+        OPC_LUZ_CIELO_DEFECTO * amb_mod,
+        OPC_LUZ_BLOQUE_DEFECTO * mod_bloque.intensidad * bloq_mod,
         color,
         OPC_LUZ_MINIMA_CUEVAS_DEFECTO * mod_cuevas.mult_luz_minima,
-        max(OPC_LUZ_MINIMA_EXTERIOR_DEFECTO, mod_noches.luz_minima_exterior),
+        max(max(OPC_LUZ_MINIMA_EXTERIOR_DEFECTO + min_ext_mod, 0.0), mod_noches.luz_minima_exterior),
         sss == 1u || sss == 3u, sss == 2u || sss == 3u, SSS_BRILLO,
         brillo_especular_sol, EMISION_LABPBR,
         con_charcos, con_mojado,

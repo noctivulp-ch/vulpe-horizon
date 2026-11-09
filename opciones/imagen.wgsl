@@ -55,15 +55,18 @@ struct OpcImagen {
 }
 
 fn opc_balance_k() -> f32 {
-    return opc_estilo_color().balance_k;
+    let k_mod = adp_mod_param(34u, 2000.0, 12000.0, VULPE_BALANCE_BLANCOS_K, 6500.0) - 6500.0;
+    return clamp(opc_estilo_color().balance_k + k_mod, 2000.0, 12000.0);
 }
 
 fn opc_imagen() -> OpcImagen {
     let mod_color = opc_estilo_color();
     let sat_final = 1.0 + mod_color.saturacion + saturacion;
     let cont_final = (1.0 + 0.5 * OPC_IMAGEN_CONTRASTE_DEFECTO) * mod_color.contraste;
+    let exp_man = adp_mod_param(32u, 0.05, 10.0, VULPE_EXPOSICION_MANUAL, 1.0);
+    let comp = select(exposicion * exp_man, exposicion, exposicion_auto);
     return OpcImagen(
-        exposicion,
+        comp,
         OPC_EXPOSICION_OSCURO_DEFECTO,
         OPC_EXPOSICION_CLARO_DEFECTO,
         ColParametrosGradacion(0.0, sat_final, cont_final),

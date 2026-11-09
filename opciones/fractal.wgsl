@@ -54,12 +54,15 @@ fn opc_fractal() -> OpcFractal {
     }
 
     let mod_fractal = opc_estilo_fractal();
+    let sat_mod = adp_mod_param(12u, 0.0, 3.0, VULPE_FRACTAL_SATURACION, 1.0);
+    let cont_mod = adp_mod_param(13u, 0.0, 3.0, VULPE_FRACTAL_CONTRASTE, 1.0);
+    let sem_mod = i32(round(adp_mod_param(11u, 0.0, 65535.0, VULPE_FRACTAL_SEMILLA, 0.0)));
 
     return OpcFractal(
         fractal_brillo > 0, fractal_cambia_cada_noche, f32(fractal_cobertura), OPC_FRACTAL_CONJUNTOS_DEFECTO,
-        OPC_FRACTAL_SEMILLA_DEFECTO, fractal_paleta,
+        OPC_FRACTAL_SEMILLA_DEFECTO + sem_mod, fractal_paleta,
         f32(fractal_brillo) * OPC_FRACTAL_ESCALA * mod_fractal.ganancia, FRACTAL_TECHO * OPC_FRACTAL_ESCALA * 4.0,
-        OPC_FRACTAL_SATURACION_DEFECTO * 0.01 * mod_fractal.mult_saturacion, FRACTAL_CONTRASTE * 0.01,
+        OPC_FRACTAL_SATURACION_DEFECTO * 0.01 * mod_fractal.mult_saturacion * sat_mod, FRACTAL_CONTRASTE * 0.01 * cont_mod,
         FRACTAL_MUTACION * 0.01, FRACTAL_HUECO, mod_fractal.dibujo,
         OPC_FRACTAL_SORTEO_DEFECTO == 0u, iteraciones,
     );

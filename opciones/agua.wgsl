@@ -28,5 +28,11 @@ fn opc_agua(tiempo: f32, lluvia: f32) -> OpcAgua {
 
 fn opc_agua_medio(claridad: f32) -> AguMedio {
     let mod_agua = opc_estilo_agua();
-    return agu_medio(claridad, mod_agua.absorcion, mod_agua.turbidez, mod_agua.color_disperso);
+    let abs_mod = vec3<f32>(
+        adp_mod_param(28u, 0.0, 1.0, VULPE_AGUA_ABSORCION_R, 0.35) / 0.35,
+        adp_mod_param(29u, 0.0, 1.0, VULPE_AGUA_ABSORCION_G, 0.15) / 0.15,
+        adp_mod_param(30u, 0.0, 1.0, VULPE_AGUA_ABSORCION_B, 0.05) / 0.05,
+    );
+    let turb_mod = adp_mod_param(31u, 0.0, 5.0, VULPE_AGUA_TURBIDEZ, 1.0);
+    return agu_medio(claridad, mod_agua.absorcion * abs_mod, mod_agua.turbidez * turb_mod, mod_agua.color_disperso);
 }

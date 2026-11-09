@@ -140,10 +140,11 @@ fn opc_volumen() -> OpcVolumen {
 
     let mod_cuevas = opc_estilo_cuevas();
     let mod_horaria = opc_estilo_niebla_horaria();
+    let caida_mod = adp_mod_param(22u, 0.0, 1.0, VULPE_NIEBLA_ALTURA_CAIDA, 0.1) / 0.1;
     let niebla_activa = niebla_cantidad > 0 && mod_cuevas.niebla_cueva;
     let cant = f32(niebla_cantidad) * 0.01;
     let lluvia = OPC_NIEBLA_LLUVIA_DEFECTO * mod_horaria.niebla_lluvia;
-    let caida = NIEBLA_CAIDA * 0.001 * mod_cuevas.caida;
+    let caida = NIEBLA_CAIDA * 0.001 * mod_cuevas.caida * caida_mod;
     let viento = NUBES_VIENTO * nubes_velocidad;
     let sombra_nubes = f32(nubes_sombras) * 0.01;
 

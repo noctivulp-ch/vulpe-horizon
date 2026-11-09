@@ -10,6 +10,7 @@ description = "Vulpe para Horizon, escrito en sala limpia."
 authors = ["noctivulp-ch"]
 license = "GPL-3.0-or-later"
 shared = [
+    "constantes_mod.wgsl",
     "nucleo/matematica/constantes.wgsl",
     "nucleo/matematica/utilidades.wgsl",
     "nucleo/matematica/proyeccion.wgsl",
