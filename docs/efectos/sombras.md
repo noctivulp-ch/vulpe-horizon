@@ -78,8 +78,9 @@ Solo en caras hacia la luz, en plantas cruzadas o con SSS, y con algo de luz de 
 Página «Sombras» y página «Calidad» (ver `docs/efectos/calidad.md`): la opción `sombras_penumbra` salió del menú
 para integrarse en el preset `calidad_sombras` (Baja: penumbra fija con filtro 4; Media: variable con búsqueda 4 y filtro 8;
 Alta: búsqueda 8 y filtro 16; Ultra: búsqueda 16 y filtro 32; sombras de contacto pendientes). Las sombras de nubes
-se mantienen en la página «Sombras». La resolución y la distancia del mapa son del manifiesto y el jugador no
-puede cambiarlas (limitación de Horizon que recoge la especificación).
+se mantienen en la página «Sombras». La resolución (1024 a 4096) y distancia (64 a 256) teóricas del preset quedan
+recogidas en `calidad.md`, manteniéndose en el manifiesto en 2048 y 128.0 debido a que `resolution_option` y `distance_option`
+de Horizon solo admiten opciones numéricas y no presets con herencia simbólica. El shader ya calcula dinámicamente con `frame`.
 
 ## Coste medido
 
