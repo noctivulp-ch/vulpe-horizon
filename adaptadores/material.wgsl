@@ -74,7 +74,9 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
     let con_pbr = block_pbr_maps();
     if con_pbr {
         p.pbr = sup_labpbr(block_specular_map(input.uv), p.albedo);
-        p.normal = sup_normal_mapa(block_normal_map(input.uv), input.normal, input.tangent);
+        let mapa_n = block_normal_map(input.uv);
+        p.normal = sup_normal_mapa(mapa_n, input.normal, input.tangent);
+        p.albedo *= 0.5 + 0.5 * mapa_n.b;
     } else {
         p.pbr = SupMaterial(0.15, 0.7225, vec3<f32>(0.04), false, 0.0, 0.0, 0.0);
         p.normal = input.normal;

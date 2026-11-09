@@ -140,3 +140,10 @@ fn agua(input: MaterialInput, p: AdpPunto, luces: AdpLuces) -> Surface {
     }
     return adp_material_salida(color, 1.0, p);
 }
+
+// Punto de entrada de la etapa de desplazamiento (subsistema 18).
+// Porqué: docs/efectos/relieve.md §Desplazamiento
+fn displacement(input: DisplacementInput) -> f32 {
+    return adp_desplazamiento(input);
+}
+

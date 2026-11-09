@@ -102,12 +102,19 @@ files = [
     "nucleo/superficie/emision.wgsl",
     "nucleo/superficie/menas.wgsl",
     "opciones/menas.wgsl",
+    "nucleo/superficie/relieve.wgsl",
+    "opciones/relieve.wgsl",
+    "adaptadores/relieve.wgsl",
     "nucleo/luz/curvas.wgsl",
     "nucleo/luz/difusa.wgsl",
     "adaptadores/sombras.wgsl",
     "adaptadores/material.wgsl",
     "adaptadores/agua.wgsl",
 ]
+
+[displacement]       # relieve geométrico con teselación (subsistema 18)
+distance = 12.0
+cells = 16
 
 [reflection]        # el espejo del agua (07): se dibuja siempre que el material lo lee
 
@@ -545,6 +552,16 @@ min = 0.0
 max = 10.0
 step = 0.1
 
+[[options]]
+id = "relieve"
+name = "Relieve"
+description = "Profundidad del relieve geométrico LabPBR (0 = apagado)."
+type = "float"
+default = 0.25
+min = 0.0
+max = 0.50
+step = 0.05
+
 # ============================================================================================
 # 2. PRESETS DE CALIDAD Y MAPA DE SOMBRAS (9 OPCIONES, mapa-de-ajustes.md §2.1)
 # ============================================================================================
@@ -945,7 +962,8 @@ name = "Luz y superficie"
 description = "Oclusión ambiental, ondulación, charcos, menas y dispersión."
 items = [
     "ao_fuerza", "ondulacion", "ondulacion_velocidad", "charcos", "charcos_tamano",
-    "menas", "menas_umbral", "luz_mano", "sss", "normales_intensidad", "brillo_especular_sol"
+    "menas", "menas_umbral", "luz_mano", "sss", "normales_intensidad", "brillo_especular_sol",
+    "relieve"
 ]
 
 [budget]
