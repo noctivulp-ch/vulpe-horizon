@@ -15,123 +15,45 @@
 
 ## Qué es
 
-Vulpe es un shader de Minecraft con aspecto propio: un cielo con dispersión atmosférica real, un
-**cielo fractal** que de noche cuelga cortinas de luz dentro de la niebla como una aurora, niebla
-volumétrica densa y oscura de noche, nubes con volumen, agua con refracción y cáusticas, menas que
-brillan solo en el mineral y un aislamiento de color opcional que deja el mundo casi en gris.
-
-Esta es su versión para **[Horizon](https://github.com/horizon-rust/horizon)**, que tiene su propio
-motor y su propia API de shaders en WGSL, por etapas (`sky`, `material`, `vertex`, `weather` y hasta 8
-pasadas `post`). No es un port de un pack de OptiFine/Iris: está escrito desde cero para esa API.
+Vulpe es un shader para [Horizon](https://github.com/horizon-rust/horizon) con aspecto propio: cielo con dispersión atmosférica real, cielo fractal con aurora que ilumina la niebla volumétrica, agua con refracción y cáusticas, y luz PBR completa. Está escrito desde cero en WGSL para la API nativa de Horizon, con su propio motor por etapas y pasadas de postprocesado.
 
 <p align="center">
-  <img src="pruebas/capturas/hoja-imagen.png" width="48%" alt="Día, atardecer, noche con aurora y cueva">
-  <img src="pruebas/capturas/hoja-agua.png" width="48%" alt="Agua: orilla, fondo con cáusticas, atardecer, noche y bajo el agua">
+  <img src="pruebas/capturas/hoja-imagen.png" width="90%" alt="Día, atardecer, noche con aurora y cueva en Vulpe para Horizon">
 </p>
-<p align="center">
-  <img src="pruebas/capturas/hoja-aurora-frente-referencia.png" width="60%" alt="Aurora del cielo fractal frente a la referencia">
-</p>
-
-<p align="center"><sub>Capturas del propio pack en Horizon, hechas con <code>tools/probar.sh</code>. En la hoja de la aurora, la imagen de abajo a la derecha es la referencia de la versión para Iris/Oculus.</sub></p>
 
 ## Funciones principales
 
-- **Cielo y atmósfera:** dispersión Rayleigh y Mie con tablas precalculadas, sol, luna y estrellas,
-  cinturón de Venus al anochecer.
-- **Cielo fractal (propio):** conjuntos de Julia y Mandelbrot que cambian cada noche, con paletas.
-- **Aurora del fractal:** de noche las figuras emiten luz dentro de la niebla, con cortinas, vetas,
-  conos que abren huecos y una ventana al cielo a través de ellos.
-- **Niebla y nubes:** un solo raymarch para aire, niebla y tres capas de nubes, con tiempo que cambia
-  cada día y horario de niebla (jirones al amanecer, niebla densa de noche).
-- **Luz de superficie:** difusa, GGX, LabPBR completo (metales incluidos), SSS en hojas y nieve,
-  charcos con la lluvia, luz de bloque con color, estaciones.
-- **Sombras:** PCSS con penumbra variable, sombras de color de cristal y agua, sombras de nubes.
-- **Agua:** olas, refracción con la profundidad real, absorción, reflejo con el cielo del pack,
-  cáusticas, niebla y ventana de Snell bajo el agua.
-- **Imagen:** TAA con FXAA, bloom, exposición automática, tonemap, efecto Purkinje, oclusión ambiental.
-- **Propias de Vulpe:** menas brillantes, aislamiento de color y rayos del fractal.
-- **Otras dimensiones:** niebla y luz propias del Nether y del End.
+- **Cielo y atmósfera:** dispersión física Rayleigh y Mie, sol, luna, estrellas y cinturón de Venus.
+- **Cielo fractal y aurora:** figuras de Julia y Mandelbrot que cambian cada noche y emiten cortinas de luz sobre la niebla.
+- **Niebla y nubes:** raymarch volumétrico unificado con horario de niebla y tres capas dinámicas de nubes.
+- **Luz y materiales:** iluminación difusa y GGX, soporte LabPBR completo, SSS en hojas y nieve, charcos y relieve geométrico.
+- **Sombras:** PCSS con penumbra variable, sombras coloreadas de cristal y agua, y sombras de nubes.
+- **Agua:** olas, refracción profunda, absorción, cáusticas submarinas y niebla bajo el agua con ventana de Snell.
+- **Postprocesado:** TAA con FXAA, bloom, autoexposición, tonemapping fílmico y oclusión ambiental.
+- **Propias de Vulpe:** menas brillantes en la roca, aislamiento de color configurable y adaptación para Nether y End.
 
-## Instalar la beta
+## Instalación
 
-La forma recomendada para jugar es descargar el archivo empaquetado `.hshader` desde **[Releases](https://github.com/noctivulp-ch/vulpe-horizon/releases)** (`vulpe-0.2.0-beta.1.hshader`).
+1. Descarga el paquete `.hshader` desde **[Releases](https://github.com/noctivulp-ch/vulpe-horizon/releases)**.
+2. Instálalo con `horizon-launcher packs add vulpe-0.2.0-beta.1.hshader` (o cópialo en la carpeta `shaderpacks/`).
+3. Actívalo en el menú de shaders del juego. Para compilar desde el código fuente, consulta [`docs/guia.md`](docs/guia.md).
 
-Una vez descargado, puedes instalarlo de cualquiera de estas dos formas:
+## Progreso
 
-1. **Con el lanzador oficial de Horizon:**
-   ```bash
-   horizon-launcher packs add vulpe-0.2.0-beta.1.hshader
-   ```
-2. **Copia manual:**
-   Copia el archivo `.hshader` directamente en la carpeta `shaderpacks/` de tu instancia de Horizon (junto a `options.txt`).
-
-Luego, entra al juego y selecciónalo en **Opciones > Ajustes de vídeo > Shaders > Shader Packs** (aparece listado con la marca `(Horizon)`).
-
-### Instalación desde el código (desarrollo)
-
-Necesita **Horizon** instalado con su lanzador ([instrucciones en su repo](https://github.com/horizon-rust/horizon)).
-La vegetación ondulante usa la etapa `vertex`, que entró en Horizon el 2026-11-01 17:17 (UTC+1): hace falta una
-nightly posterior (probado con `nightly-2026-11-08-fdc87ae`).
-
-```bash
-git clone https://github.com/noctivulp-ch/vulpe-horizon.git
-cd vulpe-horizon
-tools/montar.sh                     # arma el pack en build/vulpe/
-```
-
-Después, una de estas tres:
-
-- copiar la carpeta `build/vulpe/` a la carpeta `shaderpacks/` de la instancia (junto a `options.txt`)
-  y elegirla en el menú de shaders del juego;
-- empaquetarla con `tools/empaquetar.sh` y añadir el archivo generado en `dist/` con `horizon-launcher packs add`;
-- para probar sin instalar, arrancar con `HORIZON_SHADER_PACK=build/vulpe`. La recarga en caliente
-  aplica cada archivo que se guarda.
-
-## Cómo está hecho
-
-- **Sala limpia.** La versión original de Vulpe se apoya en Bliss, cuya licencia no permite publicar
-  derivados. Esta versión se escribió con dos agentes separados por una especificación: uno leyó el
-  original y describió qué hace cada parte, sin código; el otro escribió este pack solo desde esa
-  descripción y la bibliografía pública. Un tercero hizo de gestor y revisó cada lote que cruzaba la
-  muralla. Detalle en [ADR 0001](docs/decisiones/0001-sala-limpia.md) y [docs/metodologia.md](docs/metodologia.md).
-- **Carpetas por función y SOLID.** `etapas/` solo compone, `nucleo/` son funciones puras sin acceso al
-  motor y `adaptadores/` es lo único que conoce la API de Horizon. Ver [ADR 0002](docs/decisiones/0002-estructura-por-funcion.md).
-
-| Capa | Qué hay |
-|---|---|
-| `etapas/` | puntos de entrada de cada etapa y las 7 pasadas `post`, en orden |
-| `nucleo/` | matemática, ruido, color, atmósfera, cielo, volumen, superficie, luz e imagen |
-| `adaptadores/` | traducción de la API de Horizon (`frame`, `MaterialInput`…) al núcleo |
-| `opciones/` | los ajustes del menú y las constantes con nombre, agrupados por efecto |
-| `tools/` | montar, validar y probar en el juego con `horizon-ctl` |
-
-## Progreso y calendario
-
-Empezado el **2026-11-01**. Cifras al 2026-11-08: casi 6 000 líneas de WGSL, 64 opciones de las 64
-que admite Horizon.
-
-| Fase | Qué es | Estado | Fecha prevista |
-|---|---|---|---|
-| 1. Base | los 16 subsistemas especificados e implementados | **hecha** (los 16 en marcha; la vegetación, activa desde el 2026-11-03) | 2026-11-02 ✔ |
-| 2. Faltas | lo que le faltaba frente al original, y lo que vio el dueño jugando | **hecha** (las tres faltas de prioridad baja, 05.3, 07.2 y 15.1, pasan a la fase 6) | 2026-11-03 ✔ |
-| 3. Paridad | mismas salidas que el original, medidas con tablas de prueba y capturas en escenas fijas | **en curso**: las tablas de los 17 subsistemas están medidas; aplicadas las de agua, bloom y vegetación | 2026-11-08 a 11-10 |
-| 4. Flexibilidad | tantos ajustes como el original: presets que mueven varios parámetros, y un mod nativo para Horizon que pase el resto | **hecha** en cuanto a presets (presets de calidad y de estilo en 64 opciones); el **mod nativo en marcha** | 2026-11-08 ✔ |
-| 5. Beta pública | primera versión empaquetada (`.hshader`) | **hecha** (`vulpe-0.2.0-beta.1.hshader`) | 2026-11-08 ✔ |
-| 6. Detalles finos | rendimiento, rincones sin ver, ajuste fino con jugadores | — | ~2026-11-20 |
-
-Las fechas son una previsión, no un compromiso: Horizon cambia su API casi a diario.
-
-## Documentación
-
-- [`docs/index.md`](docs/index.md): por dónde empezar.
-- [`docs/efectos/`](docs/efectos/): un documento por efecto, con el porqué de cada decisión.
-- [`docs/decisiones/`](docs/decisiones/): decisiones de diseño (ADR).
-- [`docs/metodologia.md`](docs/metodologia.md): cómo se trabaja (sala limpia, pruebas, criterios).
+| Fase | Descripción | Estado |
+|---|---|---|
+| 1. Base | 16 subsistemas iniciales especificados e implementados | **Hecha** |
+| 2. Faltas | Ajustes frente al original y correcciones visuales | **Hecha** |
+| 3. Paridad | Medición contra tablas de referencia y escenas fijas | **En curso** |
+| 4. Flexibilidad | Presets de calidad y estilo (64 opciones) y mod nativo | **Hecha** |
+| 5. Beta pública | Primera versión empaquetada (`.hshader`) | **Hecha** |
+| 6. Detalles finos | Rendimiento, pulido de rincones y ajustes finales | Pendiente |
 
 ## Licencia
 
-Código bajo **GPL-3.0-or-later** ([`LICENSE`](LICENSE)). Horizon es un proyecto aparte, con su propia
-licencia, y no forma parte de este repo.
+Código bajo **GPL-3.0-or-later** ([`LICENSE`](LICENSE)). Los componentes de terceros y sus licencias
+están en [`NOTICE`](NOTICE). El nombre y la identidad visual no forman parte de la licencia: ver
+[`TRADEMARKS.md`](TRADEMARKS.md). Para aportar, [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Apoyo
 
