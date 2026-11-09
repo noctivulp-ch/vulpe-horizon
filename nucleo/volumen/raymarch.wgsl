@@ -141,13 +141,43 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: 
         var hacia = 0.0;
         hacia += vol_nube(mundo + luz.direccion * 8.0, i, a.nubes, t2, s2, t3, false) * 8.0;
         hacia += vol_nube(mundo + luz.direccion * 28.0, i, a.nubes, t2, s2, t3, false) * 20.0;
-        let t_sol = exp(-sigma_nube * hacia * 1.2);
+        var t_sol = exp(-sigma_nube * hacia * 1.2);
+
+        // Sombra proyectada entre capas (fino/05 §5):
+        if luz.direccion.y > 0.02 {
+            let inv_luz_y = 1.0 / luz.direccion.y;
+            // Altoestratos (capa 2) proyectan sombra sobre ambas capas de cúmulos (0 y 1)
+            if i < 2 && a.nubes.perfil.cobertura[2] > 0.0 {
+                let h2 = VOL_MAR + VOL_BASE[2];
+                let p2 = mundo + luz.direccion * ((h2 - mundo.y) * inv_luz_y);
+                let cob2 = vol_cobertura(p2.xz, 2, a.nubes, t2, s2);
+                t_sol *= exp(-cob2 * a.nubes.forma.sigma[2] * 20.0 * min(inv_luz_y, 4.0));
+            }
+            // Cúmulos grandes (capa 1) proyectan sombra sobre cúmulos pequeños (capa 0)
+            if i == 0 && a.nubes.perfil.cobertura[1] > 0.0 {
+                let h1 = VOL_MAR + VOL_BASE[1] + VOL_ESPESOR[1] * 0.5;
+                let p1 = mundo + luz.direccion * ((h1 - mundo.y) * inv_luz_y);
+                let cob1 = vol_cobertura(p1.xz, 1, a.nubes, t2, s2);
+                t_sol *= exp(-cob1 * cob1 * a.nubes.forma.sigma[1] * 25.0);
+            }
+        }
+
         let altura = clamp((mundo.y - y0) / VOL_ESPESOR[i], 0.0, 1.0);
-        let ambiente = luz.cielo * mix(0.35, 1.1, altura) + luz.suelo * (1.0 - altura) * 0.3;
-        // Se funden con la distancia: cerca del horizonte cada paso cubre cientos de bloques.
-        let lejos = 1.0 - smoothstep(VOL_NUBES_DISTANCIA * 0.5, VOL_NUBES_DISTANCIA, t);
+        var ambiente = luz.cielo * mix(0.35, 1.1, altura) + luz.suelo * (1.0 - altura) * 0.3;
+        // Cúmulos grandes reducen luz ambiental de cielo sobre cúmulos pequeños inferiores:
+        if i == 0 && a.nubes.perfil.cobertura[1] > 0.0 {
+            let cob_cenit = vol_cobertura(mundo.xz, 1, a.nubes, t2, s2);
+            ambiente *= mix(1.0, 0.4, cob_cenit);
+        }
+
+        // Neblina atmosférica interna: las nubes lejanas se funden suavemente con el horizonte atmosférico
+        let dist_horiz = length(rayo.dir.xz) * t;
+        let niebla_ext = 1.0 - exp(-dist_horiz * (0.00012 + a.niebla.uniforme * 0.0004));
+        let lejos = 1.0 - smoothstep(VOL_NUBES_DISTANCIA * 0.7, VOL_NUBES_DISTANCIA, t);
         let sigma = sigma_nube * d * lejos;
-        let fuente = sigma * (luz.irradiancia * t_sol * vol_fase(cos_luz, d * 4.0) + ambiente);
+        var luz_nube = luz.irradiancia * t_sol * vol_fase(cos_luz, d * 4.0) + ambiente;
+        luz_nube = mix(luz_nube, luz.cielo, niebla_ext);
+        let fuente = sigma * luz_nube;
         vol_tramo(r, fuente, sigma, paso);
         if (*r).transmitancia < 0.01 {
             break;

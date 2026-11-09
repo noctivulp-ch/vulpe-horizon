@@ -112,9 +112,13 @@ código (medido): el presupuesto de 64 por etapa no aprieta.
        Con la forma horizontal llena (`cob = 1`) reproduce los 40 puntos del vector de `paridad/05` §«Perfil vertical de
        los cúmulos» (cúmulos pequeños Y = 252,5..347,5 y grandes Y = 505..695) con error medio `0,0006` y máximo `0,0050`.
        Donde `cob < 1` (bordes y nubes menores), la nube se queda baja y pegada a la base plana en vez de formar palos.
-    3. **Erosión 3D e inclinación:** la erosión 3D (`OPC_NUBES_ESCALA_EROSION = (220, 360)`) se atenúa en la base
-       (`smoothstep(0, 0,25, h) · (1 − d)`) para conservar la base plana y esculpir coliflores 3D en los flancos y la
-       cúpula. La inclinación por el viento se modera a `OPC_NUBES_INCLINACION = 0,12` del espesor.
+    3. **Erosión 3D, sombras inter-capa y neblina interna (fino/05 §5):** la escala horizontal de forma se
+       ajustó a cientos de bloques (`OPC_NUBES_ESCALA_FORMA = (900, 1800)`) y la escala de erosión a `(110, 180)` con
+       detalle fino en `35` bloques y fuerza reforzada (`0,60` y `0,45`), generando cúmulos fragmentados con bordes rotos
+       y claros de cielo entre nubes en lugar de bandas continuas. Se incorporó la sombra proyectada entre estratos: los
+       altoestratos proyectan sombra solar sobre ambas capas de cúmulos, y los cúmulos grandes proyectan sombra solar
+       y reducen la luz ambiental de cielo sobre los cúmulos pequeños situados debajo. Por último, las nubes lejanas se
+       funden con el horizonte mediante extinción atmosférica en línea hacia el color del cielo.
 - **Capas:** base 187 / 437 / 1937 bloques sobre el mar (`VOL_MAR = 63` → Y = 250 / 500 / 2000, como en `paridad/05`),
   espesor 100 / 200 / 12.
 

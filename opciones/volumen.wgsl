@@ -13,23 +13,23 @@ const TIEMPO_ALEATORIO: bool = true;
 const OPC_VIENTO: vec2<f32> = vec2<f32>(3.0, 1.2);     // bloques por segundo con la opción a 1
 const OPC_PERFIL_FIJO: u32 = 10u;                      // sin tiempo aleatorio: cúmulos pequeños y grandes
 
-// Geometría y escalas de las nubes (05.4): docs/efectos/niebla-y-nubes.md §Nubes
-const OPC_NUBES_ESCALA_ZONAS: f32 = 12000.0;                        // bloques: zonas de varios km donde hay nubes
-const OPC_NUBES_ESCALA_FORMA: vec2<f32> = vec2<f32>(3600.0, 6400.0);// bloques: forma de cúmulos pequeños y grandes
-const OPC_NUBES_ESCALA_ALTO: f32 = 9000.0;                          // bloques: altoestratos
-const OPC_NUBES_ESCALA_EROSION: vec2<f32> = vec2<f32>(220.0, 360.0);// bloques: periodo del ruido 3D de erosión
-const OPC_NUBES_INCLINACION: f32 = 0.12;                            // fracción del espesor inclinada por el viento
-const OPC_NUBES_BASE_REDONDEO: f32 = 25.0;                          // bloques de redondeo en la base plana
-const OPC_NUBES_CAIDA_ALTURA: f32 = 0.5;                            // caída exponencial en altura del vector de paridad
-const OPC_NUBES_CUPULA_DESDE: f32 = 0.78;                           // inicio del cierre en cúpula
-const OPC_NUBES_CUPULA_POTENCIA: f32 = 1.7;                         // exponente del cierre en cúpula
-const OPC_NUBES_EROSION_FUERZA: f32 = 0.45;                         // erosión gruesa: recorte de la envolvente (lóbulos)
-const OPC_NUBES_EROSION_BASE: f32 = 0.4;                            // fracción de la erosión que queda en la base plana
-const OPC_NUBES_ESCALA_DETALLE: f32 = 70.0;                         // bloques: periodo del ruido 3D fino (coliflores)
-const OPC_NUBES_DETALLE_FUERZA: f32 = 0.35;                         // erosión fina
-const OPC_NUBES_SIGMA: vec3<f32> = vec3<f32>(0.45, 0.45, 0.06);     // extinción por bloque (con densidad 0,5 da ~0,225 y 0,03)
-const OPC_NUBES_TRAMO_MAX: f32 = 900.0;                             // bloques: tope del tramo integrado por capa baja
-const OPC_NUBES_SOMBRA_TAU: f32 = 6.0;                              // espesor óptico de la sombra en el suelo
+// Geometría y escalas de las nubes (05.4 y fino/05 §5): docs/efectos/niebla-y-nubes.md §Nubes
+const OPC_NUBES_ESCALA_ZONAS: f32 = 5000.0;                        // bloques: zonas donde hay cúmulos
+const OPC_NUBES_ESCALA_FORMA: vec2<f32> = vec2<f32>(900.0, 1800.0);// bloques: forma fragmentada de cúmulos pequeños y grandes
+const OPC_NUBES_ESCALA_ALTO: f32 = 4500.0;                         // bloques: altoestratos
+const OPC_NUBES_ESCALA_EROSION: vec2<f32> = vec2<f32>(110.0, 180.0);// bloques: periodo del ruido 3D de erosión (lóbulos)
+const OPC_NUBES_INCLINACION: f32 = 0.12;                           // fracción del espesor inclinada por el viento
+const OPC_NUBES_BASE_REDONDEO: f32 = 25.0;                         // bloques de redondeo en la base plana
+const OPC_NUBES_CAIDA_ALTURA: f32 = 0.5;                           // caída exponencial en altura del vector de paridad
+const OPC_NUBES_CUPULA_DESDE: f32 = 0.78;                          // inicio del cierre en cúpula
+const OPC_NUBES_CUPULA_POTENCIA: f32 = 1.7;                        // exponente del cierre en cúpula
+const OPC_NUBES_EROSION_FUERZA: f32 = 0.60;                        // erosión gruesa para bordes rotos
+const OPC_NUBES_EROSION_BASE: f32 = 0.4;                           // fracción de la erosión que queda en la base plana
+const OPC_NUBES_ESCALA_DETALLE: f32 = 35.0;                        // bloques: periodo del ruido 3D fino (jirones y coliflores)
+const OPC_NUBES_DETALLE_FUERZA: f32 = 0.45;                        // erosión fina de alta frecuencia
+const OPC_NUBES_SIGMA: vec3<f32> = vec3<f32>(0.45, 0.45, 0.06);    // extinción por bloque
+const OPC_NUBES_TRAMO_MAX: f32 = 800.0;                            // bloques: tope del tramo integrado por capa baja
+const OPC_NUBES_SOMBRA_TAU: f32 = 6.0;                             // espesor óptico de la sombra en el suelo
 
 // Otras dimensiones (17).
 const OPC_NIEBLA_NETHER_DEFECTO: f32 = 1.0;
