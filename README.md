@@ -52,11 +52,26 @@ pasadas `post`). No es un port de un pack de OptiFine/Iris: está escrito desde 
 - **Propias de Vulpe:** menas brillantes, aislamiento de color y rayos del fractal.
 - **Otras dimensiones:** niebla y luz propias del Nether y del End.
 
-## Instalación
+## Instalar la beta
+
+La forma recomendada para jugar es descargar el archivo empaquetado `.hshader` desde **[Releases](https://github.com/noctivulp-ch/vulpe-horizon/releases)** (`vulpe-0.2.0-beta.1.hshader`).
+
+Una vez descargado, puedes instalarlo de cualquiera de estas dos formas:
+
+1. **Con el lanzador oficial de Horizon:**
+   ```bash
+   horizon-launcher packs add vulpe-0.2.0-beta.1.hshader
+   ```
+2. **Copia manual:**
+   Copia el archivo `.hshader` directamente en la carpeta `shaderpacks/` de tu instancia de Horizon (junto a `options.txt`).
+
+Luego, entra al juego y selecciónalo en **Opciones > Ajustes de vídeo > Shaders > Shader Packs** (aparece listado con la marca `(Horizon)`).
+
+### Instalación desde el código (desarrollo)
 
 Necesita **Horizon** instalado con su lanzador ([instrucciones en su repo](https://github.com/horizon-rust/horizon)).
 La vegetación ondulante usa la etapa `vertex`, que entró en Horizon el 2026-11-01 17:17 (UTC+1): hace falta una
-nightly posterior (probado con `nightly-2026-11-03-f42ef42`).
+nightly posterior (probado con `nightly-2026-11-08-fdc87ae`).
 
 ```bash
 git clone https://github.com/noctivulp-ch/vulpe-horizon.git
@@ -68,8 +83,7 @@ Después, una de estas tres:
 
 - copiar la carpeta `build/vulpe/` a la carpeta `shaderpacks/` de la instancia (junto a `options.txt`)
   y elegirla en el menú de shaders del juego;
-- empaquetarla con la herramienta de Horizon, `horizon-shader pack build/vulpe`, y añadir el
-  `.hshader` con `horizon-launcher packs add`;
+- empaquetarla con `tools/empaquetar.sh` y añadir el archivo generado en `dist/` con `horizon-launcher packs add`;
 - para probar sin instalar, arrancar con `HORIZON_SHADER_PACK=build/vulpe`. La recarga en caliente
   aplica cada archivo que se guarda.
 
@@ -93,7 +107,7 @@ Después, una de estas tres:
 
 ## Progreso y calendario
 
-Empezado el **2026-11-01**. Cifras al 2026-11-04: unas 5 100 líneas de WGSL, 58 opciones de las 64
+Empezado el **2026-11-01**. Cifras al 2026-11-08: casi 6 000 líneas de WGSL, 64 opciones de las 64
 que admite Horizon.
 
 | Fase | Qué es | Estado | Fecha prevista |
@@ -101,8 +115,8 @@ que admite Horizon.
 | 1. Base | los 16 subsistemas especificados e implementados | **hecha** (los 16 en marcha; la vegetación, activa desde el 2026-11-03) | 2026-11-02 ✔ |
 | 2. Faltas | lo que le faltaba frente al original, y lo que vio el dueño jugando | **hecha** (las tres faltas de prioridad baja, 05.3, 07.2 y 15.1, pasan a la fase 6) | 2026-11-03 ✔ |
 | 3. Paridad | mismas salidas que el original, medidas con tablas de prueba y capturas en escenas fijas | **en curso**: las tablas de los 17 subsistemas están medidas; aplicadas las de agua, bloom y vegetación | 2026-11-08 a 11-10 |
-| 4. Flexibilidad | tantos ajustes como el original: presets que mueven varios parámetros, y un mod nativo para Horizon que pase el resto | por empezar | 2026-11-10 a 11-13 |
-| 5. Beta pública | primera versión empaquetada (`.hshader`) | — | ~2026-11-14 |
+| 4. Flexibilidad | tantos ajustes como el original: presets que mueven varios parámetros, y un mod nativo para Horizon que pase el resto | **hecha** en cuanto a presets (presets de calidad y de estilo en 64 opciones); el **mod nativo en marcha** | 2026-11-08 ✔ |
+| 5. Beta pública | primera versión empaquetada (`.hshader`) | **hecha** (`vulpe-0.2.0-beta.1.hshader`) | 2026-11-08 ✔ |
 | 6. Detalles finos | rendimiento, rincones sin ver, ajuste fino con jugadores | — | ~2026-11-20 |
 
 Las fechas son una previsión, no un compromiso: Horizon cambia su API casi a diario.
