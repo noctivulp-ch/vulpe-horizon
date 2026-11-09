@@ -31,20 +31,20 @@ fn post(input: PostInput) -> vec4<f32> {
         default: {}
     }
     let o = opc_imagen();
-    var c = img_nitidez(previous, linear_sampler, p.uv, OPC_NITIDEZ);
+    var c = img_nitidez(previous, linear_sampler, p.uv, nitidez);
     c = adp_bloom_final(c, p.uv, o);
     c = adp_estado_jugador(c, adp_post_distancia(p));
     let e = adp_exposicion(o);
     c *= e.exposicion * OPC_TONEMAP_EXPOSICION[min(o.tonemap, 2u)];
     c = col_purkinje(c, e.bastones);
-    c = col_balance_blancos(c, atm_cuerpo_negro(6500.0), atm_cuerpo_negro(OPC_BALANCE_K));
+    c = col_balance_blancos(c, atm_cuerpo_negro(6500.0), atm_cuerpo_negro(opc_balance_k()));
     c = col_tonemap(c, o.tonemap, OPC_BLANCO, OPC_FILMICO_BLANCO);
     c = col_gradar(c, o.gradacion);
     c = mat_saturar3(c);
     // Rayos del fractal (14): luz de la escena tras el tonemap y antes del aislamiento de color.
     c += adp_rayos(p.uv, p.pixel, e.exposicion);
     var salida = col_lineal_a_srgb(c);
-    if aislamiento {
+    if aislamiento_rango > 0 {
         salida = img_aislar(salida, p.uv, previous, linear_sampler, opc_aislamiento(e.exposicion));
     }
     if o.tramado {

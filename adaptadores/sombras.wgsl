@@ -75,7 +75,7 @@ fn adp_sombra_punto(e: AdpEntradaSombra, o: OpcSombras) -> AdpResultadoSombra {
                 let grosor = max(mapa.z - d_t, 0.0) * adp_bloques_por_profundidad();
                 let oa = adp_agua_opciones_sombra();
                 let caus = agu_causticas((pos + frame.camera_position).xz, oa.olas, ruido2d, ruido2d_sampler);
-                tinte = agu_transmitancia(opc_agua_medio(oa.claridad), grosor) * mix(1.0, caus, smoothstep(0.0, 1.0, grosor) * OPC_AGUA_CAUSTICAS);
+                tinte = agu_transmitancia(opc_agua_medio(oa.claridad), grosor) * mix(1.0, caus, smoothstep(0.0, 1.0, grosor) * agua_causticas);
             }
             luz *= mix(tinte, vec3<f32>(1.0), detras);
         }

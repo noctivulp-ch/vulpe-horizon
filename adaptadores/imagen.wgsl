@@ -56,14 +56,14 @@ fn adp_exposicion(o: OpcImagen) -> AdpExposicion {
     var e = previa;
     // Sin medida aún, lo oscuro o lo claro según la hora.
     var claridad = adp_factor_dia();
-    if estado.x > 0.0 {
+    if estado.x > 0.0 && exposicion_auto {
         let automatica = img_exposicion_objetivo(estado.x, ImgCurvaExposicion(OPC_EXPOSICION_K, OPC_EXPOSICION_C));
         e = exp2(mix(log2(previa), log2(automatica), OPC_EXPOSICION_PESO_AUTO));
         claridad = smoothstep(log2(OPC_EXPOSICION_L_OSCURO), log2(OPC_EXPOSICION_L_CLARO), log2(estado.x));
     }
     // Oscuridad mínima y máxima (fase 2b, punto 5): pasos aparte para lo oscuro y lo claro.
     e *= exp2(mix(o.oscuro, o.claro, claridad));
-    var bastones = select(0.0, col_peso_bastones(estado.y, OPC_BASTONES_L0), estado.y > 0.0) * OPC_PURKINJE;
+    var bastones = select(0.0, col_peso_bastones(estado.y, OPC_BASTONES_L0), estado.y > 0.0) * (OPC_PURKINJE * opc_estilo_noches().mult_purkinje);
     // Fuera del Overworld no hay noche que adaptar (17): sin Purkinje (teñía de azul el Nether).
     bastones *= select(0.0, 1.0, adp_es_superficie());
     // Junto a una fuente de luz (luz de bloque en la cámara) el ojo no está en visión escotópica: los colores de las
@@ -85,7 +85,7 @@ fn adp_bloom_final(color: vec3<f32>, uv: vec2<f32>, o: OpcImagen) -> vec3<f32> {
     // La niebla que dispersa la luz de una fuente es la que hay alrededor, no solo la del píxel: con la del píxel el
     // halo quedaba recortado por los objetos cercanos y parecía un disco desplazado. Porqué: docs/efectos/bloom.md §«Bloom de niebla».
     let t = 1.0 - max(1.0 - textureSampleLevel(volumen, linear_sampler, uv, 0.0).a, ancho4.a);
-    let mult = OPC_BLOOM_NIEBLA * (1.0 + OPC_BLOOM_NIEBLA_LLUVIA * frame.rain) + OPC_BLOOM_NIEBLA_AGUA * frame.in_water;
+    let mult = bloom_niebla * (1.0 + OPC_BLOOM_NIEBLA_LLUVIA * frame.rain) + OPC_BLOOM_NIEBLA_AGUA * frame.in_water;
     let borde = smoothstep(0.0, 0.05, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));
     // Al cuadrado: solo la niebla espesa; la bruma de día (opacidad 0,2–0,4) mezclaba media imagen con el
     // desenfoque ancho y la lavaba.

@@ -42,6 +42,7 @@ shared = [
     "nucleo/volumen/capas.wgsl",
     "nucleo/volumen/borde.wgsl",
     "opciones/calidad.wgsl",
+    "opciones/estilo.wgsl",
     "opciones/depuracion.wgsl",
     "opciones/imagen.wgsl",
     "opciones/exposicion.wgsl",
@@ -200,21 +201,21 @@ file = "etapas/post/07-final.wgsl"
 files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/nitidez.wgsl", "nucleo/imagen/aislamiento.wgsl", "opciones/aislamiento.wgsl", "nucleo/volumen/fase.wgsl", "nucleo/imagen/rayos.wgsl", "opciones/rayos.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/rayos.wgsl"]
 name = "Final"
 
-# --- Opciones -------------------------------------------------------------------------------
+# ============================================================================================
+# 1. MENÚ DIRECTO (37 OPCIONES, mapa-de-ajustes.md §1)
+# ============================================================================================
 
 [[options]]
-id = "agua_olas"
-name = "Fuerza de las olas"
-type = "float"
-default = 1.0
-min = 0.0
-max = 2.0
-step = 0.05
+id = "exposicion_auto"
+name = "Exposición automática"
+description = "Ajuste continuo del brillo según la luz de la escena."
+type = "bool"
+default = true
 
 [[options]]
-id = "agua_claridad"
-name = "Claridad del agua"
-description = "Cuánta agua hace falta para que se vuelva opaca."
+id = "exposicion"
+name = "Exposición"
+description = "Multiplicador de la exposición."
 type = "float"
 default = 1.0
 min = 0.25
@@ -222,86 +223,41 @@ max = 4.0
 step = 0.05
 
 [[options]]
-id = "agua_refraccion"
-name = "Refracción"
-description = "Cuánto deforma el agua lo que hay debajo."
-type = "float"
-default = 50.0
-min = 0.0
-max = 100.0
-step = 5.0
-
-[[options]]
-id = "taa"
-name = "Antialiasing temporal"
-description = "Limpia el grano de niebla, nubes, sombras y reflejos promediando fotogramas."
-type = "bool"
-default = true
-
-[[options]]
-id = "taa_nitidez"
-name = "Nitidez del TAA"
-type = "float"
-default = 0.75
-min = 0.0
-max = 1.0
-step = 0.05
-
-[[options]]
-id = "exposicion_oscuro"
-name = "Brillo de lo oscuro"
-description = "Pasos solo de noche y en cuevas: lo negra que es la oscuridad (0 neutro; −2 más negra, +2 más clara)."
-type = "float"
-default = 0.0
-min = -2.0
-max = 2.0
-step = 0.1
-
-[[options]]
-id = "exposicion_claro"
-name = "Brillo de lo claro"
-description = "Pasos solo de día y con mucha luz (0 neutro)."
-type = "float"
-default = 0.0
-min = -2.0
-max = 2.0
-step = 0.1
-
-[[options]]
-id = "imagen_exposicion"
-name = "Compensación de exposición"
-description = "Pasos sobre la exposición automática (0 neutro; −2 = ×0,25, +2 = ×4)."
-type = "float"
-default = 0.0
-min = -2.0
-max = 2.0
-step = 0.1
-
-[[options]]
-id = "imagen_saturacion"
-name = "Saturación"
-type = "float"
-default = 0.0
-min = -1.0
-max = 1.0
-step = 0.05
-
-[[options]]
-id = "imagen_contraste"
-name = "Contraste"
-type = "float"
-default = 0.0
-min = -1.0
-max = 1.0
-step = 0.05
-
-[[options]]
-id = "imagen_tonemap"
-name = "Mapeo de tonos"
-description = "Cómo se comprimen los brillos por encima de 1."
+id = "curva_tonos"
+name = "Curva de tonos"
+description = "Mapeo de tonos: Fílmico (Hejl 2015), ACES o Reinhard."
 type = "choice"
 values = ["Fílmico", "ACES", "Reinhard"]
 default = "Fílmico"
+
+[[options]]
+id = "saturacion"
+name = "Saturación"
+description = "Saturación sumada al estilo de color."
+type = "float"
+default = 0.0
+min = -1.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "nitidez"
+name = "Nitidez"
+description = "Nitidez posterior."
+type = "float"
+default = 0.35
+min = 0.0
+max = 1.0
+step = 0.05
+
+[[options]]
+id = "desenfoque_movimiento"
+name = "Desenfoque de movimiento"
+description = "Desenfoque de movimiento (0 apagado)."
+type = "int"
+default = 0
+min = 0
+max = 100
 
 [[options]]
 id = "bloom_fuerza"
@@ -310,311 +266,100 @@ description = "El halo de lo muy brillante: sol, lava, antorchas de noche."
 type = "float"
 default = 1.0
 min = 0.0
-max = 4.0
+max = 10.0
 step = 0.1
 
 [[options]]
-id = "aislamiento"
-name = "Aislamiento de color"
-description = "El mundo casi en gris y un solo color, en manchas grandes (el abrigo rojo)."
-type = "bool"
-default = true
-
-[[options]]
-id = "aislamiento_matiz"
-name = "Color aislado (matiz)"
-description = "Grados: 0 rojo, 30 naranja, 120 verde, 210 azul agua."
+id = "bloom_niebla"
+name = "Bloom de niebla"
+description = "Bloom de niebla, bajo el agua y con lluvia."
 type = "float"
-default = 0.0
+default = 1.0
 min = 0.0
-max = 360.0
-step = 5.0
+max = 20.0
+step = 0.5
 
 [[options]]
-id = "aislamiento_rango"
-name = "Amplitud del color"
-type = "float"
-default = 20.0
-min = 0.0
-max = 100.0
-step = 5.0
-
-[[options]]
-id = "imagen_tramado"
-name = "Tramado"
-description = "Ruido de un octavo de bit que borra las bandas de los degradados."
-type = "bool"
-default = true
-
-[[options]]
-id = "depuracion_vista"
-name = "Vista de depuración"
+id = "taa"
+name = "Antialiasing temporal"
+description = "Antialiasing temporal: apagado, estándar o reactivo."
 type = "choice"
-values = ["Normal", "Distancia", "Ruido fBm", "Tramado", "Aurora: conos", "Aurora: sin ventana", "Aurora: mapa"]
-default = "Normal"
+values = ["Apagado", "Estándar", "Reactivo"]
+default = "Reactivo"
 
 [[options]]
-id = "cielo_brillo"
-name = "Brillo del cielo"
-description = "Pasos de brillo de la atmósfera (0 neutro)."
-type = "float"
-default = 0.0
-min = -2.0
-max = 2.0
-step = 0.1
+id = "orbita_sol"
+name = "Órbita del sol"
+description = "Inclinación de la órbita del sol en grados."
+type = "int"
+default = -35
+min = -90
+max = 90
 
 [[options]]
-id = "luna_brillo"
-name = "Brillo de la luna"
-description = "Pasos de brillo de la luz de luna: noches más oscuras o más claras."
-type = "float"
-default = 0.0
-min = -2.0
-max = 2.0
-step = 0.1
+id = "fractal_brillo"
+name = "Brillo del fractal"
+description = "Brillo del cielo fractal (0 = apagado)."
+type = "int"
+default = 40
+min = 0
+max = 200
 
 [[options]]
-id = "estrellas"
-name = "Estrellas"
-type = "bool"
-default = true
+id = "fractal_cobertura"
+name = "Cobertura del fractal"
+description = "Cuánto cielo cubren entre todas las constelaciones."
+type = "int"
+default = 45
+min = 5
+max = 80
 
 [[options]]
-id = "aurora"
-name = "Aurora"
-description = "De noche, las figuras del cielo fractal emiten luz dentro de la niebla y abren huecos en ella."
+id = "fractal_paleta"
+name = "Paleta del fractal"
+description = "Paleta de colores del fractal."
+type = "choice"
+values = ["Aurora", "Brasa", "Hielo", "Monocromo", "Del cielo", "Cielo invertido"]
+default = "Cielo invertido"
+
+[[options]]
+id = "fractal_cambia_cada_noche"
+name = "Cambia cada noche"
+description = "Genera otro cielo fractal en cada noche."
 type = "bool"
 default = true
 
 [[options]]
 id = "aurora_brillo"
 name = "Brillo de la aurora"
-description = "Ajuste relativo, en %."
-type = "float"
-default = 0.0
-min = -90.0
-max = 200.0
-step = 5.0
-
-[[options]]
-id = "rayos"
-name = "Rayos del fractal"
-description = "De noche, haces de luz que salen de la figura del cielo fractal."
-type = "bool"
-default = false
+description = "Brillo de la aurora en porcentaje (0 = apagada)."
+type = "int"
+default = 100
+min = 0
+max = 300
 
 [[options]]
 id = "rayos_intensidad"
 name = "Intensidad de los rayos"
-type = "float"
-default = 200.0
-min = 10.0
-max = 400.0
-step = 10.0
-
-[[options]]
-id = "fractal"
-name = "Cielo fractal"
-description = "Conjuntos de Julia y del Mandelbrot en el cielo de noche."
-type = "bool"
-default = true
-
-[[options]]
-id = "fractal_cambios_noche"
-name = "Cambios por noche"
-description = "Apagado: el mismo cielo siempre (por mundo, con el mod Vulpe Companion)."
-type = "bool"
-default = true
-
-[[options]]
-id = "fractal_cobertura"
-name = "Cobertura del cielo"
-description = "Cuánto cielo cubren entre todas: pocas y pequeñas, o figuras que lo llenan."
-type = "float"
-default = 45.0
-min = 5.0
-max = 80.0
-step = 5.0
-
-[[options]]
-id = "fractal_conjuntos"
-name = "Máximo de conjuntos"
+description = "Rayos del fractal (0 = apagados)."
 type = "int"
-default = 6
-min = 1
-max = 8
-
-[[options]]
-id = "fractal_sorteo"
-name = "Sorteo"
-description = "Como el original: misma semilla, mismo cielo que Vulpe en tu GPU (el seno de cada GPU cambia el sorteo). Estable: igual en todas las GPU, pero otro cielo."
-type = "choice"
-values = ["Como el original", "Estable"]
-default = "Como el original"
-
-[[options]]
-id = "fractal_semilla"
-name = "Semilla"
-description = "Rebaraja el reparto."
-type = "int"
-default = 8
+default = 0
 min = 0
-max = 15
-
-[[options]]
-id = "fractal_paleta"
-name = "Paleta"
-type = "choice"
-values = ["Aurora", "Brasa", "Hielo", "Monocromo", "Del cielo", "Cielo invertido"]
-default = "Cielo invertido"
-
-[[options]]
-id = "fractal_brillo"
-name = "Brillo"
-description = "Invisible a la izquierda, foco a la derecha."
-type = "float"
-default = 40.0
-min = 0.0
-max = 200.0
-step = 5.0
-
-[[options]]
-id = "fractal_saturacion"
-name = "Saturación"
-description = "Gris a la izquierda, carta de ajuste a la derecha."
-type = "float"
-default = 70.0
-min = 0.0
-max = 100.0
-step = 5.0
-
-[[options]]
-id = "menas"
-name = "Menas brillantes"
-description = "El mineral de las menas brilla tenue con su color en la oscuridad."
-type = "bool"
-default = true
-
-[[options]]
-id = "menas_intensidad"
-name = "Intensidad de las menas"
-type = "float"
-default = 60.0
-min = 0.0
-max = 100.0
-step = 5.0
-
-[[options]]
-id = "clima_opacidad"
-name = "Opacidad de la lluvia y la nieve"
-type = "float"
-default = 1.0
-min = 0.0
-max = 2.0
-step = 0.05
-
-[[options]]
-id = "estaciones"
-name = "Estaciones"
-description = "El follaje cambia de tinte con las estaciones (necesita el mod nativo para el número de día)."
-type = "bool"
-default = true
-
-[[options]]
-id = "estacion_inicial"
-name = "Estación inicial"
-type = "choice"
-values = ["Verano", "Otoño", "Invierno", "Primavera"]
-default = "Verano"
-
-[[options]]
-id = "luz_cielo"
-name = "Brillo de la luz de cielo"
-type = "float"
-default = 1.0
-min = 0.0
-max = 2.0
-step = 0.05
-
-[[options]]
-id = "luz_bloque"
-name = "Brillo de la luz de bloque"
-description = "Antorchas, lava, linternas."
-type = "float"
-default = 1.0
-min = 0.0
-max = 2.0
-step = 0.05
-
-[[options]]
-id = "ondulacion"
-name = "Vegetación ondulante"
-type = "bool"
-default = true
-
-[[options]]
-id = "ondulacion_fuerza"
-name = "Fuerza del viento"
-type = "float"
-default = 1.0
-min = 0.0
-max = 2.0
-step = 0.05
-
-[[options]]
-id = "luz_minima_exterior"
-name = "Luz mínima al aire libre"
-description = "Luz que no baja de ahí fuera de las cuevas (de noche sin luna)."
-type = "float"
-default = 0.0
-min = 0.0
-max = 1.0
-step = 0.05
-
-[[options]]
-id = "luz_minima_cuevas"
-name = "Luz mínima en cuevas"
-description = "Para distinguir las formas de una cueva sin antorchas."
-type = "float"
-default = 0.5
-min = 0.0
-max = 1.0
-step = 0.05
-
-[[options]]
-id = "sss"
-name = "Dispersión bajo la superficie"
-description = "Hojas, plantas y nieve que dejan pasar la luz. Lista: por bloque; LabPBR: del paquete de recursos."
-type = "choice"
-values = ["Apagada", "Lista", "LabPBR", "Ambas"]
-default = "Lista"
-
-[[options]]
-id = "charcos"
-name = "Charcos"
-type = "choice"
-values = ["Charcos y mojado", "Solo charcos", "Solo mojado", "Apagado"]
-default = "Charcos y mojado"
-
-[[options]]
-id = "ao_fuerza"
-name = "Fuerza de la oclusión"
-type = "float"
-default = 1.0
-min = 0.0
-max = 2.0
-step = 0.05
-
-[[options]]
-id = "niebla"
-name = "Niebla volumétrica"
-type = "bool"
-default = true
+max = 500
 
 [[options]]
 id = "niebla_cantidad"
 name = "Cantidad de niebla"
-description = "Multiplica la niebla de cada hora."
+description = "Cantidad global de niebla (0 = sin niebla volumétrica)."
+type = "int"
+default = 100
+min = 0
+max = 200
+
+[[options]]
+id = "perspectiva_aerea"
+name = "Perspectiva aérea"
+description = "Bruma de la distancia."
 type = "float"
 default = 1.0
 min = 0.0
@@ -622,50 +367,185 @@ max = 2.0
 step = 0.05
 
 [[options]]
-id = "niebla_lluvia"
-name = "Niebla con lluvia"
+id = "nubes_velocidad"
+name = "Velocidad de las nubes"
+description = "Multiplicador de velocidad del movimiento de las nubes."
 type = "float"
 default = 1.0
 min = 0.0
-max = 2.0
-step = 0.05
-
-[[options]]
-id = "niebla_nether"
-name = "Niebla del Nether"
-type = "float"
-default = 1.0
-min = 0.0
-max = 2.0
-step = 0.05
-
-[[options]]
-id = "niebla_end"
-name = "Niebla del End"
-type = "float"
-default = 1.0
-min = 0.0
-max = 2.0
-step = 0.05
-
-[[options]]
-id = "nubes"
-name = "Nubes"
-description = "Qué capas de nubes se dibujan."
-type = "choice"
-values = ["Apagadas", "Todas", "Solo cúmulos", "Solo altoestratos"]
-default = "Todas"
+max = 5.0
+step = 0.1
 
 [[options]]
 id = "nubes_sombras"
 name = "Sombras de nubes"
-type = "float"
-default = 100.0
-min = 0.0
-max = 100.0
-step = 5.0
+description = "Sombras de las nubes en porcentaje (0 = apagadas)."
+type = "int"
+default = 100
+min = 0
+max = 100
 
-# --- Presets de calidad (§2.1) --------------------------------------------------------------
+[[options]]
+id = "ao_fuerza"
+name = "Fuerza de la oclusión"
+description = "Fuerza de la oclusión ambiental."
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
+id = "agua_refraccion"
+name = "Refracción del agua"
+description = "Refracción de la superficie en porcentaje."
+type = "int"
+default = 50
+min = 0
+max = 100
+
+[[options]]
+id = "agua_olas"
+name = "Altura del oleaje"
+description = "Altura de las olas."
+type = "float"
+default = 1.0
+min = 0.0
+max = 10.0
+step = 0.1
+
+[[options]]
+id = "agua_velocidad"
+name = "Velocidad del agua"
+description = "Velocidad del oleaje."
+type = "float"
+default = 1.0
+min = 0.0
+max = 5.0
+step = 0.1
+
+[[options]]
+id = "agua_causticas"
+name = "Brillo de las cáusticas"
+description = "Brillo de las cáusticas bajo el agua."
+type = "float"
+default = 1.0
+min = 0.0
+max = 5.0
+step = 0.1
+
+[[options]]
+id = "ondulacion"
+name = "Ondulación de vegetación"
+description = "Cantidad de ondulación de la vegetación (0 = quieta)."
+type = "int"
+default = 50
+min = 0
+max = 100
+
+[[options]]
+id = "ondulacion_velocidad"
+name = "Velocidad de ondulación"
+description = "Velocidad de la ondulación del follaje."
+type = "float"
+default = 1.0
+min = 0.0
+max = 4.0
+step = 0.1
+
+[[options]]
+id = "charcos"
+name = "Charcos"
+description = "Apagado, charcos y mojado, solo charcos o solo mojado."
+type = "choice"
+values = ["Apagado", "Charcos y mojado", "Solo charcos", "Solo mojado"]
+default = "Charcos y mojado"
+
+[[options]]
+id = "charcos_tamano"
+name = "Tamaño de charcos"
+description = "Tamaño de los charcos en el terreno."
+type = "float"
+default = 1.0
+min = 0.0
+max = 4.0
+step = 0.1
+
+[[options]]
+id = "menas"
+name = "Brillo de menas"
+description = "Brillo de las menas (0 = apagadas)."
+type = "int"
+default = 60
+min = 0
+max = 99
+
+[[options]]
+id = "menas_umbral"
+name = "Umbral de menas"
+description = "Cuánto debe apartarse el mineral de la roca para brillar."
+type = "int"
+default = 6
+min = 2
+max = 15
+
+[[options]]
+id = "aislamiento_rango"
+name = "Amplitud de aislamiento"
+description = "Anchura del abanico de matiz salvado en grados (0 = apagado)."
+type = "int"
+default = 20
+min = 0
+max = 100
+
+[[options]]
+id = "aislamiento_matiz"
+name = "Matiz aislado"
+description = "Matiz que se salva en grados (0..360)."
+type = "int"
+default = 0
+min = 0
+max = 360
+
+[[options]]
+id = "luz_mano"
+name = "Luz en la mano"
+description = "Luz del objeto en la mano: apagada, normal o linterna."
+type = "choice"
+values = ["Apagada", "Normal", "Linterna"]
+default = "Normal"
+
+[[options]]
+id = "sss"
+name = "Dispersión bajo la superficie"
+description = "Luz a través de hojas y finos: apagada, lista de bloques, mapas de materiales o ambos."
+type = "choice"
+values = ["Apagada", "Lista de bloques", "Mapas de materiales", "Ambos"]
+default = "Lista de bloques"
+
+[[options]]
+id = "normales_intensidad"
+name = "Intensidad de normales"
+description = "Intensidad de los mapas de normales."
+type = "float"
+default = 1.0
+min = 0.0
+max = 2.0
+step = 0.05
+
+[[options]]
+id = "brillo_especular_sol"
+name = "Brillo especular del sol"
+description = "Brillo del reflejo del sol."
+type = "float"
+default = 1.0
+min = 0.0
+max = 10.0
+step = 0.1
+
+# ============================================================================================
+# 2. PRESETS DE CALIDAD (7 OPCIONES, mapa-de-ajustes.md §2.1)
+# ============================================================================================
 
 [[options]]
 id = "calidad_general"
@@ -722,6 +602,148 @@ description = "Iteraciones del cielo fractal, muestras e iteraciones de la auror
 type = "choice"
 values = ["Según la general", "Baja", "Media", "Alta", "Ultra"]
 default = "Según la general"
+
+# ============================================================================================
+# 3. PRESETS DE ESTILO (17 OPCIONES, mapa-de-ajustes.md §2.2)
+# ============================================================================================
+
+[[options]]
+id = "estilo_cielo"
+name = "Estilo de cielo"
+description = "Color del aire, bruma de aerosoles, halo solar y brillo del cielo."
+type = "choice"
+values = ["Natural", "Limpio", "Brumoso", "Atardeceres intensos"]
+default = "Natural"
+
+[[options]]
+id = "estilo_niebla_horaria"
+name = "Estilo de niebla horaria"
+description = "Densidad de niebla uniforme y en manchas a cada hora del día."
+type = "choice"
+values = ["Despejada", "Por defecto", "Brumosa", "Noches cerradas"]
+default = "Por defecto"
+
+[[options]]
+id = "estilo_tiempo"
+name = "Estilo del tiempo"
+description = "Perfiles de cobertura y densidad de nubes en tiempo diario y lluvia."
+type = "choice"
+values = ["Los del pack", "Despejado", "Variable", "Encapotado", "Tormentoso"]
+default = "Los del pack"
+
+[[options]]
+id = "estilo_biomas"
+name = "Estilo de biomas"
+description = "Perfiles atmosféricos por bioma (caliente, frío, pantano, selva, jardín pálido)."
+type = "choice"
+values = ["Apagado", "Sutil", "Marcado"]
+default = "Apagado"
+
+[[options]]
+id = "estilo_color"
+name = "Estilo de color"
+description = "Gradación tonal por sombras/luces, balance de blancos y diafonía."
+type = "choice"
+values = ["Neutro", "Cálido", "Frío", "Cine", "Vivo"]
+default = "Neutro"
+
+[[options]]
+id = "efectos_camara"
+name = "Efectos de cámara"
+description = "Viñeta, grano de película, aberración cromática y bandas de cine."
+type = "choice"
+values = ["Apagados", "Sutiles", "Cine"]
+default = "Apagados"
+
+[[options]]
+id = "profundidad_campo"
+name = "Profundidad de campo"
+description = "Desenfoque de lente y velocidad de enfoque."
+type = "choice"
+values = ["Apagada", "Suave", "Fuerte"]
+default = "Apagada"
+
+[[options]]
+id = "estilo_agua"
+name = "Estilo del agua"
+description = "Absorción de color, claridad, turbidez y cáusticas."
+type = "choice"
+values = ["Normal", "Clara", "Turbia", "Pantano"]
+default = "Normal"
+
+[[options]]
+id = "estilo_luz_bloque"
+name = "Estilo de luz de bloque"
+description = "Tonalidad e intensidad de antorchas y fuentes de luz artificial."
+type = "choice"
+values = ["Cálida", "Neutra", "Fría", "Vela"]
+default = "Cálida"
+
+[[options]]
+id = "estilo_noches"
+name = "Estilo de las noches"
+description = "Luz lunar, seguimiento de fase, visión nocturna y claridad exterior."
+type = "choice"
+values = ["Natural", "Claras", "Oscuras", "Sin fases"]
+default = "Natural"
+
+[[options]]
+id = "estilo_fractal"
+name = "Estilo del fractal"
+description = "Modo de dibujo, relleno y saturación del cielo fractal."
+type = "choice"
+values = ["Original", "Suave", "Bandas", "Salpicadura"]
+default = "Original"
+
+[[options]]
+id = "estilo_aurora"
+name = "Estilo de la aurora"
+description = "Extensión, radio, velo y longitud de las cortinas boreales."
+type = "choice"
+values = ["Discreta", "Por defecto", "Amplia"]
+default = "Por defecto"
+
+[[options]]
+id = "estilo_rayos"
+name = "Estilo de los rayos"
+description = "Foco, longitud, caída y delimitación de los haces de luz nocturnos."
+type = "choice"
+values = ["Sutiles", "Normales", "Dramáticos"]
+default = "Normales"
+
+[[options]]
+id = "efectos_juego"
+name = "Efectos de juego"
+description = "Indicadores visuales de daño, salud baja, fuego y agua en cámara."
+type = "choice"
+values = ["Apagados", "Sutiles", "Por defecto", "Intensos"]
+default = "Por defecto"
+
+[[options]]
+id = "atmosfera_nether"
+name = "Atmósfera del Nether"
+description = "Densidad del humo de lava, techo y bruma del Nether."
+type = "choice"
+values = ["Despejada", "Estándar", "Sofocante"]
+default = "Estándar"
+
+[[options]]
+id = "tormenta_end"
+name = "Tormenta del End"
+description = "Densidad de la tormenta de partículas y relámpagos del End."
+type = "choice"
+values = ["Calma", "Estándar", "Tormenta"]
+default = "Estándar"
+
+[[options]]
+id = "estilo_cuevas"
+name = "Estilo de cuevas"
+description = "Niebla subterránea, caída y oscuridad mínima en interiores."
+type = "choice"
+values = ["Abiertas", "Por defecto", "Oscuras", "Muy oscuras"]
+default = "Por defecto"
+
+# --- Texturas -------------------------------------------------------------------------------
 
 [[textures]]
 id = "atmosfera"
@@ -842,63 +864,71 @@ blocks = ["verdant_froglight"]
 [[pages]]
 id = "principal"
 name = "Vulpe"
-items = ["page:calidad", "page:cielo", "page:fractal", "page:niebla", "page:agua", "page:luz", "page:sombras", "page:imagen", "page:depuracion"]
+items = ["page:presets_estilo", "page:presets_calidad", "page:imagen", "page:cielo", "page:niebla", "page:agua", "page:luz"]
 
 [[pages]]
-id = "calidad"
-name = "Calidad"
+id = "presets_estilo"
+name = "Estilo (presets)"
+description = "17 presets temáticos que afinan la atmósfera, color, iluminación y dimensiones."
+items = [
+    "estilo_cielo", "estilo_niebla_horaria", "estilo_tiempo", "estilo_biomas",
+    "estilo_color", "efectos_camara", "profundidad_campo", "estilo_agua",
+    "estilo_luz_bloque", "estilo_noches", "estilo_fractal", "estilo_aurora",
+    "estilo_rayos", "efectos_juego", "atmosfera_nether", "tormenta_end", "estilo_cuevas"
+]
+
+[[pages]]
+id = "presets_calidad"
+name = "Calidad (presets)"
 description = "Presets de calidad gráfica: general y por subsistema."
-items = ["calidad_general", "calidad_sombras", "calidad_niebla", "calidad_nubes", "calidad_ao", "calidad_reflejos", "calidad_fractal"]
+items = [
+    "calidad_general", "calidad_sombras", "calidad_niebla", "calidad_nubes",
+    "calidad_ao", "calidad_reflejos", "calidad_fractal"
+]
+
+[[pages]]
+id = "imagen"
+name = "Imagen y color"
+description = "Exposición, color, tonos y antialiasing."
+items = [
+    "exposicion_auto", "exposicion", "curva_tonos", "saturacion", "nitidez",
+    "desenfoque_movimiento", "bloom_fuerza", "bloom_niebla", "taa",
+    "aislamiento_rango", "aislamiento_matiz"
+]
 
 [[pages]]
 id = "cielo"
-name = "Cielo"
-description = "Atmósfera, sol, luna y estrellas."
-items = ["cielo_brillo", "luna_brillo", "estrellas"]
-
-[[pages]]
-id = "fractal"
-name = "Cielo fractal"
-description = "Las constelaciones de fractales de la noche."
-items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conjuntos", "fractal_semilla", "fractal_sorteo", "fractal_paleta", "fractal_brillo", "fractal_saturacion", "aurora", "aurora_brillo", "rayos", "rayos_intensidad"]
+name = "Cielo y atmósfera"
+description = "Órbita solar, cielo fractal y constelaciones boreales."
+items = [
+    "orbita_sol", "fractal_brillo", "fractal_cobertura", "fractal_paleta",
+    "fractal_cambia_cada_noche", "aurora_brillo", "rayos_intensidad"
+]
 
 [[pages]]
 id = "niebla"
 name = "Niebla y nubes"
-description = "Niebla volumétrica y nubes."
-items = ["niebla", "niebla_cantidad", "niebla_lluvia", "nubes", "niebla_nether", "niebla_end"]
+description = "Niebla volumétrica, perspectiva aérea y nubes."
+items = [
+    "niebla_cantidad", "perspectiva_aerea", "nubes_velocidad", "nubes_sombras"
+]
 
 [[pages]]
 id = "agua"
 name = "Agua"
-description = "Olas, claridad y refracción."
-columns = 1
-items = ["agua_olas", "agua_claridad", "agua_refraccion"]
+description = "Refracción, olas, velocidad y cáusticas."
+items = [
+    "agua_refraccion", "agua_olas", "agua_velocidad", "agua_causticas"
+]
 
 [[pages]]
 id = "luz"
-name = "Luz"
-description = "Cielo, bloques, dispersión, brillos y charcos."
-items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "luz_minima_exterior", "sss", "charcos", "menas", "menas_intensidad", "clima_opacidad", "estaciones", "estacion_inicial", "ondulacion", "ondulacion_fuerza"]
-
-[[pages]]
-id = "sombras"
-name = "Sombras"
-description = "Penumbra, sombras de nubes y oclusión ambiental."
-items = ["nubes_sombras", "ao_fuerza"]
-
-[[pages]]
-id = "imagen"
-name = "Imagen"
-description = "Exposición, color y mapeo de tonos."
-items = ["taa", "taa_nitidez", "imagen_exposicion", "exposicion_oscuro", "exposicion_claro", "imagen_saturacion", "imagen_contraste", "imagen_tonemap", "bloom_fuerza", "aislamiento", "aislamiento_matiz", "aislamiento_rango", "imagen_tramado"]
-
-[[pages]]
-id = "depuracion"
-name = "Depuración"
-description = "Vistas para comprobar el núcleo."
-columns = 1
-items = ["depuracion_vista"]
+name = "Luz y superficie"
+description = "Oclusión ambiental, ondulación, charcos, menas y dispersión."
+items = [
+    "ao_fuerza", "ondulacion", "ondulacion_velocidad", "charcos", "charcos_tamano",
+    "menas", "menas_umbral", "luz_mano", "sss", "normales_intensidad", "brillo_especular_sol"
+]
 
 [budget]
 gpu_ms = 1.0

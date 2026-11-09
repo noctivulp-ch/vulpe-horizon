@@ -1,12 +1,13 @@
 // Ajustes de la niebla volumétrica y las nubes. Porqué: docs/efectos/niebla-y-nubes.md §Opciones
-override niebla: bool = true;
-override niebla_cantidad: f32 = 1.0;
-override niebla_lluvia: f32 = 1.0;
-const NIEBLA_BRUMA: f32 = 1.0;
-const NIEBLA_CAIDA: f32 = 25.0;          // por mil y bloque
-override nubes: u32 = 1u;                   // apagadas, todas, solo cúmulos, solo altoestratos
+override niebla_cantidad: i32 = 100;        // % (§1) (0 = sin niebla volumétrica)
+override perspectiva_aerea: f32 = 1.0;     // bruma de la distancia (§1)
+override nubes_velocidad: f32 = 1.0;        // velocidad de las nubes (§1)
+override nubes_sombras: i32 = 100;          // % (§1) (0 = apagadas)
+
+const OPC_NIEBLA_LLUVIA_DEFECTO: f32 = 1.0;
+const NIEBLA_CAIDA: f32 = 25.0;             // por mil y bloque
+const OPC_NUBES_DEFECTO: u32 = 1u;          // todas las capas por defecto
 const NUBES_VIENTO: f32 = 1.0;
-override nubes_sombras: f32 = 100.0;        // %
 const TIEMPO_ALEATORIO: bool = true;
 
 const OPC_VIENTO: vec2<f32> = vec2<f32>(3.0, 1.2);     // bloques por segundo con la opción a 1
@@ -29,6 +30,18 @@ const OPC_NUBES_DETALLE_FUERZA: f32 = 0.35;                         // erosión 
 const OPC_NUBES_SIGMA: vec3<f32> = vec3<f32>(0.45, 0.45, 0.06);     // extinción por bloque (con densidad 0,5 da ~0,225 y 0,03)
 const OPC_NUBES_TRAMO_MAX: f32 = 900.0;                             // bloques: tope del tramo integrado por capa baja
 const OPC_NUBES_SOMBRA_TAU: f32 = 6.0;                              // espesor óptico de la sombra en el suelo
+
+// Otras dimensiones (17).
+const OPC_NIEBLA_NETHER_DEFECTO: f32 = 1.0;
+const OPC_NIEBLA_END_DEFECTO: f32 = 1.0;
+
+fn opc_niebla_nether() -> f32 {
+    return OPC_NIEBLA_NETHER_DEFECTO * opc_estilo_atmosfera_nether();
+}
+
+fn opc_niebla_end() -> f32 {
+    return OPC_NIEBLA_END_DEFECTO * opc_estilo_tormenta_end().densidad;
+}
 
 struct OpcVolumen {
     niebla: bool,
@@ -71,7 +84,7 @@ fn opc_volumen() -> OpcVolumen {
     }
 
     let nivel_nubes = opc_calidad_nubes();
-    var capas = array<vec3<f32>, 4>(vec3<f32>(0.0), vec3<f32>(1.0), vec3<f32>(1.0, 1.0, 0.0), vec3<f32>(0.0, 0.0, 1.0))[min(nubes, 3u)];
+    var capas = array<vec3<f32>, 4>(vec3<f32>(0.0), vec3<f32>(1.0), vec3<f32>(1.0, 1.0, 0.0), vec3<f32>(0.0, 0.0, 1.0))[min(OPC_NUBES_DEFECTO, 3u)];
     var pasos_nubes = 14;
     switch nivel_nubes {
         case 0u: { // Baja: ×0,5 pasos, sin cúmulos pequeños
@@ -107,13 +120,19 @@ fn opc_volumen() -> OpcVolumen {
         OPC_NUBES_TRAMO_MAX,
         OPC_NUBES_SOMBRA_TAU,
     );
+
+    let mod_cuevas = opc_estilo_cuevas();
+    let mod_horaria = opc_estilo_niebla_horaria();
+    let niebla_activa = niebla_cantidad > 0 && mod_cuevas.niebla_cueva;
+    let cant = f32(niebla_cantidad) * 0.01;
+    let lluvia = OPC_NIEBLA_LLUVIA_DEFECTO * mod_horaria.niebla_lluvia;
+    let caida = NIEBLA_CAIDA * 0.001 * mod_cuevas.caida;
+    let viento = NUBES_VIENTO * nubes_velocidad;
+    let sombra_nubes = f32(nubes_sombras) * 0.01;
+
     return OpcVolumen(
-        niebla, pasos_niebla, niebla_cantidad, niebla_lluvia, NIEBLA_BRUMA, NIEBLA_CAIDA * 0.001, alcance_niebla,
-        nubes != 0u, capas, pasos_nubes, NUBES_VIENTO, nubes_sombras * 0.01, TIEMPO_ALEATORIO,
+        niebla_activa, pasos_niebla, cant, lluvia, perspectiva_aerea, caida, alcance_niebla,
+        OPC_NUBES_DEFECTO != 0u, capas, pasos_nubes, viento, sombra_nubes, TIEMPO_ALEATORIO,
         forma,
     );
 }
-
-// Otras dimensiones (17).
-override niebla_nether: f32 = 1.0;
-override niebla_end: f32 = 1.0;

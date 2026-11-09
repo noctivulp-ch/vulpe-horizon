@@ -1,7 +1,7 @@
 // VertexInput → la familia de la planta, la fase en el mundo y la amplitud por el viento, la lluvia y la luz de
 // cielo. Porqué: docs/efectos/vegetacion-ondulante.md §Adaptadores
 fn adp_vertice_ondulado(input: VertexInput) -> vec3<f32> {
-    if !ondulacion || input.fluid != 0u {
+    if ondulacion <= 0 || input.fluid != 0u {
         return input.position;
     }
     let m = input.material;
@@ -19,7 +19,7 @@ fn adp_vertice_ondulado(input: VertexInput) -> vec3<f32> {
     }
     let mundo = input.position + frame.camera_position;
     let cielo = select(max(input.light.y, 0.5), input.light.y, hojas);
-    let v = SupViento(frame.time * OPC_VIENTO_VELOCIDAD, ondulacion_fuerza * (1.0 + frame.rain) * cielo,
+    let v = SupViento(frame.time * (OPC_VIENTO_VELOCIDAD * ondulacion_velocidad), (f32(ondulacion) * 0.02) * (1.0 + frame.rain) * cielo,
                       OPC_VIENTO_PLANTA_PERIODO, OPC_VIENTO_PLANTA_AMPLITUD, OPC_VIENTO_HOJA_PERIODO,
                       OPC_VIENTO_HOJA_AMPLITUD, OPC_VIENTO_HOJA_VERTICAL);
     // La base de la mitad superior y la punta de la inferior están en la misma posición del mundo: la misma función

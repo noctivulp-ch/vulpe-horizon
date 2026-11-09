@@ -1,14 +1,18 @@
 // Ajustes de la luz de superficie. Porqué: docs/efectos/luz-de-superficie.md §Opciones
-override luz_cielo: f32 = 1.0;
-override luz_bloque: f32 = 1.0;
-const LUZ_BLOQUE_COLOR: u32 = 0u;        // cálido, neutro, frío
-override luz_minima_cuevas: f32 = 0.5;
-override luz_minima_exterior: f32 = 0.0;
-override sss: u32 = 1u;                     // apagado, lista, LabPBR, ambos
+override charcos: u32 = 1u;                 // 0: apagado, 1: charcos y mojado, 2: solo charcos, 3: solo mojado (§1)
+override charcos_tamano: f32 = 1.0;         // tamaño de los charcos (§1)
+override luz_mano: u32 = 1u;                // 0: apagada, 1: normal, 2: linterna (§1)
+override sss: u32 = 1u;                     // 0: apagada, 1: lista, 2: LabPBR, 3: ambos (§1)
+override normales_intensidad: f32 = 1.0;    // intensidad de mapas de normales (§1)
+override brillo_especular_sol: f32 = 1.0;   // brillo del destello solar (§1)
+
+// Opciones que pasaron a constantes con nombre resueltas por presets o mod nativo (§2.2 y §3)
+const OPC_LUZ_CIELO_DEFECTO: f32 = 1.0;
+const OPC_LUZ_BLOQUE_DEFECTO: f32 = 1.0;
+const OPC_LUZ_MINIMA_CUEVAS_DEFECTO: f32 = 0.5;
+const OPC_LUZ_MINIMA_EXTERIOR_DEFECTO: f32 = 0.0;
 const SSS_BRILLO: f32 = 1.0;
-const ESPECULAR_SOL: f32 = 1.0;
 const EMISION_LABPBR: f32 = 1.0;
-override charcos: u32 = 0u;                 // charcos y mojado, solo charcos, solo mojado, apagado
 
 // Escalas en la escala común (convenciones.md): proporciones de partida afinadas en el juego.
 const OPC_LUZ_BLOQUE: f32 = 1.0;            // × la curva medida de la antorcha (paridad/03; antes 0,012 × refuerzo 3)
@@ -47,13 +51,11 @@ struct OpcLuz {
 }
 
 fn opc_luz() -> OpcLuz {
-    var color = vec3<f32>(1.0, 0.5, 0.25);
-    if LUZ_BLOQUE_COLOR == 1u {
-        color = vec3<f32>(1.0, 0.78, 0.6);
-    } else if LUZ_BLOQUE_COLOR == 2u {
-        color = vec3<f32>(0.75, 0.85, 1.0);
-    }
+    let mod_bloque = opc_estilo_luz_bloque();
+    let mod_cuevas = opc_estilo_cuevas();
+    let mod_noches = opc_estilo_noches();
 
+    let color = mod_bloque.color;
     let nivel = opc_calidad_reflejos();
     var pasos = 15;
     var suavidad = 0.7; // rugosidad 0,3 -> suavidad 0,7
@@ -76,11 +78,18 @@ fn opc_luz() -> OpcLuz {
         }
     }
 
+    let con_charcos = charcos == 1u || charcos == 2u;
+    let con_mojado = charcos == 1u || charcos == 3u;
+
     return OpcLuz(
-        luz_cielo, luz_bloque, color, luz_minima_cuevas, luz_minima_exterior,
+        OPC_LUZ_CIELO_DEFECTO,
+        OPC_LUZ_BLOQUE_DEFECTO * mod_bloque.intensidad,
+        color,
+        OPC_LUZ_MINIMA_CUEVAS_DEFECTO * mod_cuevas.mult_luz_minima,
+        max(OPC_LUZ_MINIMA_EXTERIOR_DEFECTO, mod_noches.luz_minima_exterior),
         sss == 1u || sss == 3u, sss == 2u || sss == 3u, SSS_BRILLO,
-        ESPECULAR_SOL, EMISION_LABPBR,
-        charcos == 0u || charcos == 1u, charcos == 0u || charcos == 2u,
+        brillo_especular_sol, EMISION_LABPBR,
+        con_charcos, con_mojado,
         pasos, suavidad,
     );
 }

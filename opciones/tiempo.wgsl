@@ -7,6 +7,26 @@ const OPC_NIEBLA_HORARIO_UNIFORME: vec4<f32> = vec4<f32>(0.06, 0.0, 0.1, 0.38);
 const OPC_NIEBLA_HORARIO_MANCHAS: vec4<f32> = vec4<f32>(0.5, 0.0, 0.0, 0.15);
 const OPC_NIEBLA_HORARIO_TRANSICION: f32 = 0.08;   // fracción del día que tarda en pasar de una franja a otra
 
+fn opc_niebla_horario_uniforme() -> vec4<f32> {
+    let m = opc_estilo_niebla_horaria();
+    return vec4<f32>(
+        OPC_NIEBLA_HORARIO_UNIFORME.x * m.mult_dia,
+        OPC_NIEBLA_HORARIO_UNIFORME.y * m.mult_dia,
+        OPC_NIEBLA_HORARIO_UNIFORME.z * m.mult_dia,
+        OPC_NIEBLA_HORARIO_UNIFORME.w * m.mult_noche,
+    );
+}
+
+fn opc_niebla_horario_manchas() -> vec4<f32> {
+    let m = opc_estilo_niebla_horaria();
+    return vec4<f32>(
+        OPC_NIEBLA_HORARIO_MANCHAS.x * m.mult_manchas_dia,
+        OPC_NIEBLA_HORARIO_MANCHAS.y * m.mult_manchas_dia,
+        OPC_NIEBLA_HORARIO_MANCHAS.z * m.mult_manchas_dia,
+        OPC_NIEBLA_HORARIO_MANCHAS.w * m.mult_manchas_noche,
+    );
+}
+
 // Los once perfiles del tiempo diario (paridad/05 §Tiempo diario): cobertura y densidad de los cúmulos pequeños, los
 // grandes y los altoestratos. 0 despejado.
 const OPC_TIEMPO_COBERTURA = array<vec3<f32>, 11>(

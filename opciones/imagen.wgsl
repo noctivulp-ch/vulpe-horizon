@@ -1,12 +1,18 @@
 // Ajustes de la imagen final: exposición, bloom, tonos y gradación. Porqué: docs/efectos/exposicion-tonemap-gradacion.md §Opciones
-override imagen_exposicion: f32 = 0.0;      // compensación en pasos (EV): −2…+2 = ×0,25…×4
-override exposicion_oscuro: f32 = 0.0;      // pasos solo en lo oscuro (noche, cuevas): lo negra que es la noche
-override exposicion_claro: f32 = 0.0;       // pasos solo en lo claro (día)
-override imagen_saturacion: f32 = 0.0;      // −1…+1
-override imagen_contraste: f32 = 0.0;       // −1…+1
-override imagen_tonemap: u32 = 0u;          // fílmico (el del original, paridad/11), ACES, Reinhard
-override imagen_tramado: bool = true;
-override bloom_fuerza: f32 = 1.0;           // ×
+override exposicion_auto: bool = true;      // exposición automática sí/no (§1)
+override exposicion: f32 = 1.0;             // multiplicador de la exposición (0,25..4) (§1)
+override curva_tonos: u32 = 0u;             // curva de mapeo de tonos: Fílmico (Hejl 2015), ACES, Reinhard (§1)
+override saturacion: f32 = 0.0;             // saturación sumada al estilo de color (−1..1) (§1)
+override nitidez: f32 = 0.35;               // nitidez posterior (0..1) (§1)
+override desenfoque_movimiento: i32 = 0;    // desenfoque de movimiento (0..100) (§1)
+override bloom_fuerza: f32 = 1.0;           // fuerza del bloom (0..10) (§1)
+override bloom_niebla: f32 = 1.0;           // bloom de niebla, agua y lluvia (0..20) (§1)
+
+// Opciones que pasaron a constantes con nombre resueltas por presets o mod nativo (§2.2 y §3)
+const OPC_EXPOSICION_OSCURO_DEFECTO: f32 = 0.0; // pasos solo en lo oscuro (noche, cuevas)
+const OPC_EXPOSICION_CLARO_DEFECTO: f32 = 0.0;  // pasos solo en lo claro (día)
+const OPC_IMAGEN_CONTRASTE_DEFECTO: f32 = 0.0;
+const OPC_IMAGEN_TRAMADO_DEFECTO: bool = true;
 
 // Constantes de la especificación 11 y 10 (no son opciones).
 const OPC_EXPOSICION_K: f32 = 0.2;          // exposición = k / ln(L + 1 + c): E ≈ 3,2 de día (L ≈ 0,06)
@@ -23,7 +29,6 @@ const OPC_BASTONES_TAU: f32 = 10.0;         // s, la media lenta de los bastones
 const OPC_BASTONES_L0: f32 = 0.0015;       // luminancia de escena a la que los bastones pesan la mitad
 const OPC_PURKINJE: f32 = 1.0;
 const OPC_BALANCE_K: f32 = 6500.0;
-const OPC_NITIDEZ: f32 = 0.35;
 const OPC_FILMICO_BLANCO: f32 = 3.1;       // punto blanco del fílmico de Hejl 2015 (paridad/11)
 // Exposición propia de cada curva (fílmico, ACES, Reinhard): el fílmico da más en los medios tonos; con ×0,5 deja el día
 // y la noche donde los dejaba Reinhard y el cielo azul (lo que le llegaba a la curva venía demasiado expuesto).
@@ -32,7 +37,6 @@ const OPC_BLOOM: f32 = 0.3;                 // peso con que se suma el desenfoqu
 const OPC_BLOOM_VINETA_CENTRO: f32 = 1.5;   // viñeta propia del bloom: ×1,5 en el centro (0,45)…
 const OPC_BLOOM_VINETA_ESQUINA: f32 = 0.5;  // …y ×0,5 en las esquinas (0,15)
 const OPC_BLOOM_NUCLEO: f32 = 0.75;         // parte del núcleo compacto en el desenfoque (el resto, el ancho)
-const OPC_BLOOM_NIEBLA: f32 = 1.0;
 const OPC_BLOOM_NIEBLA_AGUA: f32 = 1.0;
 // Paridad 16: cada gota apaga el bloom de niebla en su píxel; sin máscara de gotas, se quita la parte que cubren (~10 %).
 const OPC_BLOOM_NIEBLA_LLUVIA: f32 = -0.1;
@@ -50,14 +54,21 @@ struct OpcImagen {
     bloom: f32,
 }
 
+fn opc_balance_k() -> f32 {
+    return opc_estilo_color().balance_k;
+}
+
 fn opc_imagen() -> OpcImagen {
+    let mod_color = opc_estilo_color();
+    let sat_final = 1.0 + mod_color.saturacion + saturacion;
+    let cont_final = (1.0 + 0.5 * OPC_IMAGEN_CONTRASTE_DEFECTO) * mod_color.contraste;
     return OpcImagen(
-        exp2(imagen_exposicion),
-        exposicion_oscuro,
-        exposicion_claro,
-        ColParametrosGradacion(0.0, 1.0 + imagen_saturacion, 1.0 + 0.5 * imagen_contraste),
-        imagen_tonemap,
-        imagen_tramado,
+        exposicion,
+        OPC_EXPOSICION_OSCURO_DEFECTO,
+        OPC_EXPOSICION_CLARO_DEFECTO,
+        ColParametrosGradacion(0.0, sat_final, cont_final),
+        curva_tonos,
+        OPC_IMAGEN_TRAMADO_DEFECTO,
         bloom_fuerza * OPC_BLOOM,
     );
 }

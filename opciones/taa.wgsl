@@ -1,6 +1,6 @@
 // Ajustes del TAA. Porqué: docs/efectos/taa.md §Opciones
-override taa: bool = true;
-override taa_nitidez: f32 = 0.75;
+override taa: u32 = 2u;                     // 0: apagado, 1: estándar, 2: reactivo (§1)
+const OPC_TAA_NITIDEZ_DEFECTO: f32 = 0.75;  // nitidez del TAA por defecto
 
 // Medidos en paridad/09: la mezcla en movimiento es la misma que en reposo y la caja no se estrecha.
 const OPC_TAA_MEZCLA_QUIETO: f32 = 0.125;
@@ -15,5 +15,5 @@ struct OpcTaa {
 }
 
 fn opc_taa() -> OpcTaa {
-    return OpcTaa(taa, taa_nitidez);
+    return OpcTaa(taa != 0u, OPC_TAA_NITIDEZ_DEFECTO);
 }

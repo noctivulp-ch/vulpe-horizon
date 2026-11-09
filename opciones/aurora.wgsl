@@ -1,6 +1,5 @@
 // Ajustes de la aurora. Porqué: docs/efectos/aurora.md §Opciones
-override aurora: bool = true;
-override aurora_brillo: f32 = 0.0;          // %, relativo, encima de todo
+override aurora_brillo: i32 = 100;          // % (§1) (0 = apagada)
 
 const OPC_AURORA_INTENSIDAD: f32 = 600.0;   // la de Vulpe; escala en adp_aurora
 const OPC_AURORA_RADIO: f32 = 512.0;
@@ -37,5 +36,5 @@ fn opc_aurora() -> OpcAurora {
             muestras = 12;
         }
     }
-    return OpcAurora(aurora, 1.0 + aurora_brillo * 0.01, iteraciones, muestras);
+    return OpcAurora(aurora_brillo > 0, f32(aurora_brillo) * 0.01, iteraciones, muestras);
 }

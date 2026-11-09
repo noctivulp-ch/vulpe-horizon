@@ -1,6 +1,5 @@
 // Ajustes de los rayos del fractal. Porqué: docs/efectos/rayos-del-fractal.md §Opciones
-override rayos: bool = false;               // apagado por defecto, como en Vulpe
-override rayos_intensidad: f32 = 200.0;
+override rayos_intensidad: i32 = 0;         // intensidad de los rayos (0..500 %, 0 = apagados) (§1)
 
 // Valores de Vulpe: de frente y de espaldas (especificación 14 §4).
 const OPC_RAYOS_FOCO: vec2<f32> = vec2<f32>(85.0, 35.0);
@@ -35,5 +34,5 @@ fn opc_rayos() -> OpcRayos {
             muestras = 64;
         }
     }
-    return OpcRayos(rayos, rayos_intensidad, muestras);
+    return OpcRayos(rayos_intensidad > 0, f32(rayos_intensidad), muestras);
 }

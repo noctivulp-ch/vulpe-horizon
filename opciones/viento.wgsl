@@ -1,6 +1,6 @@
 // Ajustes de la vegetación ondulante. Porqué: docs/efectos/vegetacion-ondulante.md §Opciones
-override ondulacion: bool = true;
-override ondulacion_fuerza: f32 = 1.0;
+override ondulacion: i32 = 50;              // cantidad de ondulación (0..100, 0 = quieta) (§1)
+override ondulacion_velocidad: f32 = 1.0;   // velocidad de la ondulación (0..4) (§1)
 
 const OPC_VIENTO_VELOCIDAD: f32 = 1.0;
 // Medidos en paridad/15 (a cielo abierto, en seco): plantas 4,5 cm de media y 12 de máximo con periodo de 1,64 s;

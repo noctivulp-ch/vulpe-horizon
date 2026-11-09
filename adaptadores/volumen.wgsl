@@ -57,7 +57,7 @@ fn adp_volumen(uv: vec2<f32>, pixel: vec2<f32>) -> VolResultado {
         // Nether y End (17): su propia niebla; nada del Overworld (nubes, horario, aurora).
         let fc = frame.fog_color;
         let bruma = col_srgb_a_lineal(fc / max(max(fc.r, max(fc.g, fc.b)), 1e-3));
-        let d = VolDimension(bruma, select(niebla_end, niebla_nether, frame.dimension == -1), frame.time);
+        let d = VolDimension(bruma, select(opc_niebla_end(), opc_niebla_nether(), frame.dimension == -1), frame.time);
         if frame.dimension == -1 {
             return vol_nether(adp_volumen_rayo(uv, pixel), d, ruido2d, ruido2d_sampler, ruido3d);
         }

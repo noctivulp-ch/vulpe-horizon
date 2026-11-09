@@ -157,7 +157,7 @@ fn adp_mena(input: MaterialInput, albedo: vec3<f32>) -> AdpMena {
         let uv = (vec2<f32>(f32(k / 4), f32(k % 4)) + 0.5) * 0.25;
         m[k] = block_texture_level(uv, 0.0).rgb;
     }
-    let r = sup_mena(input.albedo.rgb, m, OPC_MENAS_SENSIBILIDAD * 0.01, OPC_MENAS_CARBON);
+    let r = sup_mena(input.albedo.rgb, m, f32(menas_umbral) * 0.01, OPC_MENAS_CARBON);
     let aclarado = mix(albedo, max(albedo, vec3<f32>(col_srgb_a_lineal(vec3<f32>(0.3)).x)), r.oscuro);
     return AdpMena(min(r.mascara * o.intensidad, 0.99), aclarado);
 }

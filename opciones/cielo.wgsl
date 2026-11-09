@@ -1,10 +1,11 @@
 // Ajustes del cielo y la atmósfera. Porqué: docs/efectos/cielo-y-atmosfera.md §Opciones
-override cielo_brillo: f32 = 0.0;           // pasos (EV)
-const CIELO_BRUMA: f32 = 0.0;            // pasos (EV) sobre los aerosoles
-const SOL_TEMPERATURA: f32 = 6000.0;     // K
-override luna_brillo: f32 = 0.0;            // pasos (EV)
-override estrellas: bool = true;
-const ESTRELLAS_BRILLO: f32 = 0.0;       // pasos (EV)
+override orbita_sol: i32 = -35;             // grados: inclinación de la órbita del sol (§1)
+const OPC_CIELO_BRILLO_DEFECTO: f32 = 0.0;  // pasos (EV), resuelto por estilo_cielo / mod nativo
+const CIELO_BRUMA: f32 = 0.0;               // pasos (EV) sobre los aerosoles
+const SOL_TEMPERATURA: f32 = 6000.0;        // K
+const OPC_LUNA_BRILLO_DEFECTO: f32 = 0.0;   // pasos (EV), resuelto por estilo_noches / mod nativo
+const OPC_ESTRELLAS_DEFECTO: bool = true;
+const ESTRELLAS_BRILLO: f32 = 0.0;          // pasos (EV)
 
 // Proporciones de partida (convenciones.md §Escala de luz), no opciones.
 const OPC_LUNA_PROPORCION: f32 = 1.0 / 300.0;
@@ -45,6 +46,8 @@ struct OpcCielo {
 }
 
 fn opc_cielo() -> OpcCielo {
+    let mod_cielo = opc_estilo_cielo();
+    let mod_noches = opc_estilo_noches();
     let venus = AtmVenus(
         OPC_VENUS_SOL_MIN,
         OPC_VENUS_SOL_MAX,
@@ -63,13 +66,13 @@ fn opc_cielo() -> OpcCielo {
         OPC_VENUS_ELEVACION_FIN,
     );
     return OpcCielo(
-        exp2(cielo_brillo),
+        exp2(OPC_CIELO_BRILLO_DEFECTO) * mod_cielo.brillo,
         exp2(CIELO_BRUMA),
         atm_cuerpo_negro(SOL_TEMPERATURA),
         atm_cuerpo_negro(OPC_LUNA_TEMPERATURA),
-        OPC_LUNA_PROPORCION * exp2(luna_brillo),
+        OPC_LUNA_PROPORCION * exp2(OPC_LUNA_BRILLO_DEFECTO) * mod_noches.mult_luna,
         CieAjustesEstrellas(300.0, 0.99, OPC_ESTRELLAS_BRILLO * exp2(ESTRELLAS_BRILLO)),
-        estrellas,
+        OPC_ESTRELLAS_DEFECTO,
         venus,
     );
 }
