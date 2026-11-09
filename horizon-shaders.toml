@@ -41,6 +41,7 @@ shared = [
     "nucleo/volumen/tiempo.wgsl",
     "nucleo/volumen/capas.wgsl",
     "nucleo/volumen/borde.wgsl",
+    "nucleo/volumen/cueva.wgsl",
     "opciones/calidad.wgsl",
     "opciones/estilo.wgsl",
     "opciones/depuracion.wgsl",

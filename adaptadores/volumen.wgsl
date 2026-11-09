@@ -127,6 +127,18 @@ fn adp_niebla_inmersion(color: vec3<f32>, distancia: f32) -> vec3<f32> {
     return c;
 }
 
+// Niebla de cueva (05.3): añade una niebla tenue azul oscura que crece con la distancia.
+// Porqué: docs/efectos/niebla-y-nubes.md §Niebla de cueva
+fn adp_niebla_cueva(color: vec3<f32>, p: AdpPixel, dir: vec3<f32>) -> vec3<f32> {
+    if p.es_cielo || !adp_es_superficie() || frame.in_water > 0.0 || frame.in_lava > 0.0 || frame.eye_in != 0u {
+        return color;
+    }
+    let o = opc_niebla_cueva();
+    let cueva = 1.0 - smoothstep(0.05, 0.35, frame.eye_light_smooth.y);
+    let d = adp_post_distancia(p);
+    return color + vol_niebla_cueva(d, dir.y, cueva, o);
+}
+
 // Transmitancia para componer la escena: con la cámara bajo el agua, por canal (Beer-Lambert con la absorción del
 // agua a lo largo de la vista, la misma del raymarch del agua): el rojo se pierde antes que el verde y el azul (07.1).
 // El destino del volumen solo guarda una transmitancia, la luminancia. Porqué: docs/efectos/agua.md §Bajo el agua

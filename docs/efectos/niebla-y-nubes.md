@@ -220,3 +220,25 @@ el nuestro estaban escritos dentro de `nucleo/volumen/tiempo.wgsl`. Con el crite
 **Visto** (escena `tiempo-horario`, amanecer, mediodía, atardecer y noche desde la pradera): mismo resultado que antes del
 cambio, medias de 89,3 / 147,4 / 107,4 / 12,8 antes y 89,7 / 147,5 / 107,4 / 12,8 después, ~1 nivel por píxel de
 diferencia (tramado y TAA).
+
+## Niebla de cueva (05.3, 2026-11-09)
+
+En cuevas, la niebla volumétrica estándar se atenuaba al 5 % sin aportar tinte propio, dejando las galerías profundas
+sin referencia de distancia.
+
+**Implementación:**
+- `nucleo/volumen/cueva.wgsl` (`vol_niebla_cueva`): función pura que calcula una niebla tenue de color azul oscuro
+  (`OPC_NIEBLA_CUEVA_COLOR` = (0,15, 0,35, 0,85)) aditiva y débil, nunca más clara que la luz mínima de la cueva
+  (`OPC_NIEBLA_CUEVA_BRILLO` = 0,0035 × `mult_luz`).
+- Depende de la distancia mediante crecimiento exponencial `1.0 - exp(-d / (distancia_escala / caida))` con
+  `OPC_NIEBLA_CUEVA_DISTANCIA` = 32 bloques, de modo que en 4, 8 y 16 bloques se aprecie la lectura de profundidad.
+- Modulada por la dirección de vista (`mix(1.0, 0.25, clamp(dir_y, 0.0, 1.0))`): más fuerte mirando al frente y hacia
+  abajo que hacia arriba.
+- Integrada en `adaptadores/volumen.wgsl` (`adp_niebla_cueva`) y compuesta en `etapas/post/03-composicion.wgsl` sobre
+  la geometría de la cueva (no sobre el cielo ni con la cámara sumergida en fluidos).
+- Respeta el preset `estilo_cuevas`:
+  - «Abiertas» (0): niebla desactivada (`niebla_cueva = false`).
+  - «Por defecto» (1): caída 1,0, intensidad 1,0.
+  - «Oscuras» (2): caída 2,0, intensidad ×0,33.
+  - «Muy oscuras» (3): intensidad 0,0 (mantiene la oscuridad total).
+

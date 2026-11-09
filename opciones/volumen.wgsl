@@ -43,6 +43,23 @@ fn opc_niebla_end() -> f32 {
     return OPC_NIEBLA_END_DEFECTO * opc_estilo_tormenta_end().densidad;
 }
 
+// Niebla de cueva (05.3): constantes con nombre y ajuste desde estilo_cuevas
+const OPC_NIEBLA_CUEVA_COLOR: vec3<f32> = vec3<f32>(0.15, 0.35, 0.85); // azul oscuro tenue
+const OPC_NIEBLA_CUEVA_DISTANCIA: f32 = 32.0;                         // bloques: escala de distancia
+const OPC_NIEBLA_CUEVA_BRILLO: f32 = 0.0035;                          // escala lineal: irradiancia base
+
+fn opc_niebla_cueva() -> VolAjustesCueva {
+    let mod_cuevas = opc_estilo_cuevas();
+    return VolAjustesCueva(
+        mod_cuevas.niebla_cueva,
+        mod_cuevas.caida,
+        mod_cuevas.mult_luz_minima,
+        OPC_NIEBLA_CUEVA_DISTANCIA,
+        OPC_NIEBLA_CUEVA_COLOR,
+        OPC_NIEBLA_CUEVA_BRILLO,
+    );
+}
+
 struct OpcVolumen {
     niebla: bool,
     pasos: i32,
