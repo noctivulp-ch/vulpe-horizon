@@ -66,11 +66,13 @@ fn atm_aporte_sol(cos_vista: f32, vista_y: f32, altura: f32, medio: AtmMedio, ha
     let crep = atm_peso_crepusculo(sol.direccion.y, v);
     let anti = (1.0 - smoothstep(-0.5, -0.1, cos_vista)) * crep;
     let enrojecida = max(hacia.r - hacia.b, 0.0);
-    let verde_piso = hacia.r * v.verde_naranja + hacia.b * v.verde_azul;
     var hacia_corr = hacia;
-    hacia_corr.g = max(hacia.g, verde_piso);
-    let azul_estrat = hacia.b * (1.0 - hacia.g / max(hacia.r, 1e-5));
-    hacia_corr.r = hacia.r * (1.0 - v.rojo_ozono * clamp(azul_estrat, 0.0, 1.0));
+    if crep > 0.0 {
+        let verde_piso = hacia.r * v.verde_naranja + hacia.b * v.verde_azul;
+        hacia_corr.g = max(hacia.g, verde_piso);
+        let azul_estrat = hacia.b * (1.0 - hacia.g / max(hacia.r, 1e-5));
+        hacia_corr.r = hacia.r * (1.0 - v.rojo_ozono * clamp(azul_estrat, 0.0, 1.0));
+    }
 
     let fase = medio.rayleigh * atm_fase_elek(cos_vista) + vec3<f32>(medio.mie * atm_fase_cornette_shanks(cos_vista, p.mie_asimetria));
     let banda_h = smoothstep(1500.0, 4500.0, altura) * (1.0 - smoothstep(v.altura_fin * 0.5, v.altura_fin, altura));
@@ -78,9 +80,7 @@ fn atm_aporte_sol(cos_vista: f32, vista_y: f32, altura: f32, medio: AtmMedio, ha
     // Solo en el lado antisolar y por debajo de ~20° de elevación de la mirada (01.1: el rosa llegaba al cenit).
     let elevacion = 1.0 - smoothstep(v.elevacion_fin * 0.4, v.elevacion_fin, vista_y);
     let venus_local = densidad_aire * enrojecida * banda_h * v.color * (v.multiple_local * anti * elevacion);
-    var aporte = (fase * hacia_corr + venus_local) * sol.irradiancia + (medio.rayleigh + vec3<f32>(medio.mie)) * sol.multiple;
-    aporte.g = max(aporte.g, min(aporte.r, aporte.b));
-    return aporte;
+    return (fase * hacia_corr + venus_local) * sol.irradiancia + (medio.rayleigh + vec3<f32>(medio.mie)) * sol.multiple;
 }
 
 // Qué astros aportan: la luna solo con el sol bajo (su luz es una pequeña fracción de la del sol), y
@@ -163,6 +163,5 @@ fn atm_dispersion(origen: vec3<f32>, dir: vec3<f32>, sol: AtmLuz, luna: AtmLuz, 
         luz += transmitancia * fuente * (1.0 - t_tramo) / ext;
         transmitancia *= t_tramo;
     }
-    luz.g = max(luz.g, min(luz.r, luz.b));
     return AtmResultado(luz, transmitancia);
 }

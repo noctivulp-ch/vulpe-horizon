@@ -16,8 +16,8 @@ const OPC_SOL_RAMPA_GRADOS: f32 = 3.0;      // grados sobre el horizonte donde s
 const OPC_LUNA_RAMPA_GRADOS: f32 = 3.0;     // grados bajo el horizonte donde satura la luna (fino/01 §5)
 const OPC_ESTRELLAS_BRILLO: f32 = 0.004;
 const OPC_CIELO_SATURACION: f32 = 1.0;
-// Brillo propio del cielo dibujado (no de la luz ambiente que da al terreno): docs/efectos/cielo-y-atmosfera.md §Montaje
-const OPC_CIELO_BRILLO_DIBUJO: f32 = 2.0;
+// Brillo propio del cielo dibujado en la escala común (paridad/01 da radiancia directa sin duplicar): fino/01 §2
+const OPC_CIELO_BRILLO_DIBUJO: f32 = 1.0;
 
 // Cinturón de Venus y sombra de la Tierra en el crepúsculo (01.1): docs/efectos/cielo-y-atmosfera.md §Cinturón de Venus
 const OPC_VENUS_SOL_MIN: f32 = -0.26;               // seno de elevación solar donde termina el crepúsculo (~-10°)

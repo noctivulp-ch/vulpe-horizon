@@ -47,12 +47,10 @@ como `referencias/uns_cielo-noche_sinfractal.png`. Es analítica y no lee nada d
   y apagado, y la referencia (`base_Bliss-UNS_dia_r1.png`) lo quiere amplio y blanco. Antes era un
   multiplicador en `opciones/` que la tabla no veía: su horizonte salía más oscuro que el cielo en vivo y la
   niebla de borde pintaba una franja gris sobre el mar. Ahora la tabla sale del mismo modelo.
-- **Saturación del cielo** (`OPC_CIELO_SATURACION`): fue ×1,5 mientras la codificación usaba Reinhard por
-  canal (comprimía el cenit de ~1 : 2 : 4,5 a ~1 : 1,6 : 2,4); con el Reinhard sobre el canal máximo
-  (ADR 0004) vuelve a 1.
-- **Brillo propio del cielo dibujado ×2** (`OPC_CIELO_BRILLO_DIBUJO`), no de la luz que da al terreno: al
-  encender la luz de superficie (03) la exposición de día bajó de 2³ a 2² para que la hierba al sol no se
-  lavase, y el cielo, que se había afinado con 2³, lo compensa.
+- **Saturación y escala del cielo** (`OPC_CIELO_SATURACION` y `OPC_CIELO_BRILLO_DIBUJO = 1.0`): calibrado
+  exactamente en la escala común de paridad/01, donde la radiancia del cielo de mediodía vale ≈ (0,018; 0,039; 0,094)
+  sin duplicación artificial ni saturación forzada. Se eliminó el suelo arbitrario en el canal verde para permitir
+  que el ozono extinga las frecuencias intermedias y mantenga el azul profundo puro y el gradiente continuo hacia el sol.
 - **Luna:** el mismo modelo con la dirección de la luna y color de cuerpo negro de 10 000 K; solo se
   integra con el sol por debajo de 0,1 de seno (`atm_astros_activos`): con el sol alto no aporta nada
   visible y costaba casi el doble. El sol, por debajo de −0,35 de seno. Con el mod nativo (`adp_mod().fase_luna`),
