@@ -20,23 +20,72 @@ fn vol_indice_perfil(paso: u32, secuencia: array<u32, 18>, repite_desde: u32) ->
     return secuencia[repite_desde + (paso - repite_desde) % n];
 }
 
-// Perfiles de lluvia por día (paridad/05 §Con lluvia), modulados por la intensidad.
-fn vol_perfil_lluvia(dia: u32, lluvia: f32) -> VolPerfil {
-    var c = vec3<f32>(1.5, 1.5, 1.3);
-    var d = vec3<f32>(0.25, 0.25, 0.5);
-    switch dia & 3u {
+struct VolLluviaPerfil {
+    nubes: VolPerfil,
+    niebla_uniforme: f32,
+    niebla_manchas: f32,
+}
+
+// Perfiles de lluvia por día (paridad/05 §Con lluvia, días 0–7)
+fn vol_perfil_lluvia(dia: u32, lluvia: f32) -> VolLluviaPerfil {
+    var c = vec3<f32>(0.0, 1.5, 1.5);
+    var d = vec3<f32>(0.0, 0.25, 0.5);
+    var unif: f32 = 0.2;
+    var manchas: f32 = 0.4;
+
+    switch dia % 8u {
         case 0u: {
             c = vec3<f32>(0.0, 1.5, 1.5);
             d = vec3<f32>(0.0, 0.25, 0.5);
+            unif = 0.2;
+            manchas = 0.4;
         }
         case 1u: {
             c = vec3<f32>(0.0, 1.8, 0.0);
-            d = vec3<f32>(0.25 * f32((dia >> 2u) & 1u), 0.1, 0.3 * f32(1u - ((dia >> 2u) & 1u)));
+            d = vec3<f32>(0.0, 0.1, 0.3);
+            unif = 0.1;
+            manchas = 0.2;
+        }
+        case 2u: {
+            c = vec3<f32>(1.5, 1.5, 1.3);
+            d = vec3<f32>(0.25, 0.25, 0.5);
+            unif = 0.1;
+            manchas = 0.2;
+        }
+        case 3u: {
+            c = vec3<f32>(1.5, 1.5, 1.3);
+            d = vec3<f32>(0.25, 0.25, 0.5);
+            unif = 0.3;
+            manchas = 0.2;
+        }
+        case 4u: {
+            c = vec3<f32>(0.0, 1.5, 1.5);
+            d = vec3<f32>(0.0, 0.25, 0.5);
+            unif = 0.2;
+            manchas = 0.4;
+        }
+        case 5u: {
+            c = vec3<f32>(0.0, 1.8, 0.0);
+            d = vec3<f32>(0.5, 0.1, 0.0);
+            unif = 0.1;
+            manchas = 0.2;
+        }
+        case 6u: {
+            c = vec3<f32>(1.5, 1.5, 1.3);
+            d = vec3<f32>(0.25, 0.25, 0.5);
+            unif = 0.3;
+            manchas = 0.2;
+        }
+        case 7u: {
+            c = vec3<f32>(1.5, 1.5, 1.3);
+            d = vec3<f32>(0.25, 0.25, 0.5);
+            unif = 0.1;
+            manchas = 0.2;
         }
         default: {}
     }
     let escala = mix(0.75, 1.0, lluvia);
-    return VolPerfil(c * escala, d);
+    return VolLluviaPerfil(VolPerfil(c * escala, d), unif, manchas);
 }
 
 fn vol_mezclar_perfil(a: VolPerfil, b: VolPerfil, t: f32) -> VolPerfil {
@@ -67,7 +116,8 @@ fn vol_sorteo(m: VolMomento, secuencia: array<u32, 18>, repite_desde: u32, fundi
 // El perfil del momento a partir de los dos perfiles sorteados, con la lluvia.
 fn vol_perfil_del_momento(m: VolMomento, pa: VolPerfil, pb: VolPerfil, t: f32) -> VolPerfil {
     let base = vol_mezclar_perfil(pa, pb, t);
-    return vol_mezclar_perfil(base, vol_perfil_lluvia(u32(max(m.dia, 0.0)), m.lluvia), smoothstep(0.0, 0.6, m.lluvia));
+    let pl = vol_perfil_lluvia(u32(max(m.dia, 0.0)), m.lluvia);
+    return vol_mezclar_perfil(base, pl.nubes, smoothstep(0.0, 0.6, m.lluvia));
 }
 
 struct VolHorario {

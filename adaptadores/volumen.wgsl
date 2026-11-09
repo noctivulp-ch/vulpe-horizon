@@ -26,7 +26,7 @@ fn adp_volumen_luz() -> VolLuz {
     let c = opc_cielo();
     var cielo = adp_cielo_medio(c) * OPC_LUZ_CIELO_BASE;
     let cubierto = clamp(frame.rain, 0.0, 1.0);
-    cielo = mix(cielo, vec3<f32>(col_luminancia(cielo)) * 0.8, cubierto) * (1.0 - 0.5 * frame.thunder);
+    cielo = mix(cielo, vec3<f32>(col_luminancia(cielo)) * 1.15, cubierto * 0.4);
     // De noche la niebla toma el azul del cielo nocturno (05.2): su ambiente, más saturado y más fuerte; sin esto salía
     // gris. Porqué: docs/efectos/niebla-y-nubes.md §Niebla nocturna
     let noche = adp_factor_noche() * (1.0 - cubierto);
@@ -36,14 +36,22 @@ fn adp_volumen_luz() -> VolLuz {
 
 fn adp_volumen_ajustes(bajo_agua: bool) -> VolAjustes {
     let o = opc_volumen();
+    let m = adp_momento(o);
     let h = adp_horario();
     // En una cueva no entra la niebla de cielo: queda una tenue.
     let fuera = smoothstep(0.1, 0.7, frame.eye_light_smooth.y);
     let lluvia = frame.rain * o.lluvia;
     // Tormenta de nieve: lluvia en un bioma donde nieva (precipitation 2): densa y blanca.
     let nieve = select(0.0, frame.rain, frame.precipitation == 2u);
-    let uniforme = (h.uniforme + lluvia * 0.5 + nieve * 1.2) * mix(0.05, 1.0, fuera);
-    let manchas = (h.manchas + lluvia * 0.4 + nieve * 0.5 + clamp(frame.downfall - 0.85, 0.0, 0.15) * 2.5 * smoothstep(0.5, 0.9, frame.temperature)) * fuera;
+
+    // En lluvia se conmuta a los perfiles de lluvia para nubes y niebla (fino/05 §4 y paridad/05)
+    let pl = vol_perfil_lluvia(u32(max(m.dia, 0.0)), lluvia);
+    let peso_lluvia = smoothstep(0.0, 0.5, lluvia);
+    let param_unif_base = mix(h.uniforme, pl.niebla_uniforme, peso_lluvia);
+    let param_manchas_base = mix(h.manchas, pl.niebla_manchas, peso_lluvia);
+
+    let uniforme = (param_unif_base + nieve * 0.8) * mix(0.05, 1.0, fuera);
+    let manchas = (param_manchas_base + nieve * 0.5 + clamp(frame.downfall - 0.85, 0.0, 0.15) * 2.5 * smoothstep(0.5, 0.9, frame.temperature)) * fuera;
     let viento = vec3<f32>(OPC_VIENTO.x, 0.0, OPC_VIENTO.y) * o.viento * frame.time * 0.5;
     let niebla = VolAjustesNiebla(uniforme, manchas, o.cantidad, o.bruma, o.caida, viento, mix(1.0, 8.0, nieve));
     let con_niebla = o.niebla && !bajo_agua;

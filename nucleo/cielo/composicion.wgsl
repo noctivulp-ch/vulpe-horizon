@@ -24,9 +24,55 @@ fn cie_color_bajo_horizonte(cielo_medio: vec3<f32>, suelo: vec3<f32>, oscuridad:
     return mix(suelo, cielo_medio, 0.6) * oscuridad;
 }
 
-// Mezcla el cielo hacia un gris uniforme del color medio, más cerca del horizonte.
-fn cie_aplicar_lluvia(cielo: vec3<f32>, dir_y: f32, l: CieLluvia) -> vec3<f32> {
-    let gris = mix(vec3<f32>(col_luminancia(l.cielo_medio)), l.cielo_medio, 0.35) * 1.1 * (1.0 - 0.6 * l.tormenta);
-    let peso = l.lluvia * mix(0.75, 1.0, exp(-max(dir_y, 0.0) * 4.0));
-    return mix(cielo, gris, peso);
+// Peso de la mezcla de lluvia por componente vertical de la vista (fino/01 §7, Tabla A).
+// 0 en el cenit y último cuarto de bóveda; crece hacia el horizonte y satura por debajo.
+fn cie_peso_lluvia_vertical(dir_y: f32) -> f32 {
+    if dir_y >= 0.90 {
+        return 0.0;
+    }
+    if dir_y >= 0.80 {
+        let t = (0.90 - dir_y) / 0.10;
+        return mix(0.0, 0.0488, t);
+    }
+    if dir_y >= 0.70 {
+        let t = (0.80 - dir_y) / 0.10;
+        return mix(0.0488, 0.1813, t);
+    }
+    if dir_y >= 0.50 {
+        let t = (0.70 - dir_y) / 0.20;
+        return mix(0.1813, 0.5507, t);
+    }
+    if dir_y >= 0.30 {
+        let t = (0.50 - dir_y) / 0.20;
+        return mix(0.5507, 0.8347, t);
+    }
+    if dir_y >= 0.20 {
+        let t = (0.30 - dir_y) / 0.10;
+        return mix(0.8347, 0.9137, t);
+    }
+    if dir_y >= 0.10 {
+        let t = (0.20 - dir_y) / 0.10;
+        return mix(0.9137, 0.9592, t);
+    }
+    if dir_y >= 0.0 {
+        let t = (0.10 - dir_y) / 0.10;
+        return mix(0.9592, 0.9826, t);
+    }
+    if dir_y >= -0.20 {
+        let t = -dir_y / 0.20;
+        return mix(0.9826, 0.9933, t);
+    }
+    return 0.9933;
+}
+
+// Mezcla el cielo con lluvia hacia el promedio despejado teñido por la transmitancia del rayo (fino/01 §7).
+// Nula en el cenit y sobre la base de los cúmulos bajos. Sin oscurecimiento adicional de tormenta.
+fn cie_aplicar_lluvia(cielo: vec3<f32>, dir_y: f32, trans: vec3<f32>, camara_y: f32, l: CieLluvia) -> vec3<f32> {
+    if l.lluvia <= 0.001 {
+        return cielo;
+    }
+    let factor_altura = 1.0 - clamp((camara_y - 238.0) / 200.0, 0.0, 1.0);
+    let peso = l.lluvia * cie_peso_lluvia_vertical(dir_y) * factor_altura;
+    let velo = l.cielo_medio * mix(vec3<f32>(1.0), trans, 0.35);
+    return mix(cielo, velo, peso);
 }

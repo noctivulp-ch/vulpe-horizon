@@ -242,3 +242,11 @@ sin referencia de distancia.
   - «Oscuras» (2): caída 2,0, intensidad ×0,33.
   - «Muy oscuras» (3): intensidad 0,0 (mantiene la oscuridad total).
 
+## Niebla y perfiles de lluvia (B-16.2)
+
+Paridad con el banco de 2026-11-09 (`fino/05 §4`, `fino/01 §7` y `paridad/05`).
+- **Densidad cúbica:** en `vol_niebla` (`nucleo/volumen/medios.wgsl`) la densidad uniforme y de manchas se calculan como el cubo del parámetro horario/climático (`fino/05 §1, §4`). Al mediodía despejado vale 0; de noche y con lluvia sube a 0,2³ = 0,008 bloques⁻¹ uniforme, más manchas de 0,4³ = 0,064.
+- **Perfiles de lluvia:** `vol_perfil_lluvia` conmuta a los seis perfiles de lluvia tabulados en `paridad/05` (días 0–7), asignando cobertura/densidad de cúmulos y altoestratos, así como los parámetros de niebla uniforme y manchas.
+- **Aporte ambiental de la niebla:** se corrige la fuente ambiental de la niebla (`nucleo/volumen/raymarch.wgsl`), sustituyendo el atenuador erróneo de 0,01 por la fase cenital física que cuadruplica la luz hacia el cenit (`mix(0,25, 1,0, ...)`), permitiendo que la niebla densa brille con el tono gris azulado del cielo en vez de quedar como un vacío negro.
+- **Cielo y luz en lluvia:** en `nucleo/cielo/composicion.wgsl`, `cie_aplicar_lluvia` implementa las Tablas A y B de `fino/01 §7`: peso exactamente nulo en el cenit (último cuarto de bóveda) y atenuación lineal por encima de la base de cúmulos bajos (238 m), mezclando hacia el promedio despejado teñido por transmitancia sin oscurecimiento destructivo de tormenta. La luz ambiental de superficie (`adaptadores/material.wgsl`) se mantiene clara y suave en lugar de caer en carbón oscuro.
+

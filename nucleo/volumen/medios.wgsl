@@ -29,16 +29,18 @@ fn vol_aire(y: f32, bruma: f32) -> VolAire {
 }
 
 // Coeficiente de extinción de la niebla global (por bloque) en `mundo`.
+// La densidad efectiva es el cubo del parámetro horario/climático (paridad/05 y fino/05 §1, §4).
 fn vol_niebla(mundo: vec3<f32>, a: VolAjustesNiebla, ruido3d: texture_2d<f32>) -> f32 {
-    var d = a.uniforme;
+    var d = a.uniforme * a.uniforme * a.uniforme;
     if a.manchas > 0.0 {
         let p = (mundo + a.viento) * vec3<f32>(1.0 / 96.0, 1.0 / 40.0, 1.0 / 96.0);
         let n = vol_ruido3d(ruido3d, p).a;
         let mancha = smoothstep(0.45, 0.7, n) * exp(-max(mundo.y - VOL_MAR - VOL_MANCHAS_ALTURA, 0.0) / 12.0);
-        d += a.manchas * mancha * 2.0;
+        let d_manchas = a.manchas * a.manchas * a.manchas;
+        d += d_manchas * mancha * 2.0;
     }
     d *= exp(-max(mundo.y - VOL_CAIDA_DESDE, 0.0) * a.caida);
-    return d * a.cantidad * VOL_NIEBLA_SIGMA;
+    return d * a.cantidad;
 }
 
 // `remap(v, bajo, 1)`: lo que queda por encima de `bajo`, reescalado a 0..1.

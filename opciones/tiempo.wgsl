@@ -2,9 +2,10 @@
 // (8 densidades por hora, perfiles propios); aquí, constantes con nombre para un preset o el mod nativo, sin opciones de
 // menú (van 58 de 64). Porqué: docs/efectos/niebla-y-nubes.md §«Tiempo como datos»
 
-// Horario de la niebla: densidad relativa al amanecer, a mediodía, al atardecer y de noche (x, y, z, w).
-const OPC_NIEBLA_HORARIO_UNIFORME: vec4<f32> = vec4<f32>(0.06, 0.0, 0.1, 0.38);
-const OPC_NIEBLA_HORARIO_MANCHAS: vec4<f32> = vec4<f32>(0.5, 0.0, 0.0, 0.15);
+// Horario de la niebla: parámetro horario al amanecer, a mediodía, al atardecer y de noche (x, y, z, w).
+// La densidad efectiva en el raymarch es el cubo de este parámetro (paridad/05 y fino/05 §1, §4).
+const OPC_NIEBLA_HORARIO_UNIFORME: vec4<f32> = vec4<f32>(0.01, 0.0, 0.05, 0.2);
+const OPC_NIEBLA_HORARIO_MANCHAS: vec4<f32> = vec4<f32>(0.05, 0.0, 0.0, 0.05);
 const OPC_NIEBLA_HORARIO_TRANSICION: f32 = 0.08;   // fracción del día que tarda en pasar de una franja a otra
 
 fn opc_niebla_horario_uniforme() -> vec4<f32> {

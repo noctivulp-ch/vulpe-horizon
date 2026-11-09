@@ -134,3 +134,7 @@ disposición de la referencia). En espera: lo único abierto es el 15 (vegetaci�
 - Punto 1: luz directa y halo del sol a baja elevación corregidos conforme a `fino/01 §3, §5, §8` y `paridad/01`.
   Rampa de visibilidad a 0° que elimina la franja anaranjada de luz directa y el halo gigante en `atardecer-oeste`;
   enrojecimiento espectral y fase frontal concentrada (`paridad/05`) para halo suave y suelo cálido en `niebla-amanecer`.
+- Punto 2: niebla volumétrica y perfiles de lluvia corregidos según `fino/05 §4`, `fino/01 §7` y `paridad/05`.
+  Densidad cúbica de niebla y sustitución por perfiles de lluvia (uniforme 0,2³ y manchas 0,4³), corrección de la
+  fuente ambiental de la niebla con fase cenital, mezcla direccional del cielo de lluvia (Tablas A y B) y luz
+  ambiental clara para la escena `lluvia-dia` (muro del fondo velado en bruma gris azulada y cielo luminoso).

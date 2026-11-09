@@ -42,6 +42,6 @@ fn sky(input: SkyInput) -> vec4<f32> {
     let disco = atm_disco(dot(dir, sol.direccion), OPC_SOL_DISCO_RADIO, 0.15) * (1.0 - frame.rain);
     cielo += directa_sol * OPC_SOL_DISCO_BRILLO * disco * cie_factor_suelo(dir.y, 0.03);
 
-    cielo = cie_aplicar_lluvia(cielo, dir.y, adp_lluvia(ajustes));
+    cielo = cie_aplicar_lluvia(cielo, dir.y, atm.transmitancia, frame.camera_position.y, adp_lluvia(ajustes));
     return adp_cielo_salida(cielo, dir);
 }
