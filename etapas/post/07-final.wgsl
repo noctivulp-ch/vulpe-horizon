@@ -34,6 +34,9 @@ fn post(input: PostInput) -> vec4<f32> {
             }
             return adp_post_salida(p.color, 1.0);
         }
+        case OPC_VISTA_MOD_NATIVO: {
+            return adp_post_salida(adp_mod_depuracion(p.uv), 1.0);
+        }
         default: {}
     }
     let o = opc_imagen();

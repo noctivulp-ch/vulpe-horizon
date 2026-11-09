@@ -96,3 +96,132 @@ fn adp_mod() -> AdpModDatos {
         jugador,
     );
 }
+
+// Vista de depuración del mod nativo (OPC_VISTA_MOD_NATIVO):
+// Pinta en pantalla la firma (franja superior), fase lunar (franja central) y estación continua (franja inferior).
+// También codifica en la esquina superior izquierda (uv < 0.04) los valores normalizados en RGB:
+// R = 1.0 si firma presente, G = fase / 7.0, B = estacion / 4.0.
+fn adp_mod_depuracion(uv: vec2<f32>) -> vec3<f32> {
+    let m = adp_mod();
+
+    // Cuadrado de lectura exacta por canal en la esquina superior izquierda
+    if uv.x < 0.04 && uv.y < 0.04 {
+        let r = select(0.0, 1.0, m.activo);
+        let g = select(0.0, f32(m.fase_luna) / 7.0, m.tiene_tiempo);
+        let b = select(0.0, m.estacion / 4.0, m.tiene_estacion);
+        return vec3<f32>(r, g, b);
+    }
+
+    // 1. Franja superior (uv.y < 0.33): Firma y estado general del mod
+    if uv.y < 0.33 {
+        if !m.activo {
+            // Sin mod nativo: fondo rojo de alarma con banda central oscura
+            var rojo = vec3<f32>(0.75, 0.08, 0.08);
+            if uv.y > 0.12 && uv.y < 0.21 {
+                rojo = vec3<f32>(0.35, 0.02, 0.02);
+            }
+            return rojo;
+        }
+
+        // Mod activo (firma 1001.0 detectada): fondo verde esmeralda
+        var verde = vec3<f32>(0.05, 0.50, 0.20);
+        // Indicador central brillante si las banderas principales (tiempo + estación) están activas
+        if uv.y > 0.08 && uv.y < 0.22 {
+            let pleno = m.tiene_tiempo && m.tiene_estacion;
+            verde = select(vec3<f32>(0.15, 0.75, 0.30), vec3<f32>(0.10, 0.95, 0.35), pleno);
+        }
+
+        // Subfranja de 5 casillas de banderas en la parte baja de la franja (0.24 < uv.y < 0.31)
+        if uv.y > 0.24 && uv.y < 0.31 {
+            let slot = u32(clamp(floor(uv.x * 5.0), 0.0, 4.0));
+            let bit_activo = (m.banderas & (1u << slot)) != 0u;
+            switch slot {
+                case 0u: { // Bit 0: Tiempo (azul)
+                    return select(vec3<f32>(0.05, 0.1, 0.2), vec3<f32>(0.2, 0.6, 1.0), bit_activo);
+                }
+                case 1u: { // Bit 1: Rayo (amarillo)
+                    return select(vec3<f32>(0.15, 0.15, 0.05), vec3<f32>(1.0, 0.9, 0.2), bit_activo);
+                }
+                case 2u: { // Bit 2: Estación (verde)
+                    return select(vec3<f32>(0.05, 0.15, 0.05), vec3<f32>(0.3, 1.0, 0.4), bit_activo);
+                }
+                case 3u: { // Bit 3: Jugador (rojo)
+                    return select(vec3<f32>(0.15, 0.05, 0.05), vec3<f32>(1.0, 0.3, 0.3), bit_activo);
+                }
+                default: { // Bit 4: Canal fijo (púrpura)
+                    return select(vec3<f32>(0.1, 0.05, 0.15), vec3<f32>(0.8, 0.3, 1.0), bit_activo);
+                }
+            }
+        }
+
+        // Línea divisoria inferior
+        if uv.y > 0.325 {
+            return vec3<f32>(0.0);
+        }
+        return verde;
+    }
+
+    // 2. Franja central (0.33 <= uv.y < 0.66): Fase lunar (0..7 en 8 columnas)
+    if uv.y < 0.66 {
+        let col = u32(clamp(floor(uv.x * 8.0), 0.0, 7.0));
+        let col_frac = fract(uv.x * 8.0);
+        // Línea divisoria entre columnas y bordes
+        if col_frac < 0.03 || col_frac > 0.97 || uv.y < 0.335 || uv.y > 0.655 {
+            return vec3<f32>(0.02, 0.02, 0.03);
+        }
+
+        let es_fase_actual = (col == m.fase_luna) && m.tiene_tiempo;
+        let factor_fase = abs(4.0 - f32(col)) / 4.0;
+
+        if es_fase_actual {
+            // Fase actual: columna iluminada con resplandor dorado lunar
+            let dist_centro = length(vec2<f32>((col_frac - 0.5) * 2.0, (uv.y - 0.495) / 0.165));
+            if dist_centro < 0.75 {
+                // Disco lunar central
+                return vec3<f32>(1.0, 0.98, 0.88);
+            }
+            return vec3<f32>(0.85, 0.80, 0.65) * (0.6 + 0.4 * factor_fase);
+        }
+
+        // Demás fases: fondo nocturno con brillo proporcional a la luminosidad de esa fase
+        let brillo_inactivo = 0.06 + 0.15 * factor_fase;
+        return vec3<f32>(0.08, 0.12, 0.22) * brillo_inactivo;
+    }
+
+    // 3. Franja inferior (uv.y >= 0.66): Estación continua (0..4)
+    let estacion_norm = clamp(m.estacion / 4.0, 0.0, 1.0);
+    let cuadrante = u32(clamp(floor(uv.x * 4.0), 0.0, 3.0));
+    let quad_frac = fract(uv.x * 4.0);
+
+    // Borde separador entre cuadrantes de estación
+    if quad_frac < 0.015 || quad_frac > 0.985 || uv.y < 0.665 || uv.y > 0.995 {
+        return vec3<f32>(0.02, 0.02, 0.03);
+    }
+
+    // Color base de cada estación
+    var color_estacion: vec3<f32>;
+    switch cuadrante {
+        case 0u: { // Primavera (0..1): verde tierno / primaveral
+            color_estacion = vec3<f32>(0.40, 0.88, 0.45);
+        }
+        case 1u: { // Verano (1..2): dorado cálido
+            color_estacion = vec3<f32>(0.90, 0.82, 0.18);
+        }
+        case 2u: { // Otoño (2..3): naranja ámbar
+            color_estacion = vec3<f32>(0.95, 0.48, 0.12);
+        }
+        default: { // Invierno (3..4): cian hielo
+            color_estacion = vec3<f32>(0.45, 0.75, 0.98);
+        }
+    }
+
+    // Aguja marcadora blanca de la estación exacta actual
+    if m.tiene_estacion && abs(uv.x - estacion_norm) < 0.005 {
+        return vec3<f32>(1.0, 1.0, 1.0);
+    }
+
+    // Progreso continuo: recorrido encendido, por recorrer tenue
+    let recorrido = uv.x <= estacion_norm;
+    let factor_avance = select(0.25, 1.0, recorrido && m.tiene_estacion);
+    return color_estacion * factor_avance;
+}
