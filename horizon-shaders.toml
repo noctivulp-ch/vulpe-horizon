@@ -56,6 +56,7 @@ shared = [
     "opciones/taa.wgsl",
     "opciones/oclusion.wgsl",
     "opciones/viento.wgsl",
+    "adaptadores/mod.wgsl",
     "adaptadores/marco.wgsl",
     "adaptadores/atmosfera.wgsl",
     "adaptadores/fractal.wgsl",
