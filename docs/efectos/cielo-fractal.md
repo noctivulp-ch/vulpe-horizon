@@ -38,7 +38,7 @@ de la semilla y el índice (`cie_fractal_azar`). Motivos:
 **Consecuencia aceptada:** la misma semilla **no da el mismo cielo que en Vulpe** (los números al azar son
 otros); el reparto sigue las mismas reglas y la variedad es la misma.
 
-**Día del mundo:** `frame.mods[0].z` (número de día, con el mod nativo) + `frame.day_time`. Sin mod el
+**Día del mundo:** `adp_mod().dia` (`frame.mods[1].x`, con el mod nativo en formato v1) + `frame.day_time`. Sin mod el
 número de día es 0 y el cielo no cambia entre noches; el salto de la fracción a 0 ocurre al amanecer, de
 día, cuando el fractal no se ve.
 

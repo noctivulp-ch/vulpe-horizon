@@ -212,7 +212,8 @@ el nuestro estaban escritos dentro de `nucleo/volumen/tiempo.wgsl`. Con el crite
   día y desde dónde se repite) y `OPC_TIEMPO_FUNDIDO` (tramo del cuarto en que se funden; el original tiene una
   «velocidad de la transición»).
 - El núcleo solo decide qué perfiles mezclar (`vol_sorteo`) y cómo (`vol_perfil_del_momento`, `vol_horario` con los
-  datos por parámetro); el adaptador (`adp_nubes`, `adp_horario`) lee las tablas.
+  datos por parámetro); el adaptador (`adp_nubes`, `adp_horario`) lee las tablas. Con el mod nativo (formato v1, B-14),
+  `adp_momento()` lee el día acumulado real (`adp_mod().dia`) avanzando la secuencia del tiempo atmosférico a lo largo de los días.
 - **Sin opciones de menú:** van 58 de 64 y los 8 + 36 ajustes del original no caben; la fusión propuesta por A («cantidad»
   + un preset de reparto) queda para la fase 4. Los perfiles de lluvia siguen en el núcleo (su lógica depende del día).
 

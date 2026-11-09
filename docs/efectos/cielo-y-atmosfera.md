@@ -55,7 +55,10 @@ como `referencias/uns_cielo-noche_sinfractal.png`. Es analítica y no lee nada d
   lavase, y el cielo, que se había afinado con 2³, lo compensa.
 - **Luna:** el mismo modelo con la dirección de la luna y color de cuerpo negro de 10 000 K; solo se
   integra con el sol por debajo de 0,1 de seno (`atm_astros_activos`): con el sol alto no aporta nada
-  visible y costaba casi el doble. El sol, por debajo de −0,35 de seno.
+  visible y costaba casi el doble. El sol, por debajo de −0,35 de seno. Con el mod nativo (`adp_mod().fase_luna`),
+  la iluminación lunar (directa, dispersión atmosférica y ambiente nocturno) modula según la fase `(4 − |fase − 4|) / 4`
+  cuando `estilo_noches` tiene seguimiento de fases activado (`adp_luna_factor_fase()`). Sin mod o en «Sin fases»,
+  permanece fija en luna llena.
 - **Observador** a 250 m sobre el suelo del planeta; por encima de y = 200 sube 20 m por bloque
   (`adp_observador`), para que volar muy alto se note.
 

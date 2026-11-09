@@ -163,12 +163,12 @@ las escenas usan `command fill` / `command setblock`, de uno en uno con pausa.
 no blanco), un tinte por estación (verano sin cambio, otoño, invierno con desaturación del 35 % y un leve malva,
 primavera más fresca), 24 días por estación con el último cuarto fundido con la siguiente; las hojas (id 1) con su
 propio tinte, más marcado. Un tinte multiplicativo no saca naranja de un verde (su rojo es bajo): en las hojas la mitad
-del efecto lleva el color hacia el tono del tinte conservando su luminancia. El número de día sale de `frame.mods[0].z`;
-**sin mod nativo, fijo en la estación inicial** (opción). Solo en el Overworld.
+del efecto lleva el color hacia el tono del tinte conservando su luminancia. La estación continua sale de `adp_mod().estacion` (`frame.mods[1].z`, formato v1: 0 Primavera, 1 Verano, 2 Otoño, 3 Invierno);
+**sin mod nativo, fijo en la estación inicial** (opción, Verano por defecto). Solo en el Overworld.
 
 **Visto** (`hoja-estaciones.png`, cambiando la estación inicial): verano tal cual; otoño con las hojas ocres y pardo
 anaranjadas; invierno apagado y grisáceo; primavera verde más fresco. La hierba cambia poco (su tinte es suave a
-propósito). **Sin ver:** el paso de una estación a otra con el día del mod nativo.
+propósito). Con el mod nativo (formato v1, corte comprobado en el juego), `sup_estacion_mod()` transiciona suavemente según el calendario estacional.
 
 Opciones: estaciones sí/no y estación inicial, página «Luz». Van 53.
 
