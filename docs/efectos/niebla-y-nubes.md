@@ -231,9 +231,10 @@ En cuevas, la niebla volumétrica estándar se atenuaba al 5 % sin aportar tinte
 sin referencia de distancia.
 
 **Implementación:**
-- `nucleo/volumen/cueva.wgsl` (`vol_niebla_cueva`): función pura que calcula una niebla tenue de color azul oscuro
-  (`OPC_NIEBLA_CUEVA_COLOR` = (0,15, 0,35, 0,85)) aditiva y débil, nunca más clara que la luz mínima de la cueva
-  (`OPC_NIEBLA_CUEVA_BRILLO` = 0,0035 × `mult_luz`).
+- `nucleo/volumen/cueva.wgsl` (`vol_niebla_cueva`): función pura que calcula una niebla tenue casi neutra
+  (`OPC_NIEBLA_CUEVA_COLOR` = (0,50, 0,50, 0,52), corregido en B-17.9 desde el azul saturado previo para paridad con el
+  banco) aditiva y muy débil, sin iluminar la pared del fondo
+  (`OPC_NIEBLA_CUEVA_BRILLO` = 0,0004 × `mult_luz`, calibrado para mantenerse por debajo del pie de la luz mínima).
 - Depende de la distancia mediante crecimiento exponencial `1.0 - exp(-d / (distancia_escala / caida))` con
   `OPC_NIEBLA_CUEVA_DISTANCIA` = 32 bloques, de modo que en 4, 8 y 16 bloques se aprecie la lectura de profundidad.
 - Modulada por la dirección de vista (`mix(1.0, 0.25, clamp(dir_y, 0.0, 1.0))`): más fuerte mirando al frente y hacia

@@ -35,6 +35,9 @@ fn material(input: MaterialInput) -> Surface {
     let difusa = luz_lambert(n_l);
     let directa_luz = luces.directa;
 
+    let cielo_camara = frame.eye_light_smooth.y;
+    let apertura = clamp(p.luz_cielo + cielo_camara * (1.0 - p.luz_cielo), 0.0, 1.0);
+
     // Luz directa y SSS: el SSS llena lo que la difusa no ilumina.
     var directa = albedo * difusa * sombra.luz;
     if m.sss > 0.0 {
@@ -44,7 +47,9 @@ fn material(input: MaterialInput) -> Surface {
         let sss_directo = color_sss * perfil * fase;
         directa = mix(sss_directo, albedo, clamp(difusa * col_luminancia(sombra.luz), 0.0, 1.0));
     }
-    directa *= directa_luz;
+    // Prevención de fugas solares y SSS en cuevas (fino/03 §4). Porqué: docs/efectos/luz-de-superficie.md §Cuevas
+    let proteccion_cueva = clamp(apertura * apertura * 4.0, 0.0, 1.0);
+    directa *= directa_luz * proteccion_cueva;
 
     // Ambiente: cielo modulado por norma L1 (Overworld) o hemisférico (Nether/End) × curva de cielo.
     let curva_cielo = select(luz_curva_cielo(p.luz_cielo), 1.0, luces.fija);
@@ -57,8 +62,12 @@ fn material(input: MaterialInput) -> Surface {
         sss_cielo = sup_sss_color(albedo, 0.5) * luces.cielo * curva_cielo * m.sss * mix(0.3, 0.8, p.vista.y * -0.5 + 0.5);
     }
     let bloque = (adp_color_luz_bloque(p, o) * luz_curva_bloque(p.luz_bloque) + p.luz_colorida) * OPC_LUZ_BLOQUE * o.bloque;
-    let cielo_camara = frame.eye_light_smooth.y;
-    let minima = OPC_LUZ_MINIMA_CUEVA * (mix(o.minima_cuevas, o.minima_exterior, max(p.luz_cielo, cielo_camara)) + frame.night_vision * 20.0);
+    // Luz mínima direccional tipo linterna de cámara y caída con la distancia (fino/03 §3). Porqué: docs/efectos/luz-de-superficie.md §Cuevas
+    let frontal = max(dot(n, p.vista), 0.0);
+    let caida_dist = 1.0 / (1.0 + length(p.posicion) * 0.22);
+    let linterna = frontal * caida_dist;
+    let factor_cueva = mix(o.minima_cuevas, o.minima_exterior, smoothstep(0.0, 0.6, apertura)) * (1.0 - p.luz_cielo);
+    let minima = OPC_LUZ_MINIMA_CUEVA * factor_cueva * mix(0.08, 1.0, linterna) + frame.night_vision * 0.08;
     let indirecta = albedo * (ambiente_cielo + bloque + vec3<f32>(minima)) + sss_cielo;
 
     // Especular del sol y reflejo del ambiente.

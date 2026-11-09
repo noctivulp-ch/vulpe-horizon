@@ -221,3 +221,22 @@ atrapada en la base de la curva: en una caja cerrada de piedra a medianoche (`ti
   (distinguiendo las formas de la cueva a oscuras sin antorchas).
 - **Invarianza exterior:** al aire libre, `minima` se interpola con `o.minima_exterior` (0,0 por defecto), por lo que
   la iluminación exterior de día (≈146/255) y de noche (≈17–19/255) no sufre ninguna alteración.
+
+## Cuevas y paridad del banco (B-17.9, 2026-11-09)
+
+En el banco comparativo de paridad (`banco-2026-11-09.md`, escena `cueva-oscura`), Horizon mostraba el fondo, el techo
+y el entibado con una luminosidad excesiva y un tinte azulado, mientras que en el original la galería está casi negra y
+apenas se intuyen las tablas de madera del entibado más cercano.
+
+- **Calibración de la luz mínima:** se devuelve `OPC_LUZ_MINIMA_CUEVA` a `0,0018` (medida exacta de `paridad/03`: `0,001766`
+  en nivel de cielo 0), con `OPC_LUZ_MINIMA_CUEVAS_DEFECTO = 1,0` (antes 0,0071 con multiplicador 0,5, que daba ~0,00355).
+- **Linterna de cámara frontal (`fino/03 §3`):** la luz mínima no es isótropa ni constante con la distancia: modula con el
+  coseno entre la normal y la visual de cámara (`frontal = max(dot(n, p.vista), 0.0)`) y decae con la distancia
+  `1 / (1 + dist · 0.22)`. Las superficies frontales a 1–2 bloques (entibado) reciben hasta ~75 % del aporte, mientras que
+  las paredes del fondo a 12–16 bloques caen a menos del 20 % y desaparecen en la oscuridad profunda.
+- **Transición con apertura y anulación de cielo:** combina la apertura de la cámara y del bloque
+  `apertura = clamp(luz_cielo + cielo_camara · (1 - luz_cielo), 0.0, 1.0)` y se anula progresivamente con `(1 - luz_cielo)`
+  como indica la tabla de paridad.
+- **Protección de fugas solares y SSS en cuevas (`fino/03 §4`):** la luz solar directa y la dispersión subsuperficial
+  directa se multiplican por un factor suave de protección `clamp(apertura² · 4, 0.0, 1.0)`, evitando que la vegetación
+  o bloques translúcidos subterráneos brillen con sol exterior más allá del mapa de sombras.

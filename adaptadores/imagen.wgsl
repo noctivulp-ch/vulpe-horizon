@@ -67,6 +67,8 @@ fn adp_exposicion(o: OpcImagen) -> AdpExposicion {
     var bastones = select(0.0, col_peso_bastones(estado.y, OPC_BASTONES_L0), estado.y > 0.0) * (OPC_PURKINJE * opc_estilo_noches().mult_purkinje);
     // Fuera del Overworld no hay noche que adaptar (17): sin Purkinje (teñía de azul el Nether).
     bastones *= select(0.0, 1.0, adp_es_superficie());
+    // En cuevas o interiores sin cielo no hay visión escotópica exterior (fino/03 §3 y banco cueva-oscura).
+    bastones *= smoothstep(0.0, 0.15, frame.eye_light_smooth.y);
     // Junto a una fuente de luz (luz de bloque en la cámara) el ojo no está en visión escotópica: los colores de las
     // antorchas no se pierden en el azul (visto con el 03.1).
     bastones *= 1.0 - smoothstep(0.15, 0.6, frame.eye_light_smooth.x);

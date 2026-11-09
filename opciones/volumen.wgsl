@@ -44,9 +44,9 @@ fn opc_niebla_end() -> f32 {
 }
 
 // Niebla de cueva (05.3): constantes con nombre y ajuste desde estilo_cuevas
-const OPC_NIEBLA_CUEVA_COLOR: vec3<f32> = vec3<f32>(0.15, 0.35, 0.85); // azul oscuro tenue
+const OPC_NIEBLA_CUEVA_COLOR: vec3<f32> = vec3<f32>(0.5, 0.5, 0.52); // tinte neutro, sin azul saturado (banco cueva-oscura)
 const OPC_NIEBLA_CUEVA_DISTANCIA: f32 = 32.0;                         // bloques: escala de distancia
-const OPC_NIEBLA_CUEVA_BRILLO: f32 = 0.0035;                          // escala lineal: irradiancia base
+const OPC_NIEBLA_CUEVA_BRILLO: f32 = 0.0004;                          // irradiancia base reducida para evitar iluminar el fondo de cueva
 
 fn opc_niebla_cueva() -> VolAjustesCueva {
     let mod_cuevas = opc_estilo_cuevas();

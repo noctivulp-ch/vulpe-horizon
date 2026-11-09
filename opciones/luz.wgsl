@@ -9,7 +9,7 @@ override brillo_especular_sol: f32 = 1.0;   // brillo del destello solar (§1)
 // Opciones que pasaron a constantes con nombre resueltas por presets o mod nativo (§2.2 y §3)
 const OPC_LUZ_CIELO_DEFECTO: f32 = 1.0;
 const OPC_LUZ_BLOQUE_DEFECTO: f32 = 1.0;
-const OPC_LUZ_MINIMA_CUEVAS_DEFECTO: f32 = 0.5;
+const OPC_LUZ_MINIMA_CUEVAS_DEFECTO: f32 = 1.0;
 const OPC_LUZ_MINIMA_EXTERIOR_DEFECTO: f32 = 0.0;
 const SSS_BRILLO: f32 = 1.0;
 const EMISION_LABPBR: f32 = 1.0;
@@ -17,7 +17,7 @@ const EMISION_LABPBR: f32 = 1.0;
 // Escalas en la escala común (convenciones.md): proporciones de partida afinadas en el juego.
 const OPC_LUZ_BLOQUE: f32 = 1.0;            // × la curva medida de la antorcha (paridad/03; antes 0,012 × refuerzo 3)
 const OPC_LUZ_MINIMA: f32 = 0.0004;           // base de otros mínimos (agua, ambiente del agua)
-const OPC_LUZ_MINIMA_CUEVA: f32 = 0.0071;     // por unidad de la opción: adaptada al fílmico Hejl 2015 (×0,5) para dar ~35/255 (03.4)
+const OPC_LUZ_MINIMA_CUEVA: f32 = 0.0018;     // por unidad de la opción: calibrada con la medida exacta de paridad/03 (0.001766)
 // Ambiente de las otras dimensiones (17), en la misma escala.
 const OPC_AMBIENTE_NETHER: f32 = 0.0035;
 const OPC_AMBIENTE_END: f32 = 0.002;
