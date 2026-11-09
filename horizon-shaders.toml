@@ -114,6 +114,8 @@ files = [
 [shadow]
 resolution = 2048
 distance = 128.0
+resolution_option = "sombras_resolucion"
+distance_option = "sombras_distancia"
 
 [[post]]
 file = "etapas/post/01-aurora.wgsl"
@@ -544,7 +546,7 @@ max = 10.0
 step = 0.1
 
 # ============================================================================================
-# 2. PRESETS DE CALIDAD (7 OPCIONES, mapa-de-ajustes.md §2.1)
+# 2. PRESETS DE CALIDAD Y MAPA DE SOMBRAS (9 OPCIONES, mapa-de-ajustes.md §2.1)
 # ============================================================================================
 
 [[options]]
@@ -562,6 +564,22 @@ description = "Penumbra variable (PCSS), muestras de búsqueda y de filtro."
 type = "choice"
 values = ["Según la general", "Baja", "Media", "Alta", "Ultra"]
 default = "Según la general"
+
+[[options]]
+id = "sombras_resolucion"
+name = "Resolución de sombras"
+description = "Tamaño del mapa de sombras en texels."
+type = "choice"
+values = ["1024", "2048", "4096"]
+default = "2048"
+
+[[options]]
+id = "sombras_distancia"
+name = "Distancia de sombras"
+description = "Alcance del mapa de sombras en bloques desde la cámara."
+type = "choice"
+values = ["64", "128", "192", "256"]
+default = "128"
 
 [[options]]
 id = "calidad_niebla"
@@ -882,8 +900,8 @@ id = "presets_calidad"
 name = "Calidad (presets)"
 description = "Presets de calidad gráfica: general y por subsistema."
 items = [
-    "calidad_general", "calidad_sombras", "calidad_niebla", "calidad_nubes",
-    "calidad_ao", "calidad_reflejos", "calidad_fractal"
+    "calidad_general", "calidad_sombras", "sombras_resolucion", "sombras_distancia",
+    "calidad_niebla", "calidad_nubes", "calidad_ao", "calidad_reflejos", "calidad_fractal"
 ]
 
 [[pages]]

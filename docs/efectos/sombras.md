@@ -5,7 +5,7 @@ Especificación: `../vulpe-horizon-spec/subsistemas/04-sombras.md`. Capturas: `p
 
 ## Qué hay y qué falta
 
-Mapa de Horizon pedido con `[shadow]` (2048 texels, 128 bloques de semilado). PCSS completo (búsqueda de
+Mapa de Horizon pedido con `[shadow]` (2048 texels y 128 bloques de semilado por defecto, elegibles con `sombras_resolucion` y `sombras_distancia`). PCSS completo (búsqueda de
 ocluyentes, penumbra por distancia, PCF con disco de Vogel girado por píxel y fotograma), PCF fijo como
 opción «básica», sesgo por la normal, corrección de fugas en interiores, sombras de color de agua y cristal,
 y fundido a la sombra aproximada por la luz de cielo al borde del mapa. La sombra da también el **grosor**
@@ -75,12 +75,16 @@ Solo en caras hacia la luz, en plantas cruzadas o con SSS, y con algo de luz de 
 
 ## Opciones
 
-Página «Sombras» y página «Calidad» (ver `docs/efectos/calidad.md`): la opción `sombras_penumbra` salió del menú
+Página «Calidad (presets)» y página «Niebla y nubes» (ver `docs/efectos/calidad.md`): la opción `sombras_penumbra` salió del menú
 para integrarse en el preset `calidad_sombras` (Baja: penumbra fija con filtro 4; Media: variable con búsqueda 4 y filtro 8;
-Alta: búsqueda 8 y filtro 16; Ultra: búsqueda 16 y filtro 32; sombras de contacto pendientes). Las sombras de nubes
-se mantienen en la página «Sombras». La resolución (1024 a 4096) y distancia (64 a 256) teóricas del preset quedan
-recogidas en `calidad.md`, manteniéndose en el manifiesto en 2048 y 128.0 debido a que `resolution_option` y `distance_option`
-de Horizon solo admiten opciones numéricas y no presets con herencia simbólica. El shader ya calcula dinámicamente con `frame`.
+Alta: búsqueda 8 y filtro 16; Ultra: búsqueda 16 y filtro 32; sombras de contacto pendientes). Como `resolution_option` y
+`distance_option` de `[shadow]` exigen una opción `int` o un `choice` de números y no pueden colgar de un preset con niveles con
+nombre ni heredar de `calidad_general`, el tamaño y el alcance del mapa se eligen directamente en la página de Calidad mediante
+dos opciones `choice` de números: `sombras_resolucion` (`"1024"`, `"2048"`, `"4096"`, por defecto `"2048"`) conectada a
+`resolution_option`, y `sombras_distancia` (`"64"`, `"128"`, `"192"`, `"256"`, por defecto `"128"`) conectada a `distance_option`.
+El motor actualiza `frame.shadow_resolution` y `frame.shadow_distance` sin requerir `override` en WGSL, y `adaptadores/sombras.wgsl`
+adapta la densidad de texels por bloque (`adp_texeles_por_bloque`) y el sesgo en vivo. Las sombras de nubes (`nubes_sombras`) se
+mantienen en la página «Niebla y nubes».
 
 ## Coste medido
 
