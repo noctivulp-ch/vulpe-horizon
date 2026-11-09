@@ -11,3 +11,4 @@ const OPC_VIENTO_HOJA_PERIODO: f32 = 4.44;
 const OPC_VIENTO_HOJA_AMPLITUD: f32 = 0.0558;
 const OPC_VIENTO_HOJA_VERTICAL: f32 = 0.24;
 const OPC_MAT_PLANTA_ALTA_ARRIBA: u32 = 8u;     // mitad superior de las plantas de dos bloques
+const OPC_MAT_COLGANTES: u32 = 9u;              // enredaderas, lianas y plantas colgantes (15.1: ondulan enteras como las hojas)

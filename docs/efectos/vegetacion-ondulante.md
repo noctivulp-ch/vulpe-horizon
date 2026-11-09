@@ -63,4 +63,21 @@ Con la nightly f42ef42 el juego admite `[vertex]`: la etapa está en el manifies
 Las amplitudes se calcularon con las mismas fórmulas sobre 64 fases y 120 s (media del módulo horizontal). **Visto:** de
 pie en la pradera de (170, 78, 166), cuatro capturas seguidas difieren en 82 000–237 000 píxeles de la mitad de abajo
 con la ondulación y en 1 900–8 900 sin ella (`vegetacion-a.png`, `vegetacion-b.png`). **Sin ver:** el ritmo a ojo con
-el juego en marcha, las enredaderas enteras (15.1) y la sombra de las plantas moviéndose.
+el juego en marcha y la sombra de las plantas moviéndose.
+
+## Enredaderas y lianas enteras (15.1, 2026-11-09)
+
+En la implementación inicial las enredaderas y lianas compartían el id de material 4 con las plantas de suelo
+por su SSS medio. Al aplicar la condición `uv_y > 0.5`, la base de cada bloque de enredadera quedaba estática
+mientras que la mitad superior oscilaba, provocando un efecto visual en dientes de sierra a lo largo de columnas
+de varios bloques verticales.
+
+**Solución:**
+- Separación en `horizon-shaders.toml`: nuevo material `id = 9` (`OPC_MAT_COLGANTES` en `opciones/viento.wgsl`)
+  para sprites de lianas y colgantes (`block/vine`, `block/*_vines*`, `block/hanging_roots*`, `block/cave_vines*`).
+- En `adaptadores/material.wgsl`: conserva el SSS medio (`0.6`) en `adp_sss_lista` y la condición de planta cruzada
+  en `adp_es_cruzada`.
+- En `adaptadores/vertice.wgsl`: `colgantes` no aplica la restricción de base `uv_y > 0.5` y se balancea íntegramente
+  en 3D con `sup_viento_hoja(mundo, v)` junto a la familia de hojas, garantizando continuidad vertical perfecta entre
+  bloques contiguos sin roturas ni dientes de sierra.
+

@@ -832,9 +832,13 @@ sprites = ["block/*_sapling", "block/tall_grass_*", "block/large_fern_*", "block
 id = 3
 sprites = ["block/packed_ice", "block/blue_ice"]
 
-[[materials]]       # hierba, helechos, flores, bambú, lianas: SSS medio, cruzadas
+[[materials]]       # hierba, helechos, flores, bambú: SSS medio, cruzadas
 id = 4
-sprites = ["block/short_grass", "block/grass", "block/fern", "block/dandelion", "block/poppy", "block/blue_orchid", "block/allium", "block/azure_bluet", "block/*_tulip", "block/oxeye_daisy", "block/cornflower", "block/lily_of_the_valley", "block/wither_rose", "block/torchflower", "block/bamboo_stage0", "block/bamboo_*_leaves", "block/vine", "block/*_vines", "block/*_vines_plant", "block/*_roots", "block/sugar_cane", "block/sweet_berry_bush_*", "block/dead_bush", "block/*_fungus", "block/hanging_roots", "block/cave_vines*"]
+sprites = ["block/short_grass", "block/grass", "block/fern", "block/dandelion", "block/poppy", "block/blue_orchid", "block/allium", "block/azure_bluet", "block/*_tulip", "block/oxeye_daisy", "block/cornflower", "block/lily_of_the_valley", "block/wither_rose", "block/torchflower", "block/bamboo_stage0", "block/bamboo_*_leaves", "block/*_roots", "block/sugar_cane", "block/sweet_berry_bush_*", "block/dead_bush", "block/*_fungus"]
+
+[[materials]]       # plantas colgantes: enredaderas, lianas, musgo colgante (15.1: ondulan enteras como hojas); SSS medio
+id = 9
+sprites = ["block/vine", "block/*_vines", "block/*_vines_plant", "block/hanging_roots", "block/cave_vines*"]
 
 [[materials]]       # liquen, pétalos, cogollos de amatista: SSS medio
 id = 5
