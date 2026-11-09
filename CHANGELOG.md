@@ -9,13 +9,13 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/
 
 Primera versión beta pública empaquetada en formato `.hshader` para Horizon (Minecraft Java reescrito en Rust), implementada en sala limpia sobre la API de shaders en WGSL (API 0.1).
 
-Esta versión beta culmina la integración de los subsistemas base, introduce el relieve geométrico por teselación, soporte de iluminación dinámica en la mano, sombras completamente configurables y una reestructuración integral del menú mediante presets de calidad y de estilo bajo el límite estricto de 64 opciones del motor.
+Esta versión beta reúne los subsistemas base e introduce el relieve geométrico por teselación, soporte de iluminación dinámica en la mano, sombras completamente configurables y una reestructuración integral del menú mediante presets de calidad y de estilo bajo el límite estricto de 64 opciones del motor.
 
 ### Subsistemas (fase 1 consolidada y mejoras de fase 2/3)
 
-Se completaron y verificaron los 17 subsistemas fundamentales del pack:
+Están implementados los 18 subsistemas del pack (el relieve, el 18, se describe más abajo):
 - **Cielo físico y atmósfera:** dispersión física Rayleigh y Mie resuelta en vivo con tabla precalculada de transmitancia, tabla de colores atmosféricos, astros (sol, luna con seguimiento de fases, estrellas) y cinturón de Venus suavizado en el horizonte.
-- **Cielo fractal procedural (identidad Vulpe):** renderizado nocturno de conjuntos de Julia y Mandelbrot con sorteo procedural diario idéntico al original, paletas armónicas y modulación de ganancia.
+- **Cielo fractal procedural (identidad Vulpe):** renderizado nocturno de conjuntos de Julia y Mandelbrot con sorteo diario igual al del original en las GPU cuyo seno coincide (comprobado en una RTX 3050 Ti; en otras, modo de hash estable), paletas armónicas y modulación de ganancia.
 - **Aurora boreal del fractal:** emisión de cortinas de luz en el volumen de niebla proyectadas desde los conos del fractal, con vetas, velo superior y ventana nítida hacia el cielo.
 - **Niebla y nubes volumétricas:** trazado de rayos (*raymarching*) unificado para atmósfera, niebla y tres capas de nubes con perfiles dinámicos según el tiempo diario y horario (niebla baja matutina, noches densas y tormentas).
 - **Luz de superficie (PBR):** iluminación física con soporte completo de LabPBR (albedo, normales detalladas, rugosidad lineal, reflectancia metálica F0 y dispersión bajo la superficie / SSS en hojas y nieve), atenuación medida de antorchas y ajuste de interiores.
