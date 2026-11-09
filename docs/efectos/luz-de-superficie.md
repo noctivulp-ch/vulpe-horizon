@@ -51,15 +51,18 @@ antorcha se ve bien en una cueva, y de día al sol apenas se nota, como en la re
 
 ### Curvas
 
-- Luz de cielo: `(l² + l¹⁵)/2` (muy cerrada al principio, casi lineal al final).
+- Luz de cielo: `(l² + 2·l¹⁵)/3` (ponderación de 1/3 suave y 2/3 abrupta de grado 15, calibrada exactamente con la tabla de `paridad/03`).
 - Luz de bloque: `(1 − √(1 − l))²` y por encima de 0,7 una mezcla cúbica hacia ×3.
 
 ### Difusa y ambiente
 
 - Lambert con 0,05 de desplazamiento (`(N·L + 0,05)/1,05`): las caras rasantes no parpadean.
 - Plantas cruzadas (ids 2 y 4): `N·L = 0,75` fijo.
-- Ambiente hemisférico: `mix(suelo, cielo, N.y/2 + ½) · mix(0,55; 1; …)`, con cielo y suelo de la tabla
-  de la atmósfera (01). Con lluvia el sol se apaga al 10 % y el cielo se vuelve gris.
+- Modulación direccional de la luz de cielo (Overworld, `fino/03 §2` y `paridad/03`): normal en norma L1
+  (`ny_l1 = n.y / (|nx| + |ny| + |nz|)`), con factor direccional que interpola entre 0,08 (inferior), 0,356
+  (pared vertical) y 1,0 (superior). Interpola hacia 1,0 (isótropo) conforme la luz de cielo del bloque cae a
+  cero en interiores y cuevas. El tope superior queda acotado por la oclusión ambiental (`min(f_dir, mix(0.356, 1.0, ao))`).
+  No se utiliza color de suelo en Overworld; en dimensiones Nether y End se mantiene el modelo hemisférico `luz_hemisferica`.
 
 ### SSS
 

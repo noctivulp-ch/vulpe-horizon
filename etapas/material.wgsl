@@ -46,9 +46,12 @@ fn material(input: MaterialInput) -> Surface {
     }
     directa *= directa_luz;
 
-    // Ambiente: cielo hemisférico × curva de la luz de cielo; bloque; mínima.
+    // Ambiente: cielo modulado por norma L1 (Overworld) o hemisférico (Nether/End) × curva de cielo.
     let curva_cielo = select(luz_curva_cielo(p.luz_cielo), 1.0, luces.fija);
-    let ambiente_cielo = luz_hemisferica(n.y, luces.cielo, luces.suelo) * curva_cielo;
+    var ambiente_cielo = luces.cielo * luz_direccion_cielo(n, p.luz_cielo, p.cruzada, p.ao_vertice) * curva_cielo;
+    if luces.fija {
+        ambiente_cielo = luz_hemisferica(n.y, luces.cielo, luces.suelo) * curva_cielo;
+    }
     var sss_cielo = vec3<f32>(0.0);
     if m.sss > 0.0 {
         sss_cielo = sup_sss_color(albedo, 0.5) * luces.cielo * curva_cielo * m.sss * mix(0.3, 0.8, p.vista.y * -0.5 + 0.5);
@@ -69,7 +72,7 @@ fn material(input: MaterialInput) -> Surface {
         let r = reflect(-p.vista, n);
         let horizonte = adp_tabla(frame.sun_direction.y, ATM_FILA_HORIZONTE) * opc_cielo().sol_color;
         let cielo_r = mix(horizonte, luces.cielo * 2.0, sqrt(max(r.y, 0.0)));
-        let ambiente_r = select(cielo_r, luces.suelo, r.y < 0.0);
+        let ambiente_r = select(cielo_r, select(luces.cielo * 0.08, luces.suelo, luces.fija), r.y < 0.0);
         reflejo = ambiente_r * f_ambiente * curva_cielo * max(visible, select(0.0, 1.0, m.metal));
     }
     var difusa_total = directa + indirecta;

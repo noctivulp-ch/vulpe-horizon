@@ -37,14 +37,18 @@ fn luz_ao(p: vec3<f32>, n: vec3<f32>, c: LuzAo, profundidad: texture_depth_2d) -
         let a = (f32(i) * 2.39996 + c.giro * MAT_TAU);
         let uv = uv0 + vec2<f32>(cos(a) * aspecto, sin(a)) * r * radio_uv;
         let s = luz_ao_posicion(c, profundidad, uv);
-        if s.w <= 0.0 {
+        if s.w <= 0.0 || s.w >= 1.0 {
             continue;
         }
         let v = s.xyz - p;
         let l2 = dot(v, v);
+        let r2 = radio * radio;
+        if l2 >= r2 {
+            continue;
+        }
         let coseno = dot(v * inverseSqrt(max(l2, 1e-6)), n);
-        // Sesgo: una cara plana no se ocluye a sí misma; corte: lo mucho más cercano no ocluye (halos).
-        let peso = max(0.0, 1.0 - l2 / (radio * radio * 4.0));
+        // Sesgo: una cara plana no se ocluye a sí misma; corte cuadrático estricto para evitar halos en siluetas.
+        let peso = max(0.0, 1.0 - l2 / r2);
         suma += max(0.0, coseno - 0.15) * peso;
     }
     return max(1.0 - c.fuerza * suma / f32(c.muestras) * c.escala, 0.0);

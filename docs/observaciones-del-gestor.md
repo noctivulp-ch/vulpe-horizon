@@ -138,3 +138,6 @@ disposición de la referencia). En espera: lo único abierto es el 15 (vegetaci�
   Densidad cúbica de niebla y sustitución por perfiles de lluvia (uniforme 0,2³ y manchas 0,4³), corrección de la
   fuente ambiental de la niebla con fase cenital, mezcla direccional del cielo de lluvia (Tablas A y B) y luz
   ambiental clara para la escena `lluvia-dia` (muro del fondo velado en bruma gris azulada y cielo luminoso).
+- **2026-11-09 (B, encargo B-16.3):**
+  - **Luz de cielo direccional y oclusión:** caras inferiores de techos y voladizos en exteriores ahora se modulan en norma L1 con pesos de paridad (0,08 abajo frente a 1,0 arriba y 0,356 paredes verticales), suprimiendo la claridad excesiva de `cielo-dia` y `nubes-dia`. La curva de luz de cielo pondera 1/3 suave y 2/3 de grado 15 `(l² + 2·l¹⁵)/3` según los vectores de `paridad/03`.
+  - **Supresión de halos en siluetas:** en `luz_ao` se rechazan muestras de cielo (`s.w >= 1.0`) y se restringe la atenuación cuadrática estrictamente al radio de búsqueda espacial (`1 - l²/r²`), eliminando penumbras flotantes alrededor de troncos y hojas contra el cielo. Se añade recorrido `pruebas/escenas/luz-techo.ctl`.

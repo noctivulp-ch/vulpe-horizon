@@ -1,10 +1,10 @@
 // Curvas de la luz de cielo y de bloque de Minecraft (0..1) a intensidad. Porqué: docs/efectos/luz-de-superficie.md §Curvas
 
-// Muy cerrada al principio, casi lineal al final: los huecos interiores se oscurecen rápido y el
-// exterior queda pleno.
+// Caída suave cuadrática (1/3) y abrupta de grado 15 (2/3) según la tabla de paridad/03: los interiores
+// se oscurecen rápido y el exterior pleno satura a 1.0.
 fn luz_curva_cielo(l: f32) -> f32 {
     let x = clamp(l, 0.0, 1.0);
-    return (x * x + pow(x, 15.0)) * 0.5;
+    return (x * x + 2.0 * pow(x, 15.0)) / 3.0;
 }
 
 // Luz de una antorcha por nivel de luz de bloque (nivel / 15), en la escala común (1 = sol en el cenit sobre blanco de

@@ -22,6 +22,7 @@ struct AdpPunto {
     desplazado: f32,
     altura_mapa: f32,
     con_pbr: bool,
+    ao_vertice: f32,
 }
 
 fn adp_es_cruzada(m: u32) -> bool {
@@ -49,9 +50,11 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
     p.material = input.material;
     p.cruzada = adp_es_cruzada(input.material);
     var tinte = input.tint.rgb;
+    let sombreado = max(adp_sombreado_vanilla(input.normal), 0.5);
     if !p.cruzada {
-        tinte /= max(adp_sombreado_vanilla(input.normal), 0.5);
+        tinte /= sombreado;
     }
+    p.ao_vertice = select(clamp(col_luminancia(input.tint.rgb) / sombreado, 0.0, 1.0), 1.0, p.cruzada);
     p.albedo = col_srgb_a_lineal(mat_saturar3(input.albedo.rgb * tinte));
     // Estaciones (03.2): solo los bloques con color de bioma (tinte no blanco), y las hojas con su propio tinte. Con
     // mod nativo sigue la estación continua del mundo; sin mod nativo, queda fija en la estación inicial.

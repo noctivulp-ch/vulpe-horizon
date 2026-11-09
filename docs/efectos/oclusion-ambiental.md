@@ -15,14 +15,14 @@ ruido.
 
 - `nucleo/luz/oclusion.wgsl`: disco de Vogel en pantalla girado por ruido azul (canal 3) por píxel y fotograma,
   con radio de 1,5 bloques proyectado al plano del punto (acotado entre 2 píxeles y el 8 % de la pantalla, la
-  mitad pasados 50 bloques). Por muestra: `max(0, cos(v, N) − 0,15) · max(0, 1 − |v|²/(4r²))`; el sesgo evita que
-  una cara plana se ocluya y el corte por distancia quita los halos. `AO = max(1 − fuerza · media · 2,5, 0)`.
+  mitad pasados 50 bloques). Por muestra: rechazo estricto si `s.w >= 1.0` (cielo: nunca ocluye ni genera halos)
+  y corte cuadrático exacto `1 − |v|²/r²` hasta el radio límite (`fino/08 §2`). `AO = max(1 − fuerza · media · escala, 0)`.
 - **La posición del punto se reconstruye igual que la de las muestras** (`luz_ao_posicion`, con
   `view_inverse · projection_inverse`), no con el ayudante `view_position`: con los dos métodos mezclados, una
   diferencia mínima entre ellos oscurecía un 26 % las caras planas (medido en la cueva de prueba).
 - **Aplicación** (`adaptadores/oclusion.wgsl`): solo sobre la luz indirecta del terreno sólido, con la fracción del
-  dato de `set_surface` (03): `color · (1 − indirecta · (1 − AO^2,5))`. Donde `surface_at().present` es falso,
-  nada.
+  dato de `set_surface` (03): `color · (1 − indirecta · (1 − AO^4,0))`. Donde `surface_at().present` es falso,
+  nada. Curva de respuesta a la cuarta potencia según `fino/08 §1` y `paridad/08`.
 - Sin GTAO: «alta» son 20 muestras. Sin «apertura hacia arriba» (opcional).
 
 ## Opciones
