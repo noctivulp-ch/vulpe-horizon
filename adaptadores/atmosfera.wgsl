@@ -15,7 +15,7 @@ fn adp_observador() -> vec3<f32> {
 
 fn adp_luz_sol(ajustes: OpcCielo) -> AtmLuz {
     let d = frame.sun_direction;
-    let color = ajustes.sol_color * ajustes.brillo;
+    let color = ajustes.sol_color;
     let base = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * ATM_MULTIPLE;
     // En el crepúsculo el ambiente mantiene el gris azulado de la bóveda sobre la sombra de la Tierra (01.1).
     // Porqué: docs/efectos/cielo-y-atmosfera.md §Cinturón de Venus
@@ -40,7 +40,7 @@ fn adp_luz_luna(ajustes: OpcCielo) -> AtmLuz {
     let d = frame.moon_direction;
     let crepusculo = 1.0 - smoothstep(ajustes.venus.luna_inicio, ajustes.venus.luna_fin, frame.sun_direction.y);
     let peso = crepusculo * adp_luna_factor_fase();
-    let color = ajustes.luna_color * (ajustes.luna_proporcion * peso) * ajustes.brillo;
+    let color = ajustes.luna_color * (ajustes.luna_proporcion * peso);
     let multiple = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * ATM_MULTIPLE;
     return AtmLuz(d, ATM_IRRADIANCIA_SOL * color, multiple * color);
 }
@@ -87,16 +87,16 @@ fn adp_dispersion(dir: vec3<f32>, sol: AtmLuz, luna: AtmLuz, ajustes: OpcCielo) 
 }
 
 // Irradiancia del astro que da sombra (frame.light_direction: el sol de día, la luna de noche), tras la
-// atmósfera, con el cielo cubierto por la lluvia.
+// atmósfera, con rampa de horizonte que anula a <= 0° y color enrojecido medido en paridad/01.
 fn adp_irradiancia_astro(c: OpcCielo) -> vec3<f32> {
     let d = frame.light_direction;
+    let elev_sol = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
     var e: vec3<f32>;
     if dot(d, frame.sun_direction) > 0.0 {
-        e = adp_tabla(d.y, ATM_FILA_SOL) * c.sol_color * c.brillo;
+        e = atm_luz_directa_sol(elev_sol) * c.sol_color;
     } else {
-        let crepusculo = 1.0 - smoothstep(c.venus.luna_inicio, c.venus.luna_fin, frame.sun_direction.y);
-        let peso = crepusculo * adp_luna_factor_fase();
-        e = adp_tabla(d.y, ATM_FILA_SOL) * c.luna_color * (c.luna_proporcion * peso) * c.brillo;
+        let peso = adp_luna_factor_fase();
+        e = atm_luz_directa_luna(elev_sol) * c.luna_color * peso;
     }
     return e * (1.0 - 0.9 * clamp(frame.rain, 0.0, 1.0));
 }

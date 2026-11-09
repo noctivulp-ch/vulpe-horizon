@@ -61,8 +61,8 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
                     mapa: texture_depth_2d, comparacion: sampler_comparison, t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>,
                     ta: texture_2d<f32>, sa: sampler) {
     let cos_luz = dot(rayo.dir, luz.direccion);
-    let fase_aire_r = atm_fase_rayleigh(cos_luz);
-    let fase_aire_m = vol_hg(cos_luz, 0.76);
+    let fase_aire_r = atm_fase_elek(cos_luz);
+    let fase_aire_m = vol_fase_aire_mie(cos_luz);
     let largo = t1 - t0;
     // La sombra de las nubes varía despacio: se evalúa en los extremos del tramo y se interpola.
     let nubes_cerca = vol_sombra_nubes(rayo.camara + rayo.dir * t0, luz.direccion, a.nubes, t2, s2);

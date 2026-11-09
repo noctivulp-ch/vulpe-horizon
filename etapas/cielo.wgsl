@@ -27,9 +27,6 @@ fn sky(input: SkyInput) -> vec4<f32> {
         let escena = CieFractalEscena(adp_cielo_jitter(dir), frame.sun_direction, noche, mascara);
         fondo += cie_fractal(escena, adp_fractal_ajustes(fractal, adp_cielo_medio(ajustes)));
     }
-    let disco = atm_disco(dot(dir, sol.direccion), OPC_SOL_DISCO_RADIO, 0.15) * (1.0 - frame.rain);
-    fondo += sol.irradiancia * OPC_SOL_DISCO_BRILLO * disco;
-
     // Bajo el horizonte: bruma cerca de él y suelo al mirar más abajo, con la misma regla de ángulo que la
     // niebla de borde (05). Así el terreno que acaba antes del horizonte se funde con lo que hay detrás a
     // cualquier altura de la cámara.
@@ -37,6 +34,14 @@ fn sky(input: SkyInput) -> vec4<f32> {
     var cielo = atm.luz * mix(0.8, 1.0, suelo) + fondo * atm.transmitancia * cie_factor_suelo(dir.y, 0.03);
     cielo = mix(cie_color_bajo_horizonte(adp_cielo_medio(ajustes), adp_suelo(ajustes), 0.35), cielo, suelo);
     cielo = col_saturar(cielo, OPC_CIELO_SATURACION) * OPC_CIELO_BRILLO_DIBUJO;
+
+    // Disco del sol: luz directa ya atenuada y con rampa de horizonte (fino/01 §8),
+    // sumado directamente sin multiplicar por la transmitancia del rayo de vista ni por el brillo del dibujo.
+    let elev_sol = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
+    let directa_sol = atm_luz_directa_sol(elev_sol) * ajustes.sol_color;
+    let disco = atm_disco(dot(dir, sol.direccion), OPC_SOL_DISCO_RADIO, 0.15) * (1.0 - frame.rain);
+    cielo += directa_sol * OPC_SOL_DISCO_BRILLO * disco * cie_factor_suelo(dir.y, 0.03);
+
     cielo = cie_aplicar_lluvia(cielo, dir.y, adp_lluvia(ajustes));
     return adp_cielo_salida(cielo, dir);
 }

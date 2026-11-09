@@ -24,3 +24,9 @@ fn vol_fase(c: f32, densidad_optica: f32) -> f32 {
 fn vol_fase_niebla(c: f32) -> f32 {
     return vol_hg(c, 0.95) * 0.985 + vol_hg(c, 0.3) * 0.01 + vol_hg(c, -0.3) * 0.005;
 }
+
+// Fase de aerosoles del aire (Mie): fuerte concentración hacia adelante medida en paridad/05.
+// Porqué: docs/efectos/niebla-y-nubes.md §Fase
+fn vol_fase_aire_mie(c: f32) -> f32 {
+    return vol_hg(c, 0.88) * 0.94 + vol_hg(c, 0.55) * 5.0;
+}

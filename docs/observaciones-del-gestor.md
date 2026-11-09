@@ -128,3 +128,9 @@ gestor.
 El gestor da la aurora por cerrada en lo esencial (`c4d8d10`: puntos y filamentos nítidos sobre la cortina, en la
 disposición de la referencia). En espera: lo único abierto es el 15 (vegetación ondulante) y la sombra de la lluvia
 (16), que dependen de que el dueño decida actualizar Horizon.
+
+## 2026-11-09 — banco de paridad (encargo B-16)
+
+- Punto 1: luz directa y halo del sol a baja elevación corregidos conforme a `fino/01 §3, §5, §8` y `paridad/01`.
+  Rampa de visibilidad a 0° que elimina la franja anaranjada de luz directa y el halo gigante en `atardecer-oeste`;
+  enrojecimiento espectral y fase frontal concentrada (`paridad/05`) para halo suave y suelo cálido en `niebla-amanecer`.

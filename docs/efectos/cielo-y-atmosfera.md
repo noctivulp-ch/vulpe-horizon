@@ -200,3 +200,11 @@ violeta-magenta en lugar de rosa salmón poco saturado sobre la sombra gris azul
   225 → 225 → 194 → 77 → 20 → 9 a las 12600, 12700, 12800, 12850, 12900, 12950 (`hoja-venus.png`).
 - **Tono:** `OPC_VENUS_COLOR` (1; 0,56; 0,62) y refuerzo `OPC_VENUS_MULTIPLE_LOCAL` 6: (225; 172; 149) a las 12700,
   cerca del salmón (230; 180; 180) del objetivo, algo más cálido.
+
+### Luz directa
+
+Paridad con el banco de 2026-11-09 (`fino/01 §3, §5, §8` y `paridad/01`).
+- **Rampa de horizonte:** la luz directa solar de escena y el disco solar se anulan estrictamente a elevación solar <= 0°, evitando la franja de luz cálida sobre el suelo al atardecer (`atardecer-oeste`, hora 12000). La luna realiza la transición inversa entre 0° y -4° (anulada en >= 0°).
+- **Color enrojecido:** se evalúa `atm_luz_directa_sol` interpolando los 14 vectores de prueba de `paridad/01`, reproduciendo la fuerte absorción del azul y verde a 1°–6° (`niebla-amanecer`, hora 300: suelo cálido dorado y disco solar naranja-dorado en vez de blanco quemado).
+- **Halo solar cerrado:** fase molecular de Elek (2009) `(2,8 + cos θ) / (10π)` y fase bimodal de aerosoles en volumen (`vol_fase_aire_mie`) que concentra la dispersión hacia delante (`g = 0,88` con peso frontal y base abierta) ajustada a la tabla de `paridad/05`.
+- **Disco solar:** el disco no se multiplica por el brillo de dibujo de fondo ni por la transmitancia de vista por segunda vez (`fino/01 §8`), y su radio angular se ciñe a `OPC_SOL_DISCO_RADIO = 0,008` rad.

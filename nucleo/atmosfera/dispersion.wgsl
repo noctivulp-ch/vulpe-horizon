@@ -54,7 +54,7 @@ fn atm_multiple_crepusculo(base: vec3<f32>, seno_sol: f32, v: AtmVenus) -> vec3<
 // Aporte de un astro en un punto del rayo: dispersión simple por fase más el término isótropo. `hacia` es la
 // transmitancia del punto al astro (la da quien llama: tabla o integración).
 fn atm_aporte_luz(cos_vista: f32, medio: AtmMedio, hacia: vec3<f32>, luz: AtmLuz, p: AtmParametros) -> vec3<f32> {
-    let fase = medio.rayleigh * atm_fase_rayleigh(cos_vista) + vec3<f32>(medio.mie * atm_fase_cornette_shanks(cos_vista, p.mie_asimetria));
+    let fase = medio.rayleigh * atm_fase_elek(cos_vista) + vec3<f32>(medio.mie * atm_fase_cornette_shanks(cos_vista, p.mie_asimetria));
     let multiple = (medio.rayleigh + vec3<f32>(medio.mie)) * luz.multiple;
     return fase * hacia * luz.irradiancia + multiple;
 }
@@ -72,7 +72,7 @@ fn atm_aporte_sol(cos_vista: f32, vista_y: f32, altura: f32, medio: AtmMedio, ha
     let azul_estrat = hacia.b * (1.0 - hacia.g / max(hacia.r, 1e-5));
     hacia_corr.r = hacia.r * (1.0 - v.rojo_ozono * clamp(azul_estrat, 0.0, 1.0));
 
-    let fase = medio.rayleigh * atm_fase_rayleigh(cos_vista) + vec3<f32>(medio.mie * atm_fase_cornette_shanks(cos_vista, p.mie_asimetria));
+    let fase = medio.rayleigh * atm_fase_elek(cos_vista) + vec3<f32>(medio.mie * atm_fase_cornette_shanks(cos_vista, p.mie_asimetria));
     let banda_h = smoothstep(1500.0, 4500.0, altura) * (1.0 - smoothstep(v.altura_fin * 0.5, v.altura_fin, altura));
     let densidad_aire = medio.rayleigh.g + medio.mie;
     // Solo en el lado antisolar y por debajo de ~20° de elevación de la mirada (01.1: el rosa llegaba al cenit).

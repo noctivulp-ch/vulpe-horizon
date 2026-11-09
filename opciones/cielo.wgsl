@@ -10,8 +10,10 @@ const ESTRELLAS_BRILLO: f32 = 0.0;          // pasos (EV)
 // Proporciones de partida (convenciones.md §Escala de luz), no opciones.
 const OPC_LUNA_PROPORCION: f32 = 1.0 / 300.0;
 const OPC_LUNA_TEMPERATURA: f32 = 10000.0;
-const OPC_SOL_DISCO_RADIO: f32 = 0.014;     // rad: unas tres veces el real
-const OPC_SOL_DISCO_BRILLO: f32 = 12.0;     // radiancia del disco / irradiancia del sol
+const OPC_SOL_DISCO_RADIO: f32 = 0.008;     // rad: disco pequeño y nítido (paridad/01)
+const OPC_SOL_DISCO_BRILLO: f32 = 18.0;     // radiancia del disco / irradiancia del sol
+const OPC_SOL_RAMPA_GRADOS: f32 = 3.0;      // grados sobre el horizonte donde satura la luz directa (fino/01 §5)
+const OPC_LUNA_RAMPA_GRADOS: f32 = 3.0;     // grados bajo el horizonte donde satura la luna (fino/01 §5)
 const OPC_ESTRELLAS_BRILLO: f32 = 0.004;
 const OPC_CIELO_SATURACION: f32 = 1.0;
 // Brillo propio del cielo dibujado (no de la luz ambiente que da al terreno): docs/efectos/cielo-y-atmosfera.md §Montaje

@@ -33,7 +33,7 @@ fn material(input: MaterialInput) -> Surface {
     let l = luces.direccion;
     let n_l = select(dot(n, l), 0.75, p.cruzada);
     let difusa = luz_lambert(n_l);
-    let directa_luz = luces.directa / MAT_PI;
+    let directa_luz = luces.directa;
 
     // Luz directa y SSS: el SSS llena lo que la difusa no ilumina.
     var directa = albedo * difusa * sombra.luz;
