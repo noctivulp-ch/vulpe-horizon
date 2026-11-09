@@ -29,3 +29,28 @@ fn sup_estacion(albedo: vec3<f32>, dia: f32, duracion: f32, inicial: i32, hojas:
     }
     return c;
 }
+
+// Tintes con la numeración del mod nativo (0 primavera, 1 verano, 2 otoño, 3 invierno).
+fn sup_tinte_estacion_mod(k: i32, hojas: bool) -> vec3<f32> {
+    switch k {
+        case 0: { return select(vec3<f32>(0.92, 1.05, 0.98), vec3<f32>(0.9, 1.06, 1.0), hojas); }    // primavera
+        case 2: { return select(vec3<f32>(1.15, 0.95, 0.6), vec3<f32>(1.7, 0.7, 0.28), hojas); }    // otoño
+        case 3: { return select(vec3<f32>(0.85, 0.85, 0.8), vec3<f32>(0.8, 0.72, 0.78), hojas); }    // invierno (malva)
+        default: { return vec3<f32>(1.0); }                                                        // verano (1)
+    }
+}
+
+// Estación continua del mod nativo: 0.0..4.0 (0 primavera .. 3 invierno, la fracción es el avance).
+fn sup_estacion_mod(albedo: vec3<f32>, estacion_continua: f32, hojas: bool) -> vec3<f32> {
+    let k = i32(floor(estacion_continua)) % 4;
+    let f = smoothstep(0.75, 1.0, fract(estacion_continua));
+    let t = mix(sup_tinte_estacion_mod(k, hojas), sup_tinte_estacion_mod((k + 1) % 4, hojas), f);
+    let hacia = vec3<f32>(col_luminancia(albedo)) * t / max(col_luminancia(t), 1e-3);
+    var c = mix(albedo * t, hacia, select(0.0, 0.55, hojas) * select(0.0, 1.0, any(abs(t - vec3<f32>(1.0)) > vec3<f32>(0.01))));
+    if k == 3 || (k == 2 && f > 0.0) {
+        // El invierno desatura (k = 3 en mod; k = 2 transicionando a invierno).
+        let w = select(f, 1.0, k == 3) * select(1.0 - f, 1.0, k != 3);
+        c = mix(c, vec3<f32>(col_luminancia(c)), 0.35 * w);
+    }
+    return c;
+}

@@ -17,12 +17,10 @@ fn adp_aurora(alcance: f32) -> VolAurora {
     let o = opc_aurora();
     let ma = opc_estilo_aurora();
     let noche = adp_factor_noche();
-    // frame.mods[0].w: altura media del terreno (válida si mods[1].x = 1); si no, la fija.
-    let medido = frame.mods[0].x > 0.5 && frame.mods[1].x > 0.5;
-    let suelo = select(OPC_AURORA_SUELO, frame.mods[0].w, medido);
+    let m = adp_mod();
+    let suelo = OPC_AURORA_SUELO;
     let base = suelo + OPC_AURORA_FIN_VELO * ma.mult_velo;
-    let con_mod = frame.mods[0].x > 0.5;
-    let dia = select(0.0, floor(frame.mods[0].z), con_mod) + frame.day_time;
+    let dia = select(0.0, m.dia, m.tiene_tiempo) + frame.day_time;
     let activa = o.activa && opc_fractal().activo && noche > 0.0 && adp_es_superficie();
     let radio = OPC_AURORA_RADIO * ma.mult_radio;
     let largo = OPC_AURORA_LARGO * ma.mult_largo;

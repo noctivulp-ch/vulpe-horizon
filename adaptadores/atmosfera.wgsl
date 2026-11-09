@@ -23,13 +23,23 @@ fn adp_luz_sol(ajustes: OpcCielo) -> AtmLuz {
     return AtmLuz(d, ATM_IRRADIANCIA_SOL * color, multiple * color);
 }
 
+// Modulación de la luz de la luna según la fase lunar (formato v1 del mod nativo) y estilo_noches.
+fn adp_luna_factor_fase() -> f32 {
+    let mn = opc_estilo_noches();
+    if !mn.sigue_fases {
+        return 1.0;
+    }
+    let m = adp_mod();
+    if !m.tiene_tiempo {
+        return 1.0;
+    }
+    return abs(4.0 - f32(m.fase_luna)) / 4.0;
+}
+
 fn adp_luz_luna(ajustes: OpcCielo) -> AtmLuz {
     let d = frame.moon_direction;
-    let mn = opc_estilo_noches();
-    var peso = 1.0 - smoothstep(ajustes.venus.luna_inicio, ajustes.venus.luna_fin, frame.sun_direction.y);
-    if !mn.sigue_fases {
-        peso = 1.0;
-    }
+    let crepusculo = 1.0 - smoothstep(ajustes.venus.luna_inicio, ajustes.venus.luna_fin, frame.sun_direction.y);
+    let peso = crepusculo * adp_luna_factor_fase();
     let color = ajustes.luna_color * (ajustes.luna_proporcion * peso) * ajustes.brillo;
     let multiple = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * ATM_MULTIPLE;
     return AtmLuz(d, ATM_IRRADIANCIA_SOL * color, multiple * color);
@@ -38,13 +48,13 @@ fn adp_luz_luna(ajustes: OpcCielo) -> AtmLuz {
 // Radiancia media del cielo de este momento (sol + luna), para quien necesite su tono.
 fn adp_cielo_medio(ajustes: OpcCielo) -> vec3<f32> {
     let sol = adp_tabla(frame.sun_direction.y, ATM_FILA_CIELO) * ajustes.sol_color;
-    let luna = adp_tabla(frame.moon_direction.y, ATM_FILA_CIELO) * ajustes.luna_color * ajustes.luna_proporcion;
+    let luna = adp_tabla(frame.moon_direction.y, ATM_FILA_CIELO) * ajustes.luna_color * (ajustes.luna_proporcion * adp_luna_factor_fase());
     return (sol + luna) * ajustes.brillo;
 }
 
 fn adp_suelo(ajustes: OpcCielo) -> vec3<f32> {
     let sol = adp_tabla(frame.sun_direction.y, ATM_FILA_SUELO) * ajustes.sol_color;
-    let luna = adp_tabla(frame.moon_direction.y, ATM_FILA_SUELO) * ajustes.luna_color * ajustes.luna_proporcion;
+    let luna = adp_tabla(frame.moon_direction.y, ATM_FILA_SUELO) * ajustes.luna_color * (ajustes.luna_proporcion * adp_luna_factor_fase());
     return (sol + luna) * ajustes.brillo;
 }
 
@@ -73,7 +83,8 @@ fn adp_irradiancia_astro(c: OpcCielo) -> vec3<f32> {
     if dot(d, frame.sun_direction) > 0.0 {
         e = adp_tabla(d.y, ATM_FILA_SOL) * c.sol_color * c.brillo;
     } else {
-        let peso = 1.0 - smoothstep(c.venus.luna_inicio, c.venus.luna_fin, frame.sun_direction.y);
+        let crepusculo = 1.0 - smoothstep(c.venus.luna_inicio, c.venus.luna_fin, frame.sun_direction.y);
+        let peso = crepusculo * adp_luna_factor_fase();
         e = adp_tabla(d.y, ATM_FILA_SOL) * c.luna_color * (c.luna_proporcion * peso) * c.brillo;
     }
     return e * (1.0 - 0.9 * clamp(frame.rain, 0.0, 1.0));

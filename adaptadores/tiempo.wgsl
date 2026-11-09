@@ -2,8 +2,8 @@
 // opciones. Compartido (cielo, material y post). Porqué: docs/efectos/niebla-y-nubes.md §Adaptadores
 
 fn adp_momento(o: OpcVolumen) -> VolMomento {
-    let con_mod = frame.mods[0].x > 0.5;
-    let dia = select(0.0, floor(frame.mods[0].z), con_mod);
+    let m = adp_mod();
+    let dia = select(0.0, m.dia, m.tiene_tiempo);
     return VolMomento(dia, frame.day_time, frame.rain, o.aleatorio, OPC_PERFIL_FIJO);
 }
 
