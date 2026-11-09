@@ -202,3 +202,19 @@ Con las novedades de la API 0.1 de Horizon (nightly 2026-11-08, entrada de regis
 
 - **Integración:** en `adaptadores/material.wgsl`, `adp_material_punto` extrae `input.colored_light` gobernado por la opción `luz_mano` (0: apagada; 1 o 2: activa).
 - **Tratamiento en el material:** en `etapas/material.wgsl`, `p.luz_colorida` se suma a la luz de bloque del material (`(adp_color_luz_bloque(...) * luz_curva_bloque(...) + p.luz_colorida) * OPC_LUZ_BLOQUE * o.bloque`), compartiendo la escala `OPC_LUZ_BLOQUE` y el preset de intensidad `o.bloque`.
+
+## Cueva a oscuras y compensación del fílmico (fase 4, 03.4)
+
+En el commit `2041d82` (11.2) se activó el mapeo de tonos fílmico (Hejl 2015) por defecto con una escala de exposición
+propia de ×0,5 (`OPC_TONEMAP_EXPOSICION = 0,5`). Al reducir a la mitad la luz que entra al tonemap y contar la curva de
+Hejl con un pie pronunciado (se anula bajo ~0,00465 y comprime fuertemente los oscuros frente a la linealidad inicial
+de Reinhard), la luz mínima de cueva (`OPC_LUZ_MINIMA_CUEVA = 0,00294`, calibrada en 03.3 con Reinhard) quedó
+atrapada en la base de la curva: en una caja cerrada de piedra a medianoche (`time 18000`), el gestor midió una media de
+3/255 y máximo de 15/255, dejando la cueva prácticamente negra.
+
+- **Arreglo:** se eleva `OPC_LUZ_MINIMA_CUEVA` a `0,0071` (~2,41×). Con la opción por defecto (`0,5`), la irradiancia
+  mínima de cueva pasa a `0,00355`. Tras la adaptación de la exposición automática y la escala ×0,5, el valor medio
+  entregado al fílmico se sitúa en ~0,026, devolviendo la media de la imagen en el cuarto central a ~35/255 en sRGB
+  (distinguiendo las formas de la cueva a oscuras sin antorchas).
+- **Invarianza exterior:** al aire libre, `minima` se interpola con `o.minima_exterior` (0,0 por defecto), por lo que
+  la iluminación exterior de día (≈146/255) y de noche (≈17–19/255) no sufre ninguna alteración.
