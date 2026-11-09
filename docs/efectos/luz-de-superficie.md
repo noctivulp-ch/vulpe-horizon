@@ -128,10 +128,10 @@ el TAA (09) promediará el ruido. Los charcos (suavidad 0,97) son casi espejo y 
 «Luz mínima al aire libre» (`luz_minima_exterior`, 0–1, por defecto 0) es opción desde el punto 5 de la fase 2b
 (ver `exposicion-tonemap-gradacion.md` §«Oscuridad mínima y máxima»).
 
-Página «Luz» (presupuesto de `convenciones.md`): luz de cielo y de bloque (0–2), luz mínima en cuevas, SSS
-(apagado, lista, LabPBR, ambas), reflejos de pantalla (apagados, bajos, altos) y charcos. Color de la luz de
-bloque, luz mínima al aire libre, brillo del SSS, especular del sol y emisión LabPBR pasan a constantes
-(`opciones/luz.wgsl`).
+Página «Luz» y página «Calidad» (ver `docs/efectos/calidad.md`): la opción `reflejos_pantalla` salió del menú para
+integrarse en el preset `calidad_reflejos` (Baja: 8 pasos, rugosidad 0,2 / suavidad 0,8; Media: 15 pasos, rugosidad 0,3 /
+suavidad 0,7; Alta: 30 pasos, rugosidad 0,4 / suavidad 0,6; Ultra: 50 pasos, rugosidad 0,5 / suavidad 0,5; SSR en
+translúcidos pendiente). En la página «Luz» quedan luz de cielo y de bloque, mínimos de cuevas y exteriores, SSS y charcos.
 
 ## Coste
 

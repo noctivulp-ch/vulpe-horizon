@@ -64,7 +64,7 @@ fn material(input: MaterialInput) -> Surface {
     var reflejo = vec3<f32>(0.0);
     let visible = smoothstep(0.45, 0.7, m.suavidad);
     // Superficies lisas y sólidas: su reflejo lo pone el trazado de pantalla de la composición.
-    let por_pantalla = o.pasos_reflejo > 0 && !p.translucido && m.suavidad >= OPC_SUAVIDAD_REFLEJO_PANTALLA;
+    let por_pantalla = o.pasos_reflejo > 0 && !p.translucido && m.suavidad >= o.suavidad_reflejo;
     if (visible > 0.0 || m.metal) && !por_pantalla {
         let r = reflect(-p.vista, n);
         let horizonte = adp_tabla(frame.sun_direction.y, ATM_FILA_HORIZONTE) * opc_cielo().sol_color;

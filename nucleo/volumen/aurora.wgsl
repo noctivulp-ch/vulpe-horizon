@@ -11,6 +11,7 @@ struct VolAurora {
     intensidad: f32,        // multiplicador de la luz emitida (incluye el ajuste del usuario)
     dia: f32,               // día del mundo (mueve el ruido del despeje)
     depuracion: u32,        // 0 nada, 1 conos en rojo, 2 sin ventana
+    muestras: i32,
 }
 
 const VOL_AURORA_DEPURAR_CONOS: u32 = 1u;
@@ -162,9 +163,10 @@ fn vol_aurora_tramo(camara: vec3<f32>, dir: vec3<f32>, ta: f32, tb: f32, ruido: 
         return r;
     }
     let largo = t1 - t0;
-    let muestra = largo / f32(VOL_AURORA_MUESTRAS);
-    for (var k = 0; k < VOL_AURORA_MUESTRAS; k++) {
-        let u = (f32(k) + fract(ruido + f32(k) * 0.618034)) / f32(VOL_AURORA_MUESTRAS);
+    let n_muestras = a.muestras;
+    let muestra = largo / f32(n_muestras);
+    for (var k = 0; k < n_muestras; k++) {
+        let u = (f32(k) + fract(ruido + f32(k) * 0.618034)) / f32(n_muestras);
         let rel = dir * (t0 + u * largo);
         let y = camara.y + rel.y;
         let despeje = vol_aurora_despeje(rel, y, a, t, s);
@@ -177,7 +179,7 @@ fn vol_aurora_tramo(camara: vec3<f32>, dir: vec3<f32>, ta: f32, tb: f32, ruido: 
         if a.depuracion == VOL_AURORA_DEPURAR_CONOS {
             r.luz += vec3<f32>(despeje * muestra * 2e-3, 0.0, 0.0) * transmitancia;
         }
-        r.despeje += despeje / f32(VOL_AURORA_MUESTRAS);
+        r.despeje += despeje / f32(n_muestras);
         r.ventana += despeje * muestra;
     }
     r.fraccion = largo / max(tb - ta, 1e-3);

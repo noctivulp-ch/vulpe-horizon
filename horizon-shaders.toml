@@ -41,6 +41,7 @@ shared = [
     "nucleo/volumen/tiempo.wgsl",
     "nucleo/volumen/capas.wgsl",
     "nucleo/volumen/borde.wgsl",
+    "opciones/calidad.wgsl",
     "opciones/depuracion.wgsl",
     "opciones/imagen.wgsl",
     "opciones/exposicion.wgsl",
@@ -589,27 +590,11 @@ values = ["Apagada", "Lista", "LabPBR", "Ambas"]
 default = "Lista"
 
 [[options]]
-id = "reflejos_pantalla"
-name = "Reflejos de pantalla"
-description = "Charcos, metales y superficies lisas reflejan lo que se ve en pantalla."
-type = "choice"
-values = ["Apagados", "Bajos", "Altos"]
-default = "Bajos"
-
-[[options]]
 id = "charcos"
 name = "Charcos"
 type = "choice"
 values = ["Charcos y mojado", "Solo charcos", "Solo mojado", "Apagado"]
 default = "Charcos y mojado"
-
-[[options]]
-id = "ao"
-name = "Oclusión ambiental"
-description = "Rincones, juntas y huecos algo más oscuros. Apagada: solo la de vértice del juego."
-type = "choice"
-values = ["Apagada", "Normal", "Alta"]
-default = "Normal"
 
 [[options]]
 id = "ao_fuerza"
@@ -621,27 +606,10 @@ max = 2.0
 step = 0.05
 
 [[options]]
-id = "sombras_penumbra"
-name = "Penumbra"
-description = "Básica: borde suave fijo. Variable: dura al pie del objeto, difusa lejos de él."
-type = "choice"
-values = ["Básica", "Variable"]
-default = "Variable"
-
-[[options]]
 id = "niebla"
 name = "Niebla volumétrica"
 type = "bool"
 default = true
-
-[[options]]
-id = "niebla_pasos"
-name = "Calidad de la niebla"
-description = "Pasos del rayo."
-type = "int"
-default = 8
-min = 4
-max = 16
 
 [[options]]
 id = "niebla_cantidad"
@@ -689,13 +657,6 @@ values = ["Apagadas", "Todas", "Solo cúmulos", "Solo altoestratos"]
 default = "Todas"
 
 [[options]]
-id = "nubes_calidad"
-name = "Calidad de las nubes"
-type = "choice"
-values = ["Baja", "Media", "Alta"]
-default = "Media"
-
-[[options]]
 id = "nubes_sombras"
 name = "Sombras de nubes"
 type = "float"
@@ -703,6 +664,64 @@ default = 100.0
 min = 0.0
 max = 100.0
 step = 5.0
+
+# --- Presets de calidad (§2.1) --------------------------------------------------------------
+
+[[options]]
+id = "calidad_general"
+name = "Calidad general"
+description = "Ajusta la calidad de sombras, niebla, nubes, AO, reflejos y fractal a la vez."
+type = "choice"
+values = ["Baja", "Media", "Alta", "Ultra"]
+default = "Media"
+
+[[options]]
+id = "calidad_sombras"
+name = "Calidad de sombras"
+description = "Penumbra variable (PCSS), muestras de búsqueda y de filtro."
+type = "choice"
+values = ["Según la general", "Baja", "Media", "Alta", "Ultra"]
+default = "Según la general"
+
+[[options]]
+id = "calidad_niebla"
+name = "Calidad de la niebla"
+description = "Pasos del rayo y alcance de la niebla volumétrica."
+type = "choice"
+values = ["Según la general", "Baja", "Media", "Alta", "Ultra"]
+default = "Según la general"
+
+[[options]]
+id = "calidad_nubes"
+name = "Calidad de las nubes"
+description = "Pasos del raymarch y capas activas de nubes."
+type = "choice"
+values = ["Según la general", "Baja", "Media", "Alta", "Ultra"]
+default = "Según la general"
+
+[[options]]
+id = "calidad_ao"
+name = "Calidad de la oclusión ambiental"
+description = "Oclusión ambiental: vanilla (baja), pantalla filtrada (media) o alta calidad."
+type = "choice"
+values = ["Según la general", "Baja", "Media", "Alta", "Ultra"]
+default = "Según la general"
+
+[[options]]
+id = "calidad_reflejos"
+name = "Calidad de reflejos"
+description = "Pasos de trazado de reflejos en pantalla y umbral de rugosidad."
+type = "choice"
+values = ["Según la general", "Baja", "Media", "Alta", "Ultra"]
+default = "Según la general"
+
+[[options]]
+id = "calidad_fractal"
+name = "Calidad del fractal y cielo"
+description = "Iteraciones del cielo fractal, muestras e iteraciones de la aurora y rayos."
+type = "choice"
+values = ["Según la general", "Baja", "Media", "Alta", "Ultra"]
+default = "Según la general"
 
 [[textures]]
 id = "atmosfera"
@@ -823,7 +842,13 @@ blocks = ["verdant_froglight"]
 [[pages]]
 id = "principal"
 name = "Vulpe"
-items = ["page:cielo", "page:fractal", "page:niebla", "page:agua", "page:luz", "page:sombras", "page:imagen", "page:depuracion"]
+items = ["page:calidad", "page:cielo", "page:fractal", "page:niebla", "page:agua", "page:luz", "page:sombras", "page:imagen", "page:depuracion"]
+
+[[pages]]
+id = "calidad"
+name = "Calidad"
+description = "Presets de calidad gráfica: general y por subsistema."
+items = ["calidad_general", "calidad_sombras", "calidad_niebla", "calidad_nubes", "calidad_ao", "calidad_reflejos", "calidad_fractal"]
 
 [[pages]]
 id = "cielo"
@@ -841,7 +866,7 @@ items = ["fractal", "fractal_cambios_noche", "fractal_cobertura", "fractal_conju
 id = "niebla"
 name = "Niebla y nubes"
 description = "Niebla volumétrica y nubes."
-items = ["niebla", "niebla_pasos", "niebla_cantidad", "niebla_lluvia", "nubes", "nubes_calidad", "niebla_nether", "niebla_end"]
+items = ["niebla", "niebla_cantidad", "niebla_lluvia", "nubes", "niebla_nether", "niebla_end"]
 
 [[pages]]
 id = "agua"
@@ -854,13 +879,13 @@ items = ["agua_olas", "agua_claridad", "agua_refraccion"]
 id = "luz"
 name = "Luz"
 description = "Cielo, bloques, dispersión, brillos y charcos."
-items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "luz_minima_exterior", "sss", "reflejos_pantalla", "charcos", "menas", "menas_intensidad", "clima_opacidad", "estaciones", "estacion_inicial", "ondulacion", "ondulacion_fuerza"]
+items = ["luz_cielo", "luz_bloque", "luz_minima_cuevas", "luz_minima_exterior", "sss", "charcos", "menas", "menas_intensidad", "clima_opacidad", "estaciones", "estacion_inicial", "ondulacion", "ondulacion_fuerza"]
 
 [[pages]]
 id = "sombras"
 name = "Sombras"
 description = "Penumbra, sombras de nubes y oclusión ambiental."
-items = ["sombras_penumbra", "nubes_sombras", "ao", "ao_fuerza"]
+items = ["nubes_sombras", "ao_fuerza"]
 
 [[pages]]
 id = "imagen"

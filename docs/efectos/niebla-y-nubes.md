@@ -143,10 +143,12 @@ cuevas, hacia el color del cielo aproximado de la tabla. `color = escena · T + 
 
 ## Opciones
 
-Presupuesto de `convenciones.md` (2026-11-02): niebla sí/no, calidad (pasos 4–16), cantidad, con lluvia,
-**nubes por capas** (apagadas, todas, solo cúmulos, solo altoestratos) y calidad de nubes. Las sombras de
-nubes van en la página de sombras (04). Bruma, caída, alcance, viento y tiempo aleatorio pasan a constantes
-(`opciones/volumen.wgsl`, en mayúsculas) con su valor por defecto.
+Página «Niebla y nubes» y página «Calidad» (ver `docs/efectos/calidad.md`): las opciones sueltas `niebla_pasos` y
+`nubes_calidad` salieron del menú al integrarse en los presets `calidad_niebla` (4, 6, 12, 24 pasos y alcance de 256,
+512, 1024, 2048 bloques) y `calidad_nubes` (7, 14, 28, 42 pasos y desactivación de la capa baja en Baja). La página
+«Niebla y nubes» mantiene niebla sí/no, cantidad, niebla con lluvia, capas de nubes y niebla de dimensiones.
+Las sombras de nubes van en la página de sombras (04). Bruma, caída, viento y tiempo aleatorio pasan a constantes
+(`opciones/volumen.wgsl`).
 
 ## Coste medido
 

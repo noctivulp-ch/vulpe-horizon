@@ -21,8 +21,9 @@ Especificación: `../vulpe-horizon-spec/subsistemas/14-rayos-del-fractal.md`. Ca
 
 ## Opciones
 
-Rayos sí/no (apagado) e intensidad (200), en la página «Cielo fractal». El resto, constantes con los valores de
-Vulpe (`opciones/rayos.wgsl`). Van 48.
+Rayos sí/no (apagado) e intensidad (200), en la página «Cielo fractal». Las muestras del rayo se resuelven según el
+preset `calidad_fractal` (Baja: 16, Media: 32, Alta: 48, Ultra: 64; ver `docs/efectos/calidad.md`). El resto, constantes
+con los valores de Vulpe (`opciones/rayos.wgsl`).
 
 ## Visto y no visto
 

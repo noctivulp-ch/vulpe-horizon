@@ -1,5 +1,4 @@
 // Ajustes de la oclusión ambiental. Porqué: docs/efectos/oclusion-ambiental.md §Opciones
-override ao: u32 = 1u;                  // apagada, normal, alta
 override ao_fuerza: f32 = 1.0;
 
 // Ajustados a paridad/08 con tools/paridad/ao_rincon.py (rincón suelo–pared con la pared a 3, 8 y 20 bloques).
@@ -15,5 +14,21 @@ struct OpcAo {
 }
 
 fn opc_ao() -> OpcAo {
-    return OpcAo(array<i32, 3>(0, 7, 20)[min(ao, 2u)], ao_fuerza);
+    let nivel = opc_calidad_ao();
+    var muestras = 7;
+    switch nivel {
+        case 0u: { // Baja: la de vanilla (apagada en shader)
+            muestras = 0;
+        }
+        case 1u: { // Media: pantalla filtrada
+            muestras = 7;
+        }
+        case 2u: { // Alta: pantalla de alta calidad
+            muestras = 20;
+        }
+        default: { // Ultra: trazado con rebote (pendiente; usa pantalla de alta calidad)
+            muestras = 20;
+        }
+    }
+    return OpcAo(muestras, ao_fuerza);
 }

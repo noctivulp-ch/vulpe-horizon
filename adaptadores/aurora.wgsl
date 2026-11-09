@@ -24,6 +24,6 @@ fn adp_aurora(alcance: f32) -> VolAurora {
     let dia = select(0.0, floor(frame.mods[0].z), con_mod) + frame.day_time;
     let activa = o.activa && opc_fractal().activo && noche > 0.0 && adp_es_superficie();
     return VolAurora(activa, noche, min(OPC_AURORA_RADIO, alcance), base, base + OPC_AURORA_LARGO,
-                     OPC_AURORA_INTENSIDAD * ADP_AURORA_ESCALA * o.brillo, dia, adp_aurora_depuracion());
+                     OPC_AURORA_INTENSIDAD * ADP_AURORA_ESCALA * o.brillo, dia, adp_aurora_depuracion(), o.muestras);
 }
 

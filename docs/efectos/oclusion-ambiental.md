@@ -27,8 +27,10 @@ ruido.
 
 ## Opciones
 
-Oclusión (apagada, normal, alta) y fuerza (imprescindibles), en la página «Sombras». Radio y curva, constantes
-(`opciones/oclusion.wgsl`). Van 41 opciones.
+Página «Sombras» y página «Calidad» (ver `docs/efectos/calidad.md`): la opción `ao` salió del menú para integrarse
+en el preset `calidad_ao` (Baja: 0 muestras, vanilla; Media: 7 muestras, filtrada; Alta: 20 muestras, alta calidad;
+Ultra: 20 muestras, trazado con rebote pendiente). La `ao_fuerza` se mantiene en el menú directo en «Sombras». Radio
+y curva van como constantes (`opciones/oclusion.wgsl`).
 
 ## Coste
 

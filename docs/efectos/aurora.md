@@ -83,7 +83,8 @@ proporcional al despeje de cada muestra; «Aurora: sin ventana» quita la ventan
 ## Opciones
 
 Las dos imprescindibles del presupuesto (`convenciones.md`), en la página del cielo fractal: aurora sí/no y
-brillo relativo (−90 … +200 %, 0). El resto de la tabla de la especificación son constantes.
+brillo relativo (−90 … +200 %, 0). Las iteraciones y muestras pasan a depender del preset `calidad_fractal` (Baja: 12 y 2;
+Media: 24 y 4; Alta: 48 y 8; Ultra: 96 y 12; ver `docs/efectos/calidad.md`). El resto de la tabla de la especificación son constantes.
 
 ## Coste
 

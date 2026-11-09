@@ -6,7 +6,8 @@ fn post(input: PostInput) -> vec4<f32> {
     var c = adp_post_escena(p);
     c = adp_aplicar_oclusion(c, p);
     let dir = adp_post_direccion(p);
-    c += adp_post_reflejo(p, dir, opc_luz().pasos_reflejo);
+    let o = opc_luz();
+    c += adp_post_reflejo(p, dir, o.pasos_reflejo, o.suavidad_reflejo);
     let borde = adp_post_borde(p, dir);
     c = mix(c, borde.rgb, borde.a);
     let v = adp_volumen_reescalado(p.pixel, adp_post_distancia(p));

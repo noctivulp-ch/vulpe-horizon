@@ -3,12 +3,12 @@
 
 // Reflejo de pantalla del píxel (subsistema 03): lo que ve el rayo reflejado (la escena si impacta, el cielo
 // aproximado si no) por Fresnel. 0 si el píxel no es terreno sólido liso.
-fn adp_post_reflejo(p: AdpPixel, dir: vec3<f32>, pasos: i32) -> vec3<f32> {
+fn adp_post_reflejo(p: AdpPixel, dir: vec3<f32>, pasos: i32, suavidad_min: f32) -> vec3<f32> {
     if pasos <= 0 || p.es_cielo {
         return vec3<f32>(0.0);
     }
     let s = surface_at(vec2<i32>(p.pixel));
-    if !s.present || s.smoothness < OPC_SUAVIDAD_REFLEJO_PANTALLA {
+    if !s.present || s.smoothness < suavidad_min {
         return vec3<f32>(0.0);
     }
     let dato = sup_desempaquetar_dato(s.data);

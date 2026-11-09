@@ -15,6 +15,7 @@ struct LuzAjustesSombra {
     penumbra_max: f32,          // radio, texels
     muestras: i32,
     penumbra_crece: f32,        // radio que crece por bloque de distancia al ocluyente
+    muestras_busqueda: i32,     // muestras de búsqueda de ocluyentes en PCSS
 }
 
 struct LuzSombra {
@@ -39,7 +40,7 @@ fn luz_sombra(p: LuzPuntoSombra, a: LuzAjustesSombra, mapa: texture_depth_2d, co
         let busqueda = clamp(1.5 * p.texeles_por_bloque, 2.0, 24.0);
         var suma = 0.0;
         var cuenta = 0.0;
-        let n_busqueda = 8;
+        let n_busqueda = a.muestras_busqueda;
         for (var i = 0; i < n_busqueda; i++) {
             let uv = p.mapa.xy + luz_vogel(i, n_busqueda, giro + 1.3) * busqueda / lado;
             let texel = vec2<i32>(clamp(uv * lado, vec2<f32>(0.0), lado - 1.0));

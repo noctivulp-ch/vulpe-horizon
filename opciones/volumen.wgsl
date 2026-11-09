@@ -1,13 +1,10 @@
 // Ajustes de la niebla volumétrica y las nubes. Porqué: docs/efectos/niebla-y-nubes.md §Opciones
 override niebla: bool = true;
-override niebla_pasos: i32 = 8;
 override niebla_cantidad: f32 = 1.0;
 override niebla_lluvia: f32 = 1.0;
 const NIEBLA_BRUMA: f32 = 1.0;
 const NIEBLA_CAIDA: f32 = 25.0;          // por mil y bloque
-const NIEBLA_ALCANCE: f32 = 512.0;       // bloques
 override nubes: u32 = 1u;                   // apagadas, todas, solo cúmulos, solo altoestratos
-override nubes_calidad: u32 = 1u;           // baja, media, alta
 const NUBES_VIENTO: f32 = 1.0;
 override nubes_sombras: f32 = 100.0;        // %
 const TIEMPO_ALEATORIO: bool = true;
@@ -51,7 +48,47 @@ struct OpcVolumen {
 }
 
 fn opc_volumen() -> OpcVolumen {
-    let pasos_nubes = array<i32, 3>(8, 14, 20)[min(nubes_calidad, 2u)];
+    let nivel_niebla = opc_calidad_niebla();
+    var pasos_niebla = 6;
+    var alcance_niebla = 512.0;
+    switch nivel_niebla {
+        case 0u: { // Baja: 4 pasos, 256 bloques
+            pasos_niebla = 4;
+            alcance_niebla = 256.0;
+        }
+        case 1u: { // Media: 6 pasos, 512 bloques
+            pasos_niebla = 6;
+            alcance_niebla = 512.0;
+        }
+        case 2u: { // Alta: 12 pasos, 1024 bloques
+            pasos_niebla = 12;
+            alcance_niebla = 1024.0;
+        }
+        default: { // Ultra: 24 pasos, 2048 bloques
+            pasos_niebla = 24;
+            alcance_niebla = 2048.0;
+        }
+    }
+
+    let nivel_nubes = opc_calidad_nubes();
+    var capas = array<vec3<f32>, 4>(vec3<f32>(0.0), vec3<f32>(1.0), vec3<f32>(1.0, 1.0, 0.0), vec3<f32>(0.0, 0.0, 1.0))[min(nubes, 3u)];
+    var pasos_nubes = 14;
+    switch nivel_nubes {
+        case 0u: { // Baja: ×0,5 pasos, sin cúmulos pequeños
+            pasos_nubes = 7;
+            capas.x = 0.0;
+        }
+        case 1u: { // Media: ×1, tres capas
+            pasos_nubes = 14;
+        }
+        case 2u: { // Alta: ×2
+            pasos_nubes = 28;
+        }
+        default: { // Ultra: ×3
+            pasos_nubes = 42;
+        }
+    }
+
     let forma = VolFormaNubes(
         OPC_NUBES_ESCALA_ZONAS,
         OPC_NUBES_ESCALA_FORMA,
@@ -71,8 +108,8 @@ fn opc_volumen() -> OpcVolumen {
         OPC_NUBES_SOMBRA_TAU,
     );
     return OpcVolumen(
-        niebla, niebla_pasos, niebla_cantidad, niebla_lluvia, NIEBLA_BRUMA, NIEBLA_CAIDA * 0.001, NIEBLA_ALCANCE,
-        nubes != 0u, array<vec3<f32>, 4>(vec3<f32>(0.0), vec3<f32>(1.0), vec3<f32>(1.0, 1.0, 0.0), vec3<f32>(0.0, 0.0, 1.0))[min(nubes, 3u)], pasos_nubes, NUBES_VIENTO, nubes_sombras * 0.01, TIEMPO_ALEATORIO,
+        niebla, pasos_niebla, niebla_cantidad, niebla_lluvia, NIEBLA_BRUMA, NIEBLA_CAIDA * 0.001, alcance_niebla,
+        nubes != 0u, capas, pasos_nubes, NUBES_VIENTO, nubes_sombras * 0.01, TIEMPO_ALEATORIO,
         forma,
     );
 }

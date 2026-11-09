@@ -2,7 +2,8 @@
 // de la niebla y el factor de noche. Porqué: docs/efectos/rayos-del-fractal.md §Adaptadores
 fn adp_rayos(uv: vec2<f32>, pixel: vec2<f32>, exposicion: f32) -> vec3<f32> {
     let noche = adp_factor_noche();
-    if !rayos || noche <= 0.0 || !opc_fractal().activo {
+    let o_rayos = opc_rayos();
+    if !o_rayos.activo || noche <= 0.0 || !opc_fractal().activo {
         return vec3<f32>(0.0);
     }
     let sorteo = adp_fractal_sorteo(opc_fractal());
@@ -21,9 +22,9 @@ fn adp_rayos(uv: vec2<f32>, pixel: vec2<f32>, exposicion: f32) -> vec3<f32> {
     let clip = frame.projection * vec4<f32>(pv, 1.0);
     let origen = mat_ndc_a_uv(clip.xy / clip.w);
     let j = select(0, 1, convergente);
-    let r = ImgRayos(origen, convergente, rayos_intensidad * 0.01 * select(1.0, OPC_RAYOS_ESPALDAS * 0.01, convergente),
+    let r = ImgRayos(origen, convergente, o_rayos.intensidad * 0.01 * select(1.0, OPC_RAYOS_ESPALDAS * 0.01, convergente),
                      OPC_RAYOS_FOCO[j] * 0.01, OPC_RAYOS_LONGITUD[j] * 0.01, OPC_RAYOS_CAIDA * 0.01, OPC_RAYOS_UMBRAL[j] * 0.01,
-                     OPC_RAYOS_NUCLEO[j] * 0.001, OPC_RAYOS_MUESTRAS, OPC_RAYOS_OCLUSION * 0.01, exposicion,
+                     OPC_RAYOS_NUCLEO[j] * 0.001, o_rayos.muestras, OPC_RAYOS_OCLUSION * 0.01, exposicion,
                      adp_ruido_azul(pixel, 0u));
     // Fase de la niebla (05), normalizada a su valor de frente, más un término múltiple con lóbulo trasero.
     let dir = normalize(view_position(uv, 1e-4));

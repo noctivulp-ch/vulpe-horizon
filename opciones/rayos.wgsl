@@ -9,6 +9,31 @@ const OPC_RAYOS_CAIDA: f32 = 96.0;
 const OPC_RAYOS_UMBRAL: vec2<f32> = vec2<f32>(2.0, 4.0);
 const OPC_RAYOS_NUCLEO: vec2<f32> = vec2<f32>(100.0, 40.0);
 const OPC_RAYOS_ESPALDAS: f32 = 100.0;      // % de la intensidad de frente
-const OPC_RAYOS_MUESTRAS: i32 = 32;
 const OPC_RAYOS_OCLUSION: f32 = 60.0;
 const OPC_RAYOS_ATRAS: f32 = 100.0;         // dispersión hacia atrás, %
+
+struct OpcRayos {
+    activo: bool,
+    intensidad: f32,
+    muestras: i32,
+}
+
+fn opc_rayos() -> OpcRayos {
+    let nivel = opc_calidad_fractal();
+    var muestras = 32;
+    switch nivel {
+        case 0u: { // Baja: 16 muestras
+            muestras = 16;
+        }
+        case 1u: { // Media: 32 muestras
+            muestras = 32;
+        }
+        case 2u: { // Alta: 48 muestras
+            muestras = 48;
+        }
+        default: { // Ultra: 64 muestras
+            muestras = 64;
+        }
+    }
+    return OpcRayos(rayos, rayos_intensidad, muestras);
+}

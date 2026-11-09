@@ -4,6 +4,6 @@ fn adp_fractal_ajustes(o: OpcFractal, cielo_medio: vec3<f32>) -> CieFractalAjust
     return CieFractalAjustes(
         adp_fractal_sorteo(o),
         CiePaleta(o.paleta, o.contraste, o.saturacion, cielo_medio),
-        o.dibujo, OPC_FRACTAL_ITERACIONES, o.mutacion, o.brillo, o.techo, o.hueco,
+        o.dibujo, o.iteraciones, o.mutacion, o.brillo, o.techo, o.hueco,
     );
 }

@@ -9,7 +9,6 @@ const SSS_BRILLO: f32 = 1.0;
 const ESPECULAR_SOL: f32 = 1.0;
 const EMISION_LABPBR: f32 = 1.0;
 override charcos: u32 = 0u;                 // charcos y mojado, solo charcos, solo mojado, apagado
-override reflejos_pantalla: u32 = 1u;       // apagado, bajo, alto
 
 // Escalas en la escala común (convenciones.md): proporciones de partida afinadas en el juego.
 const OPC_LUZ_BLOQUE: f32 = 1.0;            // × la curva medida de la antorcha (paridad/03; antes 0,012 × refuerzo 3)
@@ -23,9 +22,6 @@ const OPC_EMISION: f32 = 0.05;
 const OPC_LUZ_CIELO_BASE: f32 = 1.8;
 
 // Ids de [[materials]] (horizon-shaders.toml).
-// Suavidad desde la que el reflejo lo pone el trazado de pantalla (post) y no el material.
-const OPC_SUAVIDAD_REFLEJO_PANTALLA: f32 = 0.7;
-
 const OPC_MAT_HOJAS: u32 = 1u;
 const OPC_MAT_PLANTA_FUERTE: u32 = 2u;      // planta cruzada, SSS fuerte
 const OPC_MAT_HIELO: u32 = 3u;
@@ -47,6 +43,7 @@ struct OpcLuz {
     charcos: bool,
     mojado: bool,
     pasos_reflejo: i32,     // 0 apagado
+    suavidad_reflejo: f32,  // umbral de suavidad para trazado de pantalla (1 - rugosidad)
 }
 
 fn opc_luz() -> OpcLuz {
@@ -56,11 +53,34 @@ fn opc_luz() -> OpcLuz {
     } else if LUZ_BLOQUE_COLOR == 2u {
         color = vec3<f32>(0.75, 0.85, 1.0);
     }
+
+    let nivel = opc_calidad_reflejos();
+    var pasos = 15;
+    var suavidad = 0.7; // rugosidad 0,3 -> suavidad 0,7
+    switch nivel {
+        case 0u: { // Baja: 8 pasos, rugosidad 0,2
+            pasos = 8;
+            suavidad = 0.8;
+        }
+        case 1u: { // Media: 15 pasos, rugosidad 0,3
+            pasos = 15;
+            suavidad = 0.7;
+        }
+        case 2u: { // Alta: 30 pasos, rugosidad 0,4
+            pasos = 30;
+            suavidad = 0.6;
+        }
+        default: { // Ultra: 50 pasos, rugosidad 0,5
+            pasos = 50;
+            suavidad = 0.5;
+        }
+    }
+
     return OpcLuz(
         luz_cielo, luz_bloque, color, luz_minima_cuevas, luz_minima_exterior,
         sss == 1u || sss == 3u, sss == 2u || sss == 3u, SSS_BRILLO,
         ESPECULAR_SOL, EMISION_LABPBR,
         charcos == 0u || charcos == 1u, charcos == 0u || charcos == 2u,
-        array<i32, 3>(0, 16, 32)[min(reflejos_pantalla, 2u)],
+        pasos, suavidad,
     );
 }
