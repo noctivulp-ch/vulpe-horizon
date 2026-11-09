@@ -18,6 +18,7 @@ struct AdpPunto {
     cruzada: bool,          // planta de planos cruzados: N·L fijo
     pbr: SupMaterial,
     pixel: vec2<f32>,
+    luz_colorida: vec3<f32>,
 }
 
 fn adp_es_cruzada(m: u32) -> bool {
@@ -68,6 +69,7 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
     p.translucido = input.translucent;
     p.fluido = input.fluid;
     p.pixel = input.screen * frame.resolution;
+    p.luz_colorida = select(vec3<f32>(0.0), input.colored_light, o.luz_mano > 0u);
 
     let con_pbr = block_pbr_maps();
     if con_pbr {

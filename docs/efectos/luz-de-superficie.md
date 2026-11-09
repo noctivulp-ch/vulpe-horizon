@@ -193,3 +193,12 @@ exposición previa de interior (`OPC_EV_INTERIOR` = 6) lo compensaba.
 con la distancia. Sin antorcha, 35 (las formas se distinguen). Fuera, día 170 y noche 19 en esa vista, sin cambios
 (probado con EV de interior 4,5: 129–149 dentro; 3,5: 114–136). **Sin ver:** antorchas al aire libre de noche (ahora
 dominan su entorno, como en el original) y las familias de color del 03.1.
+
+## Luz de color en la mano (fase 4, 2026-11-08)
+
+La especificación 03 §«Fuera de alcance / limitaciones en Horizon» daba por imposible la luz del objeto en la mano porque `Frame` no informaba sobre los objetos del jugador ni su iluminación dinámica.
+
+Con las novedades de la API 0.1 de Horizon (nightly 2026-11-08, entrada de registro 2026-11-02), con las luces dinámicas activadas el motor entrega en `MaterialInput.colored_light` (`vec3<f32>`, 0..1) la luz de color de los objetos que se llevan en la mano o están en el suelo (en el color de su bloque según `[[lights]]`), así como de `[[particle_lights]]` y luces de mods.
+
+- **Integración:** en `adaptadores/material.wgsl`, `adp_material_punto` extrae `input.colored_light` gobernado por la opción `luz_mano` (0: apagada; 1 o 2: activa).
+- **Tratamiento en el material:** en `etapas/material.wgsl`, `p.luz_colorida` se suma a la luz de bloque del material (`(adp_color_luz_bloque(...) * luz_curva_bloque(...) + p.luz_colorida) * OPC_LUZ_BLOQUE * o.bloque`), compartiendo la escala `OPC_LUZ_BLOQUE` y el preset de intensidad `o.bloque`.
