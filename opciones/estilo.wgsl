@@ -29,16 +29,16 @@ struct OpcModifCielo {
 fn opc_estilo_cielo() -> OpcModifCielo {
     switch estilo_cielo {
         case 1u: { // Limpio: aerosoles ×0,5, halo más estrecho
-            return OpcModifCielo(1.0, 0.5, 0.85, 1.0);
+            return OpcModifCielo(1.0, 0.5, 0.65, 1.0);
         }
         case 2u: { // Brumoso: aerosoles ×2, halo más ancho
-            return OpcModifCielo(1.0, 2.0, 0.72, 1.0);
+            return OpcModifCielo(1.0, 2.0, 0.52, 1.0);
         }
         case 3u: { // Atardeceres intensos: aire ×1,3, aerosoles ×1,5
-            return OpcModifCielo(1.3, 1.5, 0.8, 1.15);
+            return OpcModifCielo(1.3, 1.5, 0.6, 1.15);
         }
         default: { // Natural (por defecto)
-            return OpcModifCielo(1.0, 1.0, 0.8, 1.0);
+            return OpcModifCielo(1.0, 1.0, 0.6, 1.0);
         }
     }
 }

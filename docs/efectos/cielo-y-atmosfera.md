@@ -206,3 +206,29 @@ Paridad con el banco de 2026-11-09 (`fino/01 §3, §5, §8` y `paridad/01`).
 - **Color enrojecido:** se evalúa `atm_luz_directa_sol` interpolando los 14 vectores de prueba de `paridad/01`, reproduciendo la fuerte absorción del azul y verde a 1°–6° (`niebla-amanecer`, hora 300: suelo cálido dorado y disco solar naranja-dorado en vez de blanco quemado).
 - **Halo solar cerrado:** fase molecular de Elek (2009) `(2,8 + cos θ) / (10π)` y fase bimodal de aerosoles en volumen (`vol_fase_aire_mie`) que concentra la dispersión hacia delante (`g = 0,88` con peso frontal y base abierta) ajustada a la tabla de `paridad/05`.
 - **Disco solar:** el disco no se multiplica por el brillo de dibujo de fondo ni por la transmitancia de vista por segunda vez (`fino/01 §8`), y su radio angular se ciñe a `OPC_SOL_DISCO_RADIO = 0,008` rad.
+
+### Aerosoles y halo (C-09.1, 2026-11-09)
+
+Síntoma: en `atardecer-oeste` (hora 12000) y `niebla-amanecer` (hora 300) un resplandor blanco y amarillo de un cuarto
+de pantalla alrededor del sol y el horizonte cálido y brillante de lado a lado; el original tiene un disco pequeño y
+el cielo pálido.
+
+Medida (modelo de `tools/atmosfera/generar_tabla.py`, el mismo que el núcleo sin el cinturón de Venus, contra las
+tablas de cielo dibujado de `paridad/01`; cociente modelo/tabla en R, G, B):
+
+| caso | antes (Mie 19,98e-6, g 0,8) | ahora (Mie 11,99e-6, g 0,6) |
+|---|---|---|
+| sol 2°, horizonte 2° hacia el sol | 5,78 / 3,25 / 0,54 | 1,23 / 0,91 / 0,27 |
+| sol 10°, horizonte 2° hacia el sol | 5,35 / 3,70 / 1,69 | 1,53 / 1,26 / 0,72 |
+| sol 10°, horizonte opuesto | 1,50 / 1,28 / 0,63 | 1,77 / 1,47 / 0,69 |
+| sol 55°, cenit | 1,07 / 1,04 / 1,06 | 1,05 / 1,03 / 1,06 |
+| sol 55°, horizonte hacia el sol | 1,02 / 1,01 / 0,89 | 1,21 / 1,16 / 0,97 |
+
+- Los aerosoles iban ×5 sobre Hillaire 2020 (3,996e-6); el original trae la bruma por defecto en **3**
+  (`paridad/01` §(a)). Ahora ×3 (11,99e-6; absorción en la misma proporción, 1,332e-6).
+- Solo con eso el horizonte hacia el sol seguía ~3,8 veces por encima a sol 10°. Una rejilla de aerosoles
+  (×1; 0,6; 0,3; 0,15) por g (0,8; 0,7; 0,6; 0,5) da el menor error con ×0,6 y **g = 0,6** en nuestra fase de
+  Cornette-Shanks. El 0,80 del original es su parámetro, no tiene por qué valer lo mismo en otra fase: se ajusta a la
+  tabla, no al número. Los presets de estilo del cielo bajan su g en lo mismo (−0,2).
+- Sigue abierto: el cenit con el sol bajo (2° y 10°) sale a la mitad de la tabla en todos los casos de la rejilla,
+  así que no depende de los aerosoles (posible dispersión múltiple o ganancia de fondo, `fino/01` §2).

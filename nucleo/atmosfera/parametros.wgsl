@@ -4,7 +4,7 @@
 
 // Irradiancia del sol en lo alto de la atmósfera, escala común: la que deja el sol de mediodía en π
 // (blanco perpendicular = 1). La calcula y escribe generar_tabla.py.
-const ATM_IRRADIANCIA_SOL: f32 = 3.6215;
+const ATM_IRRADIANCIA_SOL: f32 = 3.5923;
 // Altura del observador sobre el suelo del planeta con la cámara a ras de suelo, m.
 const ATM_ALTURA_OBSERVADOR: f32 = 250.0;
 // Albedo medio del suelo para la fila de suelo de la tabla.
@@ -28,11 +28,12 @@ struct AtmParametros {
 
 // Valores de Hillaire 2020 y Bruneton 2017 calibrados contra la tabla de radiancia del cielo de paridad/01
 // (sol a 55°: cenit R=0,018, G=0,039, B=0,094; docs/efectos/cielo-y-atmosfera.md §Modelo).
+// Aerosoles y g del halo: C-09.1, ajustados a la tabla del horizonte hacia el sol. Porqué: docs/efectos/cielo-y-atmosfera.md §Aerosoles y halo (C-09.1)
 fn atm_tierra() -> AtmParametros {
     return AtmParametros(
         6360e3, 6460e3,
         vec3<f32>(4.20e-6, 12.50e-6, 39.0e-6), 8000.0,
-        19.98e-6, 2.22e-6, 1200.0, 0.8,
+        11.99e-6, 1.332e-6, 1200.0, 0.6,
         vec3<f32>(0.70e-6, 2.20e-6, 0.06e-6), 25000.0, 15000.0,
     );
 }
