@@ -107,7 +107,7 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
         let fuente_aire = (aire.rayleigh * fase_aire_r + aire.mie * fase_aire_m) * (sol * fase_aire_m) + (aire.rayleigh + aire.mie) * ambiente;
         // Ambiente de la niebla: radiancia media del cielo × fase cenital medida (F-3), con la escala base de opciones.
         let fase_cenital = vol_fase_cenital(rayo.dir.y) * OPC_NIEBLA_AMBIENTE_BASE;
-        let fuente_niebla = niebla * (sol * vol_fase_niebla(cos_luz)
+        let fuente_niebla = niebla * (sol * vol_fase_niebla(cos_luz, niebla)
                           + luz.cielo * a.niebla.ambiente * fase_cenital);
         let sigma = (col_luminancia(aire.rayleigh) + aire.mie * 1.1) + niebla;
         vol_tramo(r, fuente_aire + fuente_niebla, sigma, paso);
@@ -180,7 +180,7 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: 
         let niebla_ext = 1.0 - exp(-dist_horiz * (0.00012 + a.niebla.uniforme * 0.0004));
         let lejos = 1.0 - smoothstep(VOL_NUBES_DISTANCIA * 0.7, VOL_NUBES_DISTANCIA, t);
         let sigma = sigma_nube * d * lejos;
-        var luz_nube = luz.irradiancia * t_sol * vol_fase(cos_luz, d * 4.0) + ambiente;
+        var luz_nube = luz.irradiancia * t_sol * vol_fase(cos_luz, sigma_nube * d) + ambiente;
         luz_nube = mix(luz_nube, luz.cielo, niebla_ext);
         let fuente = sigma * luz_nube;
         vol_tramo(r, fuente, sigma, paso);

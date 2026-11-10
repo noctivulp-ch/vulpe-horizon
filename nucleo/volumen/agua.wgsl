@@ -15,7 +15,7 @@ fn vol_agua(rayo: VolRayo, luz: VolLuz, a: VolAgua, mapa_l: LuzMapa, mapa: textu
     let paso = fin / f32(pasos);
     // La extinción medida (paridad 07) es la total: la misma que la de la superficie.
     let sigma = a.medio.absorcion;
-    let fase = vol_fase_niebla(dot(rayo.dir, luz.direccion));
+    let fase = vol_fase_niebla(dot(rayo.dir, luz.direccion), col_luminancia(sigma));
     var t_acum = vec3<f32>(1.0);
     var luz_acum = vec3<f32>(0.0);
     for (var i = 0; i < pasos; i++) {

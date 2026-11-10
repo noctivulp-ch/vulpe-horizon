@@ -332,3 +332,16 @@ es lo que permite integrarlo sobre todo el cielo sin lavarlo (y lo que faltaba e
 contra esa tabla con una rejilla de tres lóbulos: `0,5·HG(0,9) + 5·HG(0,55) + 1·HG(0,3)` (error medio 0,35 EV frente a
 0,55 con la anterior; a 1°–4° sigue ×1,4–1,6 porque la tabla se divide por dos ya a 1°, más estrecho que cualquier HG
 de la rejilla). `tools/paridad/aire.py` comprueba la tabla del halo.
+
+### Fase medida de niebla y nubes (F-6, 2026-11-10)
+
+`fino/05 §Medidos` trae la fase total del original por densidad local (0,001–0,5 por bloque) y ángulo (0–180°): la
+misma función para niebla y nubes, con el «powder» dentro. Las nuestras no se le parecían: la de la niebla
+(`HG 0,95 × 0,985`) daba 61 en el centro del astro y **0,0045 de lado** (la tabla: 20 y 0,17: 38 veces más de luz
+lateral); la de las nubes era una mezcla a ojo. Ahora `vol_fase_medida(cos, densidad)` interpola la tabla (9 × 7
+valores en `VOL_FASE_TABLA`, lineal en ángulo y en log de la densidad); `vol_fase_niebla` y `vol_fase` son alias con la
+extinción local del paso (σ de la niebla; σ_nube · forma en las nubes; luminancia de σ bajo el agua). Lo que se
+espera: halo del sol y de la luna en la niebla tres veces menos puntiagudo; la niebla de día iluminada de lado y de
+espaldas mucho más clara (`lluvia-dia`: la bruma que faltaba; `niebla-amanecer`), y los cúmulos con el borde
+retroiluminado más marcado. Riesgo: la niebla nocturna con luna gana luz lateral (×38 sobre 0,003 de irradiancia:
+sigue siendo poco frente al ambiente). Los rayos del fractal (14) usan la fila de 0,01.

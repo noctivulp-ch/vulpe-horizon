@@ -34,6 +34,6 @@ fn adp_rayos(uv: vec2<f32>, pixel: vec2<f32>, exposicion: f32) -> vec3<f32> {
     // Fase de la niebla (05), normalizada a su valor de frente, más un término múltiple con lóbulo trasero.
     let dir = normalize(view_position(uv, 1e-4));
     let c = dot(dir, centro);
-    let fase = vol_fase_niebla(c) / vol_fase_niebla(1.0) + 0.15 * vol_hg(c, -0.3) / vol_hg(-1.0, -0.3) * OPC_RAYOS_ATRAS * 0.01;
+    let fase = vol_fase_niebla(c, 0.01) / vol_fase_niebla(1.0, 0.01) + 0.15 * vol_hg(c, -0.3) / vol_hg(-1.0, -0.3) * OPC_RAYOS_ATRAS * 0.01;
     return img_rayos(uv, previous, linear_sampler, r) * fase * sobre * peso_polo * noche;
 }
