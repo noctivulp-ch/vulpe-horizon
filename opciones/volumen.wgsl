@@ -8,6 +8,13 @@ const OPC_NIEBLA_LLUVIA_DEFECTO: f32 = 1.0;
 // Ambiente que dispersa el aire (perspectiva aérea): fracción de la luz de cielo de superficie, que lleva
 // OPC_LUZ_CIELO_BASE (1,8); 1/1,8 deja la radiancia media del cielo tal cual (fino/05 §3: «una fracción»).
 const OPC_AIRE_AMBIENTE: f32 = 0.55;
+// Ambiente de la niebla global: escala base sobre la luz de cielo, multiplicada por la fase cenital medida en fino/05
+// (0,5 abajo .. 2,5 arriba). 0,26 deja el horizonte como estaba antes de F-3 (0,63) y baja el cenit un tercio.
+const OPC_NIEBLA_AMBIENTE_BASE: f32 = 0.26;
+// De noche el ambiente de la niebla toma el azul del cielo nocturno (05.2): saturación y brillo extra. Brillo 1,0
+// (antes 2,0): el cielo nocturno del pack salía más claro que el original (noche-fractal, F-3).
+const OPC_NIEBLA_NOCHE_SATURACION: f32 = 5.0;
+const OPC_NIEBLA_NOCHE_BRILLO: f32 = 1.0;
 const NIEBLA_CAIDA: f32 = 25.0;             // por mil y bloque
 const OPC_NUBES_DEFECTO: u32 = 1u;          // todas las capas por defecto
 const NUBES_VIENTO: f32 = 1.0;

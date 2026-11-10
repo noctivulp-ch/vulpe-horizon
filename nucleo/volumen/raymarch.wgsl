@@ -103,7 +103,8 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
         visible *= mix(1.0, mix(nubes_cerca, nubes_lejos, (t - t0) / max(largo, 1.0)), a.sombra_nubes);
         let sol = luz.irradiancia * visible;
         let fuente_aire = aire.rayleigh * (sol * fase_aire_r + ambiente) + aire.mie * (sol * fase_aire_m + ambiente);
-        let fase_cenital = mix(0.25, 1.0, smoothstep(-0.2, 0.8, rayo.dir.y));
+        // Ambiente de la niebla: radiancia media del cielo × fase cenital medida (F-3), con la escala base de opciones.
+        let fase_cenital = vol_fase_cenital(rayo.dir.y) * OPC_NIEBLA_AMBIENTE_BASE;
         let fuente_niebla = niebla * (sol * vol_fase_niebla(cos_luz)
                           + luz.cielo * a.niebla.ambiente * fase_cenital);
         let sigma = (col_luminancia(aire.rayleigh) + aire.mie * 1.1) + niebla;

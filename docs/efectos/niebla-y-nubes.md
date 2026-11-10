@@ -290,3 +290,21 @@ llevaba el pack en el molecular.
   cielo) sería 1,8 veces mayor.
 - Riesgo: `atardecer-oeste` y `niebla-amanecer` ganan bruma clara cerca del horizonte; con el sol a ≤ 1° la luz directa
   del aire es nula (rampa de `atm_luz_directa_sol`), así que el halo bajo no debería crecer por esto.
+
+## Ambiente de la niebla (F-3, 2026-11-10)
+
+Síntoma: en `noche-fractal` (hora 18000, cenit) el fondo del pack es un azul claro (media 41/55/81) frente al azul
+grisáceo oscuro del original (32/37/41); la niebla nocturna ya se había medido más clara que `aurora_off_noche.png`
+(16–34 frente a 3–17). `fino/05 §2` y su tabla medida dan la **fase cenital del ambiente**: 0,5 en el nadir, 1,97 a
+−30°, 2,46 en el horizonte y 2,5 hacia arriba; el pack llevaba `mix(0,25, 1, smoothstep(−0,2, 0,8, y))`, que casi
+duplicaba el cenit respecto al horizonte.
+
+- `vol_fase_cenital` (`nucleo/volumen/fase.wgsl`): `2,5 − 2·max(−y, 0)²`, a menos de 0,04 de los cinco puntos.
+- `OPC_NIEBLA_AMBIENTE_BASE = 0,26` escala la luz de cielo antes de la fase: deja el horizonte donde estaba (0,64 frente
+  a 0,63) y baja el cenit de 1,0 a 0,65 y el nadir de 0,25 a 0,13. La escala fija del original no está medida
+  (preguntado a A).
+- De noche, `OPC_NIEBLA_NOCHE_BRILLO` pasa de 2,0 a 1,0 (la saturación ×5 de 05.2 se queda, como constante
+  `OPC_NIEBLA_NOCHE_SATURACION`). Juntas, la niebla nocturna mirando arriba baja a un tercio y al horizonte a la mitad:
+  lo que separaba la medida del gestor de la referencia.
+- Lo que se espera: `noche-fractal` con el fondo mucho más oscuro; `lluvia-dia` y la niebla de día apenas cambian
+  mirando al horizonte y se oscurecen algo mirando arriba o abajo.
