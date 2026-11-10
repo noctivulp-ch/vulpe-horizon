@@ -151,7 +151,7 @@ struct OpcModifAgua {
 }
 
 fn opc_estilo_agua() -> OpcModifAgua {
-    let abs_base = vec3<f32>(0.39, 0.108, 0.066); // paridad/07 §1 (transmitancia por bloque)
+    let abs_base = vec3<f32>(0.39, 0.120, 0.055);
     let disp_base = 0.035;
     let col_disp_base = vec3<f32>(0.04, 0.22, 0.68);
     switch estilo_agua {

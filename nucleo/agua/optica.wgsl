@@ -24,19 +24,11 @@ fn agu_transmitancia(m: AguMedio, distancia: f32) -> vec3<f32> {
     return exp(-m.absorcion * max(distancia, 0.0));
 }
 
-// Albedo de dispersión simple de la columna: σ_s gris frente a la extinción σ_a + σ_s por canal. Con la absorción
-// de paridad/07 sale verde azulado oscuro, sin teñir a mano. Porqué: docs/efectos/agua.md §Color del agua (C-08.3)
-fn agu_albedo(m: AguMedio) -> vec3<f32> {
-    return vec3<f32>(m.dispersion) / (m.absorcion + vec3<f32>(m.dispersion));
-}
-
-// Lo que se ve a través del agua: lo refractado absorbido más la luz dispersada hacia el ojo por la columna (es lo
-// que hace el agua profunda verde azulada oscura y no negra). `luz`: la que entra en la columna (cielo y sol) ya
-// pesada por la fracción que vuelve hacia arriba.
-fn agu_a_traves(refractado: vec3<f32>, distancia: f32, luz: vec3<f32>, m: AguMedio) -> vec3<f32> {
+// Lo que se ve a través del agua: lo refractado absorbido más la luz dispersada por el agua (es lo que hace el
+// agua profunda azul oscuro y no negra).
+fn agu_a_traves(refractado: vec3<f32>, distancia: f32, ambiente: vec3<f32>, m: AguMedio) -> vec3<f32> {
     let t = agu_transmitancia(m, distancia);
-    let extincion = m.absorcion + vec3<f32>(m.dispersion);
-    let disperso = agu_albedo(m) * luz * (vec3<f32>(1.0) - exp(-extincion * max(distancia, 0.0)));
+    let disperso = m.color_disperso * ambiente * (1.0 - exp(-m.dispersion * distancia * 8.0));
     return refractado * t + disperso;
 }
 
