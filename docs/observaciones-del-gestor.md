@@ -189,3 +189,15 @@ disposición de la referencia). En espera: lo único abierto es el 15 (vegetaci�
   2. la exposición a esa hora, que sube la escena entera.
   Pendiente: medir el cielo a 2° y a 10° del sol a la hora 12000 contra la tabla de `paridad/01` antes de tocar nada.
 - **C-09.2 y C-09.3:** sin empezar.
+
+## 2026-11-10 — encargo F (B, Claude Fable 5.2)
+
+- Commits F-1..F-10 y F-6b (ver `TODO.md` §Hecho y las secciones «F-n» de `docs/efectos/`). Tres herramientas de paridad
+  nuevas: `tools/paridad/cielo.py` (cielo dibujado), `tools/paridad/aire.py` (extinción, fases y halo del aire).
+- Qué mirar en el banco: `cielo-dia` y `nubes-dia` (cielo más claro y blanquecino, más cúmulos, halo cerrado del sol),
+  `atardecer-oeste` (disco pequeño, sin resplandor de un cuarto de pantalla), `cueva-oscura` (paredes de canto con la luz
+  mínima entera: antes el pack quedó más oscuro que el original), `lluvia-dia` (la niebla sube mucho: puede pasarse de
+  clara y azul) y `noche-fractal` (fondo más oscuro, aún azul claro).
+- Para comparar colores en Horizon hay que apagar el aislamiento (`aislamiento_rango` default 0 en el manifiesto): con él
+  todo sale gris; perdí media comprobación por eso.
+- Preguntas nuevas para A en `docs/preguntas-para-A.md` (7).
