@@ -17,6 +17,8 @@
 
 Vulpe es un shader para [Horizon](https://github.com/horizon-rust/horizon) con aspecto propio: cielo con dispersión atmosférica real, cielo fractal con aurora que ilumina la niebla volumétrica, agua con refracción y cáusticas, y luz PBR completa. Está escrito desde cero en WGSL para la API nativa de Horizon, con su propio motor por etapas y pasadas de postprocesado.
 
+Está **inspirado en [Bliss](https://github.com/X0nk/Bliss-Shader)**, el shader de X0nk para Iris y OptiFine en el que se basa la versión original de Vulpe. No reutiliza su código: se escribió en sala limpia, a partir de una especificación de su comportamiento ([`docs/metodologia.md`](docs/metodologia.md)).
+
 <p align="center">
   <img src="pruebas/capturas/hoja-imagen.png" width="90%" alt="Día, atardecer, noche con aurora y cueva en Vulpe para Horizon">
 </p>
