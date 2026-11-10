@@ -27,16 +27,22 @@ struct LuzSombra {
 // elevación no recibe sol directo; se desvanece del todo al subir el sol. 1 iluminado, 0 en sombra.
 // Porqué: docs/efectos/sombras.md §Sombra planetaria del horizonte
 struct LuzHorizonte {
-    cota: f32,          // Y por debajo de la cual no llega el sol a 0° de elevación
-    por_grado: f32,     // bloques que baja la cota por grado de elevación del sol
+    cota: f32,          // bloques·grado: el centro de la transición está en cota / elevación − desplazamiento
+    desplazamiento: f32,
     transicion: f32,    // semiancho vertical de la transición, bloques
-    fin: vec2<f32>,     // grados de elevación en que el efecto se desvanece (inicio, fin)
+    piso: f32,          // suelo de luz en el terreno bajo: 1 − exp(−piso · elevación²)
 }
 
+// Sombra planetaria del horizonte: 1 = sin sombra. Ajustada a la tabla de fino/04 §Medidos (Y −64..256, sol 0°..45°):
+// a 0° es 0 a toda altura; el límite sombra/luz baja con el sol (Y ≈ 245 a 2°, 60 a 5°, 0 a 10°) y el terreno bajo
+// conserva un suelo que crece con el cuadrado de la elevación (0,03 a 10°, 0,58 a 45°).
+// Porqué: docs/efectos/sombras.md §Sombra planetaria del horizonte (F-8)
 fn luz_sombra_horizonte(y: f32, elev_grados: f32, h: LuzHorizonte) -> f32 {
-    let base = h.cota - max(elev_grados, 0.0) * h.por_grado;
-    let luz = smoothstep(base - h.transicion, base + h.transicion, y);
-    return mix(luz, 1.0, smoothstep(h.fin.x, h.fin.y, elev_grados));
+    let e = max(elev_grados, 0.0);
+    let piso = 1.0 - exp(-h.piso * e * e);
+    let centro = h.cota / max(e, 0.5) - h.desplazamiento;
+    let luz = smoothstep(centro - h.transicion, centro + h.transicion, y);
+    return max(piso, luz);
 }
 
 // Disco de Vogel (espiral áurea): muestra i de n, girado `giro` radianes, radio 0..1 de área igual (para filtrado PCF).

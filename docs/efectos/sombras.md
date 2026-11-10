@@ -144,3 +144,14 @@ Discrepancias identificadas en la escena `niebla-amanecer`:
 3. **Crecimiento de penumbra en follaje a distancia:** se incrementa la tasa de crecimiento de penumbra `OPC_SOMBRA_PENUMBRA_CRECE` a 0,024 y el radio de búsqueda máxima a 36 texels, ampliando la penumbra del follaje a baja elevación solar sin perder la definición de contacto en troncos.
 4. **Antialiasing temporal en bordes y follaje (`adaptadores/taa.wgsl`):** se añade el retroceso adaptativo hacia el primer momento (media del vecindario 3×3, Salvi 2016) proporcional al exceso del recorte por varianza, suprimiendo estelas residuales y aliasing parpadeante en hojas en movimiento.
 
+
+### Sombra planetaria del horizonte medida (F-8, 2026-11-10)
+
+`fino/04 §Medidos` trae la tabla del original (Y −64..256 × sol 0°..45°). Nueva forma de `luz_sombra_horizonte`:
+`max(piso, smoothstep(centro ± 50, Y))` con `centro = 560 / elevación − 55` bloques y `piso = 1 − exp(−0,0003·elev²)`
+(`OPC_SOMBRA_HORIZONTE = (560, 55, 50, 0,0003)`). Contra la tabla: 0 exacto a 0°; a 2° Y = 256 da 0,90 (0,82); a 3°
+Y = 128 da 0,45 (0,36); a 5° Y = 32/63/90 dan 0,16/0,59/0,92 (0,11/0,54/0,88); a 10° Y = 0/32 dan 0,49/0,91
+(0,46/0,88); a 20° Y = −32 da 0,43 (0,46); a 45° Y = −64 da 0,46 (0,58). Frente a la estimación de C-08.1 (cota 220,
+10 bloques/°, se apagaba del todo a 26°): el efecto dura más (a 10° el terreno a Y ≤ 0 sigue a medias) y a 5° la cota
+de luz es 60, no 170. En `atardecer-oeste` (sol ≈ 12°) el suelo a Y ≈ 75 ya está iluminado por esta sombra; lo que
+lo apaga en el original a esa hora es la sombra de los altoestratos (C-08.1), no esta.
