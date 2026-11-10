@@ -160,3 +160,16 @@ Discrepancias identificadas en la escena `agua-orilla` (diferencia media inicial
    - Se evalúa la cobertura de nubes (`vol_cobertura`) en el vector reflejado de cielo, reflejando las nubes del cielo sobre el mar.
 
 
+
+### Horizonte del mar (C-09.3, 2026-11-09)
+
+Síntoma (`agua-orilla`, banco 2026-11-09c): una franja blanca brillante en el horizonte del mar; en el original el mar
+lejano se funde con un cielo gris azulado claro.
+
+Causa: `agu_peso_cielo` multiplicaba el parecido de color por `alto = smoothstep(0, 0,26, elevación reflejada)`. En
+el mar lejano la dirección reflejada queda a menos de ~15° del horizonte, así que el peso del cielo del pack caía a 0
+aunque el texel fuera exactamente el `fog_color` vanilla esperado. Quedaba el texel del espejo, el cielo vanilla
+pálido, decodificado como escena con la inversa del mapeo de tonos (ADR 0004): un blanco muy brillante, y con un
+Fresnel rasante cercano a 1 se veía tal cual. Ahora el parecido de color decide a cualquier elevación; la elevación
+sola sigue usándose solo para la noche (todo oscuro). Riesgo: el terreno lejano velado por la niebla vanilla en el
+espejo puede tomarse por cielo y recibir el horizonte del pack, que es casi el mismo color.

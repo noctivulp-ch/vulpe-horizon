@@ -56,5 +56,6 @@ fn agu_peso_cielo(texel: vec3<f32>, elevacion_seno: f32, cielo: vec3<f32>, niebl
     let color = 1.0 - smoothstep(0.08, 0.25, diferencia);
     let alto = smoothstep(0.0, 0.26, elevacion_seno);
     let oscuro = 1.0 - smoothstep(0.02, 0.1, length(esperado));
-    return max(color * alto, alto * oscuro);
+    // El parecido de color vale a cualquier elevación. Porqué: docs/efectos/agua.md §Horizonte del mar (C-09.3)
+    return max(color, alto * oscuro);
 }
