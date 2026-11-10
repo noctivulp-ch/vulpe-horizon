@@ -25,6 +25,8 @@ struct VolFormaNubes {
     tramo_max: f32,
     sombra_tau: f32,
     sombra_alto: f32,       // multiplicador del espesor óptico oblicuo de los altoestratos sobre el suelo
+    umbral_cobertura: vec2<f32>, // umbral de la cobertura 2D de los cúmulos: x − cob·y (F-4)
+    rampa_cobertura: f32,   // anchura de la rampa sobre el umbral
 }
 
 struct VolNubes {
@@ -52,8 +54,10 @@ fn vol_cobertura(xz_entrada: vec2<f32>, i: i32, n: VolNubes, t: texture_2d<f32>,
     let muestra_forma = vol_ruido2d(t, s, xz / escala_f + f32(i) * 0.37);
     let forma = muestra_forma.r * 0.75 + muestra_forma.a * 0.25;
     let u = (forma * 0.7 + zonas * 0.3 - 0.36) * 3.2;
-    let umbral = 0.68 - cob * 0.22;
-    return sqrt(smoothstep(umbral, umbral + 0.48, u));
+    // Umbral y rampa medidos sobre la textura (tools): con cob = 1, ~64 % del plano con nube y ~34 % densa.
+    // Porqué: docs/efectos/niebla-y-nubes.md §Cobertura (F-4)
+    let umbral = n.forma.umbral_cobertura.x - cob * n.forma.umbral_cobertura.y;
+    return sqrt(smoothstep(umbral, umbral + n.forma.rampa_cobertura, u));
 }
 
 // Transmitancia de las nubes hacia la luz en el punto `mundo`: la cobertura donde el rayo hacia la luz

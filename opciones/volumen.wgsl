@@ -41,6 +41,11 @@ const OPC_NUBES_SIGMA: vec3<f32> = vec3<f32>(0.45, 0.45, 0.06);    // extinción
 const OPC_NUBES_TRAMO_MAX: f32 = 800.0;                            // bloques: tope del tramo integrado por capa baja
 const OPC_NUBES_SOMBRA_TAU: f32 = 6.0;                             // espesor óptico de la sombra en el suelo
 const OPC_NUBES_SOMBRA_ALTO: f32 = 1.0;                            // × espesor óptico oblicuo de los altoestratos (fino/04 §6)
+// Cobertura 2D de los cúmulos: umbral = x − cob·y sobre la señal normalizada, rampa de anchura `RAMPA` (F-4). Con
+// (0,68; 0,22) y 0,48 el parámetro 1 cubría el 41 % del plano (30 % con c > 0,3); el original con cobertura 1 cubre
+// más de la mitad del cielo (banco cielo-dia y nubes-dia). Ahora 64 % (54 % con c > 0,3, 34 % densa).
+const OPC_NUBES_UMBRAL: vec2<f32> = vec2<f32>(0.58, 0.28);
+const OPC_NUBES_RAMPA: f32 = 0.45;
 
 // Otras dimensiones (17).
 const OPC_NIEBLA_NETHER_DEFECTO: f32 = 1.0;
@@ -148,6 +153,8 @@ fn opc_volumen() -> OpcVolumen {
         OPC_NUBES_TRAMO_MAX,
         OPC_NUBES_SOMBRA_TAU,
         OPC_NUBES_SOMBRA_ALTO,
+        OPC_NUBES_UMBRAL,
+        OPC_NUBES_RAMPA,
     );
 
     let mod_cuevas = opc_estilo_cuevas();

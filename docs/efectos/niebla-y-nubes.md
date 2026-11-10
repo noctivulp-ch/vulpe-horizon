@@ -308,3 +308,14 @@ duplicaba el cenit respecto al horizonte.
   lo que separaba la medida del gestor de la referencia.
 - Lo que se espera: `noche-fractal` con el fondo mucho más oscuro; `lluvia-dia` y la niebla de día apenas cambian
   mirando al horizonte y se oscurecen algo mirando arriba o abajo.
+
+## Cobertura (F-4, 2026-11-10)
+
+Síntoma: en `cielo-dia` y `nubes-dia` (hora 6000, día 0: mezcla de los perfiles «cúmulos pequeños 1 / 0,5» y «grandes
+1 / 0,5 + altoestratos 1 / 0,5») el original cubre más de la mitad del cielo con cúmulos densos; el pack, un cuarto
+con nubes finas. `paridad/05` dice que las coberturas > 1 «cubren de más»: con el parámetro 1 el original ya cubre mucho.
+Medido sobre `texturas/ruido2d.png` con la combinación de `vol_cobertura` (rejilla de 8000×8000 bloques cada 10):
+con el umbral `0,68 − cob·0,22` y rampa 0,48 el parámetro 1 cubría el 41 % del plano (30 % con c > 0,3; 15 % con
+c > 0,7). Con `OPC_NUBES_UMBRAL = (0,58; 0,28)` y `OPC_NUBES_RAMPA = 0,45`: 64 % (54 %; 34 %); con 0,5: 44 %; con 1,9:
+91 %. La erosión 3D recorta después parte de eso. Los altoestratos no cambian. Lo que se espera: más cúmulos y más
+grandes en las cuatro escenas de día; las sombras de nubes en el suelo, más frecuentes.
