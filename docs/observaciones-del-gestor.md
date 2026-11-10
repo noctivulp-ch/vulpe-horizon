@@ -175,3 +175,17 @@ disposición de la referencia). En espera: lo único abierto es el 15 (vegetaci�
   `paridad/01` y, además, la codificación de 8 bits del «picture» lo recorta, así que el bloom no podía repartir su
   energía. Ahora el disco sigue la tabla y un destello analítico devuelve al bloom la energía recortada, pesado por la
   parte visible del disco y por las nubes delante (`docs/efectos/bloom.md` §Destello del sol).
+
+## 2026-11-09 — arreglador C-09 (tiempo agotado: solo hallazgos, sin cambios de código)
+
+- **C-09.1, halo del sol bajo:** el destello de C-08.2 **no** es la causa principal: el resplandor de un cuarto de
+  pantalla y el horizonte cálido de lado a lado ya salen en `banco-2026-11-09b/atardecer-oeste` (antes de C-08.2), y el
+  halo queda recortado por las hojas, así que está en la escena (cielo o volumen) y no en el bloom.
+  Descartado también `vol_fase_aire_mie`: con los dos lóbulos (0,94·HG 0,88 + 5·HG 0,55) da 12,8 / 1,48 / 0,20 a
+  0° / 30° / 90°, frente a 12,5 / 1,70 / 0,24 de `paridad/05`. Sospechosos que quedan, por orden:
+  1. el lóbulo de aerosoles del **cielo** (Cornette-Shanks, g = 0,8) con las tablas de aerosoles ×5 (TODO §Hecho,
+     «tablas con aerosoles ×5 y múltiple 0,4»): `paridad/01` pone la bruma por defecto en 3, no en 5. Si se baja, hay
+     que regenerar `texturas/atmosfera.png`;
+  2. la exposición a esa hora, que sube la escena entera.
+  Pendiente: medir el cielo a 2° y a 10° del sol a la hora 12000 contra la tabla de `paridad/01` antes de tocar nada.
+- **C-09.2 y C-09.3:** sin empezar.
