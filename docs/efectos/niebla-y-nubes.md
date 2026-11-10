@@ -6,7 +6,7 @@ y `hoja-niebla.png` (escena `pruebas/escenas/niebla.ctl`).
 ## Qué hay y qué falta
 
 Pasada 1 a media resolución con destino propio `volumen` (rgb luz ya expuesta, a transmitancia): aire
-(perspectiva aérea, solo delante del terreno), niebla global uniforme y en manchas con su horario, caída con
+(perspectiva aérea, también sobre el cielo desde F-2), niebla global uniforme y en manchas con su horario, caída con
 la altura desde Y = 320, y tres capas de nubes (cúmulos pequeños y grandes, altoestratos) con perfiles de
 tiempo sorteados por día y de lluvia, en un solo raymarch con una sola transmitancia. Sombra del mapa en
 cada paso de la niebla y sombras de nubes. Pasada 2 de composición: decodifica la escena (ADR 0004),
@@ -44,8 +44,7 @@ código (medido): el presupuesto de 64 por etapa no aprieta.
   renderizado), y nunca por encima del plano de nubes si la cámara está debajo. 8 pasos con reparto
   exponencial `(f^u − 1)/(f − 1)` con f = 10, el primero desplazado por ruido. Integración analítica por
   tramo (Hillaire 2015) con extinción gris.
-- **El aire solo delante del terreno:** el cielo (01) ya lleva su atmósfera; integrarlo también en los
-  píxeles de cielo lo tapaba con una bruma (visto en el juego).
+- **El aire también sobre el cielo** (F-2, antes solo delante del terreno): ver §Perspectiva aérea (F-2).
 - **Sombra** del mapa (una comparación por paso) con la posición del mapa calculada en el núcleo con la
   fórmula documentada de la distorsión (`luz_posicion_mapa`); **sombra de nubes** evaluada en los dos
   extremos del tramo e interpolada (varía despacio y evaluarla en cada paso costaba).
@@ -68,8 +67,7 @@ código (medido): el presupuesto de 64 por etapa no aprieta.
 
 ### Medios (`nucleo/volumen/medios.wgsl`)
 
-- **Aire:** Rayleigh (0,5; 1,2; 2,9)·10⁻⁴ y Mie 1·10⁻⁴ por bloque al nivel del mar, altura de escala 600
-  bloques. Afinado a ojo: azula y aclara lo lejano sin velar lo cercano.
+- **Aire:** la extinción por bloque medida en `paridad/05` (F-2): ver §Perspectiva aérea (F-2).
 - **Niebla nocturna (respuesta de A, 2026-11-02):** tapa el cielo casi entero a propósito (la aurora, 06,
   existe por eso). Uniforme hasta Y = 320 (sin pegarla al suelo: se probó y se deshizo), densidad relativa
   0,38 de noche: σ = 0,0076 por bloque, que da τ ≈ 2,2 al cenit desde Y = 70 (≈11 % de transmitancia; A pide
@@ -266,3 +264,29 @@ Paridad con el banco de 2026-11-09 (`fino/05 §4`, `fino/01 §7` y `paridad/05`)
 - **Aporte ambiental de la niebla:** se corrige la fuente ambiental de la niebla (`nucleo/volumen/raymarch.wgsl`), sustituyendo el atenuador erróneo de 0,01 por la fase cenital física que cuadruplica la luz hacia el cenit (`mix(0,25, 1,0, ...)`), permitiendo que la niebla densa brille con el tono gris azulado del cielo en vez de quedar como un vacío negro.
 - **Cielo y luz en lluvia:** en `nucleo/cielo/composicion.wgsl`, `cie_aplicar_lluvia` implementa las Tablas A y B de `fino/01 §7`: peso exactamente nulo en el cenit (último cuarto de bóveda) y atenuación lineal por encima de la base de cúmulos bajos (238 m), mezclando hacia el promedio despejado teñido por transmitancia sin oscurecimiento destructivo de tormenta. La luz ambiental de superficie (`adaptadores/material.wgsl`) se mantiene clara y suave en lugar de caer en carbón oscuro.
 
+
+## Perspectiva aérea (F-2, 2026-11-10)
+
+Síntoma en el banco (`cielo-dia`, `nubes-dia`, `agua-orilla`): el cielo del pack sale más oscuro y saturado que el
+original (media 91/106/123 frente a 120/129/140 en `cielo-dia`) y sin la aureola blanca ancha alrededor del sol. El
+modelo del cielo no era la causa (F-1: a 0,3 EV de la tabla). `fino/05 §3` y su lista «Lo que B hizo distinto» (2 y 3)
+lo sitúan en la perspectiva aérea: el original integra el aire **también en los píxeles de cielo**, hasta el alcance
+de la niebla o la primera nube, con la extinción de `paridad/05` §«Perspectiva aérea», que es unas tres veces la que
+llevaba el pack en el molecular.
+
+- **Extinción** (`vol_aire`, `nucleo/volumen/medios.wgsl`): molecular (1,45; 3,375; 8,275)·10⁻⁴ por bloque en Y = 62
+  con altura de escala 1900 bloques; aerosoles 7,6·10⁻⁵ con altura de escala 265 más un suelo de 2·10⁻⁶. Comprobado con
+  `tools/paridad/aire.py` contra los 13 puntos de la tabla: error medio 0,014 EV (máximo 0,07). La misma herramienta
+  compara la fase: Elek exacta; la bimodal de aerosoles a 0,12 EV de media (×0,77–0,82 entre 50° y 90°, ×1,15 a 10°);
+  un ajuste de tres lóbulos no mejora, así que se deja.
+- **Sobre el cielo**: `vol_tramo_niebla` ya no anula la bruma cuando `rayo.cielo`. El tramo de niebla sigue acabando en
+  el plano de la base de los cúmulos (ordenación de tramos), no en la primera nube real como pide `fino/05 §1`: queda
+  pendiente. Lo que se espera: mirando al cenit a mediodía el aire añade ≈ +40 % de radiancia con el mismo tono
+  (τ_azul ≈ 0,13 hasta el plano de nubes) y un halo cerrado alrededor del sol (τ_Mie ≈ 0,013 × fase 12,5 × sol ≈ 0,17,
+  el doble del cenit).
+- **Ambiente del aire**: `OPC_AIRE_AMBIENTE = 0,55` deshace la ganancia de superficie `OPC_LUZ_CIELO_BASE` (1,8): el
+  aire dispersa la radiancia media del cielo tal cual (`fino/05 §3` solo dice «una fracción»; preguntado a A). Con la
+  luz de superficie entera el velo que se vio en el juego la primera vez (y que llevó a apagar el aire sobre el
+  cielo) sería 1,8 veces mayor.
+- Riesgo: `atardecer-oeste` y `niebla-amanecer` ganan bruma clara cerca del horizonte; con el sol a ≤ 1° la luz directa
+  del aire es nula (rampa de `atm_luz_directa_sol`), así que el halo bajo no debería crecer por esto.

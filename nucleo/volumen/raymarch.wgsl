@@ -67,9 +67,11 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
     // La sombra de las nubes varía despacio: se evalúa en los extremos del tramo y se interpola.
     let nubes_cerca = vol_sombra_nubes(rayo.camara + rayo.dir * t0, luz.direccion, a.nubes, t2, s2);
     let nubes_lejos = vol_sombra_nubes(rayo.camara + rayo.dir * t1, luz.direccion, a.nubes, t2, s2);
-    // El cielo ya lleva su atmósfera (01): el aire solo se integra delante del terreno.
-    let bruma = select(a.niebla.bruma, 0.0, rayo.cielo);
-    let ambiente = mix(luz.suelo, luz.cielo, 0.7);
+    // El aire se integra también en los píxeles de cielo (fino/05 §3): es lo que da la aureola del sol y el velo
+    // claro del cielo de día. Su ambiente es la radiancia media del cielo sin la ganancia de superficie.
+    // Porqué: docs/efectos/niebla-y-nubes.md §Perspectiva aérea (F-2)
+    let bruma = a.niebla.bruma;
+    let ambiente = mix(luz.suelo, luz.cielo, 0.7) * OPC_AIRE_AMBIENTE;
     let f = 10.0;
     var anterior = 0.0;
     for (var i = 0; i < a.pasos_niebla; i++) {

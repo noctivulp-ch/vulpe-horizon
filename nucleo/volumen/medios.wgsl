@@ -10,10 +10,14 @@ struct VolAjustesNiebla {
     ambiente: f32,          // multiplicador de la luz ambiente dispersada (>1 en la tormenta de nieve: blanca)
 }
 
-// Perspectiva aérea a escala de Minecraft: Rayleigh y Mie con alturas de escala cortas.
-const VOL_AIRE_RAYLEIGH: vec3<f32> = vec3<f32>(0.5e-4, 1.2e-4, 2.9e-4);    // por bloque, al nivel del mar
-const VOL_AIRE_MIE: f32 = 1.0e-4;
-const VOL_AIRE_ALTURA: f32 = 600.0;
+// Perspectiva aérea: extinción por bloque medida en paridad/05 §Perspectiva aérea (Y 62..662), con alturas de escala
+// distintas para moléculas y aerosoles y un suelo de aerosoles. Porqué: docs/efectos/niebla-y-nubes.md §Perspectiva aérea (F-2)
+const VOL_AIRE_RAYLEIGH: vec3<f32> = vec3<f32>(1.45e-4, 3.375e-4, 8.275e-4); // por bloque en VOL_AIRE_Y0
+const VOL_AIRE_MIE: f32 = 7.6e-5;                                            // por bloque en VOL_AIRE_Y0, sin el suelo
+const VOL_AIRE_MIE_SUELO: f32 = 2.0e-6;                                      // aerosoles que no caen con la altura
+const VOL_AIRE_Y0: f32 = 62.0;                                               // cota de referencia de la tabla
+const VOL_AIRE_ALTURA_RAYLEIGH: f32 = 1900.0;                                // bloques: altura de escala molecular
+const VOL_AIRE_ALTURA_MIE: f32 = 265.0;                                      // bloques: altura de escala de aerosoles
 const VOL_NIEBLA_SIGMA: f32 = 0.02;        // por bloque con densidad relativa 1
 const VOL_CAIDA_DESDE: f32 = 320.0;         // por encima del velo de la aurora (decisión de Vulpe)
 const VOL_MANCHAS_ALTURA: f32 = 24.0;       // las manchas son bruma baja: caen por encima del mar + esto
@@ -24,8 +28,10 @@ struct VolAire {
 }
 
 fn vol_aire(y: f32, bruma: f32) -> VolAire {
-    let d = exp(-max(y - VOL_MAR, 0.0) / VOL_AIRE_ALTURA) * bruma;
-    return VolAire(VOL_AIRE_RAYLEIGH * d, VOL_AIRE_MIE * d);
+    let h = max(y - VOL_AIRE_Y0, 0.0);
+    let d_r = exp(-h / VOL_AIRE_ALTURA_RAYLEIGH);
+    let d_m = exp(-h / VOL_AIRE_ALTURA_MIE);
+    return VolAire(VOL_AIRE_RAYLEIGH * (d_r * bruma), (VOL_AIRE_MIE * d_m + VOL_AIRE_MIE_SUELO) * bruma);
 }
 
 // Coeficiente de extinción de la niebla global (por bloque) en `mundo`.

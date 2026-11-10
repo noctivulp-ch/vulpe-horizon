@@ -5,6 +5,9 @@ override nubes_velocidad: f32 = 1.0;        // velocidad de las nubes (§1)
 override nubes_sombras: i32 = 100;          // % (§1) (0 = apagadas)
 
 const OPC_NIEBLA_LLUVIA_DEFECTO: f32 = 1.0;
+// Ambiente que dispersa el aire (perspectiva aérea): fracción de la luz de cielo de superficie, que lleva
+// OPC_LUZ_CIELO_BASE (1,8); 1/1,8 deja la radiancia media del cielo tal cual (fino/05 §3: «una fracción»).
+const OPC_AIRE_AMBIENTE: f32 = 0.55;
 const NIEBLA_CAIDA: f32 = 25.0;             // por mil y bloque
 const OPC_NUBES_DEFECTO: u32 = 1u;          // todas las capas por defecto
 const NUBES_VIENTO: f32 = 1.0;
