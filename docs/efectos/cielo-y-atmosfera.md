@@ -232,3 +232,22 @@ tablas de cielo dibujado de `paridad/01`; cociente modelo/tabla en R, G, B):
   tabla, no al número. Los presets de estilo del cielo bajan su g en lo mismo (−0,2).
 - Sigue abierto: el cenit con el sol bajo (2° y 10°) sale a la mitad de la tabla en todos los casos de la rejilla,
   así que no depende de los aerosoles (posible dispersión múltiple o ganancia de fondo, `fino/01` §2).
+
+### Comprobación del cielo dibujado contra `paridad/01` (F-1, 2026-11-10)
+
+`tools/paridad/cielo.py` evalúa el mismo modelo que la etapa `sky` con el sol alto (el de `generar_tabla.py` con la
+fase de Elek, el término múltiple de la tabla y el color del sol de 6000 K) en las cinco direcciones de las tablas de
+cielo dibujado de `paridad/01` y da la razón de luminancias nuestro/original y los tonos. Resultado con los
+parámetros de C-09.1 (error medio 0,35 EV sobre 7 elevaciones; 0,30 sobre 4°–90°):
+
+- cenit y lado opuesto a 30°–90° de sol: ×0,98–1,13 y el mismo tono (el azul profundo de B-16.4 es correcto);
+- horizonte hacia el sol: sistemáticamente más brillante que la tabla, ×1,3 (10° y 55°) a ×1,7 (30°), y algo más
+  amarillo;
+- con el sol a 0°–4°: el cenit y todo el lado opuesto salen a 0,5–0,7 de la tabla y demasiado rojizos (la tabla
+  mantiene un gris azulado: el refuerzo crepuscular de la dispersión múltiple de `fino/01 §3`; la herramienta no
+  incluye el cinturón de Venus del núcleo, así que en el juego parte de esto ya está corregido).
+
+Una rejilla de g (0,6–0,8) × aerosoles (4–12·10⁻⁶) × múltiple (0,4–0,8) no baja del 0,28 EV medio: **el modelo del
+cielo no es la palanca** de las diferencias del banco de día; lo que falta en `cielo-dia` y `nubes-dia` (cielo más
+claro y blanquecino, aureola) viene de la perspectiva aérea sobre el cielo (F-2) y de las nubes (F-4), no de la tabla.
+Uso: `tools/paridad/cielo.py [--elevaciones 0,2,10,55] [--g] [--mie] [--multiple] [--bruma]`.
