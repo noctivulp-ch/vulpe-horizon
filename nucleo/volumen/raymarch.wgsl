@@ -102,7 +102,9 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
         }
         visible *= mix(1.0, mix(nubes_cerca, nubes_lejos, (t - t0) / max(largo, 1.0)), a.sombra_nubes);
         let sol = luz.irradiancia * visible;
-        let fuente_aire = aire.rayleigh * (sol * fase_aire_r + ambiente) + aire.mie * (sol * fase_aire_m + ambiente);
+        // La dispersión del sol en el aire va modulada otra vez por la fase de aerosoles («fase solar directa», fino/05 §3
+        // y su tabla «Halo solar»: ×1700 en el centro del sol frente a 90°, ×0,07 de espaldas). Porqué: docs/efectos/niebla-y-nubes.md §Perspectiva aérea (F-5)
+        let fuente_aire = (aire.rayleigh * fase_aire_r + aire.mie * fase_aire_m) * (sol * fase_aire_m) + (aire.rayleigh + aire.mie) * ambiente;
         // Ambiente de la niebla: radiancia media del cielo × fase cenital medida (F-3), con la escala base de opciones.
         let fase_cenital = vol_fase_cenital(rayo.dir.y) * OPC_NIEBLA_AMBIENTE_BASE;
         let fuente_niebla = niebla * (sol * vol_fase_niebla(cos_luz)

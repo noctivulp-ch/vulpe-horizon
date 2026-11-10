@@ -25,10 +25,11 @@ fn vol_fase_niebla(c: f32) -> f32 {
     return vol_hg(c, 0.95) * 0.985 + vol_hg(c, 0.3) * 0.01 + vol_hg(c, -0.3) * 0.005;
 }
 
-// Fase de aerosoles del aire (Mie): fuerte concentración hacia adelante medida en paridad/05.
-// Porqué: docs/efectos/niebla-y-nubes.md §Fase
+// Fase de aerosoles del aire (Mie): tres lóbulos ajustados a la tabla «Halo solar de la perspectiva aérea» de fino/05
+// (se aplica dos veces a la luz del sol: como fase de los aerosoles y como «fase solar directa»; F-5).
+// Porqué: docs/efectos/niebla-y-nubes.md §Perspectiva aérea (F-5)
 fn vol_fase_aire_mie(c: f32) -> f32 {
-    return vol_hg(c, 0.88) * 0.94 + vol_hg(c, 0.55) * 5.0;
+    return vol_hg(c, 0.9) * 0.5 + vol_hg(c, 0.55) * 5.0 + vol_hg(c, 0.3) * 1.0;
 }
 
 // Fase cenital del ambiente de la niebla (fino/05 §2 y su tabla medida: 0,5 en el nadir, 1,97 a −30°, 2,46 en el

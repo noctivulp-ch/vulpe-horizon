@@ -44,6 +44,13 @@ def hg(c, g):
     return (1.0 - g2) / (4.0 * math.pi * den * math.sqrt(den))
 
 
+# fino/05 «Halo solar de la perspectiva aérea», Y = 62: ángulo → (R, G, B) dispersión del sol por bloque
+HALO_62 = {0: (0.01241, 0.0127, 0.01344), 1: (0.006352, 0.006559, 0.007088), 2: (0.004682, 0.00486, 0.005312),
+           4: (0.003076, 0.00322, 0.003585), 10: (0.001386, 0.001481, 0.001723), 30: (0.0002551, 0.0002933, 0.0003907),
+           45: (8.985e-05, 0.0001108, 0.0001641), 60: (3.518e-05, 4.693e-05, 7.683e-05), 90: (7.358e-06, 1.139e-05, 2.167e-05),
+           120: (2.336e-06, 3.998e-06, 8.229e-06), 180: (8.867e-07, 1.614e-06, 3.465e-06)}
+
+
 def main():
     k = constantes(MEDIOS.read_text(), "VOL_AIRE_")
     print("extinción por bloque (nuestra / tabla):")
@@ -71,6 +78,21 @@ def main():
         ray = (2.8 + c) / (10.0 * math.pi)
         err += [abs(math.log2(mie / mie_t)), abs(math.log2(ray / ray_t))]
         print(f"  {ang:3d}°: Mie {mie:7.3f} tabla {mie_t:7.3f} ×{mie / mie_t:.2f}; Rayleigh {ray:.4f} tabla {ray_t:.4f} ×{ray / ray_t:.3f}")
+    print(f"  error medio {np.mean(err):.3f} EV, máximo {np.max(err):.3f} EV")
+
+    # Dispersión del sol por bloque a Y = 62: (σ_r·Elek + σ_m·Mie) × Mie, como en vol_tramo_niebla (F-5).
+    print("\nhalo solar del aire a Y = 62 (nuestro / tabla):")
+    err = []
+    ray0 = k["VOL_AIRE_RAYLEIGH"]
+    mie0 = k["VOL_AIRE_MIE"] + k["VOL_AIRE_MIE_SUELO"]
+    for ang, tabla in HALO_62.items():
+        c = math.cos(math.radians(ang))
+        fm = sum(hg(c, float(g)) * float(w) for g, w in lobulos)
+        fr = (2.8 + c) / (10.0 * math.pi)
+        n = (ray0 * fr + mie0 * fm) * fm
+        razon = n / np.array(tabla)
+        err += [abs(math.log2(x)) for x in razon]
+        print(f"  {ang:3d}°: {n.round(7)} tabla {tabla}  ×{razon.round(2)}")
     print(f"  error medio {np.mean(err):.3f} EV, máximo {np.max(err):.3f} EV")
 
 

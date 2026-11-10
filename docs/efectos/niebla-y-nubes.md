@@ -319,3 +319,16 @@ con el umbral `0,68 − cob·0,22` y rampa 0,48 el parámetro 1 cubría el 41 % 
 c > 0,7). Con `OPC_NUBES_UMBRAL = (0,58; 0,28)` y `OPC_NUBES_RAMPA = 0,45`: 64 % (54 %; 34 %); con 0,5: 44 %; con 1,9:
 91 %. La erosión 3D recorta después parte de eso. Los altoestratos no cambian. Lo que se espera: más cúmulos y más
 grandes en las cuatro escenas de día; las sombras de nubes en el suelo, más frecuentes.
+
+### Halo solar del aire: la fase se aplica dos veces (F-5, 2026-11-10)
+
+La tabla nueva de `fino/05` «Halo solar de la perspectiva aérea» (dispersión del sol por bloque a Y = 62 y 300, por
+ángulo al sol) no cuadra con `(σ_r·Elek + σ_m·Mie)`: el halo es ×1700 el valor a 90° y de espaldas queda en ×0,07–0,16.
+Dividiendo la tabla entre esa suma sale, ángulo a ángulo, la propia fase de aerosoles («aire Mie»: 12,5; 4,1; 1,7;
+0,24; 0,07): el original modula la dispersión del sol en el aire **otra vez** por la fase de aerosoles (la «fase solar
+directa» de `fino/05 §3`). Así el halo es un pincho estrecho y, lejos del sol, el aire apenas dispersa luz directa, que
+es lo que permite integrarlo sobre todo el cielo sin lavarlo (y lo que faltaba en F-2, que a 90° daba ×4 la tabla).
+`vol_tramo_niebla`: `(σ_r·Elek + σ_m·Mie) × Mie × sol + (σ_r + σ_m) × ambiente`. La fase de aerosoles se reajustó
+contra esa tabla con una rejilla de tres lóbulos: `0,5·HG(0,9) + 5·HG(0,55) + 1·HG(0,3)` (error medio 0,35 EV frente a
+0,55 con la anterior; a 1°–4° sigue ×1,4–1,6 porque la tabla se divide por dos ya a 1°, más estrecho que cualquier HG
+de la rejilla). `tools/paridad/aire.py` comprueba la tabla del halo.
