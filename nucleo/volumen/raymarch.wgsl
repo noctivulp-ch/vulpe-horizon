@@ -70,7 +70,7 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
     // El aire se integra también en los píxeles de cielo (fino/05 §3): es lo que da la aureola del sol y el velo
     // claro del cielo de día. Su ambiente es la radiancia media del cielo sin la ganancia de superficie.
     // Porqué: docs/efectos/niebla-y-nubes.md §Perspectiva aérea (F-2)
-    let bruma = a.niebla.bruma;
+    let bruma = select(a.niebla.bruma, 0.0, rayo.cielo); // PRUEBA A/B
     let ambiente = mix(luz.suelo, luz.cielo, 0.7) * OPC_AIRE_AMBIENTE;
     let f = 10.0;
     var anterior = 0.0;
@@ -180,7 +180,9 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: 
         let niebla_ext = 1.0 - exp(-dist_horiz * (0.00012 + a.niebla.uniforme * 0.0004));
         let lejos = 1.0 - smoothstep(VOL_NUBES_DISTANCIA * 0.7, VOL_NUBES_DISTANCIA, t);
         let sigma = sigma_nube * d * lejos;
-        var luz_nube = luz.irradiancia * t_sol * vol_fase(cos_luz, sigma_nube * d) + ambiente;
+        // La tabla de fase da el factor del original; su escala absoluta en las nubes no está medida: con 1 las nubes
+        // salen blancas quemadas (visto en el juego, F-6). Porqué: docs/efectos/niebla-y-nubes.md §Fase medida (F-6)
+        var luz_nube = luz.irradiancia * t_sol * vol_fase(cos_luz, sigma_nube * d) * a.nubes.forma.fase_escala + ambiente;
         luz_nube = mix(luz_nube, luz.cielo, niebla_ext);
         let fuente = sigma * luz_nube;
         vol_tramo(r, fuente, sigma, paso);

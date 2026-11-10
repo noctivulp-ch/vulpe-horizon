@@ -27,6 +27,7 @@ struct VolFormaNubes {
     sombra_alto: f32,       // multiplicador del espesor óptico oblicuo de los altoestratos sobre el suelo
     umbral_cobertura: vec2<f32>, // umbral de la cobertura 2D de los cúmulos: x − cob·y (F-4)
     rampa_cobertura: f32,   // anchura de la rampa sobre el umbral
+    fase_escala: f32,       // escala del término solar de las nubes sobre la fase medida (F-6)
 }
 
 struct VolNubes {

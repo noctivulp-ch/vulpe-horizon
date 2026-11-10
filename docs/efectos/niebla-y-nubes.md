@@ -345,3 +345,9 @@ espera: halo del sol y de la luna en la niebla tres veces menos puntiagudo; la n
 espaldas mucho más clara (`lluvia-dia`: la bruma que faltaba; `niebla-amanecer`), y los cúmulos con el borde
 retroiluminado más marcado. Riesgo: la niebla nocturna con luna gana luz lateral (×38 sobre 0,003 de irradiancia:
 sigue siendo poco frente al ambiente). Los rayos del fractal (14) usan la fila de 0,01.
+
+**Escala del término solar de las nubes (F-6, visto en Horizon):** con la tabla a escala 1 los cúmulos salían blancos
+quemados (de lado y de espaldas la tabla da 0,8–2,6 donde la fase anterior daba ≈ 0,05). `OPC_NUBES_FASE_ESCALA = 0,05`
+deja el brillo donde estaba y conserva la forma medida; la escala absoluta del original en las nubes no está medida
+(pregunta para A). Comprobado en `pruebas/escenas/banco-f.ctl` (las ocho escenas del banco, con el aislamiento de color
+apagado en el manifiesto solo para mirar): cúmulos blancos con sombra propia, no quemados.

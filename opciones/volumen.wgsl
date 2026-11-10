@@ -46,6 +46,9 @@ const OPC_NUBES_SOMBRA_ALTO: f32 = 1.0;                            // × espesor
 // más de la mitad del cielo (banco cielo-dia y nubes-dia). Ahora 64 % (54 % con c > 0,3, 34 % densa).
 const OPC_NUBES_UMBRAL: vec2<f32> = vec2<f32>(0.58, 0.28);
 const OPC_NUBES_RAMPA: f32 = 0.45;
+// Escala del término solar de las nubes sobre la fase medida de fino/05 (cuya escala absoluta en las nubes no está
+// medida): 0,05 deja el brillo de las nubes donde estaba con la fase anterior (≈0,05 de lado y de espaldas).
+const OPC_NUBES_FASE_ESCALA: f32 = 0.05;
 
 // Otras dimensiones (17).
 const OPC_NIEBLA_NETHER_DEFECTO: f32 = 1.0;
@@ -155,6 +158,7 @@ fn opc_volumen() -> OpcVolumen {
         OPC_NUBES_SOMBRA_ALTO,
         OPC_NUBES_UMBRAL,
         OPC_NUBES_RAMPA,
+        OPC_NUBES_FASE_ESCALA,
     );
 
     let mod_cuevas = opc_estilo_cuevas();
