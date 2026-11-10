@@ -251,3 +251,12 @@ Una rejilla de g (0,6–0,8) × aerosoles (4–12·10⁻⁶) × múltiple (0,4�
 cielo no es la palanca** de las diferencias del banco de día; lo que falta en `cielo-dia` y `nubes-dia` (cielo más
 claro y blanquecino, aureola) viene de la perspectiva aérea sobre el cielo (F-2) y de las nubes (F-4), no de la tabla.
 Uso: `tools/paridad/cielo.py [--elevaciones 0,2,10,55] [--g] [--mie] [--multiple] [--bruma]`.
+
+### Refuerzo crepuscular de la dispersión múltiple (F-10, 2026-11-10)
+
+`fino/01 §Medidos D`: el término de dispersión múltiple va ×2 en una meseta de −17° a +7° de sol, baja a 1 hacia 14°
+y hacia −45°. `atm_refuerzo_crepuscular(elev)` = `1 + smoothstep(14, 7, e) · clamp((e + 45) / 28)`, aplicado al
+`multiple` del sol en `adp_luz_sol` (antes del ajuste del cinturón de Venus). `tools/paridad/cielo.py` lo incluye
+(`--sin-refuerzo` lo quita): con el sol a 0°–4° el lado opuesto sube de ×0,52–0,63 a ×0,62–0,70 de la tabla; el resto
+de la diferencia a esa hora (el original es gris azulado y el modelo, naranja) no es el peso del término sino su
+color, que en nuestra tabla sale de las filas cielo+suelo, anaranjadas con el sol bajo. Pregunta para A anotada.

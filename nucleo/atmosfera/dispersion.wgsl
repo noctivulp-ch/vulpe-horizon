@@ -41,6 +41,12 @@ fn atm_peso_crepusculo(seno_sol: f32, v: AtmVenus) -> f32 {
     return smoothstep(v.sol_min, -0.04, seno_sol) * (1.0 - smoothstep(0.02, v.sol_max, seno_sol));
 }
 
+// Refuerzo crepuscular de la dispersión múltiple (fino/01 §3 y §Medidos D): 1 con el sol alto, 2 en una meseta de
+// −17° a +7°, vuelve a 1 hacia 14° por arriba y hacia −45° por abajo. Porqué: docs/efectos/cielo-y-atmosfera.md §Refuerzo crepuscular (F-10)
+fn atm_refuerzo_crepuscular(elev_grados: f32) -> f32 {
+    return 1.0 + smoothstep(14.0, 7.0, elev_grados) * clamp((elev_grados + 45.0) / 28.0, 0.0, 1.0);
+}
+
 // Dispersión múltiple ambiente del sol: en el crepúsculo mantiene el gris azulado de la bóveda sobre la sombra de la
 // Tierra, evitando que el hueco verde del ozono en la tabla la tiña de magenta. Porqué: docs/efectos/cielo-y-atmosfera.md §Cinturón de Venus
 fn atm_multiple_crepusculo(base: vec3<f32>, seno_sol: f32, v: AtmVenus) -> vec3<f32> {

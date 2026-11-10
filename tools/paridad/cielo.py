@@ -60,6 +60,16 @@ def fase_elek(c):
     return (2.8 + c) / (10.0 * math.pi)
 
 
+def smoothstep(a, b, x):
+    t = min(max((x - a) / (b - a), 0.0), 1.0)
+    return t * t * (3 - 2 * t)
+
+
+def refuerzo_crepuscular(elev):
+    """atm_refuerzo_crepuscular: 2 entre −17° y +7°, 1 por encima de 14° y por debajo de −45°."""
+    return 1.0 + smoothstep(14.0, 7.0, elev) * min(max((elev + 45.0) / 28.0, 0.0), 1.0)
+
+
 def direcciones(sol_elev):
     """Las cinco direcciones de las tablas; el sol en el azimut +x."""
     def d(elev, azim):
@@ -77,6 +87,7 @@ def main():
     q.add_argument("--rayleigh", default=None, help="tres coeficientes separados por comas")
     q.add_argument("--multiple", type=float, default=None, help="ATM_MULTIPLE")
     q.add_argument("--rayleigh-fase", choices=["elek", "rayleigh"], default="elek")
+    q.add_argument("--sin-refuerzo", action="store_true", help="sin el refuerzo crepuscular ×2 de la dispersión múltiple (F-10)")
     a = q.parse_args()
 
     p, k, _ = gt.leer_parametros()
@@ -113,6 +124,8 @@ def main():
             t_sol = gt.transmitancia(o[None], luz, p, 64)[0]
             suelo = k["ATM_ALBEDO_SUELO"] / math.pi * (irradiancia * t_sol * max(math.sin(el), 0.0) + e_cielo)
             multiple = k["ATM_MULTIPLE"] * 0.5 * (e_cielo / math.pi + suelo)
+        if not a.sin_refuerzo:
+            multiple = multiple * refuerzo_crepuscular(elev)
         nuestro = gt.cielo(o, direcciones(elev), luz, irradiancia, multiple, p) * color_sol
         print(f"\nsol a {elev:3d}°")
         for nombre, n, orig in zip(DIRECCIONES, nuestro, ORIGINAL[elev]):

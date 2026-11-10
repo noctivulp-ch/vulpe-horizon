@@ -16,7 +16,8 @@ fn adp_observador() -> vec3<f32> {
 fn adp_luz_sol(ajustes: OpcCielo) -> AtmLuz {
     let d = frame.sun_direction;
     let color = ajustes.sol_color;
-    let base = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * ATM_MULTIPLE;
+    let base = 0.5 * (adp_tabla(d.y, ATM_FILA_CIELO) + adp_tabla(d.y, ATM_FILA_SUELO)) * ATM_MULTIPLE
+             * atm_refuerzo_crepuscular(degrees(asin(clamp(d.y, -1.0, 1.0))));
     // En el crepúsculo el ambiente mantiene el gris azulado de la bóveda sobre la sombra de la Tierra (01.1).
     // Porqué: docs/efectos/cielo-y-atmosfera.md §Cinturón de Venus
     let multiple = atm_multiple_crepusculo(base, d.y, ajustes.venus);
