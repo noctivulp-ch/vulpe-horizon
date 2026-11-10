@@ -160,3 +160,29 @@ Discrepancias identificadas en la escena `agua-orilla` (diferencia media inicial
    - Se evalúa la cobertura de nubes (`vol_cobertura`) en el vector reflejado de cielo, reflejando las nubes del cielo sobre el mar.
 
 
+
+## Color del agua (banco 2026-11-09, C-08.3)
+
+Tras B-17.6 el gestor vio el agua del pack **azul saturada** y sin destello, frente a la del original, **verde azulada
+y más oscura**, con un destello solar brillante en primer plano. B-17.6 se había apartado de la especificación en tres
+cifras; se vuelven a ella:
+
+- **Absorción** `(0,39; 0,120; 0,055)` → `(0,39; 0,108; 0,066)`: la de la tabla de transmitancia de `paridad/07` §1
+  (a 4 bloques, 0,2085 / 0,6492 / 0,7680). B-17.6 había bajado el azul y subido el verde para azular el mar.
+- **Dispersión gris con su albedo físico** en vez de un color a mano. `subsistemas/07` §3 pide un coeficiente
+  «pequeño y gris»; B usaba `color_disperso = (0,04; 0,22; 0,68)`, un azul que no sale de la absorción. Ahora
+  `agu_albedo = σ_s / (σ_a + σ_s)` por canal, con σ_s = 0,035: da `(0,082; 0,245; 0,347)`, verde azulado oscuro
+  (verde/azul ≈ 0,7, antes 0,32). La columna se llena con `1 − e^{−(σ_a+σ_s)·d}`, no con el `× 8` de antes, que la
+  saturaba en pocos bloques.
+- **Luz de la columna:** cielo + sol × sombra (el sol es la mayor parte de la luz que entra en el agua a mediodía),
+  por `OPC_AGUA_RETRODISPERSION = 0,5`, la fracción de una dispersión isótropa que vuelve hacia arriba. Sin el sol,
+  el tinte lo ponía el cielo, muy azul.
+- **Destello:** `OPC_AGUA_ESPECULAR_RUGOSIDAD` 0,07 → 0,02. `subsistemas/07` §4 pide «rugosidad muy baja». Con 0,07
+  el pico de GGX era unas 12 veces menor y quedaba por debajo del techo de la codificación (≈ 3,7 de día, ADR 0004):
+  el agua no llegaba a destellar ni a alimentar el bloom.
+- `color_disperso` ya no tiñe la superficie; sigue tiñendo la niebla bajo el agua (`nucleo/volumen/agua.wgsl`), que
+  no se tocó. Los estilos «turbia» y «pantano» solo cambian ahora la superficie por su absorción y su turbidez.
+- **Sin tocar:** el horizonte blanco del mar. La fila de horizonte de la tabla de atmósfera da a 55° de sol
+  `(0,10; 0,18; 0,23)`, igual que `paridad/01` (horizonte opuesto, 2°), así que no viene de ahí. Quedan por mirar el
+  reflejo del espejo de Horizon cuando la detección de cielo falla y la niebla de borde (`fino/05` §7, injusticia 7
+  del banco); hace falta verlo en el juego.

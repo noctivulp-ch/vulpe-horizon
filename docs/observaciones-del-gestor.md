@@ -175,3 +175,7 @@ disposición de la referencia). En espera: lo único abierto es el 15 (vegetaci�
   `paridad/01` y, además, la codificación de 8 bits del «picture» lo recorta, así que el bloom no podía repartir su
   energía. Ahora el disco sigue la tabla y un destello analítico devuelve al bloom la energía recortada, pesado por la
   parte visible del disco y por las nubes delante (`docs/efectos/bloom.md` §Destello del sol).
+- **C-08.3, `agua-orilla`:** el agua azul saturada venía de tres cifras de B-17.6 que se apartaban de la
+  especificación. La absorción vuelve a la de `paridad/07`, la dispersión pasa a gris con su albedo físico (verde
+  azulado oscuro, sin color a mano) e iluminada por cielo y sol, y la rugosidad del destello vuelve a «muy baja» (0,02).
+  El horizonte blanco del mar queda sin resolver (`docs/efectos/agua.md` §Color del agua).
