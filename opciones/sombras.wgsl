@@ -7,6 +7,10 @@ const SOMBRAS_COLOR: bool = true;
 const OPC_SOMBRA_PENUMBRA_MIN: f32 = 0.051;
 const OPC_SOMBRA_PENUMBRA_CRECE: f32 = 0.024;
 
+// Sombra planetaria del horizonte (fino/04 §6). Valores estimados del banco atardecer-oeste / niebla-amanecer: la cota
+// del original está apuntada para medir. Porqué: docs/efectos/sombras.md §Sombra planetaria del horizonte
+const OPC_SOMBRA_HORIZONTE: LuzHorizonte = LuzHorizonte(220.0, 10.0, 24.0, vec2<f32>(18.0, 26.0));
+
 struct OpcSombras {
     ajustes: LuzAjustesSombra,
     color: bool,

@@ -161,3 +161,13 @@ disposición de la referencia). En espera: lo único abierto es el 15 (vegetaci�
   - Transición suave con la apertura combinada de cámara y bloque $(1 - \text{luz\_cielo})$ y protección estricta contra fugas solares y de SSS en cuevas (`fino/03 §4`).
   - Neutralización del tinte de niebla de cueva a gris neutro `OPC_NIEBLA_CUEVA_COLOR = (0.5, 0.5, 0.52)` y reducción de su brillo a `0.0004` (antes azul saturado `(0.15, 0.35, 0.85)` con brillo 0,0035 que iluminaba el fondo de azul).
   - Silenciado del efecto Purkinje (`col_peso_bastones`) en interiores/cuevas sin cielo en la cámara (`smoothstep(0.0, 0.15, frame.eye_light_smooth.y)`). Se añade recorrido `pruebas/escenas/cueva-recorrido.ctl`.
+
+## 2026-11-09 — arreglador C-08 (sigue a B-16 y B-17)
+
+- **C-08.1, `atardecer-oeste` y `niebla-amanecer`:** el gestor ve en el original el suelo y la cara del bloque flotante
+  en sombra fría con el sol a unos 12°, y en el pack una franja amarilla de luz directa y un resplandor enorme. La luz
+  directa del pack ya sigue la tabla de `paridad/01` (a 12° vale 0,85), así que no era la rampa: faltaban dos sombras
+  de `fino/04 §6`, la **sombra planetaria del horizonte** (terreno bajo con el sol rasante) y la **sombra de los
+  altoestratos con camino oblicuo**. Las dos están ahora. La cota de la primera es una estimación, no una medida
+  (`docs/efectos/sombras.md` §Sombra planetaria del horizonte). A la hora 300 (sol a ~17°) apenas actúa: el suelo de
+  `niebla-amanecer` sigue soleado, como en el original.

@@ -73,6 +73,25 @@ aproximada por la luz de cielo; no con la cámara bajo el agua.
 Solo en caras hacia la luz, en plantas cruzadas o con SSS, y con algo de luz de cielo
 (`etapas/material.wgsl`): las caras de espaldas ya están en sombra por N·L.
 
+### Sombra planetaria del horizonte
+
+`luz_sombra_horizonte` (`nucleo/luz/sombras.wgsl`), aplicada en `adp_sombra` junto a la sombra de nubes (C-08.1,
+2026-11-09). Sigue `fino/04 §6`: con el sol rasante, el terreno por debajo de una cota no recibe sol directo, y el
+efecto se desvanece al subir el sol. Es lo que faltaba para el banco `atardecer-oeste` (hora 12000, sol a unos 12°):
+en el original el suelo y la cara del bloque flotante quedan en sombra fría aunque el disco se ve, y en el pack salía
+una franja amarilla de luz directa. La tabla de luz directa de `paridad/01` no podía explicarlo (a 12° da 0,85 de
+luma): la anulación tiene que venir de una sombra, no del color de la luz.
+
+- Forma: cota base `cota − elevación × por_grado`; iluminado por encima de ella, en sombra por debajo, con una
+  transición vertical de ±`transicion` bloques; todo vuelve a 1 entre `fin.x` y `fin.y` grados.
+- **Valores estimados, no medidos** (`OPC_SOMBRA_HORIZONTE`: 220, 10 bloques/°, ±24, 18°–26°): la cota del original
+  está en «apuntados para medir» de `fino/04`. Se eligieron para que un suelo a Y ≈ 64–80 quede en sombra a la hora
+  12000 (sol a ~12,4° con la curva de vainilla: cota 96) y casi del todo iluminado a la hora 300 (sol a ~17°: cota 50),
+  donde el original sí tiene el suelo cálido y soleado. Si la medida llega, se cambian las cuatro cifras.
+- Alternativa descartada: adelantar la rampa de visibilidad de `atm_luz_directa_sol` hasta ~13°. Rompería la tabla de
+  `paridad/01` (que manda) y apagaría también el disco y las nubes, que en el original siguen iluminados.
+- La niebla y el aire del volumen no la usan todavía (solo superficies).
+
 ## Opciones
 
 Página «Calidad (presets)» y página «Niebla y nubes» (ver `docs/efectos/calidad.md`): la opción `sombras_penumbra` salió del menú

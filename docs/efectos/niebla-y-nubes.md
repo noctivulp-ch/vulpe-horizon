@@ -122,6 +122,17 @@ código (medido): el presupuesto de 64 por etapa no aprieta.
 - **Capas:** base 187 / 437 / 1937 bloques sobre el mar (`VOL_MAR = 63` → Y = 250 / 500 / 2000, como en `paridad/05`),
   espesor 100 / 200 / 12.
 
+### Sombra de los altoestratos
+
+`vol_sombra_nubes` sumaba solo las dos capas de cúmulos. `fino/04 §6` pide las tres, y la de altoestratos reforzada
+con el sol rasante (C-08.1, 2026-11-09). La lámina tiene 12 bloques de espesor y σ = 0,06 por bloque
+(`OPC_NUBES_SIGMA.z`): su espesor óptico vertical a cobertura y densidad plenas es 0,72, y el rayo hacia el sol la
+cruza con un camino 1 / sen(elevación) veces más largo. A mediodía sombrea poco (T ≈ 0,5); a 12° de elevación,
+T ≈ 0,03. Así el velo pálido del atardecer apaga la luz directa del suelo, que es lo que se ve en el original en
+`atardecer-oeste`. Sin constantes nuevas salvo `OPC_NUBES_SOMBRA_ALTO` (multiplicador, 1,0); el divisor se recorta a
+0,05 (unos 3°) para que no se dispare en el horizonte. Como el volumen usa la misma función, la niebla y el aire bajo
+el velo también pierden la luz del sol (menos halo bajo un cielo cubierto).
+
 ### Tiempo (`nucleo/volumen/tiempo.wgsl`)
 
 Los once perfiles medidos en `paridad/05` §«Tiempo diario: perfiles sorteados» (con sus coberturas `0..2` y densidades

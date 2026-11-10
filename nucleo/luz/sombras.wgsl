@@ -23,6 +23,22 @@ struct LuzSombra {
     grosor: f32,                // distancia media al ocluyente hacia la luz, bloques (0 sin ocluyente)
 }
 
+// Sombra planetaria del horizonte (fino/04 §6): con el sol rasante, el terreno por debajo de una cota que baja con la
+// elevación no recibe sol directo; se desvanece del todo al subir el sol. 1 iluminado, 0 en sombra.
+// Porqué: docs/efectos/sombras.md §Sombra planetaria del horizonte
+struct LuzHorizonte {
+    cota: f32,          // Y por debajo de la cual no llega el sol a 0° de elevación
+    por_grado: f32,     // bloques que baja la cota por grado de elevación del sol
+    transicion: f32,    // semiancho vertical de la transición, bloques
+    fin: vec2<f32>,     // grados de elevación en que el efecto se desvanece (inicio, fin)
+}
+
+fn luz_sombra_horizonte(y: f32, elev_grados: f32, h: LuzHorizonte) -> f32 {
+    let base = h.cota - max(elev_grados, 0.0) * h.por_grado;
+    let luz = smoothstep(base - h.transicion, base + h.transicion, y);
+    return mix(luz, 1.0, smoothstep(h.fin.x, h.fin.y, elev_grados));
+}
+
 // Disco de Vogel (espiral áurea): muestra i de n, girado `giro` radianes, radio 0..1 de área igual (para filtrado PCF).
 fn luz_vogel(i: i32, n: i32, giro: f32) -> vec2<f32> {
     let r = sqrt((f32(i) + 0.5) / f32(n));

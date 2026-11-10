@@ -30,6 +30,7 @@ const OPC_NUBES_DETALLE_FUERZA: f32 = 0.45;                        // erosión f
 const OPC_NUBES_SIGMA: vec3<f32> = vec3<f32>(0.45, 0.45, 0.06);    // extinción por bloque
 const OPC_NUBES_TRAMO_MAX: f32 = 800.0;                            // bloques: tope del tramo integrado por capa baja
 const OPC_NUBES_SOMBRA_TAU: f32 = 6.0;                             // espesor óptico de la sombra en el suelo
+const OPC_NUBES_SOMBRA_ALTO: f32 = 1.0;                            // × espesor óptico oblicuo de los altoestratos (fino/04 §6)
 
 // Otras dimensiones (17).
 const OPC_NIEBLA_NETHER_DEFECTO: f32 = 1.0;
@@ -136,6 +137,7 @@ fn opc_volumen() -> OpcVolumen {
         OPC_NUBES_SIGMA,
         OPC_NUBES_TRAMO_MAX,
         OPC_NUBES_SOMBRA_TAU,
+        OPC_NUBES_SOMBRA_ALTO,
     );
 
     let mod_cuevas = opc_estilo_cuevas();
