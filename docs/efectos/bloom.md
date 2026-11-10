@@ -35,6 +35,31 @@ y `bloom-niebla` (al aire libre de noche, la luna saliendo y una vista de día: 
   niebla espesa.
 - Las esquinas (0,0) y (1,0) del alfa guardan la exposición (11); el rgb no se toca.
 
+### Destello del sol
+
+C-08.2 (2026-11-09), banco `cielo-dia`: el original tiene un destello fuerte y concentrado junto al borde del techo,
+con el sol detrás; en el pack el sol apenas se veía. Dos causas:
+
+1. **El disco era 25 veces más pequeño en área y 39 veces más tenue** que el de `paridad/01` (tabla del disco:
+   radiancia = 702,9 × luz directa, plena hasta ~0,95° y nula hacia 1,6°). Ahora `OPC_SOL_DISCO_RADIO` = 1,275°,
+   `OPC_SOL_DISCO_BORDE` = 0,255 (de 0,95° a 1,6°) y `OPC_SOL_DISCO_BRILLO` = 702,9.
+2. **La codificación de 8 bits recorta el disco** (ADR 0004: techo `OPC_BLANCO / exposición previa`, unas 3,7 en la
+   escala común de día). El bloom del original trabaja en coma flotante y reparte toda la energía del disco; el del
+   pack solo ve el techo, así que por mucho que suba el disco, el halo no crece. `adp_destello_sol` devuelve al bloom
+   la parte recortada: `(radiancia del disco × transmitancia del volumen − techo) × parte visible × área del disco ×
+   respuesta del bloom`. Se suma a `b` antes del peso `0,3 × viñeta`, igual que el resto del bloom.
+   - **Parte visible:** profundidad en el centro y en 8 puntos a 0,7 del radio (`OPC_DESTELLO_MUESTRAS`); con el sol
+     tras el borde de un techo, el destello baja en proporción.
+   - **Transmitancia:** el alfa del destino `volumen` en el centro del sol: nubes y niebla delante lo apagan.
+   - **Respuesta:** `img_bloom_respuesta`, cuatro gaussianas (σ = 0,0022; 0,006; 0,015; 0,04 del alto; pesos 0,55;
+     0,25; 0,12; 0,08) ajustadas a la energía encerrada de `paridad/10` (46/70/84/93/97,6 % en 4/8/16/32/64 px a
+     1080). Energía total 0,9379 (`OPC_BLOOM_ENERGIA`).
+   - Cuenta a mano para el banco (sol a ~55°, sin nubes, entero): exceso ≈ 680, área ≈ 3,9·10⁻⁴; tras el peso del
+     bloom y la exposición, blanco hasta ~0,04 del alto y resplandor visible hasta ~0,08. Sin comprobar en el juego.
+- Alternativa descartada: subir el peso del bloom o bajar la exposición previa para que el disco no se recorte.
+  Lo primero aclara toda la imagen; lo segundo cambia la codificación de toda la escena (ADR 0004) por un píxel.
+- Límite conocido: con el sol fuera de pantalla no hay destello (el original sí deja algo de cola en el borde).
+
 ## Opciones
 
 Fuerza del bloom (0–4, 1). Bloom de niebla y bajo el agua, constantes.

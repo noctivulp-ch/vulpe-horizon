@@ -78,12 +78,51 @@ fn adp_exposicion(o: OpcImagen) -> AdpExposicion {
     return AdpExposicion(e * o.compensacion, bastones);
 }
 
+// Destello del sol en el bloom: la parte de la radiancia del disco que la codificación de 8 bits recorta (ADR 0004)
+// se devuelve con la respuesta del bloom del original, pesada por la parte visible del disco (profundidad) y por la
+// transmitancia del volumen (nubes y niebla) delante del sol. Porqué: docs/efectos/bloom.md §Destello del sol
+fn adp_destello_sol(uv: vec2<f32>) -> vec3<f32> {
+    let d_sol = frame.sun_direction;
+    if !adp_es_superficie() || d_sol.y <= 0.0 || frame.rain >= 1.0 {
+        return vec3<f32>(0.0);
+    }
+    let h = frame.projection * frame.view * vec4<f32>(d_sol, 0.0);
+    if h.w <= 1e-4 {
+        return vec3<f32>(0.0);
+    }
+    let uv_sol = mat_ndc_a_uv(h.xy / h.w);
+    let aspecto = frame.resolution.x / frame.resolution.y;
+    // Radio del disco en unidades del alto de pantalla.
+    let rho = tan(OPC_SOL_DISCO_RADIO) * frame.projection[1][1] * 0.5;
+    if any(uv_sol < vec2<f32>(-rho)) || any(uv_sol > vec2<f32>(1.0 + rho)) {
+        return vec3<f32>(0.0);
+    }
+    var visible = select(0.0, 1.0, depth_at(clamp(uv_sol, vec2<f32>(0.0), vec2<f32>(1.0))) <= 0.0);
+    for (var i = 0; i < OPC_DESTELLO_MUESTRAS; i++) {
+        let a = f32(i) * MAT_TAU / f32(OPC_DESTELLO_MUESTRAS);
+        let m = uv_sol + vec2<f32>(cos(a) / aspecto, sin(a)) * rho * 0.7;
+        let dentro = all(m >= vec2<f32>(0.0)) && all(m <= vec2<f32>(1.0));
+        visible += select(0.0, 1.0, dentro && depth_at(clamp(m, vec2<f32>(0.0), vec2<f32>(1.0))) <= 0.0);
+    }
+    visible /= f32(OPC_DESTELLO_MUESTRAS + 1);
+    if visible <= 0.0 {
+        return vec3<f32>(0.0);
+    }
+    let t_vol = textureSampleLevel(volumen, linear_sampler, clamp(uv_sol, vec2<f32>(0.0), vec2<f32>(1.0)), 0.0).a;
+    let elev = degrees(asin(clamp(d_sol.y, -1.0, 1.0)));
+    let disco = atm_luz_directa_sol(elev) * opc_cielo().sol_color * OPC_SOL_DISCO_BRILLO * t_vol * (1.0 - frame.rain);
+    let techo = OPC_BLANCO / adp_codificacion().exposicion;
+    let exceso = max(disco - vec3<f32>(techo), vec3<f32>(0.0)) * visible;
+    let d = length((uv - uv_sol) * vec2<f32>(aspecto, 1.0));
+    return img_destello(exceso, MAT_PI * rho * rho, d, OPC_BLOOM_ENERGIA);
+}
+
 // Bloom de la pasada final: núcleo (bicúbico de bloom) más ancho (bloom2), y bloom de niebla.
 fn adp_bloom_final(color: vec3<f32>, uv: vec2<f32>, o: OpcImagen) -> vec3<f32> {
     let nucleo = img_catmull_rom(bloom, linear_sampler, uv, 1.0);
     let ancho4 = textureSampleLevel(bloom2, linear_sampler, uv, 0.0);
     let ancho = ancho4.rgb;
-    let b = mix(ancho, nucleo, OPC_BLOOM_NUCLEO);
+    let b = mix(ancho, nucleo, OPC_BLOOM_NUCLEO) + adp_destello_sol(uv);
     let vineta = mix(OPC_BLOOM_VINETA_CENTRO, OPC_BLOOM_VINETA_ESQUINA, saturate(length(uv - 0.5) * 1.41421356));
     // La niebla que dispersa la luz de una fuente es la que hay alrededor, no solo la del píxel: con la del píxel el
     // halo quedaba recortado por los objetos cercanos y parecía un disco desplazado. Porqué: docs/efectos/bloom.md §«Bloom de niebla».

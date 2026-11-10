@@ -171,3 +171,7 @@ disposición de la referencia). En espera: lo único abierto es el 15 (vegetaci�
   altoestratos con camino oblicuo**. Las dos están ahora. La cota de la primera es una estimación, no una medida
   (`docs/efectos/sombras.md` §Sombra planetaria del horizonte). A la hora 300 (sol a ~17°) apenas actúa: el suelo de
   `niebla-amanecer` sigue soleado, como en el original.
+- **C-08.2, `cielo-dia`:** faltaba el destello del sol. El disco era mucho más pequeño y tenue que la tabla de
+  `paridad/01` y, además, la codificación de 8 bits del «picture» lo recorta, así que el bloom no podía repartir su
+  energía. Ahora el disco sigue la tabla y un destello analítico devuelve al bloom la energía recortada, pesado por la
+  parte visible del disco y por las nubes delante (`docs/efectos/bloom.md` §Destello del sol).

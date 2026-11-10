@@ -39,7 +39,7 @@ fn sky(input: SkyInput) -> vec4<f32> {
     // sumado directamente sin multiplicar por la transmitancia del rayo de vista ni por el brillo del dibujo.
     let elev_sol = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
     let directa_sol = atm_luz_directa_sol(elev_sol) * ajustes.sol_color;
-    let disco = atm_disco(dot(dir, sol.direccion), OPC_SOL_DISCO_RADIO, 0.15) * (1.0 - frame.rain);
+    let disco = atm_disco(dot(dir, sol.direccion), OPC_SOL_DISCO_RADIO, OPC_SOL_DISCO_BORDE) * (1.0 - frame.rain);
     cielo += directa_sol * OPC_SOL_DISCO_BRILLO * disco * cie_factor_suelo(dir.y, 0.03);
 
     cielo = cie_aplicar_lluvia(cielo, dir.y, atm.transmitancia, frame.camera_position.y, adp_lluvia(ajustes));

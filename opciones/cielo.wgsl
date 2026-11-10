@@ -10,8 +10,13 @@ const ESTRELLAS_BRILLO: f32 = 0.0;          // pasos (EV)
 // Proporciones de partida (convenciones.md §Escala de luz), no opciones.
 const OPC_LUNA_PROPORCION: f32 = 1.0 / 300.0;
 const OPC_LUNA_TEMPERATURA: f32 = 10000.0;
-const OPC_SOL_DISCO_RADIO: f32 = 0.008;     // rad: disco pequeño y nítido (paridad/01)
-const OPC_SOL_DISCO_BRILLO: f32 = 18.0;     // radiancia del disco / irradiancia del sol
+// Disco del sol (paridad/01, tabla del disco): pleno hasta ~0,95°, nulo hacia 1,6°; radiancia 702,9 × luz directa.
+const OPC_SOL_DISCO_RADIO: f32 = 0.02225;   // rad (1,275°): radio medio del perfil
+const OPC_SOL_DISCO_BORDE: f32 = 0.255;     // fracción del radio: borde de 0,95° a 1,6°
+const OPC_SOL_DISCO_BRILLO: f32 = 702.9;    // radiancia del disco / luz directa del sol
+// Destello analítico del disco en el bloom (el «picture» de 8 bits recorta el disco: ADR 0004).
+// Porqué: docs/efectos/bloom.md §Destello del sol
+const OPC_DESTELLO_MUESTRAS: i32 = 8;       // muestras de profundidad en el borde del disco para su visibilidad
 const OPC_SOL_RAMPA_GRADOS: f32 = 3.0;      // grados sobre el horizonte donde satura la luz directa (fino/01 §5)
 const OPC_LUNA_RAMPA_GRADOS: f32 = 3.0;     // grados bajo el horizonte donde satura la luna (fino/01 §5)
 const OPC_ESTRELLAS_BRILLO: f32 = 0.004;

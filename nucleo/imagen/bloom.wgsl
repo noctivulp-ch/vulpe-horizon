@@ -82,3 +82,21 @@ fn img_opacidad_fuentes(luz: texture_2d<f32>, niebla: texture_2d<f32>, s: sample
     }
     return suma / pesos;
 }
+
+// Respuesta del bloom del original a un punto de energía 1, por unidad de área en unidades del alto de pantalla, a la
+// distancia `d` (alto = 1): cuatro gaussianas ajustadas a la energía encerrada de paridad/10 (46 % en 0,0037; 70 % en
+// 0,0074; 84 % en 0,0148; 93 % en 0,0296; 97,6 % en 0,0593). Sin el factor de energía total ni el peso de mezcla.
+// Porqué: docs/efectos/bloom.md §Destello del sol
+fn img_bloom_respuesta(d: f32) -> f32 {
+    let sigma = vec4<f32>(0.0022, 0.006, 0.015, 0.04);
+    let peso = vec4<f32>(0.55, 0.25, 0.12, 0.08);
+    let s2 = sigma * sigma;
+    let g = peso / (MAT_TAU * s2) * exp(-vec4<f32>(d * d) / (2.0 * s2));
+    return g.x + g.y + g.z + g.w;
+}
+
+// Destello de una fuente compacta cuya energía no cabe en la imagen: `exceso` (radiancia por encima del techo de la
+// codificación) × `area` (alto² de pantalla) × respuesta del bloom a la distancia `d`, por `energia_total` (paridad/10).
+fn img_destello(exceso: vec3<f32>, area: f32, d: f32, energia_total: f32) -> vec3<f32> {
+    return exceso * (area * energia_total * img_bloom_respuesta(d));
+}

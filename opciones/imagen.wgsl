@@ -36,6 +36,7 @@ const OPC_TONEMAP_EXPOSICION = array<f32, 3>(0.5, 1.0, 1.0);
 const OPC_BLOOM: f32 = 0.3;                 // peso con que se suma el desenfoque con fuerza 1 (paridad 10), por la viñeta
 const OPC_BLOOM_VINETA_CENTRO: f32 = 1.5;   // viñeta propia del bloom: ×1,5 en el centro (0,45)…
 const OPC_BLOOM_VINETA_ESQUINA: f32 = 0.5;  // …y ×0,5 en las esquinas (0,15)
+const OPC_BLOOM_ENERGIA: f32 = 0.9379;      // energía total del desenfoque ponderado del original (paridad/10)
 const OPC_BLOOM_NUCLEO: f32 = 0.75;         // parte del núcleo compacto en el desenfoque (el resto, el ancho)
 const OPC_BLOOM_NIEBLA_AGUA: f32 = 1.0;
 // Paridad 16: cada gota apaga el bloom de niebla en su píxel; sin máscara de gotas, se quita la parte que cubren (~10 %).
