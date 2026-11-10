@@ -17,7 +17,9 @@ const EMISION_LABPBR: f32 = 1.0;
 // Escalas en la escala común (convenciones.md): proporciones de partida afinadas en el juego.
 const OPC_LUZ_BLOQUE: f32 = 1.0;            // × la curva medida de la antorcha (paridad/03; antes 0,012 × refuerzo 3)
 const OPC_LUZ_MINIMA: f32 = 0.0004;           // base de otros mínimos (agua, ambiente del agua)
-const OPC_LUZ_MINIMA_CUEVA: f32 = 0.0018;     // por unidad de la opción: calibrada con la medida exacta de paridad/03 (0.001766)
+const OPC_LUZ_MINIMA_CUEVA: f32 = 0.0018;
+const OPC_LUZ_MINIMA_FRENTE: f32 = 0.30;      // multiplicador de la luz mínima de frente a la cámara (1 de canto; fino/03 §Medidos)
+const OPC_SSS_CIELO: f32 = 0.4;               // escala de la fase medida del SSS de cielo (1..2): 0,4..0,8, el tope de antes     // por unidad de la opción: calibrada con la medida exacta de paridad/03 (0.001766)
 // Ambiente de las otras dimensiones (17), en la misma escala.
 const OPC_AMBIENTE_NETHER: f32 = 0.0035;
 const OPC_AMBIENTE_END: f32 = 0.002;

@@ -26,3 +26,13 @@ fn sup_hg(c: f32, g: f32) -> f32 {
     let den = max(1.0 + g2 - 2.0 * g * c, 1e-4);
     return (1.0 - g2) / (4.0 * MAT_PI * den * sqrt(den));
 }
+
+// Fase del SSS de cielo por la componente vertical de la dirección de vista (fino/03 §Medidos, 11 puntos de −1 a 1):
+// sube de 1 (mirando hacia abajo) a 2 (hacia arriba), casi lineal alrededor del horizonte (1,58 a 0).
+const SUP_SSS_FASE_CIELO = array<f32, 11>(1.0, 1.0297, 1.1153, 1.2464, 1.4073, 1.5781, 1.7379, 1.8673, 1.9533, 1.9931, 2.0);
+
+fn sup_sss_fase_cielo(dir_y: f32) -> f32 {
+    let x = clamp(dir_y, -1.0, 1.0) * 5.0 + 5.0;
+    let i = i32(floor(min(x, 9.999)));
+    return mix(SUP_SSS_FASE_CIELO[i], SUP_SSS_FASE_CIELO[i + 1], x - f32(i));
+}

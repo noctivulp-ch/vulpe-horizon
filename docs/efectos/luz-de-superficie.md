@@ -240,3 +240,16 @@ apenas se intuyen las tablas de madera del entibado más cercano.
 - **Protección de fugas solares y SSS en cuevas (`fino/03 §4`):** la luz solar directa y la dispersión subsuperficial
   directa se multiplican por un factor suave de protección `clamp(apertura² · 4, 0.0, 1.0)`, evitando que la vegetación
   o bloques translúcidos subterráneos brillen con sol exterior más allá del mapa de sombras.
+
+## Correcciones de fino/03 del 2026-11-10 (F-9)
+
+A corrigió dos puntos de `fino/03` en los que se basó B-17.9, al revés de lo medido:
+- **Luz mínima direccional** (§3 y §Medidos): no es una linterna de cámara sino un **atenuador frontal**: de frente a la
+  cámara 0,30, de canto 1,00 (tabla de 0° a 90°: exactamente `1 − 0,7·N·V`). Sin caída con la distancia (la de B-17.9,
+  `1 / (1 + d·0,22)`, era inventada y se quita). `OPC_LUZ_MINIMA_FRENTE = 0,30`, con `OPC_LUZ_MINIMA_CUEVA = 0,0018`
+  como base. En `cueva-oscura` el pack había quedado más oscuro que el original (1,6/1,2/1,3 frente a 3/4,3/6,8 de
+  media): las paredes y el techo vistos de canto vuelven a recibir la luz mínima entera.
+- **Fase del SSS de cielo** (§5 y §Medidos): depende de la componente vertical de la **dirección de vista**, no de la
+  normal: 1 mirando hacia abajo, 1,58 al horizonte, 2 mirando hacia arriba (11 puntos en `SUP_SSS_FASE_CIELO`,
+  `sup_sss_fase_cielo`). Escalada por `OPC_SSS_CIELO = 0,4` para conservar el tope anterior (0,8): el envés de las hojas
+  visto desde abajo recibe el doble que la copa vista desde arriba. La escala absoluta del original no está medida.
