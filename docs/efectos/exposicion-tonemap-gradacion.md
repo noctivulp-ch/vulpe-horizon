@@ -121,3 +121,12 @@ medios) el cielo de día queda azul (151, 173, 195 de media en el quinto superio
 aislamiento apagado; media del cuarto central): día 179 → 183, saturación 59 → 37 (el cielo, algo menos saturado pero
 azul); atardecer 136 → 133; noche 36 → 19, más cerca del objetivo de 17 (el pie del fílmico oscurece más que Reinhard). Con
 los valores por defecto (aislamiento encendido) 183 / 139 / 21. Con −1,5 pasos el día bajaba a 166 y la noche a 14.
+
+## Velocidad de adaptación medida (F-7, 2026-11-10)
+
+`fino/11 §Medidos 4–5`: el original mezcla la medida nueva un 5 % por fotograma (peso 0,95: constante de tiempo 0,33 s
+a 60 fps; 90 % del salto de exposición en 18 fotogramas de oscuro a claro, 72–96 de claro a oscuro por la curva) y los
+bastones un 1,5 % (0,985: 1,1 s). El pack llevaba 1,5 s al subir, 4 s al bajar y 10 s en los bastones: entre 5 y 10
+veces más lento. Ahora `OPC_ADAPTACION_SUBE = OPC_ADAPTACION_BAJA = 0,33` y `OPC_BASTONES_TAU = 1,1`; la asimetría
+subir/bajar sale sola de la curva `k / ln(L + 1 + c)` sobre la luminancia adaptada, como en el original. En el banco
+(20 s de espera) no cambia nada; al entrar y salir de una cueva, la adaptación se ve en medio segundo.

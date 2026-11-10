@@ -23,9 +23,9 @@ const OPC_EXPOSICION_PESO_AUTO: f32 = 0.5;
 // Entre estas luminancias medias (escala común) se pasa del ajuste de lo oscuro al de lo claro, en log.
 const OPC_EXPOSICION_L_OSCURO: f32 = 0.0003;
 const OPC_EXPOSICION_L_CLARO: f32 = 0.03;
-const OPC_ADAPTACION_SUBE: f32 = 1.5;       // s, hacia la luz
-const OPC_ADAPTACION_BAJA: f32 = 4.0;       // s, hacia la oscuridad
-const OPC_BASTONES_TAU: f32 = 10.0;         // s, la media lenta de los bastones
+const OPC_ADAPTACION_SUBE: f32 = 0.33;      // s: peso 0,95 por fotograma a 60 fps del original (fino/11 §Medidos 4–5; F-7)
+const OPC_ADAPTACION_BAJA: f32 = 0.33;      // s: el original adapta la medida al mismo ritmo en los dos sentidos
+const OPC_BASTONES_TAU: f32 = 1.1;          // s: peso 0,985 por fotograma (3,3 veces más lenta que los conos)
 const OPC_BASTONES_L0: f32 = 0.0015;       // luminancia de escena a la que los bastones pesan la mitad
 const OPC_PURKINJE: f32 = 1.0;
 const OPC_BALANCE_K: f32 = 6500.0;
