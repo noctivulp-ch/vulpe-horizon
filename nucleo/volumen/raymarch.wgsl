@@ -100,11 +100,12 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
                 visible = textureSampleCompareLevel(mapa, comparacion, m.xy, m.z);
             }
         }
+        let sol_aire = luz.irradiancia * visible;
         visible *= mix(1.0, mix(nubes_cerca, nubes_lejos, (t - t0) / max(largo, 1.0)), a.sombra_nubes);
         let sol = luz.irradiancia * visible;
         // La dispersión del sol en el aire va modulada otra vez por la fase de aerosoles («fase solar directa», fino/05 §3
         // y su tabla «Halo solar»: ×1700 en el centro del sol frente a 90°, ×0,07 de espaldas). Porqué: docs/efectos/niebla-y-nubes.md §Perspectiva aérea (F-5)
-        let fuente_aire = (aire.rayleigh * fase_aire_r + aire.mie * fase_aire_m) * (sol * fase_aire_m) + (aire.rayleigh + aire.mie) * ambiente;
+        let fuente_aire = (aire.rayleigh * fase_aire_r + aire.mie * fase_aire_m) * (sol_aire * fase_aire_m) + (aire.rayleigh + aire.mie) * ambiente;
         // Ambiente de la niebla: radiancia media del cielo × fase cenital medida (F-3), con la escala base de opciones.
         let fase_cenital = vol_fase_cenital(rayo.dir.y) * OPC_NIEBLA_AMBIENTE_BASE;
         let fuente_niebla = niebla * (sol * vol_fase_niebla(cos_luz, niebla)
@@ -128,8 +129,8 @@ fn vol_nube_cielo_forma(forma: f32) -> f32 {
 }
 
 // La capa de nubes `i` en [t0, t1].
-fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: f32, rayo: VolRayo, luz: VolLuz, a: VolAjustes,
-                   t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>) {
+fn vol_tramo_nubes(r: ptr<function, VolResultado>, impacto: ptr<function, f32>, i: i32, t0: f32, t1_entrada: f32, rayo: VolRayo,
+                   luz: VolLuz, a: VolAjustes, t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>) {
     let tope = select(min(t0 + a.nubes.forma.tramo_max, VOL_NUBES_DISTANCIA), VOL_NUBES_DISTANCIA, i == 2);
     let t1 = min(t1_entrada, tope);
     if t1 <= t0 {
@@ -154,6 +155,10 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: 
         let d = vol_nube(mundo, i, a.nubes, t2, s2, t3, true);
         if d <= 0.001 {
             continue;
+        }
+        // Primer punto con nube de verdad en este rayo: ahí se corta la niebla (fino/05 §1).
+        if d > a.nubes.forma.impacto_umbral {
+            *impacto = min(*impacto, t);
         }
         // Autosombra (fino/05 P1, medida): la nube acumulada hacia el astro en tres tomas (forma × densidad, sin
         // erosión), menos con el astro alto, apaga la luz directa con exp(−5·acumulado).
@@ -218,51 +223,53 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: 
 // debajo, dentro o por encima de cada capa.
 fn vol_integrar(rayo: VolRayo, luz: VolLuz, a: VolAjustes, mapa: texture_depth_2d, comparacion: sampler_comparison,
                 t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>, ta: texture_2d<f32>, sa: sampler) -> VolResultado {
-    var r = VolResultado(vec3<f32>(0.0), 1.0, 0.0, vec3<f32>(0.0));
-    var inicio = array<f32, 4>(1e30, 1e30, 1e30, 1e30);
-    var fin = array<f32, 4>(0.0, 0.0, 0.0, 0.0);
-    if a.con_niebla {
-        let bajo = vol_losa(rayo.camara.y, rayo.dir.y, -1e6, VOL_MAR + VOL_BASE.x);
-        if bajo.y > bajo.x {
-            inicio[0] = bajo.x;
-            fin[0] = min(min(bajo.y, rayo.escena), bajo.x + a.alcance);
-        }
-    }
+    // Orden del original (fino/05 §1): primero las nubes, anotando la distancia al primer punto con nube de verdad;
+    // después el aire y la niebla desde la cámara hasta la geometría, su alcance o esa nube, lo que llegue antes (no
+    // hasta el plano de la base de los cúmulos); las nubes se componen detrás.
+    // Porqué: docs/efectos/niebla-y-nubes.md §«Niebla hasta la primera nube» (F-17)
+    var nubes = VolResultado(vec3<f32>(0.0), 1.0, 0.0, vec3<f32>(0.0));
+    var impacto = 1e30;
     if a.con_nubes {
+        var inicio = array<f32, 3>(1e30, 1e30, 1e30);
+        var fin = array<f32, 3>(0.0, 0.0, 0.0);
         for (var i = 0; i < 3; i++) {
             if a.nubes.perfil.cobertura[i] > 0.0 {
                 let y0 = VOL_MAR + VOL_BASE[i];
                 let l = vol_losa(rayo.camara.y, rayo.dir.y, y0, y0 + VOL_ESPESOR[i]);
                 if l.y > l.x {
-                    inicio[i + 1] = l.x;
-                    fin[i + 1] = min(l.y, rayo.escena);
+                    inicio[i] = l.x;
+                    fin[i] = min(l.y, rayo.escena);
                 }
             }
         }
-    }
-    var hecho = array<bool, 4>(false, false, false, false);
-    for (var k = 0; k < 4; k++) {
-        var elegido = -1;
-        var menor = 1e29;
-        for (var j = 0; j < 4; j++) {
-            if !hecho[j] && inicio[j] < menor {
-                menor = inicio[j];
-                elegido = j;
+        var hecho = array<bool, 3>(false, false, false);
+        for (var k = 0; k < 3; k++) {
+            var elegido = -1;
+            var menor = 1e29;
+            for (var j = 0; j < 3; j++) {
+                if !hecho[j] && inicio[j] < menor {
+                    menor = inicio[j];
+                    elegido = j;
+                }
+            }
+            if elegido < 0 || nubes.transmitancia < 0.01 {
+                break;
+            }
+            hecho[elegido] = true;
+            if fin[elegido] > inicio[elegido] {
+                vol_tramo_nubes(&nubes, &impacto, elegido, inicio[elegido], fin[elegido], rayo, luz, a, t2, s2, t3);
             }
         }
-        if elegido < 0 || r.transmitancia < 0.01 {
-            break;
-        }
-        hecho[elegido] = true;
-        if fin[elegido] <= inicio[elegido] {
-            continue;
-        }
-        if elegido == 0 {
-            vol_tramo_niebla(&r, inicio[0], fin[0], rayo, luz, a, mapa, comparacion, t2, s2, t3, ta, sa);
-        } else {
-            vol_tramo_nubes(&r, elegido - 1, inicio[elegido], fin[elegido], rayo, luz, a, t2, s2, t3);
+    }
+    var r = VolResultado(vec3<f32>(0.0), 1.0, 0.0, vec3<f32>(0.0));
+    if a.con_niebla {
+        let hasta = min(min(rayo.escena, a.alcance), impacto);
+        if hasta > 0.0 {
+            vol_tramo_niebla(&r, 0.0, hasta, rayo, luz, a, mapa, comparacion, t2, s2, t3, ta, sa);
         }
     }
+    r.luz += r.transmitancia * nubes.luz;
+    r.transmitancia *= nubes.transmitancia;
     if a.aurora.activa {
         r.luz += vol_aurora_ventana(rayo.camara, rayo.dir, r.ventana, r.color_ventana, a.aurora, ta, sa);
     }

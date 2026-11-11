@@ -27,6 +27,7 @@ struct VolFormaNubes {
     autosombra_paso: vec2<f32>, // bloques entre tomas hacia el astro (cúmulos; los altoestratos, ×4 y dos tomas)
     ambiente: f32,          // fracción del ambiente de superficie que es el de la niebla y las nubes
     exponente_cobertura: f32,
+    impacto_umbral: f32,    // densidad (forma × densidad del perfil) desde la que un punto cuenta como nube que corta la niebla
     sombra_tau: f32,
     sombra_umbral: f32,
     sombra_alto: f32,       // multiplicador del espesor óptico oblicuo de los altoestratos sobre el suelo

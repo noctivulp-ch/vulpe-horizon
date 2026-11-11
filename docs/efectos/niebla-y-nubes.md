@@ -396,3 +396,22 @@ borde claro, vetas altas y cielo azul, mucho más cerca del original; `atardecer
 (el color cálido que queda es del sol, ver observaciones); `lluvia-dia` gris, con el muro visible. **Sin arreglar:** las
 nubes siguen más lisas que las del original (les falta detalle fino), y con lluvia el suelo queda sin sol directo donde el
 original lo tiene (depende de dónde cae la nube).
+
+## Niebla hasta la primera nube (F-17, 2026-11-11)
+
+`fino/05` §1: el original traza primero las nubes, anota en cada píxel la distancia al primer punto con nube de verdad, y
+después integra el aire y la niebla desde la cámara hasta la geometría, el alcance de la niebla o esa nube; las nubes se
+componen detrás. Nosotros cortábamos la niebla en el **plano de la base de los cúmulos** (unos 170 bloques hacia el cenit),
+así que sobre el cielo despejado el aire se integraba la mitad o menos de lo que toca y la aureola del sol quedaba corta.
+
+- `vol_integrar` integra las tres capas en un resultado aparte (`vol_tramo_nubes` anota el primer paso con densidad mayor
+  que `OPC_NUBES_IMPACTO_UMBRAL`, 0,02: el «umbral tenue» no está medido), después la niebla de 0 a
+  `min(escena, alcance, impacto)` y compone las nubes detrás con la transmitancia de la niebla.
+- **La sombra de las nubes ya no apaga el sol del aire** (sí el de la niebla): con el sol detrás de un cúmulo la aureola
+  desaparecía entera, y en el original se ve alrededor del borde que lo tapa (panel `cielo-dia`). Sin confirmar en la
+  especificación: pregunta para A.
+
+**Visto** (`pruebas/escenas/destello-sol.ctl`, mirando al sol en el cenit y a 35° y 55° de él; `banco-f.ctl`): aureola clara
+de unos 10°–15° alrededor del sol donde antes había azul liso; sigue siendo menor y más azul que la del original, que además
+tiene el velo de altoestratos encendido alrededor del sol. `noche-fractal` queda muy cerca del panel (rayos a los dos lados
+sobre fondo oscuro); el resto del banco, sin cambios a la vista.
