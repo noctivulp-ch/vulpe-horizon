@@ -19,7 +19,7 @@ const OPC_EXPOSICION_K: f32 = 0.2;          // exposición = k / ln(L + 1 + c): 
 const OPC_EXPOSICION_C: f32 = 0.002;        // tope en lo oscuro: k / ln(1 + c) ≈ 100
 // Peso de la exposición automática frente a la previa analítica (en log): ver docs/efectos/
 // exposicion-tonemap-gradacion.md §Exposición (duda para la especificación).
-const OPC_EXPOSICION_PESO_AUTO: f32 = 0.5;
+const OPC_EXPOSICION_PESO_AUTO: f32 = 1.0;
 // Entre estas luminancias medias (escala común) se pasa del ajuste de lo oscuro al de lo claro, en log.
 const OPC_EXPOSICION_L_OSCURO: f32 = 0.0003;
 const OPC_EXPOSICION_L_CLARO: f32 = 0.03;
@@ -32,7 +32,7 @@ const OPC_BALANCE_K: f32 = 6500.0;
 const OPC_FILMICO_BLANCO: f32 = 3.1;       // punto blanco del fílmico de Hejl 2015 (paridad/11)
 // Exposición propia de cada curva (fílmico, ACES, Reinhard): el fílmico da más en los medios tonos; con ×0,5 deja el día
 // y la noche donde los dejaba Reinhard y el cielo azul (lo que le llegaba a la curva venía demasiado expuesto).
-const OPC_TONEMAP_EXPOSICION = array<f32, 3>(0.5, 1.0, 1.0);
+const OPC_TONEMAP_EXPOSICION = array<f32, 3>(1.0, 1.0, 1.0);
 const OPC_BLOOM: f32 = 0.3;                 // peso con que se suma el desenfoque con fuerza 1 (paridad 10), por la viñeta
 const OPC_BLOOM_VINETA_CENTRO: f32 = 1.5;   // viñeta propia del bloom: ×1,5 en el centro (0,45)…
 const OPC_BLOOM_VINETA_ESQUINA: f32 = 0.5;  // …y ×0,5 en las esquinas (0,15)

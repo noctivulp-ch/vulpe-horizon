@@ -56,7 +56,7 @@ fn adp_exposicion(o: OpcImagen) -> AdpExposicion {
     // Sin medida aún, lo oscuro o lo claro según la hora.
     var claridad = adp_factor_dia();
     if estado.x > 0.0 && exposicion_auto {
-        let automatica = img_exposicion_objetivo(estado.x, ImgCurvaExposicion(OPC_EXPOSICION_K, OPC_EXPOSICION_C));
+        let automatica = img_exposicion_tabla(estado.x);
         e = exp2(mix(log2(previa), log2(automatica), OPC_EXPOSICION_PESO_AUTO));
         claridad = smoothstep(log2(OPC_EXPOSICION_L_OSCURO), log2(OPC_EXPOSICION_L_CLARO), log2(estado.x));
     }

@@ -130,3 +130,19 @@ bastones un 1,5 % (0,985: 1,1 s). El pack llevaba 1,5 s al subir, 4 s al bajar y
 veces más lento. Ahora `OPC_ADAPTACION_SUBE = OPC_ADAPTACION_BAJA = 0,33` y `OPC_BASTONES_TAU = 1,1`; la asimetría
 subir/bajar sale sola de la curva `k / ln(L + 1 + c)` sobre la luminancia adaptada, como en el original. En el banco
 (20 s de espera) no cambia nada; al entrar y salir de una cueva, la adaptación se ve en medio segundo.
+
+## Exposición de la tabla (F-15, 2026-11-11)
+
+**Antes:** la exposición era la media en log de una «previa» analítica por la hora (EV 3,1 de día, 4,3 de noche) y una curva
+propia `0,2 / ln(L + 1,002)`, y el fílmico llevaba un ×0,5 para compensar. Comparada con la tabla «Exposición automática»
+de `paridad/11`, iba ×1,4–1,7 por encima de día y ×2–2,6 de noche: el cielo de día salía cian claro (el del original es azul
+profundo) y la noche, azul claro (36, 50, 70 de media en `noche-fractal` frente a 25, 29, 34).
+
+**Ahora:** `img_exposicion_tabla(L)` interpola en log–log las 15 filas medidas (de L = 10⁻⁵ → 11,28 a L = 2 → 0,56) y es
+**toda** la exposición (`OPC_EXPOSICION_PESO_AUTO` = 1; `OPC_TONEMAP_EXPOSICION` = 1 para las tres curvas). La previa analítica
+queda solo para lo que era: codificar el «picture» de 8 bits (ADR 0004) y el primer fotograma sin medida. Los objetivos de
+146/255 y 17/255 de la fase 1 dejan de mandar: mandan la tabla y los paneles del banco.
+
+**Visto** en Horizon (`banco-f.ctl`, aislamiento a 0, frente a los paneles `banco-2026-11-10`): el cielo de `cielo-dia` pasa
+al azul profundo del original; `noche-fractal` baja a (24–28 de media, el original 36 con sus rayos ámbar); la cueva no se
+ha vuelto a mirar (pendiente: `cueva-oscura` iba a 3,1 de diferencia y la exposición de interior ya no interviene).
