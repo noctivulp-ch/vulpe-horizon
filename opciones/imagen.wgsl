@@ -43,7 +43,7 @@ const OPC_BLOOM_NIEBLA_AGUA: f32 = 1.0;
 const OPC_BLOOM_NIEBLA_LLUVIA: f32 = -0.1;
 const OPC_BLOOM_RADIO: f32 = 0.06;          // del alto de la pantalla (cola del halo; paridad 10: 97,6 % en 0,06)
 const OPC_BLOOM_ANILLOS: i32 = 12;           // anillos del desenfoque ancho (las muestras por anillo salen del radio)
-const OPC_BLOOM_ANILLOS_NIEBLA: i32 = 6;     // anillos del desenfoque de la niebla que pesa el bloom de niebla (es suave)
+const OPC_BLOOM_NIEBLA_NUCLEO: f32 = 0.3;    // parte compacta del desenfoque de niebla (paridad/10: su pico es 0,38 del ponderado)
 
 struct OpcImagen {
     compensacion: f32,      // multiplicador

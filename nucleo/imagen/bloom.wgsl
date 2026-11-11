@@ -62,27 +62,6 @@ fn img_bloom_ancho(t: texture_2d<f32>, s: sampler, uv: vec2<f32>, radio: f32, as
     return suma / pesos;
 }
 
-// Opacidad de la niebla en las fuentes de luz de alrededor: media de `1 − a` de `niebla` pesada por la luminancia de
-// `luz`, en los mismos anillos que el desenfoque ancho. Es la niebla que dispersa la luz de esas fuentes.
-fn img_opacidad_fuentes(luz: texture_2d<f32>, niebla: texture_2d<f32>, s: sampler, uv: vec2<f32>, radio: f32, aspecto: f32, anillos: i32, giro: f32) -> f32 {
-    var suma = 0.0;
-    var pesos = 1e-6;
-    for (var k = 0; k <= anillos; k++) {
-        let r = f32(k) / f32(anillos);
-        let n = select(max(i32(ceil(MAT_TAU * r * f32(anillos))), 6), 1, k == 0);
-        let w = exp(-r * r * 2.5) * (1.0 - r * r) * (1.0 - r * r);
-        let desfase = (giro + f32(k) * 0.618034) * MAT_TAU / f32(n);
-        for (var j = 0; j < n; j++) {
-            let a = f32(j) * MAT_TAU / f32(n) + desfase;
-            let p = uv + vec2<f32>(cos(a) / aspecto, sin(a)) * r * radio;
-            let l = col_luminancia(textureSampleLevel(luz, s, p, 0.0).rgb) * w;
-            suma += (1.0 - textureSampleLevel(niebla, s, p, 0.0).a) * l;
-            pesos += l;
-        }
-    }
-    return suma / pesos;
-}
-
 // Respuesta del bloom del original a un punto de energía 1, por unidad de área en unidades del alto de pantalla, a la
 // distancia `d` (alto = 1): cuatro gaussianas ajustadas a la energía encerrada de paridad/10 (46 % en 0,0037; 70 % en
 // 0,0074; 84 % en 0,0148; 93 % en 0,0296; 97,6 % en 0,0593). Sin el factor de energía total ni el peso de mezcla.

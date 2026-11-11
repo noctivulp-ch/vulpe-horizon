@@ -34,6 +34,22 @@ fn adp_volumen_luz() -> VolLuz {
     return VolLuz(frame.light_direction, adp_irradiancia_astro(c), cielo, adp_suelo(c) * OPC_LUZ_CIELO_BASE);
 }
 
+// Opacidad de la niebla que pesa el bloom de niebla (10), en el alfa de la composición: sobre el terreno, la del
+// volumen; sobre el cielo, solo la niebla uniforme hasta su techo, sin las nubes (si no, cada nube quedaba
+// sustituida por su desenfoque). Porqué: docs/efectos/bloom.md §«Bloom de niebla»
+fn adp_opacidad_bloom_niebla(v: VolResultado, p: AdpPixel, dir: vec3<f32>) -> f32 {
+    if !p.es_cielo {
+        return 1.0 - v.transmitancia;
+    }
+    let a = adp_volumen_ajustes(adp_pixel_bajo_agua(p.uv));
+    if !a.con_niebla {
+        return 1.0 - v.transmitancia;
+    }
+    let tramo = vol_losa(frame.camera_position.y, dir.y, -1e6, VOL_CAIDA_DESDE);
+    let largo = min(max(tramo.y - tramo.x, 0.0), a.alcance);
+    return 1.0 - exp(-a.niebla.uniforme * a.niebla.cantidad * VOL_NIEBLA_SIGMA * largo);
+}
+
 fn adp_volumen_ajustes(bajo_agua: bool) -> VolAjustes {
     let o = opc_volumen();
     let m = adp_momento(o);

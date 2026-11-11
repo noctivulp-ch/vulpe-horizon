@@ -17,5 +17,5 @@ fn post(input: PostInput) -> vec4<f32> {
     c = c * adp_transmitancia_compuesta(v, adp_post_distancia(p), p.uv) + v.luz;
     c = adp_niebla_cueva(c, p, dir);
     c = adp_niebla_inmersion(c, adp_post_distancia(p));
-    return vec4<f32>(c, 1.0);
+    return vec4<f32>(c, adp_opacidad_bloom_niebla(v, p, dir));
 }

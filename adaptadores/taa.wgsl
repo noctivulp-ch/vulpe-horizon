@@ -34,12 +34,15 @@ fn adp_taa_uv_anterior(uv: vec2<f32>) -> vec2<f32> {
 fn adp_taa(input: PostInput) -> vec4<f32> {
     let o = opc_taa();
     let px = 1.0 / frame.resolution;
-    var actual = textureSampleLevel(previous, linear_sampler, input.uv, 0.0).rgb;
+    let entrada = textureSampleLevel(previous, linear_sampler, input.uv, 0.0);
+    // El alfa de la composición (opacidad de la niebla para el bloom de niebla) pasa tal cual a la final.
+    let alfa_niebla = entrada.a;
+    var actual = entrada.rgb;
     if OPC_TAA_FXAA {
         actual = img_fxaa(previous, linear_sampler, input.uv, actual);
     }
     if !o.activo {
-        return vec4<f32>(actual, 1.0);
+        return vec4<f32>(actual, alfa_niebla);
     }
     // Vecindad 3×3 del fotograma actual, en YCoCg del espacio comprimido.
     var m1 = vec3<f32>(0.0);
@@ -57,7 +60,7 @@ fn adp_taa(input: PostInput) -> vec4<f32> {
     let fuera = any(uv_ant < vec2<f32>(0.0)) || any(uv_ant > vec2<f32>(1.0));
     let h_crudo = img_catmull_rom(history, linear_sampler, uv_ant, o.nitidez);
     if fuera || frame.delta_time <= 0.0 || dot(h_crudo, h_crudo) <= 0.0 {
-        return vec4<f32>(actual, 1.0);
+        return vec4<f32>(actual, alfa_niebla);
     }
     // Movimiento en píxeles: más movimiento, caja más estrecha y más peso al fotograma actual.
     let movimiento = length((input.uv - uv_ant) * frame.resolution);
@@ -71,5 +74,5 @@ fn adp_taa(input: PostInput) -> vec4<f32> {
     let alfa = mix(OPC_TAA_MEZCLA_QUIETO, OPC_TAA_MEZCLA_MOVIMIENTO, smoothstep(0.0, 6.0, movimiento));
     let a = img_a_ycocg(img_comprimir(actual));
     let resultado = img_descomprimir(img_desde_ycocg(mix(h, a, alfa)));
-    return vec4<f32>(max(resultado, vec3<f32>(0.0)), 1.0);
+    return vec4<f32>(max(resultado, vec3<f32>(0.0)), alfa_niebla);
 }

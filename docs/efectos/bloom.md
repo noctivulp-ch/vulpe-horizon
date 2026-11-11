@@ -63,3 +63,30 @@ con el sol detrás; en el pack el sol apenas se veía. Dos causas:
 ## Opciones
 
 Fuerza del bloom (0–4, 1). Bloom de niebla y bajo el agua, constantes.
+
+## Bloom de niebla sin halos en las siluetas (F-11, 2026-11-10)
+
+**Qué se veía** (paneles `banco-2026-11-10`, `cielo-dia`, `nubes-dia`, `atardecer-oeste`, `lluvia-dia`): un halo borroso
+de ~6 % del alto alrededor de cada bloque contra el cielo, y las nubes lisas, sin borde. En el original las siluetas y
+las nubes son nítidas.
+
+**Causa (dos, las dos nuestras):**
+1. Desde 10.1 el peso del bloom de niebla era el máximo entre la opacidad del píxel y la de «las fuentes de alrededor»
+   (un desenfoque de la opacidad guardado en el alfa de `bloom2`). Junto a una silueta, el bloque (sin niebla) heredaba
+   la opacidad del cielo de al lado y se mezclaba con el desenfoque ancho. El original usa la opacidad **del píxel**
+   (`fino/10` §4).
+2. La opacidad era la del volumen entero, **nubes incluidas**: donde hay nube la transmitancia es ~0, el peso 1 y la nube
+   quedaba sustituida por su propio desenfoque de radio 0,06.
+
+**Ahora:**
+- La composición escribe en su alfa la opacidad que pesa el bloom de niebla (`adp_opacidad_bloom_niebla`): sobre el
+  terreno, `1 − T` del volumen; sobre el cielo, solo la niebla uniforme del momento hasta su techo (analítica, sin nubes
+  ni manchas). El TAA pasa ese alfa y la final lo lee de `previous`. Sale `img_opacidad_fuentes` y su pasada (la final
+  baja de 63 a 61 lecturas de textura; las de bloom, de 55 a 53).
+- El desenfoque de niebla es `mix(ancho, núcleo, 0,3)` (`OPC_BLOOM_NIEBLA_NUCLEO`): en `paridad/10` el desenfoque de
+  niebla del original tiene un pico de 0,38 del ponderado (0,00605 frente a 0,0158), no es solo la cola ancha.
+- Sigue al cuadrado (desviación de 10, pendiente del «factor reductor» del original: pregunta para A).
+
+**Lo que se pierde:** el halo de una fuente en la niebla vuelve a depender de la niebla de cada píxel (el «disco
+recortado por las hojas» de 10.1); con el desenfoque más compacto se nota menos. **Visto** en Horizon (`banco-f.ctl`,
+aislamiento a 0): bloques y nubes nítidos de día, de noche y con lluvia.

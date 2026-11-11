@@ -36,10 +36,8 @@ fn adp_bloom_ancho(input: PostInput) -> vec4<f32> {
     let aspecto = frame.resolution.x / frame.resolution.y;
     let giro = rui_tramado_ign(input.pixel);
     let rgb = img_bloom_ancho(bloom, linear_sampler, input.uv, OPC_BLOOM_RADIO, aspecto, OPC_BLOOM_ANILLOS, giro).rgb;
-    // Opacidad de la niebla en las fuentes de alrededor: pesa el bloom de niebla (ver adp_bloom_final).
-    let niebla = img_opacidad_fuentes(bloom, volumen, linear_sampler, input.uv, OPC_BLOOM_RADIO, aspecto, OPC_BLOOM_ANILLOS_NIEBLA, giro);
     let texel = vec2<i32>(input.pixel);
-    var alfa = niebla;
+    var alfa = 0.0;
     if texel.y == 0 && texel.x <= 2 {
         alfa = textureLoad(bloom, texel, 0).a;
     }
@@ -124,16 +122,16 @@ fn adp_bloom_final(color: vec3<f32>, uv: vec2<f32>, o: OpcImagen) -> vec3<f32> {
     let ancho = ancho4.rgb;
     let b = mix(ancho, nucleo, OPC_BLOOM_NUCLEO) + adp_destello_sol(uv);
     let vineta = mix(OPC_BLOOM_VINETA_CENTRO, OPC_BLOOM_VINETA_ESQUINA, saturate(length(uv - 0.5) * 1.41421356));
-    // La niebla que dispersa la luz de una fuente es la que hay alrededor, no solo la del píxel: con la del píxel el
-    // halo quedaba recortado por los objetos cercanos y parecía un disco desplazado. Porqué: docs/efectos/bloom.md §«Bloom de niebla».
-    let t = 1.0 - max(1.0 - textureSampleLevel(volumen, linear_sampler, uv, 0.0).a, ancho4.a);
+    // La opacidad de la niebla del propio píxel, sin nubes, que deja la composición en su alfa (pasa por el TAA).
+    // Porqué: docs/efectos/bloom.md §«Bloom de niebla» (F-11).
+    let t = 1.0 - textureSampleLevel(previous, nearest_sampler, uv, 0.0).a;
     let mult = bloom_niebla * (1.0 + OPC_BLOOM_NIEBLA_LLUVIA * frame.rain) + OPC_BLOOM_NIEBLA_AGUA * frame.in_water;
     let borde = smoothstep(0.0, 0.05, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));
     // Al cuadrado: solo la niebla espesa; la bruma de día (opacidad 0,2–0,4) mezclaba media imagen con el
     // desenfoque ancho y la lavaba.
     let opaco = clamp((1.0 - t) * mult, 0.0, 1.0);
     let niebla = opaco * opaco * borde;
-    return mix(color, ancho, niebla) + b * o.bloom * vineta * borde;
+    return mix(color, mix(ancho, nucleo, OPC_BLOOM_NIEBLA_NUCLEO), niebla) + b * o.bloom * vineta * borde;
 }
 
 // Ceguera y oscuridad del Warden: Horizon las aplica a su niebla, que el pack apaga; se oscurece con la
