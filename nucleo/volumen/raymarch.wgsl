@@ -70,7 +70,7 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
     // El aire se integra también en los píxeles de cielo (fino/05 §3): es lo que da la aureola del sol y el velo
     // claro del cielo de día. Su ambiente es la radiancia media del cielo sin la ganancia de superficie.
     // Porqué: docs/efectos/niebla-y-nubes.md §Perspectiva aérea (F-2)
-    let bruma = select(a.niebla.bruma, 0.0, rayo.cielo); // PRUEBA A/B
+    let bruma = a.niebla.bruma;
     let ambiente = luz.cielo * OPC_AIRE_AMBIENTE;
     let f = 10.0;
     var anterior = 0.0;
@@ -114,6 +114,19 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
     }
 }
 
+// Refuerzo de la luz de cielo dentro de la nube con la elevación del astro (seno): 1 hasta ~5°, 1,09 a 10°, 1,52 a 20°,
+// 1,85 a 30°, 2 desde 45° (tabla de fino/05 P1; ajuste 1 + 1 − e^(−(elev/22°)³), error < 0,07).
+fn vol_nube_refuerzo_cielo(seno: f32) -> f32 {
+    let e = degrees(asin(clamp(seno, 0.0, 1.0))) / 22.0;
+    return 2.0 - exp(-e * e * e);
+}
+
+// Oscurecimiento de la luz de cielo con la forma local: 1 en el borde, 0,76 en el interior denso (tabla de fino/05 P1;
+// ajuste 0,7578 + 0,2422·e^(−4·forma), error < 0,01).
+fn vol_nube_cielo_forma(forma: f32) -> f32 {
+    return 0.7578 + 0.2422 * exp(-4.0 * clamp(forma, 0.0, 1.0));
+}
+
 // La capa de nubes `i` en [t0, t1].
 fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: f32, rayo: VolRayo, luz: VolLuz, a: VolAjustes,
                    t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>) {
@@ -142,11 +155,18 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: 
         if d <= 0.001 {
             continue;
         }
-        // Luz: Beer con dos muestras hacia el astro, a distancias crecientes (sin erosión).
+        // Autosombra (fino/05 P1, medida): la nube acumulada hacia el astro en tres tomas (forma × densidad, sin
+        // erosión), menos con el astro alto, apaga la luz directa con exp(−5·acumulado).
+        // Porqué: docs/efectos/niebla-y-nubes.md §«Luz de las nubes medida» (F-14)
+        let tramo_sol = a.nubes.forma.autosombra_paso[min(i, 1)] * select(1.0, 4.0, i == 2);
         var hacia = 0.0;
-        hacia += vol_nube(mundo + luz.direccion * 8.0, i, a.nubes, t2, s2, t3, false) * 8.0;
-        hacia += vol_nube(mundo + luz.direccion * 28.0, i, a.nubes, t2, s2, t3, false) * 20.0;
-        var t_sol = exp(-sigma_nube * hacia * 1.2);
+        for (var k = 1; k <= 3; k++) {
+            if i == 2 && k == 2 {
+                continue;
+            }
+            hacia += vol_nube(mundo + luz.direccion * (tramo_sol * f32(k)), i, a.nubes, t2, s2, t3, false);
+        }
+        var t_sol = exp(-a.nubes.forma.autosombra * hacia * (1.0 - abs(luz.direccion.y)));
 
         // Sombra proyectada entre capas (fino/05 §5):
         if luz.direccion.y > 0.02 {
@@ -167,8 +187,10 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: 
             }
         }
 
-        let altura = clamp((mundo.y - y0) / VOL_ESPESOR[i], 0.0, 1.0);
-        var ambiente = luz.cielo * mix(0.35, 1.1, altura) + luz.suelo * (1.0 - altura) * 0.3;
+        // Luz de cielo dentro de la nube (fino/05 P1, medida): el ambiente de la niebla por un refuerzo con la elevación
+        // del astro (1 → 2) y un oscurecimiento con la forma local (1 → 0,76).
+        let forma_local = d / max(a.nubes.perfil.densidad[i], 1e-3);
+        var ambiente = luz.cielo * (a.nubes.forma.ambiente * vol_nube_refuerzo_cielo(luz.direccion.y) * vol_nube_cielo_forma(forma_local));
         // Cúmulos grandes reducen luz ambiental de cielo sobre cúmulos pequeños inferiores:
         if i == 0 && a.nubes.perfil.cobertura[1] > 0.0 {
             let cob_cenit = vol_cobertura(mundo.xz, 1, a.nubes, t2, s2);
@@ -180,9 +202,8 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, i: i32, t0: f32, t1_entrada: 
         let niebla_ext = 1.0 - exp(-dist_horiz * (0.00012 + a.niebla.uniforme * 0.0004));
         let lejos = 1.0 - smoothstep(VOL_NUBES_DISTANCIA * 0.7, VOL_NUBES_DISTANCIA, t);
         let sigma = sigma_nube * d * lejos;
-        // La tabla de fase da el factor del original; su escala absoluta en las nubes no está medida: con 1 las nubes
-        // salen blancas quemadas (visto en el juego, F-6). Porqué: docs/efectos/niebla-y-nubes.md §Fase medida (F-6)
-        var luz_nube = luz.irradiancia * t_sol * vol_fase(cos_luz, sigma_nube * d) * a.nubes.forma.fase_escala + ambiente;
+        // La fase total medida, con la densidad adimensional (forma × densidad del perfil) que usa el original.
+        var luz_nube = luz.irradiancia * t_sol * vol_fase(cos_luz, d) * a.nubes.forma.fase_escala + ambiente;
         luz_nube = mix(luz_nube, luz.cielo, niebla_ext);
         let fuente = sigma * luz_nube;
         vol_tramo(r, fuente, sigma, paso);

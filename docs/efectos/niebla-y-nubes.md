@@ -351,3 +351,48 @@ quemados (de lado y de espaldas la tabla da 0,8–2,6 donde la fase anterior dab
 deja el brillo donde estaba y conserva la forma medida; la escala absoluta del original en las nubes no está medida
 (pregunta para A). Comprobado en `pruebas/escenas/banco-f.ctl` (las ocho escenas del banco, con el aislamiento de color
 apagado en el manifiesto solo para mirar): cúmulos blancos con sombra propia, no quemados.
+
+## Nubes y niebla con lo medido el 2026-11-10 (F-13)
+
+Respuestas de A en `fino/05` (P1, P5, P6) y `fino/04` (tabla B), y lo visto en los paneles `banco-2026-11-10`.
+
+### Cobertura areal de los cúmulos
+`tools/paridad/cobertura.py` evalúa `vol_cobertura` sobre `texturas/ruido2d.png` como el shader y la compara con la tabla
+de P6 (fracción del plano con nube, con nube densa y forma media, con el parámetro a 0,5 / 1 / 1,5 / 1,9). La de F-4
+(umbral 0,58 − 0,28·cob, rampa 0,45, raíz) daba con 0,5 un 52 % de cielo con nube (original 5–12 %) y con 1 un 51 % de nube
+**densa** (original 5–12 %): demasiada nube y casi binaria. Ajuste por rejilla: `smoothstep(u, u + 1,2, señal)^0,75` con
+`u = 1,2 − 0,9·cob` (`OPC_NUBES_UMBRAL`, `_RAMPA`, `_EXPONENTE`); error medio 0,03 en las 24 celdas. Con 1 hay nube en el
+71 % del plano pero densa solo en el 9 %: mucha nube tenue y pocos núcleos, como el original.
+
+### Luz de las nubes (P1)
+- **Autosombra:** `exp(−5 · acumulado · (1 − |seno de la elevación|))`, con el acumulado en tres tomas de forma × densidad
+  cada 20 bloques hacia el astro (`OPC_NUBES_AUTOSOMBRA`, `_PASO`; en los altoestratos, dos tomas a 80 y 240). Sustituye a
+  las dos tomas con Beer de antes. Es lo que quemaba las nubes: sin ella la fuente era 12–150 veces mayor.
+- **Fase total** con la densidad adimensional (forma × densidad del perfil), que es la que usa el original, y **sin** el
+  0,05 de F-6b (`OPC_NUBES_FASE_ESCALA` = 1).
+- **Luz de cielo dentro de la nube:** el ambiente de la niebla (3/4 del de superficie) × refuerzo con la elevación del
+  astro (1 → 2; ajuste `2 − e^(−(elev/22°)³)`) × oscurecimiento con la forma local (1 → 0,76; ajuste
+  `0,7578 + 0,2422·e^(−4·forma)`), las dos tablas de P1 con error < 0,07 y < 0,01.
+
+### Sombra de las nubes sobre el suelo y la niebla (`fino/04` tabla B)
+Transmitancia `exp(−200·d²)` (0,61 con d = 0,05; 0,135 con 0,1), con `d` la suma por capa de (cobertura − umbral) ×
+densidad del perfil. El umbral «medio» que resta la erosión no está medido: 0,35 (`OPC_NUBES_SOMBRA_UMBRAL`), pregunta para
+A. Los altoestratos siguen con su espesor oblicuo.
+
+### Cuartos del día (P5)
+El perfil sorteado vale para **todo su cuarto** (0–6000, 6000–12000, 12000–18000, 18000–24000) y se funde con el siguiente
+solo en el último 5 % (`OPC_TIEMPO_FUNDIDO`); antes los sorteos iban centrados en 3000/9000/15000/21000 y a las horas del
+banco (6000, 12000, 18000) salía la mezcla a medias de dos perfiles. Ahora, día 0: a las 6000 cúmulos grandes y altoestratos
+(1 / 0,5), a las 12000 altoestratos (2 / 0,3), a las 18000 cúmulos grandes (1,9 / 0,2), como mide P5.
+
+### Aire sobre el cielo y manchas
+- Vuelve la perspectiva aérea sobre los píxeles de cielo (`fino/05` §1 y §3): F-6b dejó commiteada una línea de prueba
+  («PRUEBA A/B») que la anulaba. Con ella vuelve la aureola del sol de F-5.
+- Niebla en manchas: fuera el ×2 sin base y rampa del ruido 0,3–0,9 (`VOL_MANCHAS_RAMPA`, antes 0,45–0,7): con lluvia
+  (parámetro 0,4) tapaba un muro a 16 bloques que en el original se ve. A ojo del panel `lluvia-dia`.
+
+**Visto** en Horizon (`banco-f.ctl`, aislamiento a 0, frente a los paneles): `cielo-dia` y `nubes-dia` con nubes blancas de
+borde claro, vetas altas y cielo azul, mucho más cerca del original; `atardecer-oeste` con el velo alto pálido del original
+(el color cálido que queda es del sol, ver observaciones); `lluvia-dia` gris, con el muro visible. **Sin arreglar:** las
+nubes siguen más lisas que las del original (les falta detalle fino), y con lluvia el suelo queda sin sol directo donde el
+original lo tiene (depende de dónde cae la nube).

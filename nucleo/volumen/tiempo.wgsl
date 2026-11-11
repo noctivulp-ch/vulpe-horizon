@@ -100,13 +100,15 @@ struct VolMomento {
     perfil_fijo: u32,
 }
 
-// Cuatro sorteos por día centrados en 3000, 9000, 15000 y 21000 (fracción 0,125; 0,375; 0,625 y 0,875).
+// Cuatro sorteos por día, uno por cuarto (0–6000, 6000–12000, 12000–18000 y 18000–24000): el perfil vale para todo su
+// cuarto y se funde con el siguiente solo al final (fino/05 P5: a las 16000 aún el del tercer cuarto, a las 18000 ya el
+// del cuarto). Porqué: docs/efectos/niebla-y-nubes.md §«Cuartos del día» (F-13)
 fn vol_sorteo(m: VolMomento, secuencia: array<u32, 18>, repite_desde: u32, fundido: vec2<f32>) -> VolSorteo {
     if !m.aleatorio {
         return VolSorteo(m.perfil_fijo, m.perfil_fijo, 0.0);
     }
     let dia_u = u32(max(m.dia, 0.0));
-    let s = max(m.fraccion * 4.0 - 0.5, 0.0);
+    let s = max(m.fraccion * 4.0, 0.0);
     let cuarto = u32(floor(s));
     let a = vol_indice_perfil(dia_u + cuarto, secuencia, repite_desde);
     let b = vol_indice_perfil(dia_u + cuarto + 1u, secuencia, repite_desde);

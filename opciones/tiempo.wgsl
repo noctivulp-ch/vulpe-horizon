@@ -68,4 +68,4 @@ const OPC_CUBIERTO_EXTINCION: f32 = 4.0;
 const OPC_CUBIERTO_MINIMO: f32 = 0.25;
 
 // Fundido entre un perfil y el siguiente: tramo del cuarto de día en que se mezclan (smoothstep de inicio a fin).
-const OPC_TIEMPO_FUNDIDO: vec2<f32> = vec2<f32>(0.2, 0.8);
+const OPC_TIEMPO_FUNDIDO: vec2<f32> = vec2<f32>(0.95, 1.0);

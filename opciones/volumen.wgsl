@@ -33,16 +33,20 @@ const OPC_NUBES_ESCALA_DETALLE: f32 = 35.0;                        // bloques: p
 const OPC_NUBES_DETALLE_FUERZA: f32 = 0.45;                        // erosión fina de alta frecuencia
 const OPC_NUBES_SIGMA: vec3<f32> = vec3<f32>(0.45, 0.45, 0.06);    // extinción por bloque
 const OPC_NUBES_TRAMO_MAX: f32 = 800.0;                            // bloques: tope del tramo integrado por capa baja
-const OPC_NUBES_SOMBRA_TAU: f32 = 6.0;                             // espesor óptico de la sombra en el suelo
+const OPC_NUBES_SOMBRA_TAU: f32 = 200.0;                           // transmitancia de la sombra = exp(−200·d²), d la densidad acumulada (fino/04 tabla B)
+const OPC_NUBES_SOMBRA_UMBRAL: f32 = 0.35;                         // cobertura que se resta por la erosión («umbral medio», sin medir)
 const OPC_NUBES_SOMBRA_ALTO: f32 = 1.0;                            // × espesor óptico oblicuo de los altoestratos (fino/04 §6)
-// Cobertura 2D de los cúmulos: umbral = x − cob·y sobre la señal normalizada, rampa de anchura `RAMPA` (F-4). Con
-// (0,68; 0,22) y 0,48 el parámetro 1 cubría el 41 % del plano (30 % con c > 0,3); el original con cobertura 1 cubre
-// más de la mitad del cielo (banco cielo-dia y nubes-dia). Ahora 64 % (54 % con c > 0,3, 34 % densa).
-const OPC_NUBES_UMBRAL: vec2<f32> = vec2<f32>(0.58, 0.28);
-const OPC_NUBES_RAMPA: f32 = 0.45;
-// Escala del término solar de las nubes sobre la fase medida de fino/05 (cuya escala absoluta en las nubes no está
-// medida): 0,05 deja el brillo de las nubes donde estaba con la fase anterior (≈0,05 de lado y de espaldas).
-const OPC_NUBES_FASE_ESCALA: f32 = 0.05;
+// Cobertura 2D de los cúmulos: forma = smoothstep(umbral, umbral + RAMPA, señal)^EXPONENTE, umbral = x − cob·y. Ajustada
+// con tools/paridad/cobertura.py a la tabla areal medida de fino/05 P6 (con 0,5 / 1 / 1,5 / 1,9: fracción con nube, densa
+// y forma media; error medio 0,03): con 1 hay nube en el 71 % del plano pero densa solo en el 9 %.
+const OPC_NUBES_UMBRAL: vec2<f32> = vec2<f32>(1.2, 0.9);
+const OPC_NUBES_RAMPA: f32 = 1.2;
+const OPC_NUBES_EXPONENTE: f32 = 0.75;
+// Luz de las nubes medida (fino/05 P1): la fase total sin escala añadida, y la autosombra exp(−5·acumulado) con tomas
+// cada 20 bloques hacia el astro en los cúmulos (pequeños, grandes).
+const OPC_NUBES_FASE_ESCALA: f32 = 1.0;
+const OPC_NUBES_AUTOSOMBRA: f32 = 5.0;
+const OPC_NUBES_AUTOSOMBRA_PASO: vec2<f32> = vec2<f32>(20.0, 20.0);
 
 // Otras dimensiones (17).
 const OPC_NIEBLA_NETHER_DEFECTO: f32 = 1.0;
@@ -148,7 +152,12 @@ fn opc_volumen() -> OpcVolumen {
         OPC_NUBES_DETALLE_FUERZA,
         OPC_NUBES_SIGMA,
         OPC_NUBES_TRAMO_MAX,
+        OPC_NUBES_AUTOSOMBRA,
+        OPC_NUBES_AUTOSOMBRA_PASO,
+        OPC_NIEBLA_AMBIENTE_BASE,
+        OPC_NUBES_EXPONENTE,
         OPC_NUBES_SOMBRA_TAU,
+        OPC_NUBES_SOMBRA_UMBRAL,
         OPC_NUBES_SOMBRA_ALTO,
         OPC_NUBES_UMBRAL,
         OPC_NUBES_RAMPA,

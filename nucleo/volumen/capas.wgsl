@@ -23,7 +23,12 @@ struct VolFormaNubes {
     detalle_fuerza: f32,
     sigma: vec3<f32>,
     tramo_max: f32,
+    autosombra: f32,        // la luz directa dentro de la nube cae con exp(−autosombra·acumulado hacia el astro)
+    autosombra_paso: vec2<f32>, // bloques entre tomas hacia el astro (cúmulos; los altoestratos, ×4 y dos tomas)
+    ambiente: f32,          // fracción del ambiente de superficie que es el de la niebla y las nubes
+    exponente_cobertura: f32,
     sombra_tau: f32,
+    sombra_umbral: f32,
     sombra_alto: f32,       // multiplicador del espesor óptico oblicuo de los altoestratos sobre el suelo
     umbral_cobertura: vec2<f32>, // umbral de la cobertura 2D de los cúmulos: x − cob·y (F-4)
     rampa_cobertura: f32,   // anchura de la rampa sobre el umbral
@@ -58,7 +63,7 @@ fn vol_cobertura(xz_entrada: vec2<f32>, i: i32, n: VolNubes, t: texture_2d<f32>,
     // Umbral y rampa medidos sobre la textura (tools): con cob = 1, ~64 % del plano con nube y ~34 % densa.
     // Porqué: docs/efectos/niebla-y-nubes.md §Cobertura (F-4)
     let umbral = n.forma.umbral_cobertura.x - cob * n.forma.umbral_cobertura.y;
-    return sqrt(smoothstep(umbral, umbral + n.forma.rampa_cobertura, u));
+    return pow(smoothstep(umbral, umbral + n.forma.rampa_cobertura, u), n.forma.exponente_cobertura);
 }
 
 // Transmitancia de las nubes hacia la luz en el punto `mundo`: la cobertura donde el rayo hacia la luz
@@ -67,15 +72,19 @@ fn vol_sombra_nubes(mundo: vec3<f32>, luz: vec3<f32>, n: VolNubes, t: texture_2d
     if luz.y <= 0.02 {
         return 1.0;
     }
-    var tau = 0.0;
+    // Densidad acumulada de las capas hacia el sol: cobertura sin erosión menos un umbral medio, por la densidad del
+    // perfil; la transmitancia es exp(−k·d²) (tabla B de fino/04 §Medidos: 0,61 con 0,05; 0,135 con 0,1).
+    // Porqué: docs/efectos/sombras.md §«Sombra de nubes medida» (F-13)
+    var d = 0.0;
     for (var i = 0; i < 2; i++) {
         let h = VOL_MAR + VOL_BASE[i] + VOL_ESPESOR[i] * 0.5;
         if mundo.y < h {
             let p = mundo + luz * ((h - mundo.y) / luz.y);
             let c = vol_cobertura(p.xz, i, n, t, s);
-            tau += c * c * n.forma.sombra_tau * n.perfil.densidad[i];
+            d += max(c - n.forma.sombra_umbral, 0.0) * n.perfil.densidad[i];
         }
     }
+    var tau = n.forma.sombra_tau * d * d;
     // Altoestratos (fino/04 §6): lámina fina; su espesor óptico crece con el camino oblicuo (1 / seno de la elevación),
     // así que con el sol rasante apagan la luz directa aunque a mediodía apenas sombreen.
     // Porqué: docs/efectos/niebla-y-nubes.md §Sombra de los altoestratos
