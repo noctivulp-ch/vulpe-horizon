@@ -53,7 +53,10 @@ fn material(input: MaterialInput) -> Surface {
 
     // Ambiente: cielo modulado por norma L1 (Overworld) o hemisférico (Nether/End) × curva de cielo.
     let curva_cielo = select(luz_curva_cielo(p.luz_cielo), 1.0, luces.fija);
-    var ambiente_cielo = luces.cielo * luz_direccion_cielo(n, p.luz_cielo, p.cruzada, p.ao_vertice) * curva_cielo;
+    // Las caras que miran hacia abajo no ven el cielo sino lo que hay debajo: su luz ambiente va sin el azul del cielo
+    // (en el original son gris neutro; panel cielo-dia). Porqué: docs/efectos/luz-de-superficie.md §«Caras hacia abajo» (F-14)
+    let cielo_cara = mix(vec3<f32>(col_luminancia(luces.cielo)), luces.cielo, smoothstep(-OPC_LUZ_ABAJO_NEUTRA, 0.0, n.y));
+    var ambiente_cielo = cielo_cara * luz_direccion_cielo(n, p.luz_cielo, p.cruzada, p.ao_vertice) * curva_cielo;
     if luces.fija {
         ambiente_cielo = luz_hemisferica(n.y, luces.cielo, luces.suelo) * curva_cielo;
     }

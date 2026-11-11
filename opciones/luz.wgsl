@@ -26,6 +26,7 @@ const OPC_AMBIENTE_END: f32 = 0.002;
 const OPC_EMISION: f32 = 0.05;
 // La luz de cielo de la tabla (≈0,08 del sol a mediodía) se refuerza hasta el 0,1–0,2 de convenciones.md.
 const OPC_LUZ_CIELO_BASE: f32 = 1.8;
+const OPC_LUZ_ABAJO_NEUTRA: f32 = 0.5;       // componente vertical de la normal desde la que la luz de cielo ya es gris (caras hacia abajo)
 
 // Ids de [[materials]] (horizon-shaders.toml).
 const OPC_MAT_HOJAS: u32 = 1u;

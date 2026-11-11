@@ -278,3 +278,11 @@ bajo le faltaba azul (×0,6 a 4°–10°, ×0,45 a 0°) y de noche valía cero (
 **Visto** en Horizon (`banco-f.ctl`, aislamiento a 0): la lluvia pasa de blanco azulado (100, 117, 143 de media en el
 centro) a gris (82, 88, 96; el original, 66, 71, 76); la noche al horizonte baja de (6, 12, 25) a (4, 9, 15). De día sin
 cambio apreciable.
+
+## Caras hacia abajo (F-14, 2026-11-11)
+
+En el panel `cielo-dia` el original pinta la cara inferior de los bloques flotantes en gris neutro oscuro; la nuestra salía
+azul marino: recibía el 8 % de la luz ambiente de cielo con su color. Una cara que mira hacia abajo no ve el cielo: desde
+una normal vertical de −0,5 (`OPC_LUZ_ABAJO_NEUTRA`) su luz ambiente va en gris (la luminancia). Aproximación: el original
+ilumina con un «promedio de cielo con nubes» (`fino/01` §1, sin medir) que con nubes blancas es mucho menos azul; pregunta
+para A.
