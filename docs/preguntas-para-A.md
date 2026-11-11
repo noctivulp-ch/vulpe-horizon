@@ -30,3 +30,22 @@ Lo que la especificación no aclara y B no debe inventar. Una por punto, con la 
    que dispersa el agua (lo que la hace azul y no negra) en la escala común: radiancia del agua profunda (> 30 bloques)
    vista desde el aire a 45° con el sol a 55°, descontado el reflejo. B-17.6 puso (0,04; 0,22; 0,68) y C-08.3 lo intentó
    con el albedo físico y salió cian claro.
+
+## 2026-11-11 (encargo B-18, F-11 a F-16)
+
+8. **Promedio de cielo con nubes** (`fino/01` §1, «vector 1 apuntado para medir»): la luz ambiente que reciben las
+   superficies en la escala común, con el día 0 a las 6000 (cúmulos grandes y altoestratos 1 / 0,5), a las 300 (cúmulos
+   pequeños 1 / 0,5), a las 18000 (grandes 1,9 / 0,2) y con lluvia a las 6000. Ahora va a ojo de dos paneles
+   (`OPC_CUBIERTO_*`): F-16.
+9. **Umbral medio de la sombra de las nubes** (`fino/04` §6, «restando un umbral medio representativo»): ¿cuánto se resta
+   a la cobertura de los cúmulos antes de multiplicar por la densidad, y cómo entran los altoestratos en la densidad
+   acumulada de la tabla B? Ahora 0,35 y los altoestratos aparte.
+10. **Factor reductor del bloom de niebla** (`fino/10` §«Lo que está mal» 2: «por un factor reductor y por la lluvia»): su
+    valor fuera del modo de bastones, y si la opacidad que pesa la mezcla incluye las nubes. Ahora la opacidad va al
+    cuadrado y sin nubes (F-11).
+11. **Niebla en manchas:** forma del ruido (tamaño de las manchas, fracción del volumen con densidad llena, altura) para
+    el parámetro 0,4 de la lluvia: densidad media por bloque a Y = 70 sobre una línea de 200 bloques. Ahora a ojo (F-13).
+12. **Trayectoria del sol** del original: elevación del sol a las 300, 6000 y 12000 (con la inclinación de −35°). De los
+    paneles sale 4°, 55° y 0°; Horizon da 17°, 90° y 12°.
+13. **Color del fractal y de sus rayos de noche** (`noche-fractal`): en el panel son ámbar; en el pack, blanco azulado.
+    ¿El color sale de la paleta, del efecto de bastones o de la exposición?

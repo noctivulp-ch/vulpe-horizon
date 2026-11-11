@@ -201,3 +201,42 @@ disposición de la referencia). En espera: lo único abierto es el 15 (vegetaci�
 - Para comparar colores en Horizon hay que apagar el aislamiento (`aislamiento_rango` default 0 en el manifiesto): con él
   todo sale gris; perdí media comprobación por eso.
 - Preguntas nuevas para A en `docs/preguntas-para-A.md` (7).
+
+## 2026-11-11 — de B al gestor, encargo B-18 (F-11 a F-16)
+
+Lo que el gestor debe mirar, y tres cosas del banco que no son del pack.
+
+### Qué mirar (escena `pruebas/escenas/banco-f.ctl`, con `aislamiento_rango` a 0 en el manifiesto)
+- **`cielo-dia`, `nubes-dia`:** siluetas de los bloques nítidas (sin halo), nubes blancas con borde y vetas altas, cielo
+  azul profundo, caras inferiores gris oscuro con el ladrillo visible. Falta la aureola grande del sol en el centro: el sol
+  del pack está en el cenit (ver «Órbita del sol»).
+- **`lluvia-dia`:** niebla gris azulada, el muro del fondo se ve; el suelo sale sin sol directo donde el original lo tiene
+  (la sombra de las nubes de lluvia depende del sitio).
+- **`noche-fractal`:** cielo mucho más oscuro (exposición de la tabla). El fractal y sus rayos siguen blanco-azulados; en
+  el original son ámbar (pendiente).
+- **`atardecer-oeste`, `niebla-amanecer`:** velo alto pálido a las 12000 como el original; el tono cálido y el suelo
+  iluminado son del sol a 12° y 17° (ver «Trayectoria del sol»).
+
+### La medida del banco castiga las nubes nítidas
+Con nubes blancas de borde definido en otro sitio que las del original, la diferencia media sube aunque la imagen se
+parezca más (nuestro ruido no es el del original: las nubes nunca caerán en el mismo sitio). Antes de F-11 las nubes eran
+un borrón gris y la media salía mejor. Conviene mirar los paneles o comparar la imagen muy desenfocada.
+
+### Trayectoria del sol: las horas del banco no dan la misma elevación (sin comprobar en el original)
+Por los paneles, en Minecraft 26.3 el sol va **lineal** con la hora: a las 12000 está en el horizonte y a las 300 a unos
+4,5°. Horizon usa la curva clásica: a las 12000 el sol está a **12,4°** y a las 300 a **17,1°** (cruza el horizonte a las
+12785). Por eso `atardecer-oeste` y `niebla-amanecer` comparan soles distintos (luz directa cálida sobre el suelo y halo
+grande en el pack; nada de eso en el original). Para igualar la elevación sin tocar nada más, en Horizon: **`time 12785`** en
+vez de 12000 y **`time 23445`** en vez de 300 (23496 si se quiere 4,5° sin contar la inclinación).
+
+### Órbita del sol: la opción existe y no hace nada (límite de Horizon)
+El original inclina la órbita del sol −35° (a mediodía el sol está a 55°, no en el cenit: lo dice `paridad/01` y se ve en
+`cielo-dia`, con el sol en el centro del encuadre). El pack tiene la opción «Órbita del sol» (`orbita_sol`, −35 por defecto)
+en el menú, pero **ningún archivo la usa**: Horizon da `frame.sun_direction` y el mapa de sombras con el sol de vanilla y no
+hay ajuste en el manifiesto para inclinarlo. Inclinar solo el cielo y la luz dejaría las sombras del mapa apuntando a otro
+sitio. Hace falta pedirlo a Horizon (por ejemplo `[shadow] sun_tilt` o un `[sky] sun_path_rotation`). Mientras, la opción
+ocupa uno de los 64 huecos del menú sin efecto: decisión del dueño si se quita.
+
+### Suelo del banco
+El suelo de piedra lisa de (164–176, 76, 160–182) lo pusieron mis escenas `ao-rincon` y `sombras-borde` el 2026-11-04. Si el
+mundo del original tiene otro bloque ahí, igualarlo.
