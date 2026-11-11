@@ -59,13 +59,14 @@ const OPC_TIEMPO_DENSIDAD = array<vec3<f32>, 11>(
 // Orden de los perfiles por cuarto de día desde el día 0; a partir del 18.º se repiten los últimos 14.
 const OPC_TIEMPO_SECUENCIA = array<u32, 18>(1u, 2u, 3u, 4u, 5u, 6u, 1u, 7u, 8u, 6u, 1u, 4u, 1u, 4u, 9u, 10u, 8u, 0u);
 const OPC_TIEMPO_SECUENCIA_REPITE_DESDE: u32 = 4u;
-// Cielo cubierto y luz ambiente (F-12): entre estas coberturas del perfil la capa pasa de no tener nube densa a
-// tenerla en todo el cielo (fino/05 P6: 5–12 % con 1, 57–70 % con 1,5, 94–96 % con 1,9); extinción de la luz ambiente
-// por unidad de densidad del perfil, y lo que queda con el cielo cerrado del todo. A ojo de los paneles del banco
-// (lluvia-dia), a falta del promedio de cielo con nubes medido.
-const OPC_CUBIERTO_COBERTURA: vec2<f32> = vec2<f32>(0.75, 1.75);
-const OPC_CUBIERTO_EXTINCION: f32 = 4.0;
-const OPC_CUBIERTO_MINIMO: f32 = 0.25;
+// Ambiente con nubes (F-16), a ojo de los paneles del banco a falta del promedio medido (pregunta para A): rampas de la
+// cobertura del perfil a la fracción de cielo con nube y a la forma media (ajustadas a fino/05 P6: 9 % y 0,01 con 0,5;
+// 78 % y 0,2 con 1; 100 % y 0,56 con 1,5); extinción de la luz del astro a través de la nube por unidad de espesor
+// (forma media × densidad), y parte del cielo despejado que se sigue viendo entre y a través de ellas.
+const OPC_CUBIERTO_CON_NUBE: vec2<f32> = vec2<f32>(0.35, 1.3);
+const OPC_CUBIERTO_MEDIA: vec2<f32> = vec2<f32>(0.5, 2.3);
+const OPC_CUBIERTO_EXTINCION: f32 = 8.0;
+const OPC_CUBIERTO_CIELO: f32 = 0.5;
 
 // Fundido entre un perfil y el siguiente: tramo del cuarto de día en que se mezclan (smoothstep de inicio a fin).
 const OPC_TIEMPO_FUNDIDO: vec2<f32> = vec2<f32>(0.95, 1.0);

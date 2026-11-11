@@ -25,26 +25,26 @@ fn adp_horario() -> VolHorario {
     return vol_horario(frame.day_time, opc_niebla_horario_uniforme(), opc_niebla_horario_manchas(), OPC_NIEBLA_HORARIO_TRANSICION);
 }
 
-// Fracción de la luz ambiente de cielo que queda bajo las nubes del momento: aproxima el «promedio de cielo con nubes»
-// del original (fino/01 §1), que aquí no se integra. Por capa, la fracción de cielo con nube densa (fino/05 P6) deja
-// pasar exp(−k·densidad). Porqué: docs/efectos/luz-de-superficie.md §«Ambiente medido» (F-12)
-fn adp_cielo_bajo_nubes() -> f32 {
-    if !opc_volumen().nubes {
-        return 1.0;
-    }
-    let p = adp_nubes().perfil;
-    let densa = smoothstep(vec3<f32>(OPC_CUBIERTO_COBERTURA.x), vec3<f32>(OPC_CUBIERTO_COBERTURA.y), p.cobertura);
-    let capa = 1.0 - densa * (1.0 - exp(-OPC_CUBIERTO_EXTINCION * p.densidad));
-    return capa.x * capa.y * capa.z;
-}
-
-// Luz ambiente de cielo sobre una superficie horizontal, escala común: la tabla medida, filtrada por las nubes del
-// momento (lo que pasa por ellas llega gris).
+// Luz ambiente de cielo sobre una superficie horizontal, escala común: la tabla medida del cielo despejado, mezclada con
+// lo que dan las nubes del momento vistas desde abajo y comprimida (Reinhard sobre la luminancia). Aproxima el «promedio
+// de cielo con nubes» del original (fino/01 §1), que aquí no se integra: las nubes poco espesas al sol son mucho más
+// claras que el cielo azul y neutras; las de lluvia, oscuras. Porqué: docs/efectos/luz-de-superficie.md §«Ambiente con nubes» (F-16)
 fn adp_ambiente_cielo() -> vec3<f32> {
     let elev = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
     let despejado = atm_ambiente_cielo(elev);
-    let paso = adp_cielo_bajo_nubes();
-    return mix(vec3<f32>(col_luminancia(despejado)), despejado, paso) * mix(OPC_CUBIERTO_MINIMO, 1.0, paso);
+    if !opc_volumen().nubes {
+        return despejado;
+    }
+    let p = adp_nubes().perfil;
+    // Fracción del cielo con nube y forma media, por capa, según la cobertura del perfil (fino/05 P6).
+    let con_nube = smoothstep(vec3<f32>(OPC_CUBIERTO_CON_NUBE.x), vec3<f32>(OPC_CUBIERTO_CON_NUBE.y), p.cobertura);
+    let media = smoothstep(vec3<f32>(OPC_CUBIERTO_MEDIA.x), vec3<f32>(OPC_CUBIERTO_MEDIA.y), p.cobertura);
+    let cubierto = 1.0 - (1.0 - con_nube.x) * (1.0 - con_nube.y) * (1.0 - con_nube.z);
+    let espesor = dot(media, p.densidad);
+    let directa = col_luminancia(adp_irradiancia_astro(opc_cielo())) * max(frame.light_direction.y, 0.0);
+    let nube = vec3<f32>(directa * exp(-OPC_CUBIERTO_EXTINCION * espesor)) + despejado * OPC_CUBIERTO_CIELO;
+    let ambiente = mix(despejado, nube, cubierto);
+    return ambiente / (1.0 + col_luminancia(ambiente));
 }
 
 fn adp_sombra_nubes(mundo: vec3<f32>) -> f32 {

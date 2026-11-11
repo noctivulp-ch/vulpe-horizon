@@ -286,3 +286,19 @@ azul marino: recibía el 8 % de la luz ambiente de cielo con su color. Una cara 
 una normal vertical de −0,5 (`OPC_LUZ_ABAJO_NEUTRA`) su luz ambiente va en gris (la luminancia). Aproximación: el original
 ilumina con un «promedio de cielo con nubes» (`fino/01` §1, sin medir) que con nubes blancas es mucho menos azul; pregunta
 para A.
+
+## Ambiente con nubes (F-16, 2026-11-11)
+
+Corrige el «cielo cubierto» de F-12, que solo sabía oscurecer. En el panel `cielo-dia` las caras inferiores del original
+reciben unas 4 veces más luz de la que da el 8 % del ambiente despejado, y neutra: el «promedio de cielo con nubes» que usa
+el original (`fino/01` §1) con cúmulos blancos al sol es **más claro y menos azul** que el cielo despejado; con las nubes de
+lluvia, más oscuro (sombra del panel `lluvia-dia`: ambiente ≈ 0,02–0,03).
+
+`adp_ambiente_cielo()` (en `adaptadores/tiempo.wgsl`): mezcla el ambiente despejado de la tabla con el de las nubes vistas
+desde abajo, `luminancia de la directa · seno de la elevación · e^(−8·espesor) + ½ del despejado`, pesado por la fracción
+de cielo con nube; `espesor` = Σ forma media × densidad del perfil. Las dos fracciones salen de la cobertura del perfil
+con rampas ajustadas a `fino/05` P6. Al final, la compresión de Reinhard sobre la luminancia que dice `fino/01` §1.
+Constantes `OPC_CUBIERTO_*` en `opciones/tiempo.wgsl`. **Todo a ojo de dos paneles**: pregunta para A (el promedio con
+nubes medido a mediodía del día 0 y con lluvia).
+
+**Visto:** caras inferiores gris oscuro con el ladrillo visible, como el original; niebla de lluvia gris azulada.
