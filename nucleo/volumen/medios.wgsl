@@ -20,10 +20,13 @@ const VOL_AIRE_ALTURA_RAYLEIGH: f32 = 1900.0;                                // 
 const VOL_AIRE_ALTURA_MIE: f32 = 265.0;                                      // bloques: altura de escala de aerosoles
 const VOL_NIEBLA_SIGMA: f32 = 0.02;        // por bloque con densidad relativa 1
 const VOL_CAIDA_DESDE: f32 = 320.0;         // por encima del velo de la aurora (decisión de Vulpe)
-// Rampa del ruido de las manchas: ancha, para que la densidad llena (el cubo del parámetro) se alcance en pocos sitios
-// (con 0,45–0,7 y ×2 la lluvia tapaba un muro a 16 bloques que en el original se ve; panel lluvia-dia). A ojo: F-13.
-const VOL_MANCHAS_RAMPA: vec2<f32> = vec2<f32>(0.3, 0.9);
-const VOL_MANCHAS_ALTURA: f32 = 24.0;       // las manchas son bruma baja: caen por encima del mar + esto
+// Manchas de niebla ajustadas a fino/05 «Respuesta a la pregunta 11» (medido a Y = 70 con el parámetro 0,4): mancha en
+// el 53 % del volumen, forma media dentro de 0,13 del tope ya con la altura (0,61 a Y = 70), mitad cada 14 bloques por
+// encima de Y = 60. Con rampa² sobre el canal A de ruido3d sale 53 % y 0,22 antes de la altura: media 0,0046 por bloque
+// (medido 0,004635). Porqué: docs/efectos/niebla-y-nubes.md §«Manchas medidas» (F-19)
+const VOL_MANCHAS_RAMPA: vec2<f32> = vec2<f32>(0.46, 0.76);
+const VOL_MANCHAS_DESDE: f32 = 60.0;
+const VOL_MANCHAS_ALTURA: f32 = 20.2;
 
 struct VolAire {
     rayleigh: vec3<f32>,
@@ -44,7 +47,8 @@ fn vol_niebla(mundo: vec3<f32>, a: VolAjustesNiebla, ruido3d: texture_2d<f32>) -
     if a.manchas > 0.0 {
         let p = (mundo + a.viento) * vec3<f32>(1.0 / 96.0, 1.0 / 40.0, 1.0 / 96.0);
         let n = vol_ruido3d(ruido3d, p).a;
-        let mancha = smoothstep(VOL_MANCHAS_RAMPA.x, VOL_MANCHAS_RAMPA.y, n) * exp(-max(mundo.y - VOL_MAR - VOL_MANCHAS_ALTURA, 0.0) / 12.0);
+        let rampa = smoothstep(VOL_MANCHAS_RAMPA.x, VOL_MANCHAS_RAMPA.y, n);
+        let mancha = rampa * rampa * exp(-max(mundo.y - VOL_MANCHAS_DESDE, 0.0) / VOL_MANCHAS_ALTURA);
         let d_manchas = a.manchas * a.manchas * a.manchas;
         d += d_manchas * mancha;
     }

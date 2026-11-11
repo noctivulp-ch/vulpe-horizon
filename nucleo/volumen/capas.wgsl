@@ -85,16 +85,14 @@ fn vol_sombra_nubes(mundo: vec3<f32>, luz: vec3<f32>, n: VolNubes, t: texture_2d
             d += max(c - n.forma.sombra_umbral, 0.0) * n.perfil.densidad[i];
         }
     }
-    var tau = n.forma.sombra_tau * d * d;
-    // Altoestratos (fino/04 §6): lámina fina; su espesor óptico crece con el camino oblicuo (1 / seno de la elevación),
-    // así que con el sol rasante apagan la luz directa aunque a mediodía apenas sombreen.
-    // Porqué: docs/efectos/niebla-y-nubes.md §Sombra de los altoestratos
+    // Altoestratos (fino/04 «Respuesta a la pregunta 9»): entran en la misma suma, sin umbral y por 1 − |seno de la
+    // elevación| (con el sol bajo pesan mucho más).
     let h_alto = VOL_MAR + VOL_BASE.z + VOL_ESPESOR.z * 0.5;
     if mundo.y < h_alto {
         let p = mundo + luz * ((h_alto - mundo.y) / luz.y);
-        let c = vol_cobertura(p.xz, 2, n, t, s);
-        tau += c * n.perfil.densidad.z * n.forma.sigma.z * VOL_ESPESOR.z * n.forma.sombra_alto / max(luz.y, 0.05);
+        d += vol_cobertura(p.xz, 2, n, t, s) * n.perfil.densidad.z * (1.0 - abs(luz.y)) * n.forma.sombra_alto;
     }
+    let tau = n.forma.sombra_tau * d * d;
     return exp(-tau);
 }
 

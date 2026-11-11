@@ -34,8 +34,8 @@ const OPC_NUBES_DETALLE_FUERZA: f32 = 0.45;                        // erosión f
 const OPC_NUBES_SIGMA: vec3<f32> = vec3<f32>(0.45, 0.45, 0.06);    // extinción por bloque
 const OPC_NUBES_TRAMO_MAX: f32 = 800.0;                            // bloques: tope del tramo integrado por capa baja
 const OPC_NUBES_SOMBRA_TAU: f32 = 200.0;                           // transmitancia de la sombra = exp(−200·d²), d la densidad acumulada (fino/04 tabla B)
-const OPC_NUBES_SOMBRA_UMBRAL: f32 = 0.35;                         // cobertura que se resta por la erosión («umbral medio», sin medir)
-const OPC_NUBES_SOMBRA_ALTO: f32 = 1.0;                            // × espesor óptico oblicuo de los altoestratos (fino/04 §6)
+const OPC_NUBES_SOMBRA_UMBRAL: f32 = 0.13;                         // cobertura que pierden los cúmulos por la erosión antes de la densidad (fino/04 «Respuesta a la pregunta 9»)
+const OPC_NUBES_SOMBRA_ALTO: f32 = 1.0;                            // × la aportación de los altoestratos a la suma de la sombra
 // Cobertura 2D de los cúmulos: forma = smoothstep(umbral, umbral + RAMPA, señal)^EXPONENTE, umbral = x − cob·y. Ajustada
 // con tools/paridad/cobertura.py a la tabla areal medida de fino/05 P6 (con 0,5 / 1 / 1,5 / 1,9: fracción con nube, densa
 // y forma media; error medio 0,03): con 1 hay nube en el 71 % del plano pero densa solo en el 9 %.

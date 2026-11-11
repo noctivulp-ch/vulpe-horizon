@@ -415,3 +415,17 @@ así que sobre el cielo despejado el aire se integraba la mitad o menos de lo qu
 de unos 10°–15° alrededor del sol donde antes había azul liso; sigue siendo menor y más azul que la del original, que además
 tiene el velo de altoestratos encendido alrededor del sol. `noche-fractal` queda muy cerca del panel (rayos a los dos lados
 sobre fondo oscuro); el resto del banco, sin cambios a la vista.
+
+## Sombra de nubes y manchas con las respuestas 9 y 11 (F-19, 2026-11-11)
+
+- **Sombra de nubes** (`fino/04` «Respuesta a la pregunta 9»): los cúmulos pierden 0,13 de cobertura antes de multiplicar
+  por la densidad (`OPC_NUBES_SOMBRA_UMBRAL`; antes 0,35 a ojo), y los altoestratos **entran en la misma suma**, sin umbral y
+  por 1 − |seno de la elevación| (antes iban aparte con un espesor oblicuo). Transmitancia `exp(−200·d²)` como en F-13.
+  Comprobado en Python con `cobertura.py`: transmitancia media 0,72 con pequeños 1 / 0,5 (original 0,65), 0,71 con grandes
+  1 / 0,5 (0,72), 0,06 con la lluvia (0,05); con grandes 1,9 / 0,2 sale 0,06 frente a 0,125.
+- **Manchas** (`fino/05` «Respuesta a la pregunta 11»): forma = rampa² del canal A de `ruido3d` entre 0,46 y 0,76
+  (`VOL_MANCHAS_RAMPA`), que da mancha en el 53 % del volumen con forma media 0,22 (medido 53 % y 0,213); mitad cada 14
+  bloques por encima de Y = 60 (`VOL_MANCHAS_DESDE`, `VOL_MANCHAS_ALTURA`). Sustituye la rampa a ojo de F-13.
+
+**Visto** (`banco-f.ctl`, aislamiento a 0): `lluvia-dia` con niebla más ligera y el suelo en sombra de nubes; el resto sin
+cambio a la vista.
