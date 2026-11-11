@@ -99,5 +99,6 @@ fn adp_irradiancia_astro(c: OpcCielo) -> vec3<f32> {
         let peso = adp_luna_factor_fase();
         e = atm_luz_directa_luna(elev_sol) * c.luna_color * peso;
     }
-    return e * (1.0 - 0.9 * clamp(frame.rain, 0.0, 1.0));
+    // Con lluvia el sol no se apaga aparte: lo tapan las nubes del perfil de lluvia con su sombra (fino/01 §7).
+    return e;
 }

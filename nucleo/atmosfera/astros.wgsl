@@ -105,3 +105,31 @@ fn atm_luz_directa_luna(elev_sol: f32) -> vec3<f32> {
     let t = elev_sol * -0.5;
     return mix(vec3<f32>(0.0), vec3<f32>(0.001205, 0.001608, 0.002689), t);
 }
+
+// Luz ambiente de cielo sobre una superficie horizontal según la elevación del sol en grados, en la escala común:
+// tabla medida de paridad/01 §«Luz directa y ambiente de cielo» (19 filas, de −12° a 90°; por debajo, la de −12°, que ya
+// es la de la noche con luna). Porqué: docs/efectos/luz-de-superficie.md §«Ambiente medido» (F-12)
+const ATM_AMBIENTE_ELEV = array<f32, 19>(-12.0, -8.0, -6.0, -4.0, -2.0, 0.0, 1.0, 2.0, 4.0, 6.0, 8.0, 10.0, 15.0, 20.0, 30.0,
+    40.0, 55.0, 70.0, 90.0);
+const ATM_AMBIENTE_RGB = array<vec3<f32>, 19>(
+    vec3<f32>(3.866e-05, 0.0001203, 0.0005483), vec3<f32>(3.569e-05, 0.0001048, 0.0004177),
+    vec3<f32>(8.594e-05, 0.0001476, 0.0003841), vec3<f32>(0.0008634, 0.001043, 0.001525),
+    vec3<f32>(0.004269, 0.005494, 0.007457), vec3<f32>(0.01447, 0.01676, 0.02249), vec3<f32>(0.01951, 0.026, 0.03396),
+    vec3<f32>(0.02351, 0.03592, 0.04938), vec3<f32>(0.02908, 0.05326, 0.09091), vec3<f32>(0.03254, 0.06562, 0.1346),
+    vec3<f32>(0.03479, 0.07329, 0.1637), vec3<f32>(0.0359, 0.07574, 0.1644), vec3<f32>(0.03752, 0.07695, 0.1531),
+    vec3<f32>(0.04052, 0.08341, 0.1738), vec3<f32>(0.04687, 0.09407, 0.202), vec3<f32>(0.04726, 0.09759, 0.217),
+    vec3<f32>(0.04906, 0.1025, 0.2329), vec3<f32>(0.04932, 0.1047, 0.2414), vec3<f32>(0.04982, 0.1059, 0.2453),
+);
+
+fn atm_ambiente_cielo(elev: f32) -> vec3<f32> {
+    if elev <= ATM_AMBIENTE_ELEV[0] {
+        return ATM_AMBIENTE_RGB[0];
+    }
+    for (var i = 1; i < 19; i++) {
+        if elev < ATM_AMBIENTE_ELEV[i] {
+            let t = (elev - ATM_AMBIENTE_ELEV[i - 1]) / (ATM_AMBIENTE_ELEV[i] - ATM_AMBIENTE_ELEV[i - 1]);
+            return mix(ATM_AMBIENTE_RGB[i - 1], ATM_AMBIENTE_RGB[i], t);
+        }
+    }
+    return ATM_AMBIENTE_RGB[18];
+}

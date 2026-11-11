@@ -7,8 +7,7 @@ fn adp_clima(input: WeatherInput) -> vec4<f32> {
     let dist = length(input.position);
     let vista = input.position / max(dist, 1e-3);
     // Cielo (gris con la lluvia, como en 03) y sol con su sombra del mapa.
-    var cielo = adp_cielo_medio(c) * OPC_LUZ_CIELO_BASE;
-    cielo = mix(cielo, vec3<f32>(col_luminancia(cielo)) * 0.8, clamp(frame.rain, 0.0, 1.0));
+    let cielo = adp_ambiente_cielo();
     // La etapa weather no tiene el mapa de sombras (ni shadow_position, en contra de la referencia): sombra
     // aproximada por la luz de cielo de Minecraft, como más allá del mapa en 04.
     let sombra = smoothstep(0.86, 0.97, input.light.y);

@@ -25,6 +25,28 @@ fn adp_horario() -> VolHorario {
     return vol_horario(frame.day_time, opc_niebla_horario_uniforme(), opc_niebla_horario_manchas(), OPC_NIEBLA_HORARIO_TRANSICION);
 }
 
+// Fracción de la luz ambiente de cielo que queda bajo las nubes del momento: aproxima el «promedio de cielo con nubes»
+// del original (fino/01 §1), que aquí no se integra. Por capa, la fracción de cielo con nube densa (fino/05 P6) deja
+// pasar exp(−k·densidad). Porqué: docs/efectos/luz-de-superficie.md §«Ambiente medido» (F-12)
+fn adp_cielo_bajo_nubes() -> f32 {
+    if !opc_volumen().nubes {
+        return 1.0;
+    }
+    let p = adp_nubes().perfil;
+    let densa = smoothstep(vec3<f32>(OPC_CUBIERTO_COBERTURA.x), vec3<f32>(OPC_CUBIERTO_COBERTURA.y), p.cobertura);
+    let capa = 1.0 - densa * (1.0 - exp(-OPC_CUBIERTO_EXTINCION * p.densidad));
+    return capa.x * capa.y * capa.z;
+}
+
+// Luz ambiente de cielo sobre una superficie horizontal, escala común: la tabla medida, filtrada por las nubes del
+// momento (lo que pasa por ellas llega gris).
+fn adp_ambiente_cielo() -> vec3<f32> {
+    let elev = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
+    let despejado = atm_ambiente_cielo(elev);
+    let paso = adp_cielo_bajo_nubes();
+    return mix(vec3<f32>(col_luminancia(despejado)), despejado, paso) * mix(OPC_CUBIERTO_MINIMO, 1.0, paso);
+}
+
 fn adp_sombra_nubes(mundo: vec3<f32>) -> f32 {
     if !opc_volumen().nubes {
         return 1.0;

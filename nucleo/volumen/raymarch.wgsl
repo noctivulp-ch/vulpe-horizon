@@ -71,7 +71,7 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
     // claro del cielo de día. Su ambiente es la radiancia media del cielo sin la ganancia de superficie.
     // Porqué: docs/efectos/niebla-y-nubes.md §Perspectiva aérea (F-2)
     let bruma = select(a.niebla.bruma, 0.0, rayo.cielo); // PRUEBA A/B
-    let ambiente = mix(luz.suelo, luz.cielo, 0.7) * OPC_AIRE_AMBIENTE;
+    let ambiente = luz.cielo * OPC_AIRE_AMBIENTE;
     let f = 10.0;
     var anterior = 0.0;
     for (var i = 0; i < a.pasos_niebla; i++) {

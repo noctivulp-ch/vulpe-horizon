@@ -253,3 +253,28 @@ A corrigió dos puntos de `fino/03` en los que se basó B-17.9, al revés de lo 
   normal: 1 mirando hacia abajo, 1,58 al horizonte, 2 mirando hacia arriba (11 puntos en `SUP_SSS_FASE_CIELO`,
   `sup_sss_fase_cielo`). Escalada por `OPC_SSS_CIELO = 0,4` para conservar el tope anterior (0,8): el envés de las hojas
   visto desde abajo recibe el doble que la copa vista desde arriba. La escala absoluta del original no está medida.
+
+## Ambiente medido (F-12, 2026-11-11)
+
+**Antes:** la luz ambiente de cielo era la radiancia media de nuestro modelo (`adp_cielo_medio`) × 1,8
+(`OPC_LUZ_CIELO_BASE`), con un gris añadido a mano con la lluvia y, en la niebla, una saturación ×5 de noche. Comparada con
+la tabla «Luz directa y ambiente de cielo» de `paridad/01`: clavada con el sol alto (×0,96–1,03 a 30°–90°), pero con el sol
+bajo le faltaba azul (×0,6 a 4°–10°, ×0,45 a 0°) y de noche valía cero (la tabla da (0,00004; 0,00012; 0,00055) a −12°).
+
+**Ahora:**
+- `atm_ambiente_cielo(elevación)` (`nucleo/atmosfera/astros.wgsl`) interpola las 19 filas medidas, como ya hacía
+  `atm_luz_directa_sol` con la directa. `adp_ambiente_cielo()` la entrega a la superficie, a la niebla, al aire y a la
+  lluvia. `adp_cielo_medio` queda para el cielo dibujado, el fractal y los reflejos.
+- **La niebla toma 3/4 y el aire la mitad** de ese ambiente (`fino/05` P2–P3, medido): `OPC_NIEBLA_AMBIENTE_BASE` 0,26 →
+  0,75 (por la fase cenital 0,5–2,5) y `OPC_AIRE_AMBIENTE` 0,5 sin mezclar con el suelo. Fuera la saturación nocturna
+  (`OPC_NIEBLA_NOCHE_*`): el ambiente nocturno de la tabla ya es azul y tenue.
+- **Cielo cubierto** (`adp_cielo_bajo_nubes`): el original ilumina con un «promedio de cielo con nubes» que aquí no se
+  integra (`fino/01` §1, sin medir). Se aproxima: cada capa deja pasar `1 − densa·(1 − e^(−4·densidad))`, con `densa` la
+  fracción de cielo con nube densa según la cobertura del perfil (`fino/05` P6); lo que pasa llega gris y no baja de
+  0,25. Constantes `OPC_CUBIERTO_*` en `opciones/tiempo.wgsl`, **a ojo** del panel `lluvia-dia`: pregunta para A.
+- **Con lluvia el sol ya no se multiplica por 0,1** (`adp_irradiancia_astro`): en el original no hay oscurecimiento de
+  tormenta aparte (`fino/01` §7); el sol lo tapan las nubes con su sombra (F-13).
+
+**Visto** en Horizon (`banco-f.ctl`, aislamiento a 0): la lluvia pasa de blanco azulado (100, 117, 143 de media en el
+centro) a gris (82, 88, 96; el original, 66, 71, 76); la noche al horizonte baja de (6, 12, 25) a (4, 9, 15). De día sin
+cambio apreciable.

@@ -129,10 +129,8 @@ fn adp_luces(o: OpcLuz) -> AdpLuces {
     let c = opc_cielo();
     let d = frame.light_direction;
     let directa = adp_irradiancia_astro(c);
-    // Lluvia: el cielo cubierto unifica la luz de cielo sin oscurecer en carbón (banco-2026-11-09).
-    let cubierto = clamp(frame.rain, 0.0, 1.0);
-    var cielo = adp_cielo_medio(c) * o.cielo * OPC_LUZ_CIELO_BASE;
-    cielo = mix(cielo, vec3<f32>(col_luminancia(cielo)) * 1.15, cubierto * 0.4);
+    // Ambiente medido de paridad/01, filtrado por las nubes del momento (F-12).
+    let cielo = adp_ambiente_cielo() * o.cielo;
     return AdpLuces(false, d, directa, cielo, adp_suelo(c) * o.cielo * OPC_LUZ_CIELO_BASE);
 }
 
