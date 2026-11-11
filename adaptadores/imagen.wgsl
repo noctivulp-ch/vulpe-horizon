@@ -125,12 +125,10 @@ fn adp_bloom_final(color: vec3<f32>, uv: vec2<f32>, o: OpcImagen) -> vec3<f32> {
     // La opacidad de la niebla del propio píxel, sin nubes, que deja la composición en su alfa (pasa por el TAA).
     // Porqué: docs/efectos/bloom.md §«Bloom de niebla» (F-11).
     let t = 1.0 - textureSampleLevel(previous, nearest_sampler, uv, 0.0).a;
-    let mult = bloom_niebla * (1.0 + OPC_BLOOM_NIEBLA_LLUVIA * frame.rain) + OPC_BLOOM_NIEBLA_AGUA * frame.in_water;
+    let mult = bloom_niebla * mix(1.0, OPC_BLOOM_NIEBLA_AGUA, frame.in_water);
     let borde = smoothstep(0.0, 0.05, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));
-    // Al cuadrado: solo la niebla espesa; la bruma de día (opacidad 0,2–0,4) mezclaba media imagen con el
-    // desenfoque ancho y la lavaba.
-    let opaco = clamp((1.0 - t) * mult, 0.0, 1.0);
-    let niebla = opaco * opaco * borde;
+    // Mezcla lineal con la opacidad (el cuadrado de 10 no era del original).
+    let niebla = clamp((1.0 - t) * mult, 0.0, 1.0) * borde;
     return mix(color, mix(ancho, nucleo, OPC_BLOOM_NIEBLA_NUCLEO), niebla) + b * o.bloom * vineta * borde;
 }
 

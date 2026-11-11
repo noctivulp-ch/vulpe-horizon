@@ -90,3 +90,24 @@ las nubes son nítidas.
 **Lo que se pierde:** el halo de una fuente en la niebla vuelve a depender de la niebla de cada píxel (el «disco
 recortado por las hojas» de 10.1); con el desenfoque más compacto se nota menos. **Visto** en Horizon (`banco-f.ctl`,
 aislamiento a 0): bloques y nubes nítidos de día, de noche y con lluvia.
+
+## Bloom de niebla del original (F-20, 2026-11-11)
+
+`fino/10` «Respuesta a la pregunta 10» corrige F-11: **en el mundo principal ni la niebla ni las nubes dan bloom de
+niebla**. El peso solo existe a través del agua o de un translúcido (0,75 de la opacidad del volumen de detrás), con la cámara
+bajo el agua y donde caen gotas; la mezcla es **lineal** y, con los bastones activos, sin factor reductor ni aumento por lluvia.
+
+- `adp_opacidad_bloom_niebla` (composición, en el alfa): 0 en el cielo y en el terreno sólido (`surface_at().present`);
+  0,75 × la opacidad del volumen en lo demás (agua, cristal: `OPC_BLOOM_NIEBLA_TRANSLUCIDO`); la opacidad entera bajo el agua
+  y fuera del Overworld.
+- Fuera el cuadrado y el término de lluvia (`OPC_BLOOM_NIEBLA_LLUVIA`). Las gotas no dan bloom de niebla: la etapa del
+  clima no puede escribir una máscara (límite de Horizon, ver lluvia-y-nieve.md).
+
+## Bastones por píxel (F-20)
+
+`fino/02` «Respuesta a la pregunta 13»: el ámbar del fractal es la paleta y el blanco azulado lo pone el efecto de bastones,
+que desatura **más cuanto más oscuro es el píxel ya expuesto**; los rayos se calculan después. `col_purkinje` lleva ahora ese
+factor por píxel, `peso · k / (k + luminancia)` con `k` = 0,0094 y peso máximo 0,87 (`OPC_PURKINJE_K`, `OPC_PURKINJE`),
+ajustados a la tabla (de noche conserva el 19 % del color en 6·10⁻⁵ expuesto, el 49 % en 0,0057 y el 88 % en 0,057).
+
+**Visto** (`banco-f.ctl`): en `noche-fractal` el fractal y sus rayos salen ámbar dorado, como el panel del original.

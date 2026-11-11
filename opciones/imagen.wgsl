@@ -27,7 +27,8 @@ const OPC_ADAPTACION_SUBE: f32 = 0.33;      // s: peso 0,95 por fotograma a 60 f
 const OPC_ADAPTACION_BAJA: f32 = 0.33;      // s: el original adapta la medida al mismo ritmo en los dos sentidos
 const OPC_BASTONES_TAU: f32 = 1.1;          // s: peso 0,985 por fotograma (3,3 veces más lenta que los conos)
 const OPC_BASTONES_L0: f32 = 0.0015;       // luminancia de escena a la que los bastones pesan la mitad
-const OPC_PURKINJE: f32 = 1.0;
+const OPC_PURKINJE: f32 = 0.87;              // peso máximo de los bastones en lo más oscuro (fino/02 P13: conserva el 18 %)
+const OPC_PURKINJE_K: f32 = 0.0094;         // luminancia expuesta del píxel a la que el peso cae a la mitad
 const OPC_BALANCE_K: f32 = 6500.0;
 const OPC_FILMICO_BLANCO: f32 = 3.1;       // punto blanco del fílmico de Hejl 2015 (paridad/11)
 // Exposición propia de cada curva (fílmico, ACES, Reinhard): el fílmico da más en los medios tonos; con ×0,5 deja el día
@@ -40,7 +41,7 @@ const OPC_BLOOM_ENERGIA: f32 = 0.9379;      // energía total del desenfoque pon
 const OPC_BLOOM_NUCLEO: f32 = 0.75;         // parte del núcleo compacto en el desenfoque (el resto, el ancho)
 const OPC_BLOOM_NIEBLA_AGUA: f32 = 1.0;
 // Paridad 16: cada gota apaga el bloom de niebla en su píxel; sin máscara de gotas, se quita la parte que cubren (~10 %).
-const OPC_BLOOM_NIEBLA_LLUVIA: f32 = -0.1;
+const OPC_BLOOM_NIEBLA_TRANSLUCIDO: f32 = 0.75; // peso de la opacidad del volumen visto a través del agua o de un translúcido (fino/10)
 const OPC_BLOOM_RADIO: f32 = 0.06;          // del alto de la pantalla (cola del halo; paridad 10: 97,6 % en 0,06)
 const OPC_BLOOM_ANILLOS: i32 = 12;           // anillos del desenfoque ancho (las muestras por anillo salen del radio)
 const OPC_BLOOM_NIEBLA_NUCLEO: f32 = 0.3;    // parte compacta del desenfoque de niebla (paridad/10: su pico es 0,38 del ponderado)

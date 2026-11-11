@@ -47,7 +47,7 @@ fn post(input: PostInput) -> vec4<f32> {
     c = adp_estado_jugador(c, adp_post_distancia(p));
     let e = adp_exposicion(o);
     c *= e.exposicion * OPC_TONEMAP_EXPOSICION[min(o.tonemap, 2u)];
-    c = col_purkinje(c, e.bastones);
+    c = col_purkinje(c, e.bastones, OPC_PURKINJE_K);
     c = col_balance_blancos(c, atm_cuerpo_negro(6500.0), atm_cuerpo_negro(opc_balance_k()));
     c = col_tonemap(c, o.tonemap, OPC_BLANCO, OPC_FILMICO_BLANCO);
     c = col_gradar(c, o.gradacion);
