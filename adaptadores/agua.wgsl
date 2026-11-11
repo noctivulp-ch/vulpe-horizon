@@ -91,3 +91,18 @@ fn adp_agua_reflejo(p: AdpPunto, n: vec3<f32>, r: vec3<f32>, luces: AdpLuces) ->
     }
     return cielo;
 }
+
+// La luz del volumen de agua de este punto: las radiancias medidas del agua profunda (sol a 55°, todo iluminado), escaladas
+// por la luz de cielo y la directa del momento, y por el estilo de agua. Porqué: docs/efectos/agua.md §«Color del agua profunda» (F-18)
+fn adp_agua_luz_volumen(p: AdpPunto, luces: AdpLuces, sombra: f32, m: AguMedio) -> AguLuzVolumen {
+    let cielo = col_luminancia(luces.cielo) * luz_curva_cielo(p.luz_cielo) / OPC_AGUA_FONDO_REF.y;
+    let sol = col_luminancia(luces.directa) * sombra / OPC_AGUA_FONDO_REF.x;
+    let estilo = (m.color_disperso / OPC_AGUA_COLOR_DISPERSO_REF) * (m.dispersion / OPC_AGUA_DISPERSION_REF);
+    // De espaldas al sol la medida mezcla cielo y sol sin separar: a partes iguales.
+    let espaldas = OPC_AGUA_FONDO_ESPALDAS * (0.5 * (cielo + sol)) * estilo;
+    let hacia = (OPC_AGUA_FONDO_HACIA - OPC_AGUA_FONDO_ESPALDAS) * sol * estilo;
+    let lh = luces.direccion.xz;
+    let vh = -p.vista.xz;
+    let w = 0.5 + 0.5 * dot(lh, vh) / max(length(lh) * length(vh), 1e-3);
+    return AguLuzVolumen(espaldas, hacia, w, OPC_AGUA_FONDO_SATURACION);
+}

@@ -26,9 +26,19 @@ fn agu_transmitancia(m: AguMedio, distancia: f32) -> vec3<f32> {
 
 // Lo que se ve a través del agua: lo refractado absorbido más la luz dispersada por el agua (es lo que hace el
 // agua profunda azul oscuro y no negra).
-fn agu_a_traves(refractado: vec3<f32>, distancia: f32, ambiente: vec3<f32>, m: AguMedio) -> vec3<f32> {
+// Luz del propio volumen de agua visto desde el aire (fino/07 «Respuesta a la pregunta 7», medida): la dispersión es
+// gris y el tono lo pone la absorción; satura hacia los 10 bloques. `luz` lleva la radiancia del agua profunda de
+// espaldas al sol y lo que suma mirando hacia él, ya escaladas a la luz del momento.
+struct AguLuzVolumen {
+    espaldas: vec3<f32>,    // radiancia del agua profunda de espaldas al astro
+    hacia: vec3<f32>,       // lo que se añade mirando hacia el astro
+    hacia_el_astro: f32,    // 0 de espaldas .. 1 hacia él (en horizontal)
+    saturacion: f32,        // bloques de recorrido en que llega a 1 − 1/e
+}
+
+fn agu_a_traves(refractado: vec3<f32>, distancia: f32, luz: AguLuzVolumen, m: AguMedio) -> vec3<f32> {
     let t = agu_transmitancia(m, distancia);
-    let disperso = m.color_disperso * ambiente * (1.0 - exp(-m.dispersion * distancia * 8.0));
+    let disperso = (luz.espaldas + luz.hacia * luz.hacia_el_astro) * (1.0 - exp(-distancia / luz.saturacion));
     return refractado * t + disperso;
 }
 

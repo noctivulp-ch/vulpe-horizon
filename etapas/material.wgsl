@@ -133,7 +133,8 @@ fn agua(input: MaterialInput, p: AdpPunto, luces: AdpLuces) -> Surface {
     let refr = adp_agua_refraccion(p, n, oa.refraccion);
     // Absorción mínima en zonas oscuras: el agua tiene color propio aunque no haya luz de cielo.
     let minima = mix(4.0, 0.0, smoothstep(0.2, 0.8, p.luz_cielo));
-    let a_traves = agu_a_traves(refr.color, max(refr.distancia, minima), ambiente, medio);
+    let sombra = adp_sombra(p);
+    let a_traves = agu_a_traves(refr.color, max(refr.distancia, minima), adp_agua_luz_volumen(p, luces, col_luminancia(sombra.luz), medio), medio);
 
     if input.face == 0u {
         // Desde abajo: fuera del cono de Snell, reflexión total (agua profunda); dentro, lo de arriba.
@@ -144,7 +145,6 @@ fn agua(input: MaterialInput, p: AdpPunto, luces: AdpLuces) -> Surface {
     let r = reflect(-v, n);
     let f = agu_fresnel(cos_v, OPC_AGUA_F0);
     var reflejo = adp_agua_reflejo(p, n, r, luces) * luz_curva_cielo(max(p.luz_cielo, 0.3));
-    let sombra = adp_sombra(p);
     let especular = sup_especular(n, v, luces.direccion, OPC_AGUA_ESPECULAR_RUGOSIDAD, vec3<f32>(OPC_AGUA_F0))
                   * max(dot(n, luces.direccion), 0.0) * luces.directa * sombra.luz;
     var color = mix(a_traves, reflejo, f) + especular;

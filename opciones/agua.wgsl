@@ -9,6 +9,16 @@ const OPC_AGUA_CLARIDAD_DEFECTO: f32 = 1.0;
 const OPC_AGUA_MINIMO: f32 = 1.0;           // brillo mínimo de la niebla bajo el agua
 const OPC_AGUA_TEXTURA: bool = false;       // la textura vanilla del agua no se ve
 const OPC_AGUA_F0: f32 = 0.02037;
+// Radiancia del agua profunda vista desde el aire, escala común (fino/07 «Respuesta a la pregunta 7»: sol a 55°, a 45°
+// hacia abajo, sin reflejo): de espaldas al sol y hacia él; luz de la medida (luminancia de la directa y del ambiente a
+// 55°); recorrido en que satura (a 2 / 5 / 10 bloques de profundidad a 45°: 0,39 / 0,76 / 1 del valor profundo).
+const OPC_AGUA_FONDO_ESPALDAS: vec3<f32> = vec3<f32>(0.0017, 0.0075, 0.0170);
+const OPC_AGUA_FONDO_HACIA: vec3<f32> = vec3<f32>(0.0046, 0.0168, 0.0276);
+const OPC_AGUA_FONDO_REF: vec2<f32> = vec2<f32>(0.97, 0.097);
+const OPC_AGUA_FONDO_SATURACION: f32 = 5.0;
+// Valores del estilo «Normal» (opciones/estilo.wgsl), con los que el color y la turbidez de los otros estilos escalan lo medido.
+const OPC_AGUA_COLOR_DISPERSO_REF: vec3<f32> = vec3<f32>(0.04, 0.22, 0.68);
+const OPC_AGUA_DISPERSION_REF: f32 = 0.035;
 const OPC_AGUA_CALMA: f32 = 0.30;           // escala mínima del oleaje en las zonas en calma (paridad/07 §2)
 const OPC_AGUA_ESPECULAR_RUGOSIDAD: f32 = 0.07; // rugosidad efectiva del destello solar en olas
 const OPC_AGUA_DISPERSION_CROMATICA: f32 = 0.25; // dispersión cromática de refracción (fino/07 §Ajustes)

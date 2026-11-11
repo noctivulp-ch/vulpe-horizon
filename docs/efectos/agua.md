@@ -173,3 +173,23 @@ pálido, decodificado como escena con la inversa del mapeo de tonos (ADR 0004): 
 Fresnel rasante cercano a 1 se veía tal cual. Ahora el parecido de color decide a cualquier elevación; la elevación
 sola sigue usándose solo para la noche (todo oscuro). Riesgo: el terreno lejano velado por la niebla vanilla en el
 espejo puede tomarse por cielo y recibir el horizonte del pack, que es casi el mismo color.
+
+## Color del agua profunda (F-18, 2026-11-11)
+
+`fino/07` «Respuesta a la pregunta 7» mide la radiancia del agua profunda vista desde el aire (sol a 55°, 45° hacia abajo,
+sin reflejo): **(0,0017; 0,0075; 0,0170)** de espaldas al sol y **(0,0046; 0,0168; 0,0276)** hacia él; a 2, 5 y 10 bloques de
+profundidad llega al 39 %, 76 % y 100 %. Y explica la causa del azul chillón: la dispersión es **gris** y el tono lo pone la
+absorción; no hay un «color del agua». Nuestro `color_disperso` (0,04; 0,22; 0,68) × el ambiente daba unas 8 veces más azul.
+
+- `agu_a_traves` suma ahora la luz del volumen medida (`AguLuzVolumen`): `espaldas + hacia·w`, con `w` de 0 a 1 según se
+  mire de espaldas o hacia el astro en horizontal, por `1 − e^(−recorrido/5)` (`OPC_AGUA_FONDO_SATURACION`).
+- `adp_agua_luz_volumen` escala las dos radiancias (`OPC_AGUA_FONDO_ESPALDAS`, `_HACIA`) por la luz del momento respecto a
+  la de la medida (`OPC_AGUA_FONDO_REF`: luminancia de la directa 0,97 y del ambiente 0,097): la parte «hacia» con la directa
+  y su sombra; la de espaldas, a medias entre cielo y directa (la medida no las separa). Los estilos de agua (clara, turbia,
+  pantano) siguen actuando como razón sobre el estilo normal.
+- El agua profunda queda oscura y verde azulada; lo que le da el tono claro es el **reflejo** del cielo, como en el original.
+
+**Visto** (`pruebas/escenas/banco-agua.ctl`, frente al panel `agua-orilla`): mar azul verdoso oscuro y orilla turquesa; antes,
+azul eléctrico. Sigue más azul que el original porque refleja nuestro cielo (más despejado). **Sin tocar:** la refracción
+por distancia de `fino/07` §Medidos, el destello del sol en primer plano y la niebla bajo el agua (`nucleo/volumen/agua.wgsl`
+sigue con `color_disperso`).
