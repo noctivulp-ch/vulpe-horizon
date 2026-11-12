@@ -31,9 +31,14 @@ fn adp_rayos(uv: vec2<f32>, pixel: vec2<f32>, exposicion: f32) -> vec3<f32> {
                      OPC_RAYOS_CAIDA * 0.01 * mr.mult_caida * caida_mod, OPC_RAYOS_UMBRAL[j] * 0.01 * mr.mult_umbral,
                      OPC_RAYOS_NUCLEO[j] * 0.001 * mr.mult_limitador, o_rayos.muestras, OPC_RAYOS_OCLUSION * 0.01, exposicion,
                      adp_ruido_azul(pixel, 0u));
-    // Fase de la niebla (05), normalizada a su valor de frente, más un término múltiple con lóbulo trasero.
+    // Fase de fino/14 §1: directa (HG 0,85 + HG 0,75, normalizada a 1 de frente, 8,771) más la múltiple
+    // (HG 0,35 + ½·HG 0,35 hacia atrás) por la retrodispersión. Porqué: docs/efectos/rayos-del-fractal.md §«Repaso» (F-26)
     let dir = normalize(view_position(uv, 1e-4));
     let c = dot(dir, centro);
-    let fase = vol_fase_niebla(c, 0.01) / vol_fase_niebla(1.0, 0.01) + 0.15 * vol_hg(c, -0.3) / vol_hg(-1.0, -0.3) * OPC_RAYOS_ATRAS * 0.01;
-    return img_rayos(uv, previous, linear_sampler, r) * fase * sobre * peso_polo * noche;
+    let directa = (vol_hg(c, 0.85) + vol_hg(c, 0.75)) / OPC_RAYOS_FASE_NORMA;
+    let multiple = vol_hg(c, 0.35) + 0.5 * vol_hg(-c, 0.35);
+    let fase = directa + multiple * OPC_RAYOS_ATRAS * 0.01;
+    // Fuera del encuadre, el polo se apaga entre 2,5 y 4,5 radios de pantalla del centro (fino/14 §3).
+    let borde = 1.0 - smoothstep(2.5, 4.5, length(origen - 0.5));
+    return img_rayos(uv, previous, linear_sampler, r) * fase * sobre * peso_polo * borde * noche;
 }

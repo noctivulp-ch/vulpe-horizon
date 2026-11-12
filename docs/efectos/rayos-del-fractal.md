@@ -34,3 +34,15 @@ con los valores de Vulpe (`opciones/rayos.wgsl`).
   la niebla nocturna es oscura y la única zona clara es el halo de la luna, lejos del polo. No sé si es lo esperado
   con la niebla de noche o si el umbral de espaldas (0,04 mapeado) es alto en nuestra escala: duda para A.
 - **No visto:** el corte por nubes.
+
+## Repaso contra `fino/14` (F-26, 2026-11-11)
+
+- **Fase** (§1): la directa, `(HG 0,85 + HG 0,75) / 8,771` (1 de frente, 0,0011 de espaldas), más la múltiple,
+  `HG 0,35 + ½·HG(−c; 0,35)`, por la retrodispersión (100 %). Antes, la fase de la niebla normalizada más un término con
+  `HG(−0,3)` a ojo.
+- **Borde de pantalla** (§3): con el polo fuera del encuadre, los rayos se apagan entre 2,5 y 4,5 radios del centro.
+- Revisado y ya bien: transición de elevación `smoothstep(−0,12; 0,06)` (§2). §4 (fractal anclado a las estrellas) no
+  aplica: esa opción está fuera de alcance (02).
+- **Pendiente:** en el original los rayos se calculan **después** del efecto de bastones y heredan su tono (`fino/02`,
+  respuesta 13); los nuestros leen `previous`, de antes de los bastones. Arreglarlo pide más lecturas en la pasada final,
+  que va por 63 de 64.

@@ -49,3 +49,10 @@ Lo que la especificación no aclara y B no debe inventar. Una por punto, con la 
     paneles sale 4°, 55° y 0°; Horizon da 17°, 90° y 12°.
 13. **Color del fractal y de sus rayos de noche** (`noche-fractal`): en el panel son ámbar; en el pack, blanco azulado.
     ¿El color sale de la paleta, del efecto de bastones o de la exposición?
+
+## 2026-11-11 (B-21, lote 1 y punto 0 del lote 2)
+
+14. **Tope de la luz de cielo por oclusión** (`implementacion/01` §3.4): «con una oclusión del 80 % el tope ya es 0,37; por
+    debajo del 60 % es 0,3». ¿«Oclusión del 80 %» es AO = 0,8 o AO = 0,2?
+15. **Deriva del ruido del despeje con el día** (`fino/06` §1): ¿30 y 17 **bloques** por día (lo que dice el texto) o 30 y
+    17 **unidades del ruido** por día (lo que dice la fórmula, ~2 900 bloques)?

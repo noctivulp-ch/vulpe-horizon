@@ -26,9 +26,6 @@ const VOL_AURORA_DESPEJE: f32 = 1.0;
 const VOL_AURORA_RUIDO: f32 = 0.8;
 const VOL_AURORA_TAMANO_RUIDO: f32 = 96.0;      // bloques
 const VOL_AURORA_VENTANA: f32 = 2.0;
-// Fracción de la intensidad de las cortinas con que se ve el fractal por la ventana (especificación 06 §7):
-// el color del mapa es el cielo fractal, calibrado muy tenue. Porqué: docs/efectos/aurora.md §Ventana
-const VOL_AURORA_VENTANA_ESCALA: f32 = 4.0;
 const VOL_AURORA_VENTANA_CONO: bool = false;   // alternativa: el color de los conos atravesados
 const VOL_AURORA_MUESTRAS: i32 = 4;
 const VOL_AURORA_VETAS: f32 = 0.3;
@@ -97,10 +94,11 @@ fn vol_aurora_linea(rel_xz: vec2<f32>, a: VolAurora, t: texture_2d<f32>, s: samp
     return VolLinea(true, abs(d) * a.radio, rel_xz - d * a.radio * normal, normal);
 }
 
-// Ruido del despeje: dos octavas, inclinado con la altura (no salen columnas), moviéndose con el día.
-fn vol_aurora_ruido_despeje(rel: vec3<f32>, a: VolAurora) -> f32 {
-    let q = (rel.xz + vec2<f32>(0.61, -0.37) * rel.y) / VOL_AURORA_TAMANO_RUIDO + vec2<f32>(a.dia * 0.37, a.dia * 0.21);
-    let n = rui_valor2(q) * 0.65 + rui_valor2(q * 2.03 + 11.7) * 0.35;
+// Ruido del despeje: dos octavas, inclinado con la **altura del mundo** `y` (no la relativa a la cámara: con ella las
+// manchas subían y bajaban con el jugador, fino/06 §1), moviéndose con el día.
+fn vol_aurora_ruido_despeje(rel_xz: vec2<f32>, y: f32, a: VolAurora) -> f32 {
+    let q = (rel_xz + vec2<f32>(0.61, -0.37) * y) / VOL_AURORA_TAMANO_RUIDO + vec2<f32>(a.dia * 0.37, a.dia * 0.21);
+    let n = rui_valor2(q) * 0.65 + rui_valor2(q * 2.13 + 7.1) * 0.35;
     return mix(1.0, smoothstep(0.25, 0.75, n), VOL_AURORA_RUIDO);
 }
 
@@ -130,7 +128,7 @@ fn vol_aurora_despeje(rel: vec3<f32>, y: f32, a: VolAurora, t: texture_2d<f32>, 
     let d = length(vec2<f32>(l.distancia, a_lo_largo));
     var cono = 1.0 - smoothstep(rho * 0.6, rho, d);
     cono *= 1.0 - smoothstep(0.8, 1.0, h / max(largo, 1.0));
-    cono *= vol_aurora_ruido_despeje(rel, a);
+    cono *= vol_aurora_ruido_despeje(rel.xz, y, a);
     return cono * a.noche * VOL_AURORA_DESPEJE;
 }
 
@@ -196,13 +194,15 @@ fn vol_aurora_ventana(camara: vec3<f32>, dir: vec3<f32>, ventana: f32, color_acu
     }
     let f = clamp(ventana / max(vol_aurora_largo_cono(a), 1.0), 0.0, 1.0) * VOL_AURORA_VENTANA;
     let medio = 0.5 * (a.base + a.tope);
-    let rel = dir * max((medio - camara.y) / dir.y, 0.0);
-    let ruido = vol_aurora_ruido_despeje(rel, a);
+    // Donde la visual cruza la mitad del velo, a 16 bloques de altura como mínimo (fino/06 §1).
+    let alto = max(medio - camara.y, 16.0);
+    let ruido = vol_aurora_ruido_despeje(dir.xz / max(dir.y, 0.05) * alto, medio, a);
     // Dirección de vista (especificación 06 §7 bis, corregida): una sola lectura del mapa por píxel, sin integrar a lo
     // largo del rayo: por eso los puntos salen nítidos. El color de los conos queda como alternativa.
     var color = vol_aurora_mapa(t, s, dir.xz).rgb;
     if VOL_AURORA_VENTANA_CONO {
         color = color_acumulado / max(ventana, 1e-4);
     }
-    return color * a.noche * f * ruido * a.intensidad * VOL_AURORA_VENTANA_ESCALA;
+    // Sin la intensidad de las cortinas (fino/06 §4): el color del mapa ya es el cielo fractal con su brillo y su techo.
+    return color * a.noche * f * ruido;
 }

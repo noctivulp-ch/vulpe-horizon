@@ -10,6 +10,7 @@ const OPC_RAYOS_NUCLEO: vec2<f32> = vec2<f32>(100.0, 40.0);
 const OPC_RAYOS_ESPALDAS: f32 = 100.0;      // % de la intensidad de frente
 const OPC_RAYOS_OCLUSION: f32 = 60.0;
 const OPC_RAYOS_ATRAS: f32 = 100.0;         // dispersión hacia atrás, %
+const OPC_RAYOS_FASE_NORMA: f32 = 8.771;    // HG(1; 0,85) + HG(1; 0,75): la fase directa vale 1 de frente (fino/14 §1)
 
 struct OpcRayos {
     activo: bool,

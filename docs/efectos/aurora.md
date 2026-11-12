@@ -162,3 +162,19 @@ la derecha después, abajo a la izquierda a −40°, abajo a la derecha la refer
 en la mitad de arriba aparecen **formas y puntos nítidos y brillantes del fractal** entre las cortinas verticales,
 como en la referencia. Se ven algo en escalón (el mapa es de ¼ de resolución). Coste de noche con la aurora a la
 vista: 9,4 ms de GPU con todo (campo de visión 110, mirando a la aurora).
+
+## Repaso contra `fino/06` (F-26, 2026-11-11, «La noche de Vulpe»)
+
+- **Ruido del despeje con la altura del mundo** (§1): la inclinación del ruido usaba la altura relativa a la cámara; al
+  subir o saltar, las manchas despejadas de la niebla subían y bajaban con el jugador. Ahora `y` es la del mundo (en la
+  ventana, la mitad del velo), y la ventana evalúa el ruido donde la visual cruza la mitad del velo con una altura mínima
+  de 16 bloques. La segunda octava, `2,13·p + 7,1` (era 2,03 y 11,7).
+- **Ventana sin la intensidad de las cortinas** (§4): iba multiplicada por la intensidad (600 × 0,5) y por 4; la
+  especificación dice que el color del mapa ya es el cielo fractal con su brillo y su techo, y que la ventana solo lleva
+  `clamp(ventana / largo del cono) · VENTANA · ruido · noche`. Se quita `VOL_AURORA_VENTANA_ESCALA`. La ventana queda tan
+  tenue como el fractal del cielo, que es lo que se ve por ella.
+- Revisado y ya bien: caída de la niebla desde Y = 320 (§2), silueta estrecha (§3, F-25), ganancia de saturación 25 (§5),
+  geometría del velo (§6).
+- **Duda:** la deriva con el día. El texto de §1 dice «unos 30 bloques en X y 17 en Z por día» (la nuestra, 0,37 y 0,21 de
+  ruido de 96 bloques, ya son 36 y 20 bloques), pero la fórmula suma `día · (30; 17)` en unidades del ruido (unos 2 900
+  bloques por día) y añade que «100 veces menos» lo congela. Pregunta para A.
