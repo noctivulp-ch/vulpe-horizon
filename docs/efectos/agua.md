@@ -193,3 +193,28 @@ absorción; no hay un «color del agua». Nuestro `color_disperso` (0,04; 0,22; 
 azul eléctrico. Sigue más azul que el original porque refleja nuestro cielo (más despejado). **Sin tocar:** la refracción
 por distancia de `fino/07` §Medidos, el destello del sol en primer plano y la niebla bajo el agua (`nucleo/volumen/agua.wgsl`
 sigue con `color_disperso`).
+
+## Parpadeo al subir y bajar bajo el agua (F-21, 2026-11-11)
+
+Observación del dueño (2026-11-11, 1): «al moverse por el agua verticalmente ocurren parpadeos». **Reproducido** con
+`pruebas/escenas/agua-vertical.ctl` y capturas seguidas mientras la cámara sube con espacio y baja con mayúsculas: la imagen
+alternaba entre la niebla azul del agua y un cian pálido, y algunos fotogramas salían **sin agua** (fondo nítido, superficie
+vista desde abajo).
+
+**Causas, dos:**
+1. **La mía de 07.3** (`adaptadores/cruce_agua.wgsl`): para el cruce de la superficie, «con el ojo en el agua, la superficie
+   de encima es agua» confirmaba como superficie el nivel entero + 8/9 más cercano. Bajo el agua **cada** bloque tiene uno:
+   cada vez que el ojo pasaba a menos de 0,2 bloques de un 57,889 o un 58,889, ese nivel se tomaba por la superficie: la luz de
+   la niebla se calculaba como a centímetros de ella (cian pálido) y la parte de la pantalla «por encima» pasaba a aire (sin
+   niebla). Fuera: ahora solo confirman la sonda de profundidad, el mapa de sombras y la memoria del nivel.
+2. **La superficie para la luz salía de la cámara** (`cámara + 8`, o `water_plane` cuando Horizon dibujaba el espejo): al
+   moverse, la absorción del sol y de la niebla cambiaba con la cámara. Ahora es la **altura de entrada** de `fino/07` §7: la
+   de la cámara al entrar en el agua, congelada mientras está dentro (`adp_estado_altura_entrada`, guardada relativa al mar en
+   el texel (3,0).a de `bloom2`); entrando sin luz de cielo, 16 bloques por encima y nunca por debajo del mar
+   (`OPC_AGUA_ENTRADA_CUEVA`, `_SIN_CIELO`).
+
+El modo bajo el agua sigue decidiéndose con `frame.in_water` suavizado (> 0,5): con `eye_in` crudo algunos fotogramas en
+movimiento salían en modo aire (se probó y se descartó).
+
+**Visto:** subiendo de 57 a 62 y bajando a 52 en movimiento, catorce capturas seguidas con medias de 135–145 (antes saltaban
+entre 77 y 160), sin fotogramas sin agua.

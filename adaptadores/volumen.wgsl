@@ -86,7 +86,8 @@ fn adp_volumen(uv: vec2<f32>, pixel: vec2<f32>) -> VolResultado {
         // Con la cámara bajo el agua, la niebla del agua sustituye a la de aire (07).
         let oa = opc_agua(adp_tiempo().segundos, frame.rain);
         let plano = adp_plano_agua_cercano();
-        var superficie = select(frame.camera_position.y + 8.0, frame.water_plane, frame.has_reflection == 1u);
+        // La superficie congelada al entrar (fino/07 §7), no derivada de la cámara: así la luz no salta al subir o bajar.
+        var superficie = adp_altura_entrada();
         if plano.y > 0.5 {
             superficie = frame.camera_position.y + plano.x;
         }

@@ -70,9 +70,9 @@ fn adp_estado_agua(anterior: f32) -> f32 {
     if s.vista >= 0.0 {
         return select(0.0, id, s.vista > 0.5);
     }
-    // Sin sonda: con el ojo dentro, la superficie de encima es agua; si no, lo que se supiera de este nivel.
-    let ojo = frame.eye_in == 1u && s.nivel > 0.0;
-    return select(0.0, id, ojo || adp_agua_en_sombras(s.nivel) || abs(anterior - id) < 0.5);
+    // Sin sonda: el mapa de sombras o lo que se supiera de este nivel. «Con el ojo dentro, la superficie de encima» no
+    // vale: bajo el agua cada nivel entero + 8/9 cercano pasaba por superficie (parpadeo al subir, F-21).
+    return select(0.0, id, adp_agua_en_sombras(s.nivel) || abs(anterior - id) < 0.5);
 }
 
 // x: la superficie del agua junto a la cámara, relativa a ella; y: 1 si la hay.
@@ -84,8 +84,7 @@ fn adp_plano_agua_cercano() -> vec2<f32> {
     var hay = s.vista > 0.5;
     if s.vista < 0.0 {
         let guardado = textureLoad(bloom2, vec2<i32>(2, 0), 0).a;
-        hay = abs(guardado - adp_id_nivel_agua(s.nivel)) < 0.5 || (frame.eye_in == 1u && s.nivel > 0.0)
-              || adp_agua_en_sombras(s.nivel);
+        hay = abs(guardado - adp_id_nivel_agua(s.nivel)) < 0.5 || adp_agua_en_sombras(s.nivel);
     }
     return vec2<f32>(s.nivel, select(0.0, 1.0, hay));
 }
@@ -97,4 +96,25 @@ fn adp_pixel_bajo_agua(uv: vec2<f32>) -> bool {
         return frame.in_water > 0.5;
     }
     return view_position(uv, 1.0).y < plano.x;
+}
+
+// Altura de la superficie del agua para la luz de bajo el agua (fino/07 §7): la de la cámara al entrar, congelada mientras
+// está dentro. Fuera del agua sigue a la cámara (desde un sitio sin luz de cielo, 16 bloques por encima y no por debajo
+// del mar). Se guarda relativa al mar en el texel (3,0).a de bloom2 (media precisión: centímetros cerca del mar).
+// Porqué: docs/efectos/agua.md §«Altura de entrada» (F-21)
+fn adp_estado_altura_entrada(anterior: f32) -> f32 {
+    let y = frame.camera_position.y;
+    if frame.in_water > 0.5 && anterior != 0.0 {
+        return anterior;
+    }
+    let sin_cielo = frame.eye_light.y < OPC_AGUA_ENTRADA_SIN_CIELO;
+    let entrada = select(y, max(y + OPC_AGUA_ENTRADA_CUEVA, VOL_MAR), sin_cielo);
+    // 0 marca «sin dato»: se aparta un milímetro.
+    let v = entrada - VOL_MAR;
+    return select(v, 0.001, v == 0.0);
+}
+
+fn adp_altura_entrada() -> f32 {
+    let v = textureLoad(bloom2, vec2<i32>(3, 0), 0).a;
+    return select(v + VOL_MAR, frame.camera_position.y + OPC_AGUA_ENTRADA_CUEVA * 0.5, v == 0.0);
 }
