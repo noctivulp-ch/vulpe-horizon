@@ -1,16 +1,11 @@
-// Gotas en la cámara al salir del agua (07.2). Porqué: docs/efectos/agua.md §Gotas en la cámara
-const OPC_GOTAS_DURACION: f32 = 2.5;         // segundos que duran las gotas tras salir del agua
-const OPC_GOTAS_INTENSIDAD: f32 = 0.5;       // intensidad media (50 % como el original)
-const OPC_GOTAS_REFRACCION: f32 = 0.035;     // fuerza de distorsión UV
-const OPC_GOTAS_ESCALA_Y: f32 = 12.0;        // celdas de gotas verticales
-const OPC_GOTAS_VELOCIDAD: f32 = 0.35;       // velocidad de escurrimiento hacia abajo
+// Efectos de cámara de juego (19), sin opción de menú: constantes. Porqué: docs/efectos/camara-y-juego.md
+const OPC_GOTAS_DURACION: f32 = 5.0;          // segundos tras cruzar la superficie del agua
+const OPC_GOTAS_FUERZA: f32 = 0.5;            // ajuste del original, 50 por defecto
+const OPC_GOTAS_RAPIDEZ_REF: f32 = 8.0;       // bloques/s de cruce para la fuerza completa (un chapuzón)
+const OPC_CALOR_FUERZA: f32 = 0.7;            // ajuste del original, 70 por defecto
+const OPC_CALOR_SUBE: f32 = 0.5;              // segundos para encenderse
+const OPC_CALOR_BAJA: f32 = 3.0;              // segundos para apagarse
 
 fn opc_gotas() -> ImgGotasAjustes {
-    return ImgGotasAjustes(
-        OPC_GOTAS_DURACION,
-        OPC_GOTAS_INTENSIDAD,
-        OPC_GOTAS_REFRACCION,
-        OPC_GOTAS_ESCALA_Y,
-        OPC_GOTAS_VELOCIDAD,
-    );
+    return ImgGotasAjustes(OPC_GOTAS_DURACION, OPC_GOTAS_FUERZA, OPC_GOTAS_RAPIDEZ_REF);
 }

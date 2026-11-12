@@ -8,45 +8,6 @@ fn adp_estado(t: texture_2d<f32>) -> vec2<f32> {
     return vec2<f32>(textureLoad(t, vec2<i32>(0, 0), 0).a, textureLoad(t, vec2<i32>(1, 0), 0).a);
 }
 
-// Pasada 4: bajada a ¼ desde history; en la esquina, la medida y la adaptación (el estado anterior está en la
-// esquina de bloom2, que aún guarda el del fotograma anterior).
-fn adp_bloom_bajada(input: PostInput) -> vec4<f32> {
-    let rgb = img_bloom_bajada(history, linear_sampler, input.uv);
-    let texel = vec2<i32>(input.pixel);
-    if texel.y != 0 || texel.x > 3 {
-        return vec4<f32>(rgb, 0.0);
-    }
-    if texel.x == 3 {
-        return vec4<f32>(rgb, adp_estado_altura_entrada(textureLoad(bloom2, texel, 0).a));
-    }
-    if texel.x == 2 {
-        return vec4<f32>(rgb, adp_estado_agua(textureLoad(bloom2, texel, 0).a));
-    }
-    let anterior = adp_estado(bloom2);
-    let l = img_luminancia_media(history, linear_sampler);
-    let vel_mod = max(adp_mod_param(33u, 0.1, 10.0, VULPE_ADAPTACION_VELOCIDAD, 1.0), 0.1);
-    var estado = 0.0;
-    if texel.x == 0 {
-        estado = img_adaptar(anterior.x, l, frame.delta_time, OPC_ADAPTACION_SUBE / vel_mod, OPC_ADAPTACION_BAJA / vel_mod);
-    } else {
-        estado = img_adaptar(anterior.y, l, frame.delta_time, OPC_BASTONES_TAU, OPC_BASTONES_TAU);
-    }
-    return vec4<f32>(rgb, estado);
-}
-
-// Pasada 5: desenfoque ancho de bloom; copia el estado de la esquina.
-fn adp_bloom_ancho(input: PostInput) -> vec4<f32> {
-    let aspecto = frame.resolution.x / frame.resolution.y;
-    let giro = rui_tramado_ign(input.pixel);
-    let rgb = img_bloom_ancho(bloom, linear_sampler, input.uv, OPC_BLOOM_RADIO, aspecto, OPC_BLOOM_ANILLOS, giro).rgb;
-    let texel = vec2<i32>(input.pixel);
-    var alfa = 0.0;
-    if texel.y == 0 && texel.x <= 3 {
-        alfa = textureLoad(bloom, texel, 0).a;
-    }
-    return vec4<f32>(rgb, alfa);
-}
-
 struct AdpExposicion {
     exposicion: f32,
     bastones: f32,          // peso del efecto Purkinje
@@ -119,15 +80,15 @@ fn adp_destello_sol(uv: vec2<f32>) -> vec3<f32> {
 }
 
 // Bloom de la pasada final: núcleo (bicúbico de bloom) más ancho (bloom2), y bloom de niebla.
-fn adp_bloom_final(color: vec3<f32>, uv: vec2<f32>, o: OpcImagen) -> vec3<f32> {
+fn adp_bloom_final(color: vec3<f32>, alfa_niebla: f32, uv: vec2<f32>, o: OpcImagen) -> vec3<f32> {
     let nucleo = img_catmull_rom(bloom, linear_sampler, uv, 1.0);
     let ancho4 = textureSampleLevel(bloom2, linear_sampler, uv, 0.0);
     let ancho = ancho4.rgb;
     let b = mix(ancho, nucleo, OPC_BLOOM_NUCLEO) + adp_destello_sol(uv);
     let vineta = mix(OPC_BLOOM_VINETA_CENTRO, OPC_BLOOM_VINETA_ESQUINA, saturate(length(uv - 0.5) * 1.41421356));
-    // La opacidad de la niebla del propio píxel, sin nubes, que deja la composición en su alfa (pasa por el TAA).
-    // Porqué: docs/efectos/bloom.md §«Bloom de niebla» (F-11).
-    let t = 1.0 - textureSampleLevel(previous, nearest_sampler, uv, 0.0).a;
+    // La opacidad de la niebla del propio píxel, sin nubes, que deja la composición en su alfa (pasa por el TAA); llega
+    // de la muestra central de la nitidez. Porqué: docs/efectos/bloom.md §«Bloom de niebla» (F-11).
+    let t = 1.0 - alfa_niebla;
     let mult = bloom_niebla * mix(1.0, OPC_BLOOM_NIEBLA_AGUA, frame.in_water);
     let borde = smoothstep(0.0, 0.05, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));
     // Mezcla lineal con la opacidad (el cuadrado de 10 no era del original).
@@ -136,13 +97,47 @@ fn adp_bloom_final(color: vec3<f32>, uv: vec2<f32>, o: OpcImagen) -> vec3<f32> {
 }
 
 
-// Gotas en la cámara al salir del agua (07.2). Porqué: docs/efectos/agua.md §Gotas en la cámara
+// Agua en la cámara (19): el estado del cruce está en el téxel (4,0) de bloom2. Porqué: docs/efectos/camara-y-juego.md
 fn adp_gotas_camara(uv: vec2<f32>) -> ImgGotasResultado {
-    if frame.eye_in != 0u || frame.in_water <= 0.001 {
+    let c = adp_cruce_decodificar(textureLoad(bloom2, vec2<i32>(4, 0), 0).a);
+    if c.t < 0.0 {
         return ImgGotasResultado(uv, 0.0);
     }
-    let t_salida = -log2(clamp(frame.in_water, 0.001, 1.0)) * 0.25;
     let aspecto = frame.resolution.x / max(frame.resolution.y, 1.0);
-    return img_gotas_lente(uv, aspecto, t_salida, opc_gotas());
+    // Sentido en pantalla: el del cruce vertical (al salir sube, al entrar baja).
+    let vel = vec2<f32>(0.0, select(c.rapidez, -c.rapidez, c.salida));
+    return img_agua_camara(uv, aspecto, c.t, c.salida, vel, opc_gotas());
 }
+
+// Calor (19): en lava (frame.in_lava, ya suavizado) o en llamas con el mod (mods[3].z). Porqué: docs/efectos/camara-y-juego.md
+fn adp_calor(uv: vec2<f32>) -> vec2<f32> {
+    let m = adp_mod();
+    let llamas = select(0.0, m.jugador.en_llamas, m.jugador.activo);
+    let nivel = max(frame.in_lava, llamas);
+    let aspecto = frame.resolution.x / max(frame.resolution.y, 1.0);
+    return img_calor(uv, aspecto, adp_tiempo().segundos, nivel, OPC_CALOR_FUERZA);
+}
+
+// Estado del cruce del agua en un solo valor (texel (4,0).a): 0 sin cruce; si no, ±(1 + 8·nivel de rapidez + t),
+// positivo al salir y negativo al entrar, con t en segundos (< 8) y la rapidez en 8 niveles de 2 bloques/s.
+struct AdpCruce {
+    t: f32,             // segundos desde el cruce (negativo: sin efecto)
+    salida: bool,
+    rapidez: f32,       // bloques/s
+}
+
+fn adp_cruce_decodificar(v: f32) -> AdpCruce {
+    let a = abs(v) - 1.0;
+    if a < 0.0 {
+        return AdpCruce(-1.0, false, 0.0);
+    }
+    let nivel = floor(a / 8.0);
+    return AdpCruce(a - nivel * 8.0, v > 0.0, nivel * 2.0 + 1.0);
+}
+
+fn adp_cruce_codificar(t: f32, salida: bool, rapidez: f32) -> f32 {
+    let nivel = clamp(floor(rapidez / 2.0), 0.0, 7.0);
+    return select(-1.0, 1.0, salida) * (1.0 + nivel * 8.0 + clamp(t, 0.0, 7.9));
+}
+
 

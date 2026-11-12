@@ -1,9 +1,10 @@
 // Nitidez adaptativa por contraste, a la manera de CAS (AMD FidelityFX, 2019): la cruz de vecinos define cuánto
 // se puede afilar sin crear halos. Trabaja en el espacio comprimido c/(1 + luma) (la imagen es HDR) y devuelve
-// luz lineal. Textura por parámetro. Porqué: docs/efectos/exposicion-tonemap-gradacion.md §Nitidez
-fn img_nitidez(t: texture_2d<f32>, s: sampler, uv: vec2<f32>, cantidad: f32) -> vec3<f32> {
+// luz lineal, con el alfa de la muestra central (ahorra una lectura a quien lo necesite). Textura por parámetro. Porqué: docs/efectos/exposicion-tonemap-gradacion.md §Nitidez
+fn img_nitidez(t: texture_2d<f32>, s: sampler, uv: vec2<f32>, cantidad: f32) -> vec4<f32> {
     let px = 1.0 / vec2<f32>(textureDimensions(t));
-    let centro = img_comprimir(textureSampleLevel(t, s, uv, 0.0).rgb);
+    let c4 = textureSampleLevel(t, s, uv, 0.0);
+    let centro = img_comprimir(c4.rgb);
     let n = img_comprimir(textureSampleLevel(t, s, uv + vec2<f32>(0.0, -px.y), 0.0).rgb);
     let so = img_comprimir(textureSampleLevel(t, s, uv + vec2<f32>(0.0, px.y), 0.0).rgb);
     let e = img_comprimir(textureSampleLevel(t, s, uv + vec2<f32>(px.x, 0.0), 0.0).rgb);
@@ -14,5 +15,5 @@ fn img_nitidez(t: texture_2d<f32>, s: sampler, uv: vec2<f32>, cantidad: f32) -> 
     let margen = clamp(min(mn, 1.0 - mx) / max(mx, vec3<f32>(1e-4)), vec3<f32>(0.0), vec3<f32>(1.0));
     let w = -sqrt(margen) * mix(0.125, 0.2, cantidad);
     let r = clamp((centro + (n + so + e + o) * w) / (1.0 + 4.0 * w), vec3<f32>(0.0), vec3<f32>(0.999));
-    return img_descomprimir(r);
+    return vec4<f32>(img_descomprimir(r), c4.a);
 }

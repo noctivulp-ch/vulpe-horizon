@@ -40,10 +40,12 @@ fn post(input: PostInput) -> vec4<f32> {
         default: {}
     }
     let o = opc_imagen();
+    // Efectos de cámara de juego (19): agua al cruzar la superficie y calor, deformando las coordenadas.
     let gotas = adp_gotas_camara(p.uv);
-    var c = img_nitidez(previous, linear_sampler, gotas.uv, nitidez);
-    c = c * (1.0 - gotas.borde * 0.3);
-    c = adp_bloom_final(c, gotas.uv, o);
+    let uv = adp_calor(gotas.uv);
+    let c4 = img_nitidez(previous, linear_sampler, uv, nitidez);
+    var c = c4.rgb * (1.0 - gotas.borde * 0.3);
+    c = adp_bloom_final(c, c4.a, uv, o);
     let e = adp_exposicion(o);
     c *= e.exposicion * OPC_TONEMAP_EXPOSICION[min(o.tonemap, 2u)];
     c = col_purkinje(c, e.bastones, OPC_PURKINJE_K);
