@@ -12,10 +12,14 @@ fn adp_vertice_ondulado(input: VertexInput) -> vec3<f32> {
     if !(hojas || alta_arriba || suelo || colgantes) {
         return input.position;
     }
-    // Solo la parte de arriba del sprite en las plantas de suelo: la base queda clavada (uv.y en el espacio del
-    // sprite, 0 arriba).
+    // Solo bajo el cielo y cerca (formas/vegetacion.md §1): bajo techo, en cuevas y a más de 64 bloques, quieto.
+    if input.light.y <= OPC_VIENTO_CIELO_MIN || length(input.position) > OPC_VIENTO_ALCANCE {
+        return input.position;
+    }
+    // Plantas de suelo: solo la mitad de arriba del sprite (la base queda clavada); colgantes: solo la de abajo (arriba
+    // quedan clavadas). uv.y en el espacio del sprite, 0 arriba.
     let uv_y = fract(input.uv.y);
-    if suelo && uv_y > 0.5 {
+    if (suelo && uv_y > 0.5) || (colgantes && uv_y < 0.5) {
         return input.position;
     }
     let mundo = input.position + frame.camera_position;

@@ -81,3 +81,24 @@ de varios bloques verticales.
   en 3D con `sup_viento_hoja(mundo, v)` junto a la familia de hojas, garantizando continuidad vertical perfecta entre
   bloques contiguos sin roturas ni dientes de sierra.
 
+
+## Forma (F-38, 2026-11-12)
+
+Rehecha según `vulpe-horizon-spec/formas/vegetacion.md`. Código: `nucleo/superficie/viento.wgsl`, condiciones en
+`adaptadores/vertice.wgsl`, constantes en `opciones/viento.wgsl`.
+
+- **Ola de las plantas**: onda viajera con longitud de onda de 6,3 bloques en x y en z (antes la fase `0,35·x + 0,22·z`
+  daba ~18 bloques), con periodos de 1,65 s en x (frente a 3,8 bloques/s) y 7 s en z (antes 2,2 s); la altura desfasa
+  0,1 rad por bloque. Se dobla (baja lo que se desplaza) y conserva el sesgo hacia un lado.
+- **Respiración**: común a todo el prado (antes variaba por zonas), un ciclo cada 6,3 s entre 0,2 y 1,2 de la
+  amplitud media (antes 0,5–1,2 cada ~30 s).
+- **Hojas**: periodos 4,4 s, 18,5 s y 1,2 s en vertical con una quinta parte (antes 4,44, 5,5 y 3,7 s con 0,24); fase
+  en los tres ejes a 6,3 bloques (antes ~20). No bajan.
+- **Condiciones**: nada se mueve con luz de cielo del vértice ≤ 0,8 ni a más de 64 bloques de la cámara; los colgantes
+  solo mueven la mitad de abajo del sprite (antes enteros).
+- **No hecho**: «en las caras que miran arriba o abajo se usa la normal en vez de la textura» — `VertexInput` no trae la
+  normal. Las amplitudes son las de `paridad/15` (sin cambio).
+- **Cómo se comprobó (2026-11-12)**: `pruebas/escenas/forma-vegetacion.ctl` y diferencia de dos capturas a 0,6 s
+  recortada a hierba y a hojas (las nubes que se mueven ensucian la diferencia de la imagen entera): las hojas cambian
+  un 3,9 % de los píxeles con el umbral de 0,8, igual que sin umbral. Ojo: con la pausa al perder el foco
+  (`pauseOnLostFocus`, puesto a `false` en Horizon) el juego no avanza y no se mueve nada.

@@ -10,26 +10,40 @@ struct SupViento {
     hoja_vertical: f32,     // fracción vertical del vaivén de las hojas
 }
 
-// Desplazamiento horizontal de una planta en `mundo` (bloques): periodos distintos en x y z, fase anclada al mundo
-// (el viento recorre el campo como una ola), un sesgo en la dirección del viento y una amplitud que respira. La y
-// baja lo que se inclina la planta: se dobla, no se desliza.
+// Forma del movimiento (formas/vegetacion.md, F-38): longitud de onda de la ola en el mundo, periodos lentos y la
+// respiración común a todo el prado. Porqué: docs/efectos/vegetacion-ondulante.md §«Forma (F-38)»
+const SUP_VIENTO_ONDA: f32 = 6.3;               // bloques: en fase a ~6, en contrafase a ~3
+const SUP_VIENTO_PLANTA_PERIODO_Z: f32 = 7.0;   // s, el eje lento de las plantas
+const SUP_VIENTO_HOJA_PERIODOS: vec2<f32> = vec2<f32>(18.5, 1.2); // s: segundo eje horizontal y vertical de las hojas
+const SUP_VIENTO_RESPIRA_PERIODO: f32 = 6.3;    // s, rachas: de 0,2 a 1,2 de la amplitud media, todo el prado a la vez
+
+fn sup_viento_respira(t: f32) -> f32 {
+    return 0.7 + 0.5 * sin(t * MAT_TAU / SUP_VIENTO_RESPIRA_PERIODO);
+}
+
+// Desplazamiento de una planta en `mundo` (bloques): una ola que viaja en x (rápida) y en z (lenta) con la misma
+// longitud de onda, un poco desfasada con la altura, con sesgo hacia un lado y la respiración común. La y baja lo que
+// se inclina la planta: se dobla, no se desliza.
 fn sup_viento_planta(mundo: vec3<f32>, v: SupViento) -> vec3<f32> {
     let t = v.tiempo;
-    let w = MAT_TAU / v.planta_periodo;
-    let fase = dot(mundo.xz, vec2<f32>(0.35, 0.22)) + mundo.y * 0.1;
-    let respira = 0.85 + 0.35 * sin(t * 0.21 + dot(mundo.xz, vec2<f32>(0.02, 0.015)));
-    let x = sin(t * w + fase) * 0.6 + 0.25;
-    let z = sin(t * w * 0.75 + fase * 1.3 + 1.7) * 0.45 + 0.1;
-    let h = vec2<f32>(x, z) * v.planta_amplitud * respira * v.fuerza;
+    let k = MAT_TAU / SUP_VIENTO_ONDA;
+    let alto = mundo.y * 0.1;
+    let x = sin(t * MAT_TAU / v.planta_periodo - mundo.x * k + alto) * 0.6 + 0.25;
+    let z = sin(t * MAT_TAU / SUP_VIENTO_PLANTA_PERIODO_Z - mundo.z * k + alto + 1.7) * 0.45 + 0.1;
+    let h = vec2<f32>(x, z) * v.planta_amplitud * sup_viento_respira(t) * v.fuerza;
     return vec3<f32>(h.x, -length(h), h.y);
 }
 
-// Hojas y colgantes: 3D con poca amplitud vertical y frecuencias algo distintas por eje.
+// Hojas y colgantes: temblor en tres ejes (4,4 s, 18,5 s y 1,2 s en vertical con una quinta parte), con la fase en los
+// tres ejes a la misma longitud de onda: la copa ondula por zonas. No bajan.
 fn sup_viento_hoja(mundo: vec3<f32>, v: SupViento) -> vec3<f32> {
     let t = v.tiempo;
-    let w = MAT_TAU / v.hoja_periodo;
-    let fase = dot(mundo, vec3<f32>(0.31, 0.17, 0.23));
-    let respira = 0.85 + 0.35 * sin(t * 0.19 + dot(mundo.xz, vec2<f32>(0.018, 0.021)));
-    let d = vec3<f32>(sin(t * w + fase), sin(t * w * 1.2 + fase * 1.2 + 2.1) * v.hoja_vertical, sin(t * w * 0.8 + fase * 0.8 + 4.0));
-    return d * v.hoja_amplitud * respira * v.fuerza;
+    let k = MAT_TAU / SUP_VIENTO_ONDA;
+    let fase = (mundo.x + mundo.y + mundo.z) * k;
+    let d = vec3<f32>(
+        sin(t * MAT_TAU / v.hoja_periodo - fase),
+        sin(t * MAT_TAU / SUP_VIENTO_HOJA_PERIODOS.y - fase + 2.1) * v.hoja_vertical,
+        sin(t * MAT_TAU / SUP_VIENTO_HOJA_PERIODOS.x - fase + 4.0),
+    );
+    return d * v.hoja_amplitud * sup_viento_respira(t) * v.fuerza;
 }

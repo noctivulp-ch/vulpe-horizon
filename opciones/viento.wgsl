@@ -5,10 +5,14 @@ override ondulacion_velocidad: f32 = 1.0;   // velocidad de la ondulación (0..4
 const OPC_VIENTO_VELOCIDAD: f32 = 1.0;
 // Medidos en paridad/15 (a cielo abierto, en seco): plantas 4,5 cm de media y 12 de máximo con periodo de 1,64 s;
 // hojas lo mismo en horizontal, ±1,6 cm en vertical, periodo de 4,44 s. Amplitudes ajustadas a esas medias.
-const OPC_VIENTO_PLANTA_PERIODO: f32 = 1.64;
+const OPC_VIENTO_PLANTA_PERIODO: f32 = 1.65;
 const OPC_VIENTO_PLANTA_AMPLITUD: f32 = 0.0965;
 const OPC_VIENTO_HOJA_PERIODO: f32 = 4.44;
 const OPC_VIENTO_HOJA_AMPLITUD: f32 = 0.0558;
-const OPC_VIENTO_HOJA_VERTICAL: f32 = 0.24;
+const OPC_VIENTO_HOJA_VERTICAL: f32 = 0.2;
 const OPC_MAT_PLANTA_ALTA_ARRIBA: u32 = 8u;     // mitad superior de las plantas de dos bloques
-const OPC_MAT_COLGANTES: u32 = 9u;              // enredaderas, lianas y plantas colgantes (15.1: ondulan enteras como las hojas)
+const OPC_MAT_COLGANTES: u32 = 9u;              // enredaderas, lianas y plantas colgantes (como las hojas, solo la mitad de abajo: F-38)
+
+// Condiciones del movimiento (formas/vegetacion.md §1, F-38).
+const OPC_VIENTO_CIELO_MIN: f32 = 0.8;         // luz de cielo del vértice por debajo de la cual nada se mueve
+const OPC_VIENTO_ALCANCE: f32 = 64.0;           // bloques desde la cámara: más allá, quieto
