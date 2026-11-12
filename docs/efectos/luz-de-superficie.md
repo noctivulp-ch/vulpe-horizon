@@ -321,3 +321,7 @@ Las que no son claras van en `TODO.md` (orden de la nitidez, tope de la oclusió
 doble a través de translúcidos, pirámide del bloom).
 
 **Visto** (`banco-f.ctl`, aislamiento a 0): sin cambios grandes; la noche mirando al horizonte, algo más oscura.
+
+**Corrección (2026-11-11, respuesta 14 de A):** el tope por oclusión va con el **valor** de la AO (1 despejado): 1 → 1,
+0,8 → 0,37, 0,6 → 0,31 y desde 0,4 → 0,30. `luz_direccion_cielo` usa `0,30 + 0,70·e^(−11,5·(1 − ao))` (antes
+`mix(0,356; 1; ao)`, que con AO 0,8 dejaba 0,87). Con muy poca oclusión la cara ya recibe el cielo como si mirara de lado.

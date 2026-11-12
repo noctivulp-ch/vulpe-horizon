@@ -178,3 +178,7 @@ vista: 9,4 ms de GPU con todo (campo de visión 110, mirando a la aurora).
 - **Duda:** la deriva con el día. El texto de §1 dice «unos 30 bloques en X y 17 en Z por día» (la nuestra, 0,37 y 0,21 de
   ruido de 96 bloques, ya son 36 y 20 bloques), pero la fórmula suma `día · (30; 17)` en unidades del ruido (unos 2 900
   bloques por día) y añade que «100 veces menos» lo congela. Pregunta para A.
+
+**Corrección (2026-11-11, respuesta 15 de A):** la deriva del ruido del despeje son 30 y 17 **unidades del ruido** por día
+(unos 2 900 y 1 600 bloques con 96 bloques de ruido): `+ día · (30; 17)`. La nuestra (0,37 y 0,21) dejaba el ruido casi
+quieto entre noches.

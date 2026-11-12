@@ -95,9 +95,10 @@ fn vol_aurora_linea(rel_xz: vec2<f32>, a: VolAurora, t: texture_2d<f32>, s: samp
 }
 
 // Ruido del despeje: dos octavas, inclinado con la **altura del mundo** `y` (no la relativa a la cámara: con ella las
-// manchas subían y bajaban con el jugador, fino/06 §1), moviéndose con el día.
+// manchas subían y bajaban con el jugador, fino/06 §1), moviéndose con el día: 30 y 17 unidades del ruido por día
+// (respuesta 15 de A: unos 2 900 y 1 600 bloques).
 fn vol_aurora_ruido_despeje(rel_xz: vec2<f32>, y: f32, a: VolAurora) -> f32 {
-    let q = (rel_xz + vec2<f32>(0.61, -0.37) * y) / VOL_AURORA_TAMANO_RUIDO + vec2<f32>(a.dia * 0.37, a.dia * 0.21);
+    let q = (rel_xz + vec2<f32>(0.61, -0.37) * y) / VOL_AURORA_TAMANO_RUIDO + a.dia * vec2<f32>(30.0, 17.0);
     let n = rui_valor2(q) * 0.65 + rui_valor2(q * 2.13 + 7.1) * 0.35;
     return mix(1.0, smoothstep(0.25, 0.75, n), VOL_AURORA_RUIDO);
 }

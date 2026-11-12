@@ -17,7 +17,9 @@ fn luz_direccion_cielo(n: vec3<f32>, luz_cielo: f32, cruzada: bool, ao: f32) -> 
     );
     let s = clamp(luz_cielo, 0.0, 1.0);
     let f_dir = mix(1.0, f_base, s);
-    let cota_ao = mix(0.356, 1.0, clamp(ao, 0.0, 1.0));
+    // Tope por oclusión (implementacion/01 §3.4, con la respuesta 14 de A): AO 1 → 1; 0,8 → 0,37; 0,6 → 0,31; menos → 0,30.
+    // `0,30 + 0,70·e^(−11,5·(1 − ao))` pasa por la tabla con error < 0,01.
+    let cota_ao = 0.30 + 0.70 * exp(-11.5 * (1.0 - clamp(ao, 0.0, 1.0)));
     return min(f_dir, cota_ao);
 }
 
