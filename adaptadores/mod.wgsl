@@ -1,7 +1,8 @@
-// Lectura y adaptación de los datos del mod nativo (formato v1, API 84).
+// Lectura y adaptación de los datos del mod nativo (formatos 1 y 2, API 84).
 // Porqué: docs/efectos/mod-nativo.md §Adaptador y ../vulpe-horizon-spec/flexibilidad/mod-nativo.md §5
 
 const ADP_MOD_FIRMA_V1: f32 = 1001.0;
+const ADP_MOD_FIRMA_V2: f32 = 1002.0;   // formato 2: bioma de la cámara en mods[1].w (bit 5)
 
 struct AdpRayoMod {
     posicion: vec3<f32>,    // relativa a la cámara en bloques
@@ -32,11 +33,17 @@ struct AdpModDatos {
 
     rayo: AdpRayoMod,       // bit 1
     jugador: AdpJugadorMod, // bit 3
+
+    formato: u32,           // 1 o 2
+    tiene_bioma: bool,      // formato 2, bit 5
+    bioma: u32,             // 0 desconocido, 1 pantano, 2 jungla, 3 jardín pálido
+    bioma_peso: f32,        // 0..0,99, suavizado por el mod
 }
 
 fn adp_mod() -> AdpModDatos {
-    // Si no está la firma del formato v1, todo vuelve a los valores por defecto (sin mod).
-    let activo = abs(frame.mods[0].x - ADP_MOD_FIRMA_V1) < 0.5;
+    // Sin la firma del formato 1 o del 2, todo vuelve a los valores por defecto (sin mod).
+    let v2 = abs(frame.mods[0].x - ADP_MOD_FIRMA_V2) < 0.5;
+    let activo = v2 || abs(frame.mods[0].x - ADP_MOD_FIRMA_V1) < 0.5;
     if !activo {
         return AdpModDatos(
             false,
@@ -50,6 +57,10 @@ fn adp_mod() -> AdpModDatos {
             0.0,
             AdpRayoMod(vec3<f32>(0.0), -1.0, false),
             AdpJugadorMod(1.0, 999.0, 0.0, 0.0, false),
+            0u,
+            false,
+            0u,
+            0.0,
         );
     }
 
@@ -82,6 +93,12 @@ fn adp_mod() -> AdpModDatos {
         tiene_jugador,
     );
 
+    // Formato 2, bit 5: categoría del bioma (parte entera) y su peso (parte decimal).
+    let tiene_bioma = v2 && (banderas & 32u) != 0u;
+    let w = max(frame.mods[1].w, 0.0);
+    let bioma = select(0u, u32(floor(w)), tiene_bioma);
+    let bioma_peso = select(0.0, fract(w), tiene_bioma);
+
     return AdpModDatos(
         true,
         version_tabla,
@@ -94,6 +111,10 @@ fn adp_mod() -> AdpModDatos {
         estacion,
         rayo,
         jugador,
+        select(1u, 2u, v2),
+        tiene_bioma,
+        bioma,
+        bioma_peso,
     );
 }
 

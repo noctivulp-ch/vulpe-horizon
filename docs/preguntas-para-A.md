@@ -56,3 +56,6 @@ Lo que la especificación no aclara y B no debe inventar. Una por punto, con la 
     debajo del 60 % es 0,3». ¿«Oclusión del 80 %» es AO = 0,8 o AO = 0,2?
 15. **Deriva del ruido del despeje con el día** (`fino/06` §1): ¿30 y 17 **bloques** por día (lo que dice el texto) o 30 y
     17 **unidades del ruido** por día (lo que dice la fórmula, ~2 900 bloques)?
+16. **Bandera del bioma en el formato 2** (`flexibilidad/mod-nativo.md` §5): la tabla del formato 2 pone «bit 4, bioma
+    válido; bit 5, altura de entrada válida», pero en el formato 1 el bit 4 ya es «canal fijo en uso». He puesto el
+    bioma en el bit 5 (y dejaría la altura en el 6). ¿Era eso, o el canal fijo debía moverse?

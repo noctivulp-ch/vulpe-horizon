@@ -86,8 +86,8 @@ struct AdpNieblaLocal {
 
 // El perfil local del momento (21), decidido por el bioma de la cámara: calor o frío con la lluvia (uno de tres por día,
 // con el sorteo diario de la lluvia), y pantano o jungla siempre. La categoría del bioma la da el mod (`mods[1].w`); sin
-// él, por la temperatura y la humedad de vanilla. Sin suavizado temporal (no hay memoria): el clima entra con la fuerza de
-// la lluvia y el bioma, de golpe al cruzar la frontera. Porqué: docs/efectos/niebla-local.md (F-28)
+// él, por la temperatura y la humedad de vanilla. Con el mod (formato 2) el bioma entra y sale con el peso que suaviza el
+// mod; sin él, de golpe al cruzar la frontera. El clima entra con la fuerza de la lluvia. Porqué: docs/efectos/niebla-local.md (F-28)
 fn adp_niebla_local(dia: u32, fuera: f32) -> AdpNieblaLocal {
     var r = AdpNieblaLocal(0.0, 0.0, vec3<f32>(0.0), 0.0);
     let t = frame.temperature;
@@ -100,8 +100,12 @@ fn adp_niebla_local(dia: u32, fuera: f32) -> AdpNieblaLocal {
         r = AdpNieblaLocal(OPC_LOCAL_FRIO_UNIF[k], OPC_LOCAL_FRIO_MANCHAS[k], OPC_LOCAL_FRIO_COLOR, lluvia);
     } else {
         var categoria = 0u;
-        if abs(frame.mods[0].x - ADP_MOD_FIRMA_V1) < 0.5 && frame.mods[1].w > 0.5 {
-            categoria = u32(round(frame.mods[1].w));
+        var peso = 1.0;
+        let m = adp_mod();
+        if m.tiene_bioma {
+            // Formato 2: la categoría y su peso ya suavizado al cruzar la frontera.
+            categoria = m.bioma;
+            peso = m.bioma_peso;
         } else if abs(t - 0.8) < 0.03 && abs(frame.downfall - 0.9) < 0.03 {
             categoria = 1u;
         } else if abs(t - 0.95) < 0.03 && frame.downfall > 0.77 && frame.downfall < 0.93 {
@@ -109,7 +113,7 @@ fn adp_niebla_local(dia: u32, fuera: f32) -> AdpNieblaLocal {
         }
         if categoria >= 1u && categoria <= 3u {
             let k = categoria - 1u;
-            r = AdpNieblaLocal(OPC_LOCAL_BIOMA_UNIF[k], OPC_LOCAL_BIOMA_MANCHAS[k], OPC_LOCAL_BIOMA_COLOR[k], 1.0);
+            r = AdpNieblaLocal(OPC_LOCAL_BIOMA_UNIF[k], OPC_LOCAL_BIOMA_MANCHAS[k], OPC_LOCAL_BIOMA_COLOR[k], peso);
         }
     }
     r.uniforme *= r.peso * fuera;
@@ -246,3 +250,4 @@ fn adp_transmitancia_compuesta(v: VolResultado, distancia: f32, uv: vec2<f32>) -
     let d = min(distancia, 96.0);
     return exp(-m.absorcion * d);
 }
+

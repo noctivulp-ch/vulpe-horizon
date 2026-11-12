@@ -1,4 +1,4 @@
-# Datos del mod nativo (formato v1)
+# Datos del mod nativo (formatos 1 y 2)
 
 Especificación: `../vulpe-horizon-spec/flexibilidad/mod-nativo.md` (formato v1) y `../vulpe-horizon-mod/docs/guia.md`.
 Documentación de Horizon: `docs/horizon/horizon/docs/api/shaders.md` y `docs/horizon/horizon/docs/api/shaders-reference.md` (gancho `native_shader_params`, API 84).
@@ -49,3 +49,12 @@ En `opciones/depuracion.wgsl` se declara `OPC_VISTA_MOD_NATIVO = 8u` sobre la op
 2. **Franja central (Fase lunar 0..7):** 8 casillas discretas con divisores marcados. La casilla de la fase actual se ilumina en blanco/dorado lunar brillante, con brillo proporcional a la iluminación de la fase.
 3. **Franja inferior (Estación continua 0..4):** 4 cuadrantes coloreados (Primavera verde tierno, Verano dorado, Otoño ámbar, Invierno cian/hielo) con barra de progreso continua y aguja marcadora blanca en `estacion / 4.0`.
 4. **Píxel de muestreo (esquina superior izquierda):** codifica exactamente `R = activo`, `G = fase / 7.0`, `B = estacion / 4.0` para verificación automatizada o lectura con cuentagotas.
+
+## Formato 2 (F-35, 2026-11-12)
+
+`adp_mod()` acepta la cabecera 1001 y la 1002. En el formato 2, con el bit 5, `mods[1].w` da la categoría del bioma de
+la cámara (parte entera) y su peso suavizado por el mod (parte decimal): `adp_niebla_local` usa los dos, así que la
+niebla de pantano, jungla o jardín pálido entra y sale en unos 4 s en lugar de cambiar de golpe en la frontera. Sin el
+bit (formato 1 o sin mod), sigue la deducción por temperatura y humedad de vanilla. El bit 5 y no el 4: pregunta 16
+a A. Vida, daño y llamas siguen sin llegar (la API nativa no los da en el cliente fuera del HUD): ver
+`vulpe-horizon-mod/docs/decisiones.md` §6.
