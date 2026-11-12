@@ -107,33 +107,33 @@ fn vol_nube(mundo: vec3<f32>, i: i32, n: VolNubes, t2: texture_2d<f32>, s2: samp
     if i == 2 {
         return cob * smoothstep(0.0, 0.3, h) * (1.0 - smoothstep(0.7, 1.0, h)) * n.perfil.densidad[i];
     }
-    // El techo de cada cúmulo escala con su cobertura horizontal `cob` (cúpula sobre base plana); con `cob = 1`
-    // reproduce la envolvente vertical de paridad/05 §Perfil vertical de los cúmulos.
-    if h >= cob {
+    // Perfil vertical (formas/nubes.md §4): resta a la forma lo que le falta para 1, así el borde es además más bajo.
+    var d = cob - (1.0 - vol_perfil_cumulo(h, i));
+    if d <= 0.0 {
         return 0.0;
     }
-    let h_c = h / max(cob, 1e-3);
-    let base = 1.0 - pow(clamp(1.0 - dy / max(n.forma.base_redondeo * cob, 1.0), 0.0, 1.0), 5.0);
-    let u_techo = clamp((h_c - n.forma.cupula_desde) / max(1.0 - n.forma.cupula_desde, 1e-3), 0.0, 1.0);
-    let techo = 1.0 - pow(u_techo, n.forma.cupula_potencia);
-    var d = cob * base * exp(-n.forma.caida_altura * h) * techo;
-    if erosion && d > 0.0 {
-        // Erosión de Schneider y Vos (2015): `remap(d, ruido · fuerza, 1)` recorta el borde de la envolvente y deja un
-        // borde nítido. Dos frecuencias: la gruesa (Perlin-Worley) hace los lóbulos; la fina (Worley), las coliflores
-        // arriba y los jirones abajo. En la base, menos (que siga plana). Porqué: docs/efectos/niebla-y-nubes.md §Erosión
-        let q = vec3<f32>(inclinado.x, mundo.y, inclinado.y);
-        let gruesa = vol_ruido3d(t3, q / n.forma.escala_erosion[i]).r;
-        let en_base = mix(n.forma.erosion_base, 1.0, smoothstep(0.0, 0.2, h_c));
-        let lod_gruesa = 1.0 - smoothstep(VOL_NUBES_LOD.x, VOL_NUBES_LOD.y, huella * 32.0 / n.forma.escala_erosion[i]);
-        let lod_fina = 1.0 - smoothstep(VOL_NUBES_LOD.x, VOL_NUBES_LOD.y, huella * 32.0 / n.forma.escala_detalle);
-        // Lo que se deja de restar se resta como valor medio (0,5 del ruido), para que la nube no engorde a lo lejos.
-        d = vol_remapear(d, mix(0.5, 1.0 - gruesa, lod_gruesa) * n.forma.erosion_fuerza * en_base);
-        if d > 0.0 && lod_fina > 0.0 {
-            let r = vol_ruido3d(t3, q / n.forma.escala_detalle);
-            let fina = r.g * 0.625 + r.b * 0.25 + r.a * 0.125;
-            let billow = mix(fina, 1.0 - fina, smoothstep(0.1, 0.6, h_c));
-            d = vol_remapear(d, mix(0.5, billow, lod_fina) * n.forma.detalle_fuerza * en_base);
-        }
+    if !erosion {
+        // Versión barata (§5): la erosión media.
+        return max(d - n.forma.erosion_media, 0.0) * n.perfil.densidad[i];
     }
+    // Erosión (§5): ruido 3D grueso, que pesa con la raíz de lo que le falta a la forma, y fino solo en el borde, que se
+    // invierte hacia el techo (de comer huecos a dejar jirones); la suma a la cuarta muerde de golpe donde coinciden
+    // altos, y se resta la mitad. El detalle resbala sobre la masa (el viento de la erosión es mayor que el de la forma).
+    // Porqué: docs/efectos/niebla-y-nubes.md §«Forma de las nubes (F-36)»
+    let deriva = n.viento * select(0.74, 1.0, i == 0);
+    let q = vec3<f32>(inclinado.x + deriva.x, mundo.y, inclinado.y + deriva.y);
+    let eg = select(n.forma.escala_erosion.zw, n.forma.escala_erosion.xy, i == 0);
+    let ef = select(n.forma.escala_detalle.zw, n.forma.escala_detalle.xy, i == 0);
+    let falta = clamp(1.0 - cob, 0.0, 1.0);
+    let lod_gruesa = 1.0 - smoothstep(VOL_NUBES_LOD.x, VOL_NUBES_LOD.y, huella * 32.0 / eg.x);
+    let lod_fina = 1.0 - smoothstep(VOL_NUBES_LOD.x, VOL_NUBES_LOD.y, huella * 32.0 / ef.x);
+    let gruesa = mix(0.5, vol_ruido3d(t3, q / vec3<f32>(eg.x, eg.y, eg.x)).r, lod_gruesa);
+    var fina = 0.5;
+    if lod_fina > 0.0 && falta > 0.0 {
+        fina = mix(0.5, vol_ruido3d(t3, q / vec3<f32>(ef.x, ef.y, ef.x)).g, lod_fina);
+    }
+    fina = mix(fina, 1.0 - fina, h);
+    let e = sqrt(falta) * gruesa + falta * fina;
+    d -= n.forma.erosion_fuerza * e * e * e * e;
     return d * n.perfil.densidad[i];
 }

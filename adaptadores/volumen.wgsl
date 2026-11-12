@@ -251,3 +251,23 @@ fn adp_transmitancia_compuesta(v: VolResultado, distancia: f32, uv: vec2<f32>) -
     return exp(-m.absorcion * d);
 }
 
+// Vista de forma aislada (formas/README.md): la forma horizontal de una capa vista desde arriba, o un corte vertical
+// de la densidad con erosión; en gris lineal, la cámara en el centro. Porqué: docs/efectos/nucleo.md §Vistas de depuración
+fn adp_vista_forma(uv: vec2<f32>, vista: u32) -> vec3<f32> {
+    // Cobertura y densidad 1 en las tres capas (formas/nubes.md §9), sea cual sea el perfil del día.
+    var n = adp_nubes();
+    n.perfil.cobertura = vec3<f32>(1.0);
+    n.perfil.densidad = vec3<f32>(1.0);
+    let k = vista - OPC_VISTA_FORMA_NUBES_0;
+    let ancho = OPC_VISTA_FORMA_ANCHO[k];
+    let aspecto = frame.resolution.x / frame.resolution.y;
+    let x = frame.camera_position.x + (uv.x - 0.5) * aspecto * ancho;
+    if k <= 2u {
+        let z = frame.camera_position.z + (uv.y - 0.5) * ancho;
+        return vec3<f32>(vol_cobertura(vec2<f32>(x, z), i32(k), n, ruido2d, ruido2d_sampler));
+    }
+    let i = i32(k) - 3;
+    let y = VOL_MAR + VOL_BASE[i] + (1.0 - uv.y) * VOL_ESPESOR[i] * 1.2;
+    let d = vol_nube(vec3<f32>(x, y, frame.camera_position.z), i, n, ruido2d, ruido2d_sampler, ruido3d, true, 0.0);
+    return vec3<f32>(d / max(n.perfil.densidad[i], 1e-3));
+}

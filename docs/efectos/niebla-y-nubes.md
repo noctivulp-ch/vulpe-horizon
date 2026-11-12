@@ -480,3 +480,35 @@ Dos causas y dos arreglos:
 **Visto** (`pruebas/escenas/nieblas-analiticas.ctl`, aislamiento a 0): en la lava, todo rojo a un bloque; en la nieve en
 polvo, velo azul grisáceo; con ceguera y oscuridad, negro (el color de vanilla); en campo abierto, el borde se funde con el
 cielo y no hay velo mirando 15° arriba. **Sin ver:** la niebla de cueva mirando a una sima.
+
+## Forma de las nubes (F-36, 2026-11-12)
+
+Rehecha según `vulpe-horizon-spec/formas/nubes.md` (estructura y escalas; no parecido exacto). Sustituye la cobertura
+por umbral y rampa de F-4 y la cúpula de F-14 en los cúmulos; los altoestratos quedan como estaban.
+
+- **Ruidos**: la textura propia (256², `tools/ruido/generar_ruido.py`) no tiene los ruidos del original; sus canales se
+  llevan linealmente a los percentiles medidos: «suave» A (0,04/0,24/0,48 en P5/P50/P95) desde R con
+  `0,24 + (R − 0,49)·1,13`; «medio» B (0,18/0,49/0,77) desde B con `0,49 + (B − 0,5)·1,25` o desde R con ·1,54.
+- **Escalas**: el tamaño de mosaico sale del semiancho de autocorrelación medido de cada canal (B 41 px, R 20 px) y del
+  del original por onda (A 18 px por 100 px de onda, B 14 por 80): pequeños, grande 3 280 y forma 920 bloques por
+  mosaico; grandes, 6 550 y 3 350.
+- **Estructura**: pequeños, `valor = 3·|grande − 0,595| + 0,68·(1 − (1 − A)²)` (cordones a lo largo del nivel P70 del
+  ruido grande, rotos por la forma); grandes, `valor = 0,5·grande + 1,2·medio` con los ejes cambiados (masas donde los
+  dos son bajos). Forma = `clamp((cob − valor)/√cob, 0, 1)`. Pesos ajustados sobre la textura con cobertura 1: grandes
+  75 % del plano con nube y 6 % densa (meta 74 % / 5 %). En los pequeños el mejor ajuste numérico (1,25 y 1,3: 79 % /
+  18 %) no daba cordones en la vista aislada, sino una malla: se subió el peso de la banda a 3 (74 % / 24 %), porque la
+  estructura manda sobre los números (`formas/README.md` §5).
+- **Visto en la vista aislada (2026-11-12)**: pequeños, cordones sinuosos con claros a los lados; grandes, masas;
+  cortes con base plana y techo cerrado, erosión con entrantes. Se ve la **repetición de la textura** (mosaico de
+  3,3 km en los pequeños y los grandes): el original repite cada ~9,6 km porque su textura de 512 tiene 6–7 ondas por
+  mosaico. Pendiente: un canal de ruido con más ondas por mosaico en `tools/ruido/generar_ruido.py`.
+- **Perfil vertical**: las dos tablas de §4 (11 puntos), restado: `d = forma − (1 − perfil(h))`.
+- **Erosión**: gruesa con el canal R del ruido 3D (4 celdas por mosaico: 300×72 y 840×200 bloques), fina con G (8
+  celdas: 200×48 y 480×112), anisótropas. `e = √(1 − forma)·gruesa + (1 − forma)·fina`, con la fina invertida hacia el
+  techo (`mix(f, 1 − f, h)`); `d −= 0,5·e⁴`. Deriva de la erosión: el viento de la forma ×2 en los pequeños y ×1,74 en
+  los grandes (se suma ×1 y ×0,74 más). La versión barata (sombra y luz hacia el astro) resta 0,135.
+- **Lejos**: el ruido que no se resuelve en el píxel se sustituye por su media (0,5), como en F-23.
+- **Consecuencia**: la sombra de las nubes (F-13: `sombra_umbral`, `sombra_tau`) y el reflejo de nubes en el agua usan
+  `vol_cobertura`, que ahora es la forma nueva: su calibración puede necesitar repaso con el banco.
+- **Vista aislada**: `OPC_DEPURACION_VISTA_DEFECTO` a 9, 10 u 11 (mapa cenital de la forma de cada capa, 8, 16 y 160 km)
+  o 12 y 13 (corte vertical de pequeños y grandes con erosión, 1 y 2 km). Ver `docs/efectos/nucleo.md`.

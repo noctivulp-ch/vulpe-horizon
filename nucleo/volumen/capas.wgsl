@@ -8,32 +8,26 @@ const VOL_BASE: vec3<f32> = vec3<f32>(187.0, 437.0, 1937.0);
 const VOL_ESPESOR: vec3<f32> = vec3<f32>(100.0, 200.0, 12.0);
 
 struct VolFormaNubes {
-    escala_zonas: f32,
-    escala_forma: vec2<f32>,
+    escala_zonas: vec2<f32>,    // bloques por mosaico del ruido grande: pequeños, grandes (formas/nubes.md §3)
+    escala_forma: vec2<f32>,    // bloques por mosaico del ruido de forma: pequeños, grandes
     escala_alto: f32,
-    escala_erosion: vec2<f32>,
+    escala_erosion: vec4<f32>,  // erosión gruesa, bloques por mosaico 3D: pequeños (horizontal, vertical), grandes (§5)
     inclinacion: f32,
-    base_redondeo: f32,
-    caida_altura: f32,
-    cupula_desde: f32,
-    cupula_potencia: f32,
-    erosion_fuerza: f32,
-    erosion_base: f32,
-    escala_detalle: f32,
-    detalle_fuerza: f32,
+    erosion_fuerza: f32,        // fracción de la erosión que se resta (§5: la mitad)
+    erosion_media: f32,         // lo que se resta en la versión barata (sombra, luz hacia el astro): 0,135
+    escala_detalle: vec4<f32>,  // erosión fina, igual que escala_erosion
     sigma: vec3<f32>,
     tramo_max: f32,
     autosombra: f32,        // la luz directa dentro de la nube cae con exp(−autosombra·acumulado hacia el astro)
     autosombra_paso: vec2<f32>, // bloques entre tomas hacia el astro (cúmulos; los altoestratos, ×4 y dos tomas)
     ambiente: f32,          // fracción del ambiente de superficie que es el de la niebla y las nubes
-    exponente_cobertura: f32,
     impacto_umbral: f32,
-    huella_por_bloque: f32, // bloques que cubre un píxel del volumen por bloque de distancia    // densidad (forma × densidad del perfil) desde la que un punto cuenta como nube que corta la niebla
+    huella_por_bloque: f32, // bloques que cubre un píxel del volumen por bloque de distancia
     sombra_tau: f32,
     sombra_umbral: f32,
     sombra_alto: f32,       // multiplicador del espesor óptico oblicuo de los altoestratos sobre el suelo
-    umbral_cobertura: vec2<f32>, // umbral de la cobertura 2D de los cúmulos: x − cob·y (F-4)
-    rampa_cobertura: f32,   // anchura de la rampa sobre el umbral
+    pesos_pequenos: vec3<f32>, // «valor» de los pequeños: x·|grande − z| + y·(1 − forma) (§3, cordones)
+    pesos_grandes: vec2<f32>,  // «valor» de los grandes: x·grande + y·forma (§3, masas)
     fase_escala: f32,       // escala del término solar de las nubes sobre la fase medida (F-6)
 }
 
@@ -57,15 +51,49 @@ fn vol_cobertura(xz_entrada: vec2<f32>, i: i32, n: VolNubes, t: texture_2d<f32>,
         let umbral_alto = 0.72 - cob * 0.28;
         return smoothstep(umbral_alto, umbral_alto + 0.35, u_alto);
     }
-    let escala_f = n.forma.escala_forma[i];
-    let zonas = vol_ruido2d(t, s, xz / n.forma.escala_zonas).b;
-    let muestra_forma = vol_ruido2d(t, s, xz / escala_f + f32(i) * 0.37);
-    let forma = muestra_forma.r * 0.75 + muestra_forma.a * 0.25;
-    let u = (forma * 0.7 + zonas * 0.3 - 0.36) * 3.2;
-    // Umbral y rampa medidos sobre la textura (tools): con cob = 1, ~64 % del plano con nube y ~34 % densa.
-    // Porqué: docs/efectos/niebla-y-nubes.md §Cobertura (F-4)
-    let umbral = n.forma.umbral_cobertura.x - cob * n.forma.umbral_cobertura.y;
-    return pow(smoothstep(umbral, umbral + n.forma.rampa_cobertura, u), n.forma.exponente_cobertura);
+    // formas/nubes.md §3. Los canales de la textura propia se llevan a los percentiles de los ruidos del original:
+    // «suave» (A, sesgado a oscuro) desde R, «medio» (B) desde B o desde R. «valor» es 0 donde más nube.
+    // Porqué: docs/efectos/niebla-y-nubes.md §«Forma de las nubes (F-36)»
+    var valor = 0.0;
+    if i == 0 {
+        // Pequeños: cordones donde el ruido grande está cerca de su percentil 70, rotos por la forma (A invertido²).
+        let grande = 0.49 + (vol_ruido2d(t, s, xz / n.forma.escala_zonas.x).b - 0.5) * 1.25;
+        let suave = clamp(0.24 + (vol_ruido2d(t, s, xz / n.forma.escala_forma.x).r - 0.49) * 1.13, 0.0, 1.0);
+        let forma = (1.0 - suave) * (1.0 - suave);
+        let w = n.forma.pesos_pequenos;
+        valor = w.x * abs(grande - w.z) + w.y * (1.0 - forma);
+    } else {
+        // Grandes: masas donde los dos ruidos son bajos a la vez; ejes cambiados para no coincidir con los pequeños.
+        let q = xz.yx + vec2<f32>(0.37 * n.forma.escala_zonas.y);
+        let grande = 0.49 + (vol_ruido2d(t, s, q / n.forma.escala_zonas.y).b - 0.5) * 1.25;
+        let medio = 0.49 + (vol_ruido2d(t, s, q / n.forma.escala_forma.y).r - 0.49) * 1.54;
+        valor = n.forma.pesos_grandes.x * grande + n.forma.pesos_grandes.y * medio;
+    }
+    return clamp((cob - valor) / sqrt(cob), 0.0, 1.0);
+}
+
+// Perfil vertical de los cúmulos (formas/nubes.md §4), por fracción del espesor; se le resta a la forma lo que le
+// falta para 1. Tablas medidas: 11 puntos cada una.
+const VOL_PERFIL_H = array<array<f32, 11>, 2>(
+    array<f32, 11>(0.0, 0.02, 0.05, 0.10, 0.25, 0.40, 0.60, 0.80, 0.90, 0.95, 1.0),
+    array<f32, 11>(0.0, 0.025, 0.05, 0.125, 0.25, 0.5, 0.75, 0.9, 0.975, 1.0, 1.0),
+);
+const VOL_PERFIL_V = array<array<f32, 11>, 2>(
+    array<f32, 11>(0.0, 0.34, 0.66, 0.88, 0.88, 0.82, 0.74, 0.67, 0.41, 0.23, 0.0),
+    array<f32, 11>(0.0, 0.66, 0.90, 0.94, 0.88, 0.78, 0.69, 0.41, 0.12, 0.0, 0.0),
+);
+
+fn vol_perfil_cumulo(h: f32, i: i32) -> f32 {
+    let capa = min(i, 1);
+    for (var k = 1; k < 11; k++) {
+        let h1 = VOL_PERFIL_H[capa][k];
+        if h <= h1 {
+            let h0 = VOL_PERFIL_H[capa][k - 1];
+            let f = clamp((h - h0) / max(h1 - h0, 1e-4), 0.0, 1.0);
+            return mix(VOL_PERFIL_V[capa][k - 1], VOL_PERFIL_V[capa][k], f);
+        }
+    }
+    return 0.0;
 }
 
 // Transmitancia de las nubes hacia la luz en el punto `mundo`: la cobertura donde el rayo hacia la luz

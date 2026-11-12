@@ -64,6 +64,13 @@ unidad, desplazándose con el tiempo: comprueba hash, ruido y fBm) y **Tramado**
 Mientras Horizon no aplique valores de opciones distintos del defecto (ver «Not there yet» en su
 `docs/api/shaders.md`), se prueban cambiando el `default` del manifiesto con el juego abierto.
 
+- **Formas aisladas (F-36)**, `OPC_DEPURACION_VISTA_DEFECTO` en `opciones/depuracion.wgsl` (no hay opción de menú):
+  9, 10 y 11 dibujan desde arriba la forma horizontal (`vol_cobertura`) de cúmulos pequeños, grandes y altoestratos,
+  en ventanas de 8, 16 y 160 km centradas en la cámara; 12 y 13, un corte vertical (x, altura) de la densidad con
+  erosión de pequeños y grandes (1 y 2 km de ancho, el espesor de la capa más un 20 %). Siempre con cobertura y
+  densidad 1 (`formas/nubes.md` §9). Las calcula la pasada de composición y la final las saca sin tonemap. Escena:
+  `pruebas/escenas/forma.ctl`.
+
 ### Adaptadores
 
 Uno común (`adaptadores/marco.wgsl`, en `shared`: tiempo, dimensión, factor de día) y uno por etapa, cargado

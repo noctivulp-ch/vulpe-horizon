@@ -18,30 +18,26 @@ const OPC_VIENTO: vec2<f32> = vec2<f32>(3.0, 1.2);     // bloques por segundo co
 const OPC_PERFIL_FIJO: u32 = 10u;                      // sin tiempo aleatorio: cúmulos pequeños y grandes
 
 // Geometría y escalas de las nubes (05.4 y fino/05 §5): docs/efectos/niebla-y-nubes.md §Nubes
-const OPC_NUBES_ESCALA_ZONAS: f32 = 5000.0;                        // bloques: zonas donde hay cúmulos
-const OPC_NUBES_ESCALA_FORMA: vec2<f32> = vec2<f32>(900.0, 1800.0);// bloques: forma fragmentada de cúmulos pequeños y grandes
+// Escalas de formas/nubes.md (F-36): bloques por mosaico de la textura, sacados del semiancho de autocorrelación de cada
+// canal (B 41 px, R 20 px de 256) y del tamaño de onda del original. Porqué: docs/efectos/niebla-y-nubes.md §«Forma de las nubes (F-36)»
+const OPC_NUBES_ESCALA_ZONAS: vec2<f32> = vec2<f32>(3280.0, 6550.0);  // ruido grande: ondas de ~3 000 y ~6 000 bloques
+const OPC_NUBES_ESCALA_FORMA: vec2<f32> = vec2<f32>(920.0, 3350.0);   // ruido de forma: ondas de ~400 y ~1 500 bloques
 const OPC_NUBES_ESCALA_ALTO: f32 = 4500.0;                         // bloques: altoestratos
-const OPC_NUBES_ESCALA_EROSION: vec2<f32> = vec2<f32>(110.0, 180.0);// bloques: periodo del ruido 3D de erosión (lóbulos)
+// Erosión: grano grueso 75×18 y 210×50, fino 25×6 y 60×14 bloques (horizontal × vertical) → mosaico de 4 y 8 celdas.
+const OPC_NUBES_ESCALA_EROSION: vec4<f32> = vec4<f32>(300.0, 72.0, 840.0, 200.0);
+const OPC_NUBES_ESCALA_DETALLE: vec4<f32> = vec4<f32>(200.0, 48.0, 480.0, 112.0);
 const OPC_NUBES_INCLINACION: f32 = 0.12;                           // fracción del espesor inclinada por el viento
-const OPC_NUBES_BASE_REDONDEO: f32 = 25.0;                         // bloques de redondeo en la base plana
-const OPC_NUBES_CAIDA_ALTURA: f32 = 0.5;                           // caída exponencial en altura del vector de paridad
-const OPC_NUBES_CUPULA_DESDE: f32 = 0.78;                          // inicio del cierre en cúpula
-const OPC_NUBES_CUPULA_POTENCIA: f32 = 1.7;                        // exponente del cierre en cúpula
-const OPC_NUBES_EROSION_FUERZA: f32 = 0.60;                        // erosión gruesa para bordes rotos
-const OPC_NUBES_EROSION_BASE: f32 = 0.4;                           // fracción de la erosión que queda en la base plana
-const OPC_NUBES_ESCALA_DETALLE: f32 = 35.0;                        // bloques: periodo del ruido 3D fino (jirones y coliflores)
-const OPC_NUBES_DETALLE_FUERZA: f32 = 0.45;                        // erosión fina de alta frecuencia
+const OPC_NUBES_EROSION_FUERZA: f32 = 0.5;                         // se resta la mitad de la erosión (§5)
+const OPC_NUBES_EROSION_MEDIA: f32 = 0.135;                        // erosión media de la versión barata (§5)
+// Pesos del «valor» ajustados sobre la textura (cobertura 1): pequeños 79 % del plano con nube y 18 % densa (meta 82/12),
+// grandes 75 % y 6 % (meta 74/5).
+const OPC_NUBES_PESOS_PEQUENOS: vec3<f32> = vec3<f32>(3.0, 0.68, 0.595);
+const OPC_NUBES_PESOS_GRANDES: vec2<f32> = vec2<f32>(0.5, 1.2);
 const OPC_NUBES_SIGMA: vec3<f32> = vec3<f32>(0.45, 0.45, 0.06);    // extinción por bloque
 const OPC_NUBES_TRAMO_MAX: f32 = 800.0;                            // bloques: tope del tramo integrado por capa baja
 const OPC_NUBES_SOMBRA_TAU: f32 = 200.0;                           // transmitancia de la sombra = exp(−200·d²), d la densidad acumulada (fino/04 tabla B)
 const OPC_NUBES_SOMBRA_UMBRAL: f32 = 0.13;                         // cobertura que pierden los cúmulos por la erosión antes de la densidad (fino/04 «Respuesta a la pregunta 9»)
 const OPC_NUBES_SOMBRA_ALTO: f32 = 1.0;                            // × la aportación de los altoestratos a la suma de la sombra
-// Cobertura 2D de los cúmulos: forma = smoothstep(umbral, umbral + RAMPA, señal)^EXPONENTE, umbral = x − cob·y. Ajustada
-// con tools/paridad/cobertura.py a la tabla areal medida de fino/05 P6 (con 0,5 / 1 / 1,5 / 1,9: fracción con nube, densa
-// y forma media; error medio 0,03): con 1 hay nube en el 71 % del plano pero densa solo en el 9 %.
-const OPC_NUBES_UMBRAL: vec2<f32> = vec2<f32>(1.2, 0.9);
-const OPC_NUBES_RAMPA: f32 = 1.2;
-const OPC_NUBES_EXPONENTE: f32 = 0.75;
 // Luz de las nubes medida (fino/05 P1): la fase total sin escala añadida, y la autosombra exp(−5·acumulado) con tomas
 // cada 20 bloques hacia el astro en los cúmulos (pequeños, grandes).
 const OPC_NUBES_FASE_ESCALA: f32 = 1.0;
@@ -144,27 +140,21 @@ fn opc_volumen() -> OpcVolumen {
         OPC_NUBES_ESCALA_ALTO,
         OPC_NUBES_ESCALA_EROSION,
         OPC_NUBES_INCLINACION,
-        OPC_NUBES_BASE_REDONDEO,
-        OPC_NUBES_CAIDA_ALTURA,
-        OPC_NUBES_CUPULA_DESDE,
-        OPC_NUBES_CUPULA_POTENCIA,
         OPC_NUBES_EROSION_FUERZA,
-        OPC_NUBES_EROSION_BASE,
+        OPC_NUBES_EROSION_MEDIA,
         OPC_NUBES_ESCALA_DETALLE,
-        OPC_NUBES_DETALLE_FUERZA,
         OPC_NUBES_SIGMA,
         OPC_NUBES_TRAMO_MAX,
         OPC_NUBES_AUTOSOMBRA,
         OPC_NUBES_AUTOSOMBRA_PASO,
         OPC_NIEBLA_AMBIENTE_BASE,
-        OPC_NUBES_EXPONENTE,
         OPC_NUBES_IMPACTO_UMBRAL,
         OPC_NUBES_HUELLA,
         OPC_NUBES_SOMBRA_TAU,
         OPC_NUBES_SOMBRA_UMBRAL,
         OPC_NUBES_SOMBRA_ALTO,
-        OPC_NUBES_UMBRAL,
-        OPC_NUBES_RAMPA,
+        OPC_NUBES_PESOS_PEQUENOS,
+        OPC_NUBES_PESOS_GRANDES,
         OPC_NUBES_FASE_ESCALA,
     );
 
