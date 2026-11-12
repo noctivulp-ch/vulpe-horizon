@@ -33,5 +33,6 @@ Especificación: `../vulpe-horizon-spec/subsistemas/21-niebla-local-de-bioma.md`
 
 Sabana con lluvia: despejado (nada), polvo naranja y tormenta de arena rojo anaranjado que tapa todo a pocas decenas de
 bloques. Llanura nevada: nevada ligera (velo azul claro), tormenta y ventisca blancas y luminosas (la escena se aclara).
-Jungla: velo verde azulado ligero. Pantano: bruma amarilla verdosa. **Sin ver:** cruzar andando la frontera de un bioma
+Jungla: velo verde azulado ligero. Pantano: bruma amarilla verdosa. **Desierto** (−9872, −2200, encontrado con `locate` desde −6000, 0): polvo y tormenta de arena iguales que en la sabana; la
+captura del perfil «despejado» salió antes de cargar la zona (mar y lluvia). **Sin ver:** cruzar andando la frontera de un bioma
 (salto brusco esperado, ver límites) y el jardín pálido (sin mod).
