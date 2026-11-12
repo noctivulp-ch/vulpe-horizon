@@ -240,3 +240,18 @@ ocupa uno de los 64 huecos del menú sin efecto: decisión del dueño si se quit
 ### Suelo del banco
 El suelo de piedra lisa de (164–176, 76, 160–182) lo pusieron mis escenas `ao-rincon` y `sombras-borde` el 2026-11-04. Si el
 mundo del original tiene otro bloque ahí, igualarlo.
+
+## 2026-11-12 — de B al gestor, B-21 lote 2 (F-25 a F-38)
+
+- **Cliente nativo nuevo**: el mod se recompiló (`native-fdc87ae-e38b3da8d069`, seleccionado para la instancia). Para
+  ver relámpago y bioma hay que lanzar con su `horizon-ctl`: `HORIZON_CTL=…/versions/native-fdc87ae-e38b3da8d069/horizon-ctl tools/probar.sh <escena>`.
+- **Ajustes de Horizon cambiados** (permitido por B-18): `dynamicLights:true` en `horizon-extras.txt` y
+  `pauseOnLostFocus=false` en `options.txt` (con la pausa, el juego no avanza mientras no tiene el foco y la vegetación
+  no se mueve en las capturas).
+- **A mirar en el banco**: la forma nueva de las nubes (F-36) cambia la cobertura y con ella la sombra de nubes (F-13) y
+  el reflejo de nubes en el agua; las olas (F-37) son cinco veces más largas que antes; la oclusión LabPBR del albedo ya
+  no se aplica por defecto (F-34).
+- **Vistas de forma**: `OPC_DEPURACION_VISTA_DEFECTO` 9–13 (nubes) y 14 (normal del agua); escenas `forma.ctl` y
+  `forma-agua.ctl`. Sacan la forma sin luz ni niebla para compararla con las vistas del original.
+- **Error mío corregido**: `cf57aea` devuelve a 0 tres valores por defecto del manifiesto (desenfoque de movimiento,
+  rayos del fractal, matiz aislado) que un `sed` puso a 20 en `670e22f`.
