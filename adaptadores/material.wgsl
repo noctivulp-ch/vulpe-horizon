@@ -69,6 +69,15 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
             p.albedo = sup_estacion(p.albedo, 0.0, est_dias, i32(estacion_inicial), input.material == OPC_MAT_HOJAS);
         }
     }
+    // Infrarrojo (24): la vegetación a rosa, antes de iluminar. Porqué: docs/efectos/varios.md
+    if OPC_INFRARROJO > 0.0 {
+        let m = input.material;
+        let planta = m == OPC_MAT_HOJAS || m == OPC_MAT_PLANTA_FUERTE || m == OPC_MAT_PLANTA_MEDIA
+                  || m == OPC_MAT_PLANTA_ALTA_ARRIBA || m == OPC_MAT_COLGANTES || con_bioma;
+        if planta {
+            p.albedo = sup_infrarrojo(p.albedo, OPC_INFRARROJO_COLOR, OPC_INFRARROJO);
+        }
+    }
     p.alfa = input.albedo.a;
     p.normal_cara = input.normal;
     p.posicion = input.position;
@@ -90,7 +99,10 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
         p.pbr = sup_labpbr(block_specular_map(input.uv), p.albedo);
         let mapa_n = block_normal_map(input.uv);
         p.normal = sup_normal_mapa(mapa_n, input.normal, input.tangent, o.normales_intensidad);
-        p.albedo *= 0.5 + 0.5 * mapa_n.b;
+        // Oclusión del material (24): apagada por defecto en el original. Porqué: docs/efectos/varios.md
+        if OPC_OCLUSION_MATERIAL {
+            p.albedo *= 0.5 + 0.5 * mapa_n.b;
+        }
         p.altura_mapa = sup_relieve_normalizar_altura(mapa_n.a, opc_relieve().piso_altura);
     } else {
         p.pbr = SupMaterial(0.15, 0.7225, vec3<f32>(0.04), false, 0.0, 0.0, 0.0);
