@@ -69,13 +69,16 @@ fn material(input: MaterialInput) -> Surface {
         sss_cielo = sup_sss_color(albedo, 0.5) * luces.cielo * curva_cielo * m.sss * (sup_sss_fase_cielo(-p.vista.y) * OPC_SSS_CIELO);
     }
     let bloque = (adp_color_luz_bloque(p, o) * luz_curva_bloque(p.luz_bloque) + p.luz_colorida) * OPC_LUZ_BLOQUE * o.bloque;
+    // Relámpago (20): solo donde llega el cielo (luz de cielo a la cuarta). Porqué: docs/efectos/relampago.md
+    let cielo2 = p.luz_cielo * p.luz_cielo;
+    let relampago = OPC_RELAMPAGO_COLOR * (OPC_RELAMPAGO_BRILLO * cielo2 * cielo2 * luz_relampago_superficie(adp_relampago(), p.posicion, n));
     // Luz mínima direccional (fino/03 §3, corregido 2026-11-10): atenuador frontal, 0,30 de frente a la cámara y 1 de
     // canto (medido: 1 − 0,7·N·V), sin caída con la distancia. Porqué: docs/efectos/luz-de-superficie.md §Cuevas (F-9)
     let frontal = max(dot(n, p.vista), 0.0);
     let atenuador = 1.0 - (1.0 - OPC_LUZ_MINIMA_FRENTE) * frontal;
     let factor_cueva = mix(o.minima_cuevas, o.minima_exterior, smoothstep(0.0, 0.6, apertura)) * (1.0 - p.luz_cielo);
     let minima = OPC_LUZ_MINIMA_CUEVA * factor_cueva * atenuador + frame.night_vision * 0.08;
-    let indirecta = albedo * (ambiente_cielo + bloque + vec3<f32>(minima)) + sss_cielo;
+    let indirecta = albedo * (ambiente_cielo + bloque + relampago + vec3<f32>(minima)) + sss_cielo;
 
     // Especular del sol y reflejo del ambiente.
     let f_ambiente = sup_fresnel_schlick_rugosidad(max(dot(n, p.vista), 0.0), m.f0, m.rugosidad);

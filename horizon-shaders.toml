@@ -39,6 +39,7 @@ shared = [
     "nucleo/cielo/fractal_colocacion.wgsl",
     "nucleo/superficie/datos.wgsl",
     "nucleo/luz/sombras.wgsl",
+    "nucleo/luz/relampago.wgsl",
     "nucleo/volumen/ruido.wgsl",
     "nucleo/volumen/tiempo.wgsl",
     "nucleo/volumen/capas.wgsl",

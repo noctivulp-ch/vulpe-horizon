@@ -70,9 +70,11 @@ fn adp_volumen_ajustes(bajo_agua: bool) -> VolAjustes {
     let con_niebla = o.niebla && !bajo_agua;
     let mapa = LuzMapa(frame.shadow_view_proj, frame.shadow_distortion);
     let viento_local = viento * OPC_LOCAL_VIENTO + vec3<f32>(0.0, frame.time * OPC_LOCAL_DESCENSO, 0.0);
+    let r = adp_relampago();
     let medio_local = VolNieblaLocal(local.uniforme * o.cantidad, local.manchas * o.cantidad, local.color, viento_local);
     return VolAjustes(niebla, adp_nubes(), o.alcance, o.pasos, o.pasos_nubes, con_niebla, o.nubes,
-                      frame.has_shadow == 1u, o.sombra_nubes, mapa, adp_aurora(o.alcance), medio_local, OPC_LOCAL_ALCANCE);
+                      frame.has_shadow == 1u, o.sombra_nubes, mapa, adp_aurora(o.alcance), medio_local, OPC_LOCAL_ALCANCE,
+                      LuzRelampago(r.base, r.brillo * OPC_RELAMPAGO_NUBES * MAT_INV_PI * 0.25));
 }
 
 struct AdpNieblaLocal {

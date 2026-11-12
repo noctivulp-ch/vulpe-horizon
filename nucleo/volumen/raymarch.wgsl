@@ -29,6 +29,7 @@ struct VolAjustes {
     aurora: VolAurora,
     local: VolNieblaLocal,
     alcance_local: f32,     // bloques: más allá la niebla local no se integra (21: 64)
+    relampago: LuzRelampago, // destello del rayo (20), base relativa a la cámara; brillo 0 sin rayo
 }
 
 const VOL_NUBES_DISTANCIA: f32 = 6000.0;   // bloques: más allá las nubes no se integran
@@ -120,6 +121,10 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
                                + col_luminancia(luz.cielo) * fase_cenital);
                 niebla += local;
             }
+        }
+        // Relámpago (20): la niebla se enciende con la caída desde la columna. Porqué: docs/efectos/relampago.md
+        if a.relampago.brillo > 0.0 {
+            fuente_niebla += niebla * (a.relampago.brillo * luz_relampago_caida(luz_relampago_distancia(p_rel, a.relampago.base)));
         }
         // La transmitancia cuenta la media de los tres canales del aire (implementacion/02 §4): tiñe lo que suma, oscurece en gris.
         let sigma = (dot(aire.rayleigh, vec3<f32>(1.0 / 3.0)) + aire.mie * 1.1) + niebla;
@@ -221,6 +226,12 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, impacto: ptr<function, f32>, 
         let sigma = sigma_nube * d * lejos;
         // La fase total medida, con la densidad adimensional (forma × densidad del perfil) que usa el original.
         var luz_nube = luz.irradiancia * t_sol * vol_fase(cos_luz, d) * a.nubes.forma.fase_escala + ambiente;
+        // Relámpago (20): más en lo denso y cerca de la base de la capa. Porqué: docs/efectos/relampago.md
+        if a.relampago.brillo > 0.0 {
+            let bajo = 1.0 - clamp((mundo.y - y0) / VOL_ESPESOR[i], 0.0, 1.0);
+            luz_nube += vec3<f32>(a.relampago.brillo * (0.5 + 0.5 * bajo) * min(forma_local, 1.0)
+                                  * luz_relampago_caida(luz_relampago_distancia(mundo - rayo.camara, a.relampago.base)));
+        }
         luz_nube = mix(luz_nube, luz.cielo, niebla_ext);
         let fuente = sigma * luz_nube;
         vol_tramo(r, fuente, sigma, paso);

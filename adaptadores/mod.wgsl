@@ -253,3 +253,12 @@ fn adp_mod_depuracion(uv: vec2<f32>) -> vec3<f32> {
     let factor_avance = select(0.25, 1.0, recorrido && m.tiene_estacion);
     return color_estacion * factor_avance;
 }
+
+// El relámpago del mod (bit 1) como luz: sin mod, o pasado el destello, brillo 0. Porqué: docs/efectos/relampago.md
+fn adp_relampago() -> LuzRelampago {
+    let m = adp_mod();
+    if !OPC_RELAMPAGO || !m.rayo.activo {
+        return LuzRelampago(vec3<f32>(0.0), 0.0);
+    }
+    return LuzRelampago(m.rayo.posicion, luz_relampago_destello(m.rayo.edad, OPC_RELAMPAGO_DURACION));
+}

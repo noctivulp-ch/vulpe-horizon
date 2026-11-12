@@ -104,3 +104,10 @@ fn opc_luz() -> OpcLuz {
         normales_intensidad,
     );
 }
+
+// Relámpago (20), sin opción de menú: constantes. Porqué: docs/efectos/relampago.md
+const OPC_RELAMPAGO: bool = true;                               // activo por defecto
+const OPC_RELAMPAGO_DURACION: f32 = 1.0;                        // segundos de destello tras la caída
+const OPC_RELAMPAGO_BRILLO: f32 = 6.0;                          // luz sobre superficies, escala de la luz de bloque
+const OPC_RELAMPAGO_COLOR: vec3<f32> = vec3<f32>(0.80, 0.88, 1.0); // blanco algo azulado
+const OPC_RELAMPAGO_NUBES: f32 = 3.0;                           // luz dentro de nubes y niebla
