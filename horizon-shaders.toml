@@ -270,7 +270,7 @@ id = "desenfoque_movimiento"
 name = "Desenfoque de movimiento"
 description = "Desenfoque de movimiento (0 apagado)."
 type = "int"
-default = 20
+default = 0
 min = 0
 max = 100
 
@@ -358,7 +358,7 @@ id = "rayos_intensidad"
 name = "Intensidad de los rayos"
 description = "Rayos del fractal (0 = apagados)."
 type = "int"
-default = 20
+default = 0
 min = 0
 max = 500
 
@@ -518,7 +518,7 @@ id = "aislamiento_matiz"
 name = "Matiz aislado"
 description = "Matiz que se salva en grados (0..360)."
 type = "int"
-default = 20
+default = 0
 min = 0
 max = 360
 
