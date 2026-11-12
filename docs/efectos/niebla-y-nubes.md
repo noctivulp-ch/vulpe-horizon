@@ -439,3 +439,23 @@ El gestor corrigió la tabla de la fase ambiental de la niebla de `fino/05`: **0
 
 **Visto** (`banco-f.ctl`, aislamiento a 0, hora congelada): la niebla de `lluvia-dia` baja de (74, 85, 101) a (59, 70, 88) de
 media en el centro; las escenas sin niebla, sin cambio a la vista.
+
+## Grano del borde (F-23, 2026-11-11)
+
+Observación del dueño (2026-11-11, 2): «los bordes superiores de las nubes tienen un ruido de grano que no estaba en el
+original». **Visto** en `cielo-dia` ampliado: motas de un píxel en los bordes tenues de las nubes pequeñas y lejanas, que
+cambian de un fotograma a otro (la diferencia entre dos capturas seguidas se concentra ahí). En el original el borde es
+deshilachado (jirones de 25–60 bloques, `formas/nubes.md` §5), no granulado: el grano es tramado sin acumular (`fino/05` §6).
+
+Dos causas y dos arreglos:
+1. **Ruido de erosión más fino que el píxel:** el ruido fino tiene vóxeles de ~1 bloque (35 bloques / 32) y el grueso de
+   ~3–6; a cientos de bloques un píxel del volumen cubre varios. `vol_nube` recibe la huella del píxel
+   (`t × OPC_NUBES_HUELLA`, 0,0023 bloques por bloque de distancia a ½ resolución) y, entre 0,5 y 1,5 vóxeles por píxel
+   (`VOL_NUBES_LOD`), cambia cada ruido por su valor medio (0,5), para que la nube no engorde a lo lejos.
+2. **Tramado del trazado sin acumular:** el original acumula el volumen en el tiempo con recorte de vecindario. Aquí no hay
+   destino libre para un historial del volumen (los cuatro de Horizon están ocupados), así que el reescalado del volumen
+   en la composición usa, **sobre el cielo**, una tienda 3×3 de texeles que también sean cielo (`adp_volumen_reescalado`). En
+   el terreno sigue el bilateral de 4 tomas que respeta la profundidad. La composición pasa de 26 a 28 lecturas.
+
+**Visto** (`cielo-dia` ampliado, aislamiento a 0): las motas del borde casi desaparecen y queda un borde suave. Pendiente
+(lote 2, formas): el ruido fino de erosión no es anisótropo como pide `formas/nubes.md` §5 (25 × 6 bloques).

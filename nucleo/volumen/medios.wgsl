@@ -56,6 +56,9 @@ fn vol_niebla(mundo: vec3<f32>, a: VolAjustesNiebla, ruido3d: texture_2d<f32>) -
     return d * a.cantidad;
 }
 
+// Huella del píxel (en vóxeles del ruido) entre la que el ruido de erosión pasa de entero a su valor medio.
+const VOL_NUBES_LOD: vec2<f32> = vec2<f32>(0.5, 1.5);
+
 // `remap(v, bajo, 1)`: lo que queda por encima de `bajo`, reescalado a 0..1.
 fn vol_remapear(v: f32, bajo: f32) -> f32 {
     return clamp((v - bajo) / max(1.0 - bajo, 1e-3), 0.0, 1.0);
@@ -64,7 +67,10 @@ fn vol_remapear(v: f32, bajo: f32) -> f32 {
 // Densidad 0..1 de la capa de nubes `i` en `mundo`: cobertura 2D × perfil vertical, erosionada en los bordes.
 // `erosion`: falso en las muestras de luz hacia el astro (solo cobertura y forma: la especificación lo prevé
 // para el presupuesto).
-fn vol_nube(mundo: vec3<f32>, i: i32, n: VolNubes, t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>, erosion: bool) -> f32 {
+// `huella`: bloques que cubre un píxel del volumen a esa distancia. El ruido de erosión se apaga cuando su vóxel queda por
+// debajo de la huella (si no, en las nubes lejanas salía grano que el TAA no promedia).
+// Porqué: docs/efectos/niebla-y-nubes.md §«Grano del borde» (F-23)
+fn vol_nube(mundo: vec3<f32>, i: i32, n: VolNubes, t2: texture_2d<f32>, s2: sampler, t3: texture_2d<f32>, erosion: bool, huella: f32) -> f32 {
     let dy = mundo.y - (VOL_MAR + VOL_BASE[i]);
     let h = dy / VOL_ESPESOR[i];
     if h <= 0.0 || h >= 1.0 {
@@ -95,12 +101,15 @@ fn vol_nube(mundo: vec3<f32>, i: i32, n: VolNubes, t2: texture_2d<f32>, s2: samp
         let q = vec3<f32>(inclinado.x, mundo.y, inclinado.y);
         let gruesa = vol_ruido3d(t3, q / n.forma.escala_erosion[i]).r;
         let en_base = mix(n.forma.erosion_base, 1.0, smoothstep(0.0, 0.2, h_c));
-        d = vol_remapear(d, (1.0 - gruesa) * n.forma.erosion_fuerza * en_base);
-        if d > 0.0 {
+        let lod_gruesa = 1.0 - smoothstep(VOL_NUBES_LOD.x, VOL_NUBES_LOD.y, huella * 32.0 / n.forma.escala_erosion[i]);
+        let lod_fina = 1.0 - smoothstep(VOL_NUBES_LOD.x, VOL_NUBES_LOD.y, huella * 32.0 / n.forma.escala_detalle);
+        // Lo que se deja de restar se resta como valor medio (0,5 del ruido), para que la nube no engorde a lo lejos.
+        d = vol_remapear(d, mix(0.5, 1.0 - gruesa, lod_gruesa) * n.forma.erosion_fuerza * en_base);
+        if d > 0.0 && lod_fina > 0.0 {
             let r = vol_ruido3d(t3, q / n.forma.escala_detalle);
             let fina = r.g * 0.625 + r.b * 0.25 + r.a * 0.125;
             let billow = mix(fina, 1.0 - fina, smoothstep(0.1, 0.6, h_c));
-            d = vol_remapear(d, billow * n.forma.detalle_fuerza * en_base);
+            d = vol_remapear(d, mix(0.5, billow, lod_fina) * n.forma.detalle_fuerza * en_base);
         }
     }
     return d * n.perfil.densidad[i];

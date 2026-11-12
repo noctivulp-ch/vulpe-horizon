@@ -152,7 +152,7 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, impacto: ptr<function, f32>, 
         anterior = siguiente;
         let t = t0 + s * largo;
         let mundo = rayo.camara + rayo.dir * t;
-        let d = vol_nube(mundo, i, a.nubes, t2, s2, t3, true);
+        let d = vol_nube(mundo, i, a.nubes, t2, s2, t3, true, t * a.nubes.forma.huella_por_bloque);
         if d <= 0.001 {
             continue;
         }
@@ -169,7 +169,7 @@ fn vol_tramo_nubes(r: ptr<function, VolResultado>, impacto: ptr<function, f32>, 
             if i == 2 && k == 2 {
                 continue;
             }
-            hacia += vol_nube(mundo + luz.direccion * (tramo_sol * f32(k)), i, a.nubes, t2, s2, t3, false);
+            hacia += vol_nube(mundo + luz.direccion * (tramo_sol * f32(k)), i, a.nubes, t2, s2, t3, false, 0.0);
         }
         var t_sol = exp(-a.nubes.forma.autosombra * hacia * (1.0 - abs(luz.direccion.y)));
 

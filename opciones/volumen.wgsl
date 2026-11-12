@@ -46,6 +46,7 @@ const OPC_NUBES_EXPONENTE: f32 = 0.75;
 // cada 20 bloques hacia el astro en los cúmulos (pequeños, grandes).
 const OPC_NUBES_FASE_ESCALA: f32 = 1.0;
 const OPC_NUBES_IMPACTO_UMBRAL: f32 = 0.02;                        // densidad desde la que la nube corta la niebla (el «umbral tenue» de fino/05 §1, sin medir)
+const OPC_NUBES_HUELLA: f32 = 0.0023;                             // bloques por píxel del volumen (½ resolución, 70° a 1080 px) por bloque de distancia
 const OPC_NUBES_AUTOSOMBRA: f32 = 5.0;
 const OPC_NUBES_AUTOSOMBRA_PASO: vec2<f32> = vec2<f32>(20.0, 20.0);
 
@@ -158,6 +159,7 @@ fn opc_volumen() -> OpcVolumen {
         OPC_NIEBLA_AMBIENTE_BASE,
         OPC_NUBES_EXPONENTE,
         OPC_NUBES_IMPACTO_UMBRAL,
+        OPC_NUBES_HUELLA,
         OPC_NUBES_SOMBRA_TAU,
         OPC_NUBES_SOMBRA_UMBRAL,
         OPC_NUBES_SOMBRA_ALTO,

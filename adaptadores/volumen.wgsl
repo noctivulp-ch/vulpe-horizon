@@ -109,6 +109,30 @@ fn adp_volumen_salida(r: VolResultado) -> vec4<f32> {
 fn adp_volumen_reescalado(pixel: vec2<f32>, distancia: f32) -> VolResultado {
     let lado = vec2<f32>(textureDimensions(volumen));
     let q = pixel * 0.5 - 0.5;
+    // Sobre el cielo no hay bordes que respetar: un filtro de tienda 3×3 de texeles del volumen que también sean cielo quita
+    // el grano del tramado en los bordes tenues de las nubes (el original lo acumula en el tiempo, fino/05 §6; aquí no hay
+    // destino libre para un historial del volumen). Porqué: docs/efectos/niebla-y-nubes.md §«Grano del borde» (F-23)
+    if distancia >= 1e5 {
+        let centro = floor(q + 0.5);
+        var suma_c = vec4<f32>(0.0);
+        var pesos_c = 0.0;
+        for (var k = 0; k < 9; k++) {
+            let o = vec2<f32>(f32(k % 3) - 1.0, f32(k / 3) - 1.0);
+            let texel = clamp(centro + o, vec2<f32>(0.0), lado - 1.0);
+            let uv = (texel + 0.5) / lado;
+            if depth_at(uv) > 0.0 {
+                continue;
+            }
+            let dq = abs(texel - q);
+            let w = max(1.5 - dq.x, 0.0) * max(1.5 - dq.y, 0.0);
+            suma_c += textureLoad(volumen, vec2<i32>(texel), 0) * w;
+            pesos_c += w;
+        }
+        if pesos_c > 0.0 {
+            let v = suma_c / pesos_c;
+            return VolResultado(v.rgb / adp_codificacion().exposicion, v.a, 0.0, vec3<f32>(0.0));
+        }
+    }
     let base = floor(q);
     let f = q - base;
     var suma = vec4<f32>(0.0);
