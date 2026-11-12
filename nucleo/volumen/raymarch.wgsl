@@ -27,6 +27,8 @@ struct VolAjustes {
     sombra_nubes: f32,      // 0..1
     mapa: LuzMapa,
     aurora: VolAurora,
+    local: VolNieblaLocal,
+    alcance_local: f32,     // bloques: más allá la niebla local no se integra (21: 64)
 }
 
 const VOL_NUBES_DISTANCIA: f32 = 6000.0;   // bloques: más allá las nubes no se integran
@@ -108,8 +110,17 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
         let fuente_aire = (aire.rayleigh * fase_aire_r + aire.mie * fase_aire_m) * (sol_aire * fase_aire_m) + (aire.rayleigh + aire.mie) * ambiente;
         // Ambiente de la niebla: radiancia media del cielo × fase cenital medida (F-3), con la escala base de opciones.
         let fase_cenital = vol_fase_cenital(rayo.dir.y) * OPC_NIEBLA_AMBIENTE_BASE;
-        let fuente_niebla = niebla * (sol * vol_fase_niebla(cos_luz, niebla)
+        var fuente_niebla = niebla * (sol * vol_fase_niebla(cos_luz, niebla)
                           + luz.cielo * a.niebla.ambiente * fase_cenital);
+        // Niebla local (21): solo hasta su alcance; su color por la luminancia de la luz, no por su color.
+        if t < a.alcance_local {
+            let local = vol_niebla_local(mundo, a.local, t3);
+            if local > 0.0 {
+                fuente_niebla += local * a.local.color * (col_luminancia(sol) * vol_fase_niebla(cos_luz, local)
+                               + col_luminancia(luz.cielo) * fase_cenital);
+                niebla += local;
+            }
+        }
         // La transmitancia cuenta la media de los tres canales del aire (implementacion/02 §4): tiñe lo que suma, oscurece en gris.
         let sigma = (dot(aire.rayleigh, vec3<f32>(1.0 / 3.0)) + aire.mie * 1.1) + niebla;
         vol_tramo(r, fuente_aire + fuente_niebla, sigma, paso);

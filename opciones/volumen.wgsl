@@ -184,3 +184,24 @@ fn opc_volumen() -> OpcVolumen {
         forma,
     );
 }
+
+// Niebla local de bioma y de clima (21): perfiles por defecto del inventario (extinción por bloque y color lineal).
+// Porqué: docs/efectos/niebla-local.md
+const OPC_LOCAL_ALCANCE: f32 = 64.0;          // bloques: la niebla local es cercana
+const OPC_LOCAL_CALOR: f32 = 1.0;             // temperatura del bioma por encima de la cual es «zona caliente»
+const OPC_LOCAL_FRIO: f32 = 0.4;              // por debajo, «zona fría»
+const OPC_LOCAL_RAMPA_LLUVIA: f32 = 0.3;      // fuerza de lluvia en que el perfil de clima está entero (sustituye al suavizado)
+const OPC_LOCAL_VIENTO: f32 = 1.0;            // × el viento de la niebla global
+const OPC_LOCAL_DESCENSO: f32 = 0.3;          // bloques por segundo que bajan las manchas (sin medir)
+// Calor con lluvia: despejado, polvo, tormenta de arena (uno por día).
+const OPC_LOCAL_CALOR_UNIF = array<f32, 3>(0.0, 0.03, 0.08);
+const OPC_LOCAL_CALOR_MANCHAS = array<f32, 3>(0.0, 0.2, 0.5);
+const OPC_LOCAL_CALOR_COLOR = array<vec3<f32>, 3>(vec3<f32>(0.0), vec3<f32>(1.0, 0.5, 0.3), vec3<f32>(2.0, 0.6, 0.2));
+// Frío con nieve: nevada ligera, tormenta de nieve, ventisca (uno por día).
+const OPC_LOCAL_FRIO_UNIF = array<f32, 3>(0.0085, 0.03, 0.07);
+const OPC_LOCAL_FRIO_MANCHAS = array<f32, 3>(0.0, 0.2, 0.3);
+const OPC_LOCAL_FRIO_COLOR: vec3<f32> = vec3<f32>(2.0, 3.0, 5.0);
+// Bioma (siempre): pantano, jungla, jardín pálido (este, solo con el mod).
+const OPC_LOCAL_BIOMA_UNIF = array<f32, 3>(0.01, 0.01, 0.07);
+const OPC_LOCAL_BIOMA_MANCHAS = array<f32, 3>(0.05, 0.0, 0.0);
+const OPC_LOCAL_BIOMA_COLOR = array<vec3<f32>, 3>(vec3<f32>(0.9, 1.0, 0.3), vec3<f32>(0.5, 1.0, 0.8), vec3<f32>(0.18, 0.2, 0.16));

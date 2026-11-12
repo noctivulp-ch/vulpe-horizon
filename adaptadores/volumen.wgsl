@@ -53,8 +53,6 @@ fn adp_volumen_ajustes(bajo_agua: bool) -> VolAjustes {
     // En una cueva no entra la niebla de cielo: queda una tenue.
     let fuera = smoothstep(0.1, 0.7, frame.eye_light_smooth.y);
     let lluvia = frame.rain * o.lluvia;
-    // Tormenta de nieve: lluvia en un bioma donde nieva (precipitation 2): densa y blanca.
-    let nieve = select(0.0, frame.rain, frame.precipitation == 2u);
 
     // En lluvia se conmuta a los perfiles de lluvia para nubes y niebla (fino/05 §4 y paridad/05)
     let pl = vol_perfil_lluvia(u32(max(m.dia, 0.0)), lluvia);
@@ -62,14 +60,59 @@ fn adp_volumen_ajustes(bajo_agua: bool) -> VolAjustes {
     let param_unif_base = mix(h.uniforme, pl.niebla_uniforme, peso_lluvia);
     let param_manchas_base = mix(h.manchas, pl.niebla_manchas, peso_lluvia);
 
-    let uniforme = (param_unif_base + nieve * 0.8) * mix(0.05, 1.0, fuera);
-    let manchas = (param_manchas_base + nieve * 0.5 + clamp(frame.downfall - 0.85, 0.0, 0.15) * 2.5 * smoothstep(0.5, 0.9, frame.temperature)) * fuera;
+    // Niebla local (21): con un perfil activo la global se apaga (no se suman).
+    let local = adp_niebla_local(u32(max(m.dia, 0.0)), fuera);
+    let sin_global = 1.0 - local.peso;
+    let uniforme = param_unif_base * mix(0.05, 1.0, fuera) * sin_global;
+    let manchas = param_manchas_base * fuera * sin_global;
     let viento = vec3<f32>(OPC_VIENTO.x, 0.0, OPC_VIENTO.y) * o.viento * frame.time * 0.5;
-    let niebla = VolAjustesNiebla(uniforme, manchas, o.cantidad, o.bruma, o.caida, viento, mix(1.0, 8.0, nieve));
+    let niebla = VolAjustesNiebla(uniforme, manchas, o.cantidad, o.bruma, o.caida, viento, 1.0);
     let con_niebla = o.niebla && !bajo_agua;
     let mapa = LuzMapa(frame.shadow_view_proj, frame.shadow_distortion);
+    let viento_local = viento * OPC_LOCAL_VIENTO + vec3<f32>(0.0, frame.time * OPC_LOCAL_DESCENSO, 0.0);
+    let medio_local = VolNieblaLocal(local.uniforme * o.cantidad, local.manchas * o.cantidad, local.color, viento_local);
     return VolAjustes(niebla, adp_nubes(), o.alcance, o.pasos, o.pasos_nubes, con_niebla, o.nubes,
-                      frame.has_shadow == 1u, o.sombra_nubes, mapa, adp_aurora(o.alcance));
+                      frame.has_shadow == 1u, o.sombra_nubes, mapa, adp_aurora(o.alcance), medio_local, OPC_LOCAL_ALCANCE);
+}
+
+struct AdpNieblaLocal {
+    uniforme: f32,
+    manchas: f32,
+    color: vec3<f32>,
+    peso: f32,              // 0..1: cuánto sustituye a la niebla global
+}
+
+// El perfil local del momento (21), decidido por el bioma de la cámara: calor o frío con la lluvia (uno de tres por día,
+// con el sorteo diario de la lluvia), y pantano o jungla siempre. La categoría del bioma la da el mod (`mods[1].w`); sin
+// él, por la temperatura y la humedad de vanilla. Sin suavizado temporal (no hay memoria): el clima entra con la fuerza de
+// la lluvia y el bioma, de golpe al cruzar la frontera. Porqué: docs/efectos/niebla-local.md (F-28)
+fn adp_niebla_local(dia: u32, fuera: f32) -> AdpNieblaLocal {
+    var r = AdpNieblaLocal(0.0, 0.0, vec3<f32>(0.0), 0.0);
+    let t = frame.temperature;
+    let lluvia = smoothstep(0.0, OPC_LOCAL_RAMPA_LLUVIA, frame.rain);
+    if lluvia > 0.0 && t > OPC_LOCAL_CALOR && frame.precipitation == 0u {
+        let k = dia % 3u;
+        r = AdpNieblaLocal(OPC_LOCAL_CALOR_UNIF[k], OPC_LOCAL_CALOR_MANCHAS[k], OPC_LOCAL_CALOR_COLOR[k], lluvia);
+    } else if lluvia > 0.0 && t < OPC_LOCAL_FRIO && frame.precipitation == 2u {
+        let k = dia % 3u;
+        r = AdpNieblaLocal(OPC_LOCAL_FRIO_UNIF[k], OPC_LOCAL_FRIO_MANCHAS[k], OPC_LOCAL_FRIO_COLOR, lluvia);
+    } else {
+        var categoria = 0u;
+        if abs(frame.mods[0].x - ADP_MOD_FIRMA_V1) < 0.5 && frame.mods[1].w > 0.5 {
+            categoria = u32(round(frame.mods[1].w));
+        } else if abs(t - 0.8) < 0.03 && abs(frame.downfall - 0.9) < 0.03 {
+            categoria = 1u;
+        } else if abs(t - 0.95) < 0.03 && frame.downfall > 0.77 && frame.downfall < 0.93 {
+            categoria = 2u;
+        }
+        if categoria >= 1u && categoria <= 3u {
+            let k = categoria - 1u;
+            r = AdpNieblaLocal(OPC_LOCAL_BIOMA_UNIF[k], OPC_LOCAL_BIOMA_MANCHAS[k], OPC_LOCAL_BIOMA_COLOR[k], 1.0);
+        }
+    }
+    r.uniforme *= r.peso * fuera;
+    r.manchas *= r.peso * fuera;
+    return r;
 }
 
 fn adp_volumen(uv: vec2<f32>, pixel: vec2<f32>) -> VolResultado {

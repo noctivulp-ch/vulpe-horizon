@@ -59,6 +59,29 @@ fn vol_niebla(mundo: vec3<f32>, a: VolAjustesNiebla, ruido3d: texture_2d<f32>) -
 // Huella del píxel (en vóxeles del ruido) entre la que el ruido de erosión pasa de entero a su valor medio.
 const VOL_NUBES_LOD: vec2<f32> = vec2<f32>(0.5, 1.5);
 
+// Niebla local de bioma y de clima (21): uniforme + manchas tal cual (sin cubo), con su color propio.
+struct VolNieblaLocal {
+    uniforme: f32,          // extinción por bloque
+    manchas: f32,
+    color: vec3<f32>,       // multiplica la luminancia de la luz directa y de la ambiente
+    viento: vec3<f32>,      // desplazamiento de las manchas, bloques (con un descenso lento)
+}
+
+// Densidad local: la parte uniforme no cae con la altura; las manchas usan un ruido más fino que el global, aplastado
+// en vertical, y solo su parte alta (el quinto inferior se recorta). Porqué: docs/efectos/niebla-local.md (F-28)
+fn vol_niebla_local(mundo: vec3<f32>, l: VolNieblaLocal, ruido3d: texture_2d<f32>) -> f32 {
+    var d = l.uniforme;
+    if l.manchas > 0.0 {
+        let p = (mundo + l.viento) * vec3<f32>(1.0 / VOL_LOCAL_ESCALA.x, 1.0 / VOL_LOCAL_ESCALA.y, 1.0 / VOL_LOCAL_ESCALA.x);
+        let n = vol_ruido3d(ruido3d, p).a;
+        d += l.manchas * max(n - 0.2, 0.0) / 0.8;
+    }
+    return d;
+}
+
+// Tamaño de las manchas de la niebla local: horizontal × vertical, bloques (más fino que el global y aplastado; sin medir).
+const VOL_LOCAL_ESCALA: vec2<f32> = vec2<f32>(48.0, 12.0);
+
 // `remap(v, bajo, 1)`: lo que queda por encima de `bajo`, reescalado a 0..1.
 fn vol_remapear(v: f32, bajo: f32) -> f32 {
     return clamp((v - bajo) / max(1.0 - bajo, 1e-3), 0.0, 1.0);
