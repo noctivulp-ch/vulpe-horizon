@@ -19,6 +19,8 @@ Vulpe es un shader para [Horizon](https://github.com/horizon-rust/horizon) con a
 
 Está **inspirado en [Bliss](https://github.com/X0nk/Bliss-Shader)**, el shader de X0nk para Iris y OptiFine en el que se basa la versión original de Vulpe. No reutiliza su código: se escribió en sala limpia, a partir de una especificación de su comportamiento ([`docs/metodologia.md`](docs/metodologia.md)).
 
+La idea del cielo fractal nocturno viene de la opción «Fractal Night Sky» de [rethinking-voxels](https://github.com/gri573/rethinking-voxels) (gri573); el código es propio.
+
 <p align="center">
   <img src="pruebas/capturas/hoja-imagen.png" width="90%" alt="Día, atardecer, noche con aurora y cueva en Vulpe para Horizon">
 </p>

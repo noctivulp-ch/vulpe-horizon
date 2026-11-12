@@ -16,3 +16,11 @@ Componentes de terceros
 
 - Sin dependencias de terceros incluidas en el pack.
 - Horizon (MIT) no se incluye: el shader se ejecuta sobre el motor de Horizon.
+
+Reconocimientos
+---------------
+
+- Inspirado en Bliss (X0nk), el shader en el que se basa la versión original de Vulpe. No reutiliza su
+  código: se escribió en sala limpia, a partir de una especificación de su comportamiento.
+- La idea del cielo fractal nocturno viene de la opción «Fractal Night Sky» de rethinking-voxels (gri573);
+  el código es propio.
