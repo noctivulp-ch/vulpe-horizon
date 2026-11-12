@@ -17,6 +17,7 @@ const OPC_VISTA_FORMA_NUBES_1: u32 = 10u;       // cúmulos grandes, 16 km
 const OPC_VISTA_FORMA_NUBES_2: u32 = 11u;       // altoestratos, 160 km
 const OPC_VISTA_CORTE_NUBES_0: u32 = 12u;       // corte vertical de los pequeños, 1 km × su espesor
 const OPC_VISTA_CORTE_NUBES_1: u32 = 13u;       // corte vertical de los grandes, 2 km × su espesor
+const OPC_VISTA_FORMA_AGUA: u32 = 14u;          // la normal de las olas en color (×4: x → rojo, z → azul), sin luz
 const OPC_VISTA_FORMA_ANCHO = array<f32, 5>(8000.0, 16000.0, 160000.0, 1000.0, 2000.0);
 
 fn opc_vista_forma(v: u32) -> bool {

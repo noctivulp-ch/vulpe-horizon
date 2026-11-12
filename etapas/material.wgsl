@@ -148,6 +148,9 @@ fn agua(input: MaterialInput, p: AdpPunto, luces: AdpLuces) -> Surface {
     let medio = opc_agua_medio(oa.claridad);
     let dist = length(p.posicion);
     let n = agu_normal(p.mundo, p.normal_cara, dist, oa.olas, ruido2d, ruido2d_sampler);
+    if opc_depuracion().vista == OPC_VISTA_FORMA_AGUA {
+        return adp_material_salida(clamp(vec3<f32>(0.5 + 4.0 * n.x, 0.5, 0.5 + 4.0 * n.z), vec3<f32>(0.0), vec3<f32>(1.0)), 1.0, p);
+    }
     let v = p.vista;
     let cos_v = max(dot(n, v), 0.0);
     let ambiente = luces.cielo * luz_curva_cielo(p.luz_cielo) + vec3<f32>(OPC_LUZ_MINIMA * 2.0);

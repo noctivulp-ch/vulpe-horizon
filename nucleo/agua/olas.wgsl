@@ -18,31 +18,55 @@ fn agu_curva_crestas(x: f32) -> f32 {
     return mix(AGU_CURVA_CRESTAS[i], AGU_CURVA_CRESTAS[i + 1], f - f32(i));
 }
 
-// Oleaje en parches: ruido de muy baja frecuencia por la curva de crestas, con un mínimo (zonas movidas y en calma).
+// Parches de calma y mar picada (formas/agua.md §1): ruido «medio» con una onda cada ~90 bloques, fijo al mundo, por la
+// curva medida que lo aplasta hacia los extremos. Devuelve el nivel de parche 0..1. Porqué: docs/efectos/agua.md §«Forma (F-37)»
+const AGU_PARCHE_X = array<f32, 8>(0.0, 0.2, 0.35, 0.5, 0.65, 0.8, 0.95, 1.0);
+const AGU_PARCHE_Y = array<f32, 8>(0.0, 0.02, 0.15, 0.42, 0.71, 0.92, 1.0, 1.0);
+const AGU_PARCHE_MOSAICO: f32 = 200.0;      // bloques por mosaico del canal R (semiancho 20 px de 256 → onda ~90 bloques)
+
+fn agu_nivel_parche(xz: vec2<f32>, t: texture_2d<f32>, s: sampler) -> f32 {
+    let n = clamp(0.49 + (textureSampleLevel(t, s, xz / AGU_PARCHE_MOSAICO, 0.0).r - 0.49) * 1.54, 0.0, 1.0);
+    for (var k = 1; k < 8; k++) {
+        if n <= AGU_PARCHE_X[k] {
+            let f = (n - AGU_PARCHE_X[k - 1]) / (AGU_PARCHE_X[k] - AGU_PARCHE_X[k - 1]);
+            return mix(AGU_PARCHE_Y[k - 1], AGU_PARCHE_Y[k], f);
+        }
+    }
+    return 1.0;
+}
+
+// Amplitud del oleaje por el parche, con el mínimo de la calma (30 %).
 fn agu_parches(xz: vec2<f32>, minimo: f32, t: texture_2d<f32>, s: sampler) -> f32 {
-    let n = textureSampleLevel(t, s, xz / 1800.0, 0.0).r;
-    return max(agu_curva_crestas(n), minimo);
+    return max(agu_nivel_parche(xz, t, s), minimo);
+}
+
+// Las tres capas de olas (formas/agua.md §2): longitudes de onda 7,4 × 1,8, 1,8 × 7,4 y 5 bloques con el canal G
+// (16 celdas por mosaico: mosaico = 16 × onda), giradas 137,5° entre sí, deslizándose en bloques por segundo.
+const AGU_CAPAS_MOSAICO = array<vec2<f32>, 3>(vec2<f32>(118.0, 29.0), vec2<f32>(29.0, 118.0), vec2<f32>(80.0, 80.0));
+const AGU_CAPAS_VELOCIDAD = array<vec2<f32>, 3>(vec2<f32>(1.7, 0.4), vec2<f32>(0.4, 1.7), vec2<f32>(1.1, 1.1));
+const AGU_CAPAS_AMPLITUD = array<f32, 3>(0.12, 0.07, 0.035);
+const AGU_DESFASE_PARCHE: f32 = 4.0;        // bloques que se desplaza la lectura con el nivel de parche (costura)
+
+fn agu_capa(xz: vec2<f32>, k: i32, o: AguOlas, nivel: f32, t: texture_2d<f32>, s: sampler) -> f32 {
+    let q = (agu_rotar(xz, f32(k)) + AGU_CAPAS_VELOCIDAD[k] * o.tiempo + vec2<f32>(nivel * AGU_DESFASE_PARCHE)) / AGU_CAPAS_MOSAICO[k];
+    return textureSampleLevel(t, s, q, 0.0).g;
 }
 
 // Altura (bloques) en el punto horizontal `xz` del mundo; `octavas` 2 o 3.
 fn agu_altura(xz: vec2<f32>, o: AguOlas, octavas: i32, t: texture_2d<f32>, s: sampler) -> f32 {
-    // Escalas anisótropas en decenas de bloques (paridad/07 §a y subsistemas/07 §1):
-    // alargada en x, alargada en z, e isótropa.
-    let escalas = array<vec2<f32>, 3>(vec2<f32>(22.0, 9.0), vec2<f32>(7.0, 16.0), vec2<f32>(6.0, 6.0));
-    let viento = array<vec2<f32>, 3>(vec2<f32>(1.1, 0.4), vec2<f32>(-0.5, 0.9), vec2<f32>(0.7, -0.6));
-    let amplitud = array<f32, 3>(0.12, 0.07, 0.035);
+    let nivel = agu_nivel_parche(xz, t, s);
     var h = 0.0;
     for (var k = 0; k < octavas; k++) {
-        let q = agu_rotar(xz, f32(k)) / escalas[k] + viento[k] * o.tiempo * 0.02;
-        h += (textureSampleLevel(t, s, q, 0.0).g - 0.5) * amplitud[k];
+        h += (agu_capa(xz, k, o, nivel, t, s) - 0.5) * AGU_CAPAS_AMPLITUD[k];
     }
-    return h * o.fuerza * agu_parches(xz, o.calma, t, s);
+    return h * o.fuerza * max(nivel, o.calma);
 }
 
 // Normal de las olas en superficies horizontales y caras verticales/cascadas (fino/07 §1).
 fn agu_normal(mundo: vec3<f32>, normal_geom: vec3<f32>, distancia: f32, o: AguOlas, t: texture_2d<f32>, s: sampler) -> vec3<f32> {
-    let paso = clamp(distancia * 0.005, 0.08, 1.5);
-    let octavas = select(3, 2, distancia > 48.0);
+    // Distancia al vecino (formas/agua.md §3): 1 bloque en calma, 0,15 en picada, más distancia ÷ 384, hasta 3.
+    let paso = min(mix(1.0, 0.15, agu_nivel_parche(mundo.xz, t, s)) + distancia / 384.0, 3.0);
+    let octavas = select(3, 2, distancia > 128.0);
     let es_vertical = abs(normal_geom.y) < 0.75;
     if es_vertical {
         // Cascada / corriente vertical (fino/07 §1): flujo descendente y proyección lateral dominante
@@ -71,16 +95,16 @@ fn agu_normal(mundo: vec3<f32>, normal_geom: vec3<f32>, distancia: f32, o: AguOl
     return select(n, -n, normal_geom.y < 0.0);
 }
 
-// Cáusticas: las mismas octavas con el valor absoluto plegado (líneas finas) y concentración exponencial
-// en redes nítidas de luz proyectadas (fino/07 §4).
+// Cáusticas (formas/agua.md §4): las mismas tres capas, cada una plegada dos veces (líneas finas), promediadas y
+// concentradas; en calma manchas suaves, en picada una red de líneas brillantes.
 fn agu_causticas(xz: vec2<f32>, o: AguOlas, t: texture_2d<f32>, s: sampler) -> f32 {
+    let nivel = agu_nivel_parche(xz, t, s);
     var c = 0.0;
-    for (var k = 0; k < 2; k++) {
-        let q = agu_rotar(xz, f32(k)) / (18.0 + 10.0 * f32(k)) + vec2<f32>(0.8, -0.5) * o.tiempo * 0.02 * (1.0 + f32(k));
-        let n = textureSampleLevel(t, s, q, 0.0).g;
+    for (var k = 0; k < 3; k++) {
+        let n = agu_capa(xz, k, o, nivel, t, s);
         let linea = abs(abs(2.0 * n - 1.0) * 2.0 - 1.0);
         c += exp(-linea * 7.5 * o.agudeza);
     }
-    let red = pow(c * 1.5, 1.4) * 1.8;
-    return mix(1.0, red, agu_parches(xz, o.calma, t, s));
+    let red = pow(c, 1.4) * 1.8;
+    return mix(1.0, red, max(nivel, o.calma));
 }

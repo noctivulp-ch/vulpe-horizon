@@ -218,3 +218,22 @@ movimiento salían en modo aire (se probó y se descartó).
 
 **Visto:** subiendo de 57 a 62 y bajando a 52 en movimiento, catorce capturas seguidas con medias de 135–145 (antes saltaban
 entre 77 y 160), sin fotogramas sin agua.
+
+## Forma (F-37, 2026-11-12)
+
+Rehecha según `vulpe-horizon-spec/formas/agua.md` (estructura y escalas). Código: `nucleo/agua/olas.wgsl`.
+
+- **Parches** (§1): antes, el canal R a 1 800 bloques por mosaico (parches de ~450 bloques) por la curva de crestas.
+  Ahora, el canal R llevado al ruido «medio» (`0,49 + (R − 0,49)·1,54`) a 200 bloques por mosaico (onda de ~90
+  bloques: el semiancho de R es 20 px de 256 y el del original 14 px por 80 de onda), por la curva medida de nivel de
+  parche (0,2→0,02 … 0,95→1). Fijos al mundo.
+- **Olas** (§2): tres capas del canal G (16 celdas: mosaico = 16 × onda) de 7,4 × 1,8, 1,8 × 7,4 y 5 bloques (antes
+  ~1,4 × 0,6: cinco veces más cortas), giradas 137,5°, que se deslizan a (1,7; 0,4), (0,4; 1,7) y (1,1; 1,1) bloques
+  por segundo; la lectura se desplaza 4 bloques × nivel de parche (costura entre parches); amplitud × máx(nivel, 0,3).
+  Más allá de 128 bloques (antes 48), dos capas.
+- **Normal** (§3): vecino a `mix(1; 0,15; nivel) + distancia/384`, hasta 3 bloques (antes `0,005·distancia` entre 0,08
+  y 1,5): reflejo ancho en calma, destellos finos en picada y agua lejana lisa.
+- **Cáusticas** (§4): las mismas tres capas que las olas (antes dos capas propias), plegadas dos veces y promediadas;
+  contraste por el nivel de parche. La tabla de percentiles no se ha medido en el pack.
+- **Vista aislada**: `OPC_DEPURACION_VISTA_DEFECTO = 14` (normal ×4 en color, sin luz), escena
+  `pruebas/escenas/forma-agua.ctl`. Visto (2026-11-12): ondulaciones alargadas en dos direcciones cruzadas; lejos, lisa.

@@ -34,7 +34,7 @@ fn post(input: PostInput) -> vec4<f32> {
             }
             return adp_post_salida(p.color, 1.0);
         }
-        case OPC_VISTA_FORMA_NUBES_0, OPC_VISTA_FORMA_NUBES_1, OPC_VISTA_FORMA_NUBES_2, OPC_VISTA_CORTE_NUBES_0, OPC_VISTA_CORTE_NUBES_1: {
+        case OPC_VISTA_FORMA_NUBES_0, OPC_VISTA_FORMA_NUBES_1, OPC_VISTA_FORMA_NUBES_2, OPC_VISTA_CORTE_NUBES_0, OPC_VISTA_CORTE_NUBES_1, OPC_VISTA_FORMA_AGUA: {
             return adp_post_salida(col_lineal_a_srgb(clamp(p.color, vec3<f32>(0.0), vec3<f32>(1.0))), 1.0);
         }
         case OPC_VISTA_MOD_NATIVO: {
