@@ -36,3 +36,9 @@ fn adp_codificacion() -> ColCodificacion {
     }
     return ColCodificacion(e, OPC_BLANCO);
 }
+
+// Detector de cueva (23 §1), compartido por la niebla de cueva y la de borde: sin luz de cielo en la cámara (menos del
+// 1 %), con el suavizado de Horizon (vida media de 2 s). El «ánimo de cueva» de vanilla no está en `Frame`.
+fn adp_detector_cueva() -> f32 {
+    return 1.0 - smoothstep(OPC_CUEVA_DETECTOR.x, OPC_CUEVA_DETECTOR.y, frame.eye_light_smooth.y);
+}

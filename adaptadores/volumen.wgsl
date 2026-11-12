@@ -200,19 +200,26 @@ fn adp_volumen_reescalado(pixel: vec2<f32>, distancia: f32) -> VolResultado {
 
 // Cámara dentro de lava o de nieve en polvo (05 §«Cámara dentro de lava…»): niebla exponencial por distancia sobre todo,
 // como la de vanilla que el pack apaga. Porqué: docs/efectos/niebla-y-nubes.md §Lava y nieve en polvo
+// Niebla de inmersión y de efectos (23 §3): lava, nieve en polvo, ceguera y oscuridad. Sustituye al color con el color de
+// niebla de vanilla (en lineal y en la escala de la escena), con la fracción del fin de la niebla de vanilla
+// (`smoothstep`, tabla de 23 con error < 0,04); la oscuridad lleva la densidad a 1 con el doble de su pulso.
+// Porqué: docs/efectos/niebla-y-nubes.md §«Nieblas analíticas» (F-29)
 fn adp_niebla_inmersion(color: vec3<f32>, distancia: f32) -> vec3<f32> {
-    let lava = max(frame.in_lava, select(0.0, 1.0, frame.eye_in == 2u));
-    let nieve = select(0.0, 1.0, frame.eye_in == 3u);
-    if lava <= 0.0 && nieve <= 0.0 {
+    let medio = frame.eye_in == 2u || frame.eye_in == 3u || frame.in_lava > 0.5;
+    let efecto = max(frame.blindness, frame.darkness);
+    if !medio && efecto <= 0.0 {
         return color;
     }
-    let e = adp_codificacion().exposicion;
-    // Colores en la escala de la escena: la lava, brillante (como su emisión); la nieve, la luz que entra.
-    let c_lava = vec3<f32>(1.0, 0.35, 0.08) * 1.5 / e;
-    let c_nieve = vec3<f32>(0.8, 0.88, 1.0) * 0.8 / e;
-    var c = mix(color, c_nieve, (1.0 - exp(-distancia / 1.2)) * nieve);
-    c = mix(c, c_lava, (1.0 - exp(-distancia / 0.5)) * lava);
-    return c;
+    // `frame.fog_end` de Horizon no es el de la lava ni el de la nieve en polvo (medido: más de 4 bloques dentro de la
+    // lava): se acota con los de vanilla de cada medio y, con ceguera, hacia el de la ceguera.
+    var fin = frame.fog_end;
+    fin = select(fin, min(fin, OPC_INMERSION_FIN.x), frame.eye_in == 2u || frame.in_lava > 0.5);
+    fin = select(fin, min(fin, OPC_INMERSION_FIN.y), frame.eye_in == 3u);
+    fin = mix(fin, min(fin, OPC_INMERSION_FIN.z), frame.blindness);
+    var d = smoothstep(0.0, 1.0, distancia / max(fin, 0.1));
+    d = mix(d, 1.0, clamp(2.0 * frame.darkness, 0.0, 1.0));
+    let niebla = col_srgb_a_lineal(frame.fog_color) / adp_codificacion().exposicion;
+    return mix(color, niebla, d);
 }
 
 // Niebla de cueva (05.3): añade una niebla tenue azul oscura que crece con la distancia.
@@ -221,11 +228,9 @@ fn adp_niebla_cueva(color: vec3<f32>, p: AdpPixel, dir: vec3<f32>) -> vec3<f32> 
     if p.es_cielo || !adp_es_superficie() || frame.in_water > 0.0 || frame.in_lava > 0.0 || frame.eye_in != 0u {
         return color;
     }
-    let o = opc_niebla_cueva();
-    let cueva = 1.0 - smoothstep(0.05, 0.35, frame.eye_light_smooth.y);
-    let d = adp_post_distancia(p);
-    return color + vol_niebla_cueva(d, dir.y, cueva, o);
+    return color + vol_niebla_cueva(adp_post_distancia(p), frame.render_distance, dir.y, adp_detector_cueva(), opc_niebla_cueva());
 }
+
 
 // Transmitancia para componer la escena: con la cámara bajo el agua, por canal (Beer-Lambert con la absorción del
 // agua a lo largo de la vista, la misma del raymarch del agua): el rojo se pierde antes que el verde y el azul (07.1).

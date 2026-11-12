@@ -135,16 +135,6 @@ fn adp_bloom_final(color: vec3<f32>, uv: vec2<f32>, o: OpcImagen) -> vec3<f32> {
     return mix(color, mix(ancho, nucleo, OPC_BLOOM_NIEBLA_NUCLEO), niebla) + b * o.bloom * vineta * borde;
 }
 
-// Ceguera y oscuridad del Warden: Horizon las aplica a su niebla, que el pack apaga; se oscurece con la
-// distancia hasta negro a pocos bloques.
-fn adp_estado_jugador(color: vec3<f32>, distancia: f32) -> vec3<f32> {
-    let efecto = max(frame.blindness, frame.darkness);
-    if efecto <= 0.0 {
-        return color;
-    }
-    let alcance = mix(64.0, 4.0, efecto);
-    return color * exp(-distancia / alcance * 2.0) * mix(1.0, 0.6, frame.darkness);
-}
 
 // Gotas en la cámara al salir del agua (07.2). Porqué: docs/efectos/agua.md §Gotas en la cámara
 fn adp_gotas_camara(uv: vec2<f32>) -> ImgGotasResultado {

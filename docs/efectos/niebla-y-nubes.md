@@ -459,3 +459,24 @@ Dos causas y dos arreglos:
 
 **Visto** (`cielo-dia` ampliado, aislamiento a 0): las motas del borde casi desaparecen y queda un borde suave. Pendiente
 (lote 2, formas): el ruido fino de erosión no es anisótropo como pide `formas/nubes.md` §5 (25 × 6 bloques).
+
+## Nieblas analíticas (F-29, 2026-11-12, subsistema 23)
+
+- **Orden de la composición** (23): borde, **cueva**, volumen, inmersión. La de cueva iba después del volumen.
+- **Detector de cueva** (`adp_detector_cueva`, en `adaptadores/marco.wgsl`): sin luz de cielo en la cámara (suavizada
+  por Horizon, 0,005–0,03, `OPC_CUEVA_DETECTOR`); lo comparten la niebla de cueva y la de borde. El «ánimo de cueva» de
+  vanilla no está en `Frame`.
+- **Niebla de cueva:** con la fracción de la distancia de renderizado, cuadrática con la caída 1, y con la vista
+  `e^(−3,4·(1 + y))` (1 mirando a una sima, 0,031 al frente, 0,002 al techo), tablas de 23 §1. Antes, exponencial con
+  32 bloques y casi igual al frente que abajo.
+- **Niebla de borde:** `smoothstep(0,67; 1)` de la distancia horizontal entre la de renderizado y, con la vista, total al
+  frente y abajo y nula hacia 15° arriba (`e^(−(y/0,079)²)`). Antes también se apagaba mirando abajo. Por `1 − detector`.
+- **Inmersión y efectos:** lava, nieve en polvo, **ceguera y oscuridad**, con el color de niebla de vanilla
+  (`frame.fog_color` en lineal), mezclado con `smoothstep` de la fracción del fin de la niebla; la oscuridad lleva la
+  densidad a 1 con el doble de su pulso. **Medido:** dentro de la lava `frame.fog_end` de Horizon pasa de 4 bloques (no
+  es el de la lava), así que se acota con los de vanilla: 1 bloque en lava, 2 en nieve en polvo y 5 con ceguera
+  (`OPC_INMERSION_FIN`). Sale de la pasada final la ceguera propia que había (oscurecer con la distancia).
+
+**Visto** (`pruebas/escenas/nieblas-analiticas.ctl`, aislamiento a 0): en la lava, todo rojo a un bloque; en la nieve en
+polvo, velo azul grisáceo; con ceguera y oscuridad, negro (el color de vanilla); en campo abierto, el borde se funde con el
+cielo y no hay velo mirando 15° arriba. **Sin ver:** la niebla de cueva mirando a una sima.

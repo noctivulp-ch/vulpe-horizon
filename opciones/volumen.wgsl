@@ -205,3 +205,5 @@ const OPC_LOCAL_FRIO_COLOR: vec3<f32> = vec3<f32>(2.0, 3.0, 5.0);
 const OPC_LOCAL_BIOMA_UNIF = array<f32, 3>(0.01, 0.01, 0.07);
 const OPC_LOCAL_BIOMA_MANCHAS = array<f32, 3>(0.05, 0.0, 0.0);
 const OPC_LOCAL_BIOMA_COLOR = array<vec3<f32>, 3>(vec3<f32>(0.9, 1.0, 0.3), vec3<f32>(0.5, 1.0, 0.8), vec3<f32>(0.18, 0.2, 0.16));
+const OPC_CUEVA_DETECTOR: vec2<f32> = vec2<f32>(0.005, 0.03); // luz de cielo suavizada de la cámara: cueva del todo .. nada (23 §1)
+const OPC_INMERSION_FIN: vec3<f32> = vec3<f32>(1.0, 2.0, 5.0); // fin de la niebla de vanilla: lava, nieve en polvo, ceguera (bloques)

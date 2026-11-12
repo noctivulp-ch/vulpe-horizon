@@ -34,7 +34,7 @@ fn adp_post_borde(p: AdpPixel, dir: vec3<f32>) -> vec4<f32> {
         return vec4<f32>(0.0);
     }
     let pos = view_position(p.uv, p.profundidad);
-    let fuera = smoothstep(0.1, 0.7, frame.eye_light_smooth.y);
+    let fuera = 1.0 - adp_detector_cueva();
     let peso = vol_borde(length(pos.xz), frame.render_distance, dir.y, fuera);
     let c = opc_cielo();
     let horizonte = adp_tabla(frame.sun_direction.y, ATM_FILA_HORIZONTE) * c.sol_color * c.brillo;
