@@ -39,3 +39,27 @@ alfa de la niebla se toma de la muestra central de la nitidez en lugar de leerlo
 Escena `pruebas/escenas/camara-juego.ctl`: al salir del agua (con `tp`, rapidez máxima) las gotas deforman media
 pantalla a 0,3 s, quedan pocas a 1,5 s y ninguna a 3,5 s; la onda de entrada es suave; en lava la imagen ondula
 abajo y queda quieta arriba.
+
+## Ajustes de cámara (apagados por defecto)
+
+Constantes en `opciones/imagen.wgsl` (`OPC_CAM_*`), funciones puras en `nucleo/imagen/camara.wgsl`, aplicación en
+`adp_desenfoque_movimiento` y `adp_camara_final` (`adaptadores/imagen.wgsl`). Cada uno va tras un `if` sobre su
+constante: en 0 el compilador lo quita.
+
+- **Zoom** (`OPC_CAM_ZOOM`, 0..1 → ×1..×4): lo primero, antes del agua y el calor.
+- **Desenfoque de movimiento**: la opción del menú `desenfoque_movimiento` ya existía y no hacía nada. Reproyección del
+  píxel con la profundidad (`view_position`) y `previous_view_projection` + `camera_motion` (el cielo, a 10 000
+  bloques); desplazamiento normalizado a un fotograma de 60 Hz y comprimido `v/(1+4|v|)`; tres muestras más con
+  tramado de ruido azul (la cuarta es la central de la nitidez). La mano (más cerca de 0,6 bloques) no se desenfoca.
+  Solo mueve la cámara: las entidades que se mueven solas no (Horizon no da vectores de movimiento).
+- **Viñeta** (`OPC_CAM_VINETA`): `1 − f·smoothstep(0,5; 1; r)²`, con r 1 en las esquinas; el tramado final evita bandas.
+- **Grano** (`OPC_CAM_GRANO`): ruido blanco por canal (hash por píxel y fotograma, ciclo de 60), × brillo, tras el
+  tonemap.
+- **Bandas de cine** (`OPC_CAM_BANDAS_ALTO` / `_ANCHO`): fracción de pantalla.
+- **Líneas de encuadre** (`OPC_CAM_TERCIOS`): regla de tercios de un píxel.
+- **No hechos**: la **aberración cromática** (dos lecturas más; cabe, pero se dejó para no cargar la final sin
+  pedirlo) y la **profundidad de campo** (la última de la lista; necesita su propia pasada: hay 7 de 8). El modo de
+  captura de la profundidad de campo queda fuera (Horizon no tiene jitter).
+
+Comprobado en Horizon (2026-11-12) con todo encendido a mano (`pruebas/escenas/camara-ajustes.ctl`): bandas, viñeta,
+grano y zoom visibles; con la cámara quieta el desenfoque no cambia nada. Devueltos a 0 antes del commit.

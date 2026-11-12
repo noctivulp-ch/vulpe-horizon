@@ -141,3 +141,50 @@ fn adp_cruce_codificar(t: f32, salida: bool, rapidez: f32) -> f32 {
 }
 
 
+
+// Desenfoque de movimiento (19, opción `desenfoque_movimiento`): tres muestras más a lo largo del desplazamiento del
+// píxel (reproyección por profundidad con la vista anterior), con tramado; la mano no se desenfoca.
+// Porqué: docs/efectos/camara-y-juego.md §«Ajustes de cámara»
+fn adp_desenfoque_movimiento(c: vec3<f32>, uv: vec2<f32>, p: AdpPixel) -> vec3<f32> {
+    if desenfoque_movimiento <= 0 || frame.delta_time <= 0.0 {
+        return c;
+    }
+    var rel = vec3<f32>(0.0);
+    if p.es_cielo {
+        rel = adp_post_direccion(p) * 1e4;
+    } else {
+        rel = view_position(p.uv, p.profundidad);
+        if length(rel) < OPC_CAM_MANO {
+            return c;
+        }
+    }
+    let ndc = mat_proyectar(frame.previous_view_projection, rel + frame.camera_motion).xy;
+    let antes = vec2<f32>(ndc.x * 0.5 + 0.5, 0.5 - ndc.y * 0.5);
+    let v = img_movimiento(uv, antes, frame.delta_time, f32(desenfoque_movimiento) / 100.0);
+    let j = adp_ruido_azul(p.pixel, 3u);
+    var suma = c;
+    for (var i = 1; i <= 3; i++) {
+        suma += textureSampleLevel(previous, linear_sampler, uv - v * ((f32(i) - 1.0 + j) / 3.0), 0.0).rgb;
+    }
+    return suma * 0.25;
+}
+
+// Viñeta, grano, bandas de cine y líneas de encuadre (19), sobre la imagen sRGB. Todos en 0: no hace nada.
+fn adp_camara_final(c: vec3<f32>, p: AdpPixel) -> vec3<f32> {
+    var s = c;
+    if OPC_CAM_VINETA > 0.0 {
+        s *= img_vineta(p.uv, frame.resolution.x / frame.resolution.y, OPC_CAM_VINETA);
+    }
+    if OPC_CAM_GRANO > 0.0 {
+        // Ruido blanco por canal, distinto en cada fotograma con un ciclo de 60.
+        let r = rui_hash33(vec3<i32>(vec2<i32>(p.pixel), i32(frame.frame_index % 60u)));
+        s = img_grano(s, r, OPC_CAM_GRANO);
+    }
+    if OPC_CAM_BANDAS_ALTO > 0.0 || OPC_CAM_BANDAS_ANCHO > 0.0 {
+        s *= img_bandas(p.uv, OPC_CAM_BANDAS_ALTO, OPC_CAM_BANDAS_ANCHO);
+    }
+    if OPC_CAM_TERCIOS {
+        s = mix(s, vec3<f32>(1.0), 0.5 * img_tercios(p.pixel, frame.resolution));
+    }
+    return s;
+}

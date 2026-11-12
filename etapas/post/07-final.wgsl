@@ -41,10 +41,15 @@ fn post(input: PostInput) -> vec4<f32> {
     }
     let o = opc_imagen();
     // Efectos de cámara de juego (19): agua al cruzar la superficie y calor, deformando las coordenadas.
-    let gotas = adp_gotas_camara(p.uv);
-    let uv = adp_calor(gotas.uv);
+    // Orden (19): zoom, agua, calor; con esas coordenadas, la imagen y el desenfoque de movimiento.
+    var uv = p.uv;
+    if OPC_CAM_ZOOM > 0.0 {
+        uv = img_zoom(uv, OPC_CAM_ZOOM);
+    }
+    let gotas = adp_gotas_camara(uv);
+    uv = adp_calor(gotas.uv);
     let c4 = img_nitidez(previous, linear_sampler, uv, nitidez);
-    var c = c4.rgb * (1.0 - gotas.borde * 0.3);
+    var c = adp_desenfoque_movimiento(c4.rgb, uv, p) * (1.0 - gotas.borde * 0.3);
     c = adp_bloom_final(c, c4.a, uv, o);
     let e = adp_exposicion(o);
     c *= e.exposicion * OPC_TONEMAP_EXPOSICION[min(o.tonemap, 2u)];
@@ -59,6 +64,7 @@ fn post(input: PostInput) -> vec4<f32> {
     if aislamiento_rango > 0 {
         salida = img_aislar(salida, p.uv, previous, linear_sampler, opc_aislamiento(e.exposicion));
     }
+    salida = adp_camara_final(salida, p);
     if o.tramado {
         // Tramado triangular de ±1 nivel con dos ruidos azules.
         let t = adp_ruido_azul(p.pixel, 1u) + adp_ruido_azul(p.pixel, 2u) - 1.0;

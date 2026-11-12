@@ -77,3 +77,13 @@ fn opc_imagen() -> OpcImagen {
         bloom_fuerza * OPC_BLOOM,
     );
 }
+
+// Ajustes de cámara (19), apagados: constantes sin opción de menú (64/64). En 0 su código no se ejecuta.
+// Porqué: docs/efectos/camara-y-juego.md §«Ajustes de cámara»
+const OPC_CAM_ZOOM: f32 = 0.0;              // zoom de píxeles (0..1)
+const OPC_CAM_VINETA: f32 = 0.0;            // viñeta (0..1)
+const OPC_CAM_GRANO: f32 = 0.0;             // grano (0..1)
+const OPC_CAM_BANDAS_ALTO: f32 = 0.0;       // bandas de cine arriba y abajo (fracción de pantalla, 0..1)
+const OPC_CAM_BANDAS_ANCHO: f32 = 0.0;      // bandas de cine a los lados (0..1)
+const OPC_CAM_TERCIOS: bool = false;        // líneas de encuadre (regla de tercios)
+const OPC_CAM_MANO: f32 = 0.6;              // bloques: más cerca es la mano, que no se desenfoca
