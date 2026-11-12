@@ -302,3 +302,22 @@ Constantes `OPC_CUBIERTO_*` en `opciones/tiempo.wgsl`. **Todo a ojo de dos panel
 nubes medido a mediodía del día 0 y con lluvia).
 
 **Visto:** caras inferiores gris oscuro con el ladrillo visible, como el original; niebla de lluvia gris azulada.
+
+## Repaso contra los esqueletos de `implementacion/` (F-24, 2026-11-11)
+
+Diferencias claras con `implementacion/01` (superficie) y `02` (volumen), corregidas:
+- **Recorte de las luces de vanilla** (01 §0): a la luz de cielo y de bloque se le resta 0,05 y se reescala
+  (`luz_recorte_vanilla`), antes de todo lo demás.
+- **Lambert con margen** (01 §1.2): cero por debajo de un coseno de 0,06 y lineal hasta 1 (antes empezaba en −0,05).
+- **Orientación de la luz de cielo** (01 §3.3): con luz de cielo 1, una cara vertical recibe 0,36 y desde −0,5 hacia abajo
+  0,08 (antes bajaba en línea recta hasta −1 y a −0,5 daba 0,22).
+- **Fugas** (01 §1.5): la luz directa por `min(luz de cielo de la cámara + la del punto, 1)²`, salvo bajo el agua (antes
+  `clamp(apertura²·4)`).
+- **Transmitancia del aire** (02 §4): la media de los tres canales, no la luminancia.
+- **Ambiente de la niebla y del aire** (02 §3b): el del cielo **despejado** de la tabla por la luz de cielo suavizada de la
+  cámara (bajo techo se apaga); el ambiente con nubes de F-16 queda solo para las superficies.
+
+Las que no son claras van en `TODO.md` (orden de la nitidez, tope de la oclusión, alcance del rayo de la niebla, volumen
+doble a través de translúcidos, pirámide del bloom).
+
+**Visto** (`banco-f.ctl`, aislamiento a 0): sin cambios grandes; la noche mirando al horizonte, algo más oscura.

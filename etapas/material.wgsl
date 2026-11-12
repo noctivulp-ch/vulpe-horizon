@@ -48,7 +48,9 @@ fn material(input: MaterialInput) -> Surface {
         directa = mix(sss_directo, albedo, clamp(difusa * col_luminancia(sombra.luz), 0.0, 1.0));
     }
     // Prevención de fugas solares y SSS en cuevas (fino/03 §4). Porqué: docs/efectos/luz-de-superficie.md §Cuevas
-    let proteccion_cueva = clamp(apertura * apertura * 4.0, 0.0, 1.0);
+    // Fugas (implementacion/01 §1.5): el cuadrado de «luz de cielo de la cámara + del punto», recortado a 1.
+    let suma_cielo = min(cielo_camara + p.luz_cielo, 1.0);
+    let proteccion_cueva = select(suma_cielo * suma_cielo, 1.0, frame.in_water > 0.5);
     directa *= directa_luz * proteccion_cueva;
 
     // Ambiente: cielo modulado por norma L1 (Overworld) o hemisférico (Nether/End) × curva de cielo.

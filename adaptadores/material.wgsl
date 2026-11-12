@@ -74,8 +74,9 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
     p.posicion = input.position;
     p.mundo = input.position + frame.camera_position;
     p.vista = normalize(-input.position);
-    p.luz_bloque = input.light.x;
-    p.luz_cielo = input.light.y;
+    // Recorte de las luces de vanilla, lo primero (implementacion/01 §0): −0,05 y reescala; «casi nada» pasa a cero.
+    p.luz_bloque = luz_recorte_vanilla(input.light.x);
+    p.luz_cielo = luz_recorte_vanilla(input.light.y);
     p.emision_bloque = input.emission;
     p.translucido = input.translucent;
     p.fluido = input.fluid;

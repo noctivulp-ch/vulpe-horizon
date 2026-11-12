@@ -110,7 +110,8 @@ fn vol_tramo_niebla(r: ptr<function, VolResultado>, t0: f32, t1: f32, rayo: VolR
         let fase_cenital = vol_fase_cenital(rayo.dir.y) * OPC_NIEBLA_AMBIENTE_BASE;
         let fuente_niebla = niebla * (sol * vol_fase_niebla(cos_luz, niebla)
                           + luz.cielo * a.niebla.ambiente * fase_cenital);
-        let sigma = (col_luminancia(aire.rayleigh) + aire.mie * 1.1) + niebla;
+        // La transmitancia cuenta la media de los tres canales del aire (implementacion/02 §4): tiñe lo que suma, oscurece en gris.
+        let sigma = (dot(aire.rayleigh, vec3<f32>(1.0 / 3.0)) + aire.mie * 1.1) + niebla;
         vol_tramo(r, fuente_aire + fuente_niebla, sigma, paso);
     }
 }

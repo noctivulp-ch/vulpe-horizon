@@ -18,3 +18,8 @@ fn luz_curva_bloque(l: f32) -> f32 {
     let i = min(i32(f), 14);
     return mix(LUZ_TABLA_BLOQUE[i], LUZ_TABLA_BLOQUE[i + 1], f - f32(i));
 }
+
+// Recorte de una luz de vanilla (0..1): resta 0,05 y reescala para que 1 siga siendo 1 (implementacion/01 §0).
+fn luz_recorte_vanilla(l: f32) -> f32 {
+    return clamp((l - 0.05) / 0.95, 0.0, 1.0);
+}

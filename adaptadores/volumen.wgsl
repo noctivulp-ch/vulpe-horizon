@@ -24,8 +24,10 @@ fn adp_volumen_rayo(uv: vec2<f32>, pixel: vec2<f32>) -> VolRayo {
 
 fn adp_volumen_luz() -> VolLuz {
     let c = opc_cielo();
-    // El ambiente de superficie medido (paridad/01): la niebla toma 3/4 y el aire la mitad (fino/05 P2–P3), en el núcleo.
-    let cielo = adp_ambiente_cielo();
+    // El ambiente de la niebla y del aire es el del cielo despejado (implementacion/02 §3b), por la luz de cielo suavizada
+    // de la cámara (bajo techo se apaga); la niebla toma 3/4 y el aire la mitad (fino/05 P2–P3), en el núcleo.
+    let elev = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
+    let cielo = atm_ambiente_cielo(elev) * frame.eye_light_smooth.y;
     return VolLuz(frame.light_direction, adp_irradiancia_astro(c), cielo, adp_suelo(c) * OPC_LUZ_CIELO_BASE);
 }
 
