@@ -24,7 +24,8 @@ fn cie_fractal_t(inst: CieFractalInstancia, punto: CieFractalPunto, a: CieFracta
     var p = punto.q * 6.0 / inst.escala;
     let cg = cos(inst.giro);
     let sg = sin(inst.giro);
-    p = vec2<f32>(cg * p.x - sg * p.y, sg * p.x + cg * p.y);
+    // Giro propio en sentido horario para ángulos positivos (fino/02 §3).
+    p = vec2<f32>(cg * p.x + sg * p.y, -sg * p.x + cg * p.y);
     // Mutación: el parámetro da una vuelta pequeña con el día del mundo.
     let ang = a.sorteo.dia * MAT_TAU * 0.35;
     let paso = select(0.01, 0.02 * inst.zoom, inst.es_zoom);
@@ -33,11 +34,11 @@ fn cie_fractal_t(inst: CieFractalInstancia, punto: CieFractalPunto, a: CieFracta
     return cie_tiempo_de_escape(p, CieConjunto(c, inst.es_zoom, inst.zoom, iteraciones, a.dibujo));
 }
 
-// Máscara de silueta de la instancia (la de la aurora, 06): `smoothstep(0,03; 0,30; t)` × caída ancha × lejos
-// del polo.
+// Máscara de silueta de la instancia (la de la aurora, 06): `smoothstep(0,03; 0,30; t)` × caída **estrecha** (el
+// exponente ×4 del de la caída ancha del relleno: la mitad de radio, fino/02 §4) × lejos del polo.
 fn cie_fractal_silueta(inst: CieFractalInstancia, punto: CieFractalPunto, a: CieFractalAjustes) -> f32 {
     let t = cie_fractal_t(inst, punto, a);
-    return smoothstep(0.03, 0.30, t) * exp2(-punto.q2 / inst.alcance) * punto.lejos_del_polo;
+    return smoothstep(0.03, 0.30, t) * exp2(-punto.q2 * 4.0 / inst.alcance) * punto.lejos_del_polo;
 }
 
 // Aporte de una instancia (relleno «Original»): t² · caída ancha · ganancia, con el tono de la paleta.

@@ -31,7 +31,8 @@ fn sky(input: SkyInput) -> vec4<f32> {
     // niebla de borde (05). Así el terreno que acaba antes del horizonte se funde con lo que hay detrás a
     // cualquier altura de la cámara.
     let suelo = cie_peso_bruma_horizonte(dir.y);
-    var cielo = atm.luz * mix(0.8, 1.0, suelo) + fondo * atm.transmitancia * cie_factor_suelo(dir.y, 0.03);
+    // El fondo (estrellas y fractal) no se multiplica por la transmitancia del rayo de vista (fino/02 §5).
+    var cielo = atm.luz * mix(0.8, 1.0, suelo) + fondo * cie_factor_suelo(dir.y, 0.03);
     cielo = mix(cie_color_bajo_horizonte(adp_cielo_medio(ajustes), adp_suelo(ajustes), 0.35), cielo, suelo);
     cielo = col_saturar(cielo, OPC_CIELO_SATURACION) * OPC_CIELO_BRILLO_DIBUJO;
 

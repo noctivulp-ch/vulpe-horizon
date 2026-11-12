@@ -147,3 +147,27 @@ la captura, **coinciden los 60 valores** (p. ej., semilla 8, día 0: k = 1 → 0
 
 **Visto:** `hoja-fractal-sorteo.png` (cenit de noche con campo de 110°, semilla 8, día 0, sin mod): repartos distintos con
 «Como el original» y con «Estable».
+
+## Repaso contra `fino/02` (F-25, 2026-11-11, «La noche de Vulpe»)
+
+Cinco diferencias, corregidas:
+1. **Cuenta de escape** (§1): el dibujo «Original» cuenta los pasos ejecutados, **incluido** el que escapa (`n + 1`). Con
+   `n` el anillo exterior salía a 0 y las figuras más recortadas.
+2. **Orden de la paleta** (§2): primero el desfase de la instancia (cíclico), después la curva de contraste. Estaba al revés.
+3. **Sentido de las rotaciones** (§3): la colocación es «acimut alrededor del eje vertical, luego cenit alrededor del eje
+   este-oeste» con los sentidos de la especificación; el centro de la instancia cae en
+   (−sen cenit · sen acimut, cos cenit, −sen cenit · cos acimut). Nuestro giro de acimut iba al revés: las figuras salían
+   reflejadas este-oeste (el gestor las veía a la derecha mirando al cenit y en el original están a la izquierda). El giro
+   propio en el plano va en sentido horario para ángulos positivos (iba antihorario).
+4. **Silueta de la aurora** (§4): la caída de la silueta (la que lee el mapa de la aurora, 06) es la gaussiana con el
+   exponente ×4 (la mitad de radio). Usaba la ancha del relleno.
+5. **Fondo sin transmitancia** (§5): las estrellas y el fractal se suman al cielo sin multiplicarse por la transmitancia del
+   rayo de vista (salían más oscuros y rojizos cerca del horizonte).
+
+Revisado y ya bien: modo automático y su sorteo (02.1), repartidor de Fibonacci, mutación (`c + (cos a, sin a)·mut·s`), hueco
+de los astros (`1 − |cos|^(8000/HUECO)`), seis paletas y techo de Reinhard. **Marea, líneas de contorno, girar con las
+estrellas y modo manual:** fuera de alcance por la propia especificación (apagados por defecto en Vulpe); el relleno
+«Salpicadura» y el dibujo «Suave» con ciclos de Brent (§6, prioridad baja) quedan pendientes.
+
+**Visto** (`banco-f.ctl`, `noche-fractal`, aislamiento a 0): el fractal ámbar cae ahora a la izquierda del encuadre, como en
+el panel del original; sale más brillante que el original (no se afina en este encargo).

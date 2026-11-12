@@ -44,7 +44,8 @@ fn cie_tiempo_de_escape(p: vec2<f32>, k: CieConjunto) -> f32 {
         z = cie_complejo_cuadrado(z) + c;
         let m2 = dot(z, z);
         if m2 > radio2 {
-            var cuenta = f32(n);
+            // Original: los pasos ejecutados, incluido el que escapa (fino/02 §1): nunca 0 para un punto que escapa.
+            var cuenta = f32(n + 1);
             if suave {
                 cuenta = f32(n) + 1.0 - log2(log2(m2) * 0.5);
             }

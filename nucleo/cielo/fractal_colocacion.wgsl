@@ -77,9 +77,12 @@ fn cie_fractal_instancia(i: i32, s: f32, n: i32, a: CieFractalSorteo) -> CieFrac
     // Sitio: espiral de Fibonacci de área igual sobre el hemisferio, del cenit hacia el horizonte.
     let cenital = acos(1.0 - (f32(i) + 0.5) / f32(n) * 0.82);
     let azimut = f32(i) * 2.39996 + cie_fractal_azar(s, 2.0, a.como_original) * MAT_TAU;
-    let ry = mat3x3<f32>(cos(azimut), 0.0, -sin(azimut), 0.0, 1.0, 0.0, sin(azimut), 0.0, cos(azimut));
+    // De la vista al plano local: primero el giro de acimut alrededor del eje vertical, luego el de cenit alrededor del
+    // eje este-oeste, con los sentidos de fino/02 §3 (el centro de la instancia cae en
+    // (−sen cenit · sen acimut, cos cenit, −sen cenit · cos acimut)). `colocacion` es la traspuesta.
+    let ry = mat3x3<f32>(cos(azimut), 0.0, sin(azimut), 0.0, 1.0, 0.0, -sin(azimut), 0.0, cos(azimut));
     let rx = mat3x3<f32>(1.0, 0.0, 0.0, 0.0, cos(cenital), sin(cenital), 0.0, -sin(cenital), cos(cenital));
-    inst.colocacion = ry * rx;
+    inst.colocacion = transpose(rx * ry);
 
     // Forma: ángulo áureo sobre el borde del cardioide (pares) o del bulbo de periodo 2 (impares).
     let th = fract(cie_fractal_azar(s, 3.0, a.como_original) + f32(i) * 0.6180339887) * MAT_TAU;

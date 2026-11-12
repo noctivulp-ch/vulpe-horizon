@@ -21,8 +21,9 @@ fn cie_coseno(t: f32, a: vec3<f32>, b: vec3<f32>, c: vec3<f32>, d: vec3<f32>) ->
 }
 
 fn cie_paleta(t_entrada: f32, desfase: f32, p: CiePaleta) -> vec3<f32> {
-    var t = pow(clamp(t_entrada, 0.0, 1.0), p.contraste);
-    t = fract(t + desfase);
+    // Primero el desfase de la instancia, cíclico; después la curva de contraste (fino/02 §2).
+    var t = fract(clamp(t_entrada, 0.0, 1.0) + desfase);
+    t = pow(t, p.contraste);
     switch p.estilo {
         case CIE_PALETA_MONOCROMO: { return vec3<f32>(t); }
         case CIE_PALETA_CIELO, CIE_PALETA_CIELO_INVERTIDO: {
