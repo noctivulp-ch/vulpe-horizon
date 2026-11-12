@@ -72,10 +72,11 @@ fn vol_fase_aire_mie(c: f32) -> f32 {
     return vol_hg(c, 0.9) * 0.5 + vol_hg(c, 0.55) * 5.0 + vol_hg(c, 0.3) * 1.0;
 }
 
-// Fase cenital del ambiente de la niebla (fino/05 §2 y su tabla medida: 0,5 en el nadir, 1,97 a −30°, 2,46 en el
-// horizonte, 2,5 hacia arriba): `2,5 − 2·max(−y, 0)²` pasa por los cinco puntos con error < 0,04.
-// Porqué: docs/efectos/niebla-y-nubes.md §Ambiente de la niebla (F-3)
+// Fase cenital del ambiente de la niebla (fino/05, tabla corregida por el gestor el 2026-11-11: 0,5 en el nadir, 0,53 a
+// −30°, 0,97 en el horizonte, 1,95 a +30°, 2,5 en el cenit): `0,5 + 2·smoothstep(t)²` con t = (y + 1)/2 pasa por los
+// cinco puntos con error < 0,03. F-3 usaba la tabla mala (2,46 en el horizonte).
+// Porqué: docs/efectos/niebla-y-nubes.md §«Fase de cielo corregida» (F-22)
 fn vol_fase_cenital(dir_y: f32) -> f32 {
-    let abajo = max(-dir_y, 0.0);
-    return 2.5 - 2.0 * abajo * abajo;
+    let t = smoothstep(0.0, 1.0, clamp(dir_y * 0.5 + 0.5, 0.0, 1.0));
+    return 0.5 + 2.0 * t * t;
 }

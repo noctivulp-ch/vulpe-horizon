@@ -1,6 +1,7 @@
 # Comprobación rápida de los cambios F-1..F-10 en las escenas del banco (hora, mirada), sin medir píxeles.
 close
 command weather clear
+command gamerule advance_time false
 command tp @s 170.5 77 166.5
 time 6000
 sleep 2
@@ -38,3 +39,4 @@ look 0 0
 sleep 1
 screenshot f-lluvia-dia
 command weather clear
+command gamerule advance_time false

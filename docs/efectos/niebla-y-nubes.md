@@ -429,3 +429,13 @@ sobre fondo oscuro); el resto del banco, sin cambios a la vista.
 
 **Visto** (`banco-f.ctl`, aislamiento a 0): `lluvia-dia` con niebla más ligera y el suelo en sombra de nubes; el resto sin
 cambio a la vista.
+
+## Fase de cielo corregida (F-22, 2026-11-11)
+
+El gestor corrigió la tabla de la fase ambiental de la niebla de `fino/05`: **0,53 a −30°, 0,97 en el horizonte y 1,95 a
++30°** (antes 1,97, 2,46 y 2,50; el nadir 0,5 y el cenit 2,5 no cambian). F-3 ajustó `vol_fase_cenital` a la tabla mala
+(`2,5 − 2·max(−y, 0)²`), así que el ambiente de la niebla salía unas 2,5 veces más claro mirando al horizonte. Ahora
+`0,5 + 2·smoothstep(t)²` con `t = (y + 1)/2`, error < 0,03 en los cinco puntos.
+
+**Visto** (`banco-f.ctl`, aislamiento a 0, hora congelada): la niebla de `lluvia-dia` baja de (74, 85, 101) a (59, 70, 88) de
+media en el centro; las escenas sin niebla, sin cambio a la vista.
