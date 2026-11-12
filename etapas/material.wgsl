@@ -118,8 +118,24 @@ fn material(input: MaterialInput) -> Surface {
     if !p.translucido {
         let total = col_luminancia(directa + indirecta) + 1e-6;
         set_surface(n, m.suavidad, sup_empaquetar_dato(m.f0.g, col_luminancia(indirecta) / total, p.luz_cielo));
+        return adp_material_salida(color, p.alfa, p);
     }
-    return adp_material_salida(color, p.alfa, p);
+    return adp_material_salida(translucido(p, n, m, luces, color), 1.0, p);
+}
+
+// Translúcidos que no son agua (22): lo de detrás refractado y teñido por el color normalizado, la superficie encima
+// por su opacidad y el reflejo con Fresnel, que la vuelve espejo de refilón. Sale opaco, como el agua.
+// Porqué: docs/efectos/translucidos.md
+fn translucido(p: AdpPunto, n: vec3<f32>, m: SupMaterial, luces: AdpLuces, superficie: vec3<f32>) -> vec3<f32> {
+    let refr = adp_agua_refraccion(p, n, OPC_TRANSL_REFRACCION * 0.0006);
+    let a = clamp(p.alfa, 0.0, 1.0);
+    let peso_tinte = select(0.0, clamp(a / OPC_TRANSL_TINTE_MIN, 0.0, 1.0), OPC_TRANSL_TINTE);
+    let tinte = mix(vec3<f32>(1.0), normalize(max(p.albedo, vec3<f32>(1e-4))), peso_tinte);
+    let fondo = mix(refr.color * tinte, superficie, a);
+    let f0 = select(vec3<f32>(OPC_TRANSL_F0), m.f0, p.con_pbr);
+    let f = col_luminancia(sup_fresnel_schlick(max(dot(n, p.vista), 0.0), f0));
+    let reflejo = adp_agua_reflejo(p, n, reflect(-p.vista, n), luces) * luz_curva_cielo(max(p.luz_cielo, 0.3));
+    return mix(fondo, reflejo, f);
 }
 
 // El agua (subsistema 07): olas, refracción absorbida, reflejo con Fresnel y especular del sol, o la superficie
