@@ -188,3 +188,4 @@ fn adp_camara_final(c: vec3<f32>, p: AdpPixel) -> vec3<f32> {
     }
     return s;
 }
+

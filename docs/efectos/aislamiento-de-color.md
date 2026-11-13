@@ -30,3 +30,25 @@ elección si sobran). Van 46.
   tamaño. En la referencia de Vulpe (`fg2_dia.png`) pasa lo mismo: la montaña de terracota rojiza de la derecha
   conserva su rojo. No se cambia: los valores son los del usuario. Si se quiere la tierra en gris, bajar la
   amplitud a ~10 (opción del menú) o la suavidad (constante).
+
+## Color de la superficie (F-39, 2026-11-12)
+
+Observación del dueño 5.1 (`observaciones-del-dueno-2026-11-12.md`): el aislamiento parecía centrado en el naranja.
+
+- **Por qué:** se comparaba el matiz del color final, que es el del bloque **por la luz que le llega**. Medido con una
+  vista de depuración por cuadrantes (pertenencia tras la exposición, tras Purkinje, tras el balance y la final, de
+  noche con una antorcha): Purkinje, balance y gradación casi no mueven el matiz; lo que lo mueve es el **tinte de la
+  luz**. La antorcha (1; 0,5; 0,25) lleva el rosa, el marrón y hasta el magenta hacia el rojo y quema el centro del
+  naranja; la luz azul del cielo en sombra hace lo contrario. Al sol del mediodía sí salía bien.
+- **Arreglo:** la etapa material guarda el matiz y la saturación del **albedo en sRGB, antes de la luz** (con estaciones
+  y humedad), 8 bits cada uno, junto a la suavidad (8 bits) en el `smoothness` de `set_surface`, como un entero exacto
+  menor que 2²⁴ (`sup_empaquetar_suavidad`, `nucleo/superficie/datos.wgsl`). La final (`adp_aislar`,
+  `adaptadores/aislamiento.wgsl`) compara ese matiz en el píxel y en las 16 muestras del entorno (`surface_at`). Donde
+  no hay terreno sólido (cielo, entidades, agua, cristal, partículas) sigue comparando el color de la imagen como
+  antes. Los reflejos de pantalla desempaquetan la suavidad (`adaptadores/reflejo.wgsl`).
+- **Espacio:** sRGB de la textura (la columna «sRGB» de la tabla del dueño): rojo 1, rosa 0,9, naranja y marrón ~0,5,
+  magenta 0.
+- **Límites:** el cristal tintado y los demás translúcidos no llaman a `set_surface` (F-30): se aíslan por el color de la
+  imagen. Las entidades y los objetos en la mano, igual.
+- **Comprobado** (`pruebas/escenas/aislamiento-hormigon.ctl`, cinco hormigones al sol y de noche con antorcha): el mismo
+  resultado en las dos luces, y el rojo nunca por debajo del naranja.

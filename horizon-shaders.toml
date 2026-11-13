@@ -216,7 +216,7 @@ name = "TAA"
 
 [[post]]
 file = "etapas/post/07-final.wgsl"
-files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/nitidez.wgsl", "nucleo/imagen/aislamiento.wgsl", "opciones/aislamiento.wgsl", "nucleo/volumen/fase.wgsl", "nucleo/imagen/rayos.wgsl", "opciones/rayos.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/rayos.wgsl"]
+files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/nitidez.wgsl", "nucleo/imagen/aislamiento.wgsl", "opciones/aislamiento.wgsl", "nucleo/volumen/fase.wgsl", "nucleo/imagen/rayos.wgsl", "opciones/rayos.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/rayos.wgsl", "adaptadores/aislamiento.wgsl"]
 name = "Final"
 
 # ============================================================================================

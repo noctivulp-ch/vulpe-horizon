@@ -8,13 +8,14 @@ fn adp_post_reflejo(p: AdpPixel, dir: vec3<f32>, pasos: i32, suavidad_min: f32) 
         return vec3<f32>(0.0);
     }
     let s = surface_at(vec2<i32>(p.pixel));
-    if !s.present || s.smoothness < suavidad_min {
+    let suavidad = sup_desempaquetar_suavidad(s.smoothness).x;
+    if !s.present || suavidad < suavidad_min {
         return vec3<f32>(0.0);
     }
     let dato = sup_desempaquetar_dato(s.data);
     let pos = view_position(p.uv, p.profundidad);
     let n = s.normal;
-    let rugosidad = (1.0 - s.smoothness) * (1.0 - s.smoothness);
+    let rugosidad = (1.0 - suavidad) * (1.0 - suavidad);
     // Rugosidad: la normal de microfaceta se muestrea de la VNDF de GGX por píxel y fotograma (el TAA, 09,
     // promediará el ruido); en las superficies casi espejo apenas se desvía.
     let base = sup_base(n);

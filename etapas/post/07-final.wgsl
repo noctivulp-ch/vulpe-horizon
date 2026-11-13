@@ -65,7 +65,7 @@ fn post(input: PostInput) -> vec4<f32> {
     c += adp_rayos(p.uv, p.pixel, e.exposicion);
     var salida = col_lineal_a_srgb(c);
     if aislamiento_rango > 0 {
-        salida = img_aislar(salida, p.uv, previous, linear_sampler, opc_aislamiento(e.exposicion));
+        salida = adp_aislar(salida, p.uv, opc_aislamiento(e.exposicion));
     }
     salida = adp_camara_final(salida, p);
     if o.tramado {
