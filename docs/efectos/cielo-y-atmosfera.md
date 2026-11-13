@@ -260,3 +260,17 @@ y hacia −45°. `atm_refuerzo_crepuscular(elev)` = `1 + smoothstep(14, 7, e) ·
 (`--sin-refuerzo` lo quita): con el sol a 0°–4° el lado opuesto sube de ×0,52–0,63 a ×0,62–0,70 de la tabla; el resto
 de la diferencia a esa hora (el original es gris azulado y el modelo, naranja) no es el peso del término sino su
 color, que en nuestra tabla sale de las filas cielo+suelo, anaranjadas con el sol bajo. Pregunta para A anotada.
+
+## Bandas del ocaso (F-41, 2026-11-12)
+
+Observación del dueño 3.1: en los últimos segundos del atardecer suben bandas de color por la cúpula.
+
+- **Por qué:** la dispersión integra el rayo de vista en 12 tramos con la muestra fija en el centro de cada tramo, y la
+  sombra de la Tierra (`atm_hacia_sol`) tiene un borde estrecho (penumbra de 0,014 en el coseno). Al bajar el sol, ese
+  borde cruza las 12 muestras de una en una: cada cruce oscurece de golpe una franja de elevaciones, y la franja
+  avanza por la cúpula. Visto en `pruebas/escenas/ocaso-final.ctl` (cada 40 ticks de 12560 a 13400): hacia el tick
+  13000, la franja clara del este se partía en dos o tres capas.
+- **Arreglo:** la posición de la muestra dentro de cada tramo (`AtmAjustes.desfase`) se trama por dirección y
+  fotograma (`rui_tramado_direccion` más la razón áurea por fotograma, ciclo de 64), y el TAA lo promedia. Mismo
+  coste. Con la imagen fija no se ve el tramado.
+- **Comprobado:** con la misma escena, la franja queda de una pieza y se apaga de forma continua.

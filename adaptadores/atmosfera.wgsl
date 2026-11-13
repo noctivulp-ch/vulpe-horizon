@@ -84,7 +84,11 @@ fn adp_dispersion(dir: vec3<f32>, sol: AtmLuz, luna: AtmLuz, ajustes: OpcCielo) 
     p.mie_dispersion *= mc.aerosoles * aero_mod;
     p.mie_absorcion *= mc.aerosoles * aero_mod;
     p.mie_asimetria = clamp(mc.asimetria + (asim_mod - 0.8), 0.0, 0.99);
-    return atm_dispersion(adp_observador(), dir, sol, luna, p, AtmAjustes(ajustes.bruma, 12, ajustes.venus), transmitancia, transmitancia_sampler);
+    // La muestra de cada tramo se trama por dirección y fotograma (el TAA lo promedia): con el punto fijo, el borde de la
+    // sombra de la Tierra cruzaba las 12 muestras de una en una al ponerse el sol y subían bandas por la cúpula
+    // (observación del dueño 3.1). Porqué: docs/efectos/cielo-y-atmosfera.md §«Bandas del ocaso (F-41)»
+    let desfase = fract(rui_tramado_direccion(dir) + 0.618034 * f32(frame.frame_index % 64u));
+    return atm_dispersion(adp_observador(), dir, sol, luna, p, AtmAjustes(ajustes.bruma, 12, ajustes.venus, desfase), transmitancia, transmitancia_sampler);
 }
 
 // Irradiancia del astro que da sombra (frame.light_direction: el sol de día, la luna de noche), tras la

@@ -29,6 +29,7 @@ struct AtmAjustes {
     bruma: f32,             // multiplicador de aerosoles
     pasos: i32,             // tramos del rayo de vista
     venus: AtmVenus,
+    desfase: f32,           // 0..1: dónde cae la muestra dentro de cada tramo (0,5 = centro; tramado por píxel)
 }
 
 struct AtmResultado {
@@ -152,7 +153,7 @@ fn atm_dispersion(origen: vec3<f32>, dir: vec3<f32>, sol: AtmLuz, luna: AtmLuz, 
     var transmitancia = vec3<f32>(1.0);
     var luz = vec3<f32>(0.0);
     for (var i = 0; i < ajustes.pasos; i++) {
-        let pos = origen + dir * (inicio + paso * (f32(i) + 0.5));
+        let pos = origen + dir * (inicio + paso * (f32(i) + ajustes.desfase));
         let altura = length(pos) - p.radio_planeta;
         let medio = atm_medio(altura, p, ajustes.bruma);
         var fuente = vec3<f32>(0.0);

@@ -1,0 +1,74 @@
+# Final del atardecer (observación del dueño 3.1): el cielo cada 40 ticks entre 12560 y 13400, mirando al este 30°
+# arriba (lejos del sol), hora congelada en cada paso.
+close
+command weather clear
+command gamerule advance_time false
+command tp @s 170.5 120 150.5 -90 -30
+time 12560
+sleep 6
+time 12560
+sleep 1.2
+screenshot ocaso-12560
+time 12600
+sleep 1.2
+screenshot ocaso-12600
+time 12640
+sleep 1.2
+screenshot ocaso-12640
+time 12680
+sleep 1.2
+screenshot ocaso-12680
+time 12720
+sleep 1.2
+screenshot ocaso-12720
+time 12760
+sleep 1.2
+screenshot ocaso-12760
+time 12800
+sleep 1.2
+screenshot ocaso-12800
+time 12840
+sleep 1.2
+screenshot ocaso-12840
+time 12880
+sleep 1.2
+screenshot ocaso-12880
+time 12920
+sleep 1.2
+screenshot ocaso-12920
+time 12960
+sleep 1.2
+screenshot ocaso-12960
+time 13000
+sleep 1.2
+screenshot ocaso-13000
+time 13040
+sleep 1.2
+screenshot ocaso-13040
+time 13080
+sleep 1.2
+screenshot ocaso-13080
+time 13120
+sleep 1.2
+screenshot ocaso-13120
+time 13160
+sleep 1.2
+screenshot ocaso-13160
+time 13200
+sleep 1.2
+screenshot ocaso-13200
+time 13240
+sleep 1.2
+screenshot ocaso-13240
+time 13280
+sleep 1.2
+screenshot ocaso-13280
+time 13320
+sleep 1.2
+screenshot ocaso-13320
+time 13360
+sleep 1.2
+screenshot ocaso-13360
+time 13400
+sleep 1.2
+screenshot ocaso-13400
