@@ -16,6 +16,13 @@ const VOL_NETHER_LAVA: f32 = 31.0;
 const VOL_NETHER_PERFIL_Y = array<f32, 12>(31.0, 35.0, 40.0, 50.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0);
 const VOL_NETHER_PERFIL_D = array<f32, 12>(0.0, 0.07, 0.04, 0.07, 0.14, 0.19, 0.27, 0.18, 0.10, 0.05, 0.01, 0.0);
 const VOL_NETHER_ESCALA: f32 = 2.5;         // densidad relativa → extinción del humo (× 0,06 por bloque)
+const VOL_NETHER_LUZ_HUMO: f32 = 0.004;     // luz de la lava en el humo (×3 probado en F-57: sin cambio medible)
+// Apagado de esa luz dentro de lo denso, sobre la densidad ya escalada (× VOL_NETHER_ESCALA): 6 = exp(−15 · humo), el
+// 22 % con 0,1 y el 1 % con 0,3 de la spec (F-57; antes 1,5). Porqué: docs/efectos/otras-dimensiones.md §«Humo del Nether (F-57)»
+const VOL_NETHER_APAGADO: f32 = 6.0;
+// Mosaico del ruido de columnas: con 128 bloques el canal r da un semiancho de autocorrelación de ~10 bloques (columnas
+// de ~20, separadas ~40, como pide la spec). Antes 900 (columnas de ~140). Porqué: docs/efectos/otras-dimensiones.md §«Humo del Nether (F-57)»
+const VOL_NETHER_MOSAICO_COLUMNAS: f32 = 128.0;
 const VOL_NETHER_LUZ: f32 = 10.0;           // escala de la luz de la niebla, la misma subida que el ambiente del Nether (F-45)
 
 fn vol_nether_perfil(y: f32) -> f32 {
@@ -36,7 +43,7 @@ fn vol_nether_densidad(mundo: vec3<f32>, rel: vec3<f32>, d: VolDimension, t2: te
     let sobre_lava = max(mundo.y - VOL_NETHER_LAVA, 0.0);
     // Columnas: ruido 2D desplazado por el viento más cuanto más alto (inclinadas), erosionado por un 3D que baja.
     let torcido = mundo.xz + vec2<f32>(0.6, -0.4) * sobre_lava * 0.35;
-    let columnas = smoothstep(0.45, 0.7, vol_ruido2d(t2, s2, torcido / 900.0).r);
+    let columnas = smoothstep(0.45, 0.7, vol_ruido2d(t2, s2, torcido / VOL_NETHER_MOSAICO_COLUMNAS).r);
     let erosion = vol_ruido3d(t3, (mundo + vec3<f32>(0.0, -d.tiempo * 2.0, 0.0)) / 48.0).r;
     var humo = vol_nether_perfil(mundo.y) * columnas * smoothstep(0.25, 0.7, erosion);
     // Capa fina sobre la lava: cae a una décima en 4 bloques, despejada en ~24 bloques alrededor de la cámara.
@@ -67,7 +74,7 @@ fn vol_nether(rayo: VolRayo, d: VolDimension, t2: texture_2d<f32>, s2: sampler, 
         let sigma_techo = den.y * 0.02 * d.cantidad;
         // Luz del humo: un naranja cálido fijo de la lava, que se apaga algo dentro de lo denso; más la bruma del bioma.
         // El techo, gris muy oscuro.
-        let fuente = (sigma_humo * (lava * 0.004 * exp(-den.x * 1.5) + d.bruma * 0.0006) + sigma_techo * vec3<f32>(0.0004)) * VOL_NETHER_LUZ;
+        let fuente = (sigma_humo * (lava * VOL_NETHER_LUZ_HUMO * exp(-den.x * VOL_NETHER_APAGADO) + d.bruma * 0.0006) + sigma_techo * vec3<f32>(0.0004)) * VOL_NETHER_LUZ;
         vol_tramo(&r, fuente, sigma_humo + sigma_techo, paso);
         // Bruma del color de la niebla del bioma: añade luz sin restar transmitancia.
         r.luz += r.transmitancia * d.bruma * (0.000012 * VOL_NETHER_LUZ) * d.cantidad * paso;

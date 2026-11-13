@@ -20,6 +20,7 @@ const OPC_VISTA_CORTE_NUBES_1: u32 = 13u;       // corte vertical de los grandes
 const OPC_VISTA_FORMA_AGUA: u32 = 14u;          // la normal de las olas en color (×4: x → rojo, z → azul), sin luz
 const OPC_VISTA_FORMA_END_PLANTA: u32 = 15u;    // densidad de la tormenta del End a Y 60, 800 × 800 bloques alrededor del origen
 const OPC_VISTA_FORMA_END_CORTE: u32 = 16u;     // corte vertical por z = 0: x de −400 a 400, Y de −80 a 300
+const OPC_VISTA_FORMA_DIMENSION: u32 = 17u;     // opacidad de la niebla del volumen (1 − transmitancia) en gris, sin la escena
 const OPC_VISTA_FORMA_ANCHO = array<f32, 5>(8000.0, 16000.0, 160000.0, 1000.0, 2000.0);
 
 fn opc_vista_forma(v: u32) -> bool {

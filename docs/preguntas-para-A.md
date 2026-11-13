@@ -67,3 +67,10 @@ La spec da «a 50 bloques queda un 14 % de la luz que hay en el foco; a 100, un 
 están iluminados en todo el encuadre. ¿Está esa caída medida en el espacio aplastado, como el giro (una vuelta cada
 9 bloques ahí, 450 en el mundo)? ¿Y en qué eje se aplasta? Mientras tanto, el pack suma un segundo término ancho
 (caída de 100 bloques) a ojo contra la referencia (F-56).
+
+## 2026-11-13 — Humo sobre la lava del Nether (formas/otras-dimensiones.md §«La forma del humo»; F-47)
+
+En `referencias/original-dimensiones/nether-yermo` y `nether-suelo` hay masas densas de humo de 10–30 bloques de alto
+pegadas al lago de lava (Y 31–60) que tapan buena parte de él. La spec describe solo una capa de ~2–3 bloques sobre la
+lava, y la tabla de alturas de la observación del dueño 6.1 (que usa el pack desde F-47) da 0 a 0,07 entre Y 31 y 50,
+con el máximo a Y 70. ¿De qué medio salen esas masas en el original, y con qué perfil de altura?

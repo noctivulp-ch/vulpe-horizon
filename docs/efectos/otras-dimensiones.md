@@ -117,3 +117,32 @@ caída de la spec sola no puede dar a la vez el núcleo y los bancos lejanos que
 bordes blancos y grietas oscuras, con mucho contraste; los del pack salen como una bruma lisa. Es la sombra de la
 propia niebla (la spec pide 3 muestras hacia el foco; el pack toma una) y el tamaño de los bancos. La isla del original
 sale clara, de color piedra; la del pack, azulada y más oscura (22,33,52 contra 43,64,89 en `end-suelo`).
+
+## Humo del Nether (F-57, 2026-11-13)
+
+Comparado con `referencias/original-dimensiones/` (mismas cámaras, `pruebas/escenas/dimensiones-referencias.ctl`) y
+con una vista aislada nueva, `OPC_VISTA_FORMA_DIMENSION` = 17 (`opciones/depuracion.wgsl`): la opacidad de la niebla
+del volumen (1 − transmitancia) en gris, sin la escena, la misma que las `*-forma` del original.
+
+- **Opacidad:** parecida en cantidad a la del original (`nether-yermo-forma`, `nether-carmesi-forma`), pero lisa donde
+  el original tiene grumos. El ruido de columnas tenía un grano de ~140 bloques (canal r de `ruido2d`, semiancho de
+  autocorrelación de 20 texeles de 256, con mosaico de 900 bloques); la spec (`formas/otras-dimensiones.md` §«La forma
+  del humo») pide columnas de ~20 bloques separadas ~40. `VOL_NETHER_MOSAICO_COLUMNAS` = 128 da un semiancho de ~10.
+  Antes/después a Y 70 mirando horizontal, en la vista 17: `pruebas/capturas/nether-columnas-900.png` → `-128.png`.
+- **Apagado de la luz dentro del humo:** la spec da el 22 % con densidad 0,1 y el 1 % con 0,3, es decir exp(−15·d). El
+  código hacía exp(−1,5 · 2,5·d) = exp(−3,75·d), cuatro veces más suave (interior encendido, sin «borde naranja,
+  interior oscuro»). `VOL_NETHER_APAGADO` = 6 sobre la densidad escalada = exp(−15·d).
+- **Luz del humo ×3:** probada, sin cambio medible en las cuatro vistas. Se queda en 0,004.
+
+Medias de la imagen (original / pack, sin cambio apreciable con F-57 en estas vistas): yermo 94,42,31 / 80,25,11;
+suelo 114,48,27 / 95,34,10; valle de almas 70,57,51 / 37,38,32; deltas 91,60,46 / 72,38,31; carmesí 94,12,13 /
+83,5,2; distorsionado 107,50,49 / 83,29,28.
+
+**Lo que queda:**
+
+- **Grumos de humo sobre el lago de lava.** En el original hay masas densas de humo pardo anaranjado de 10–30 bloques
+  de alto pegadas a la lava, que tapan buena parte del lago. En el pack la lava se ve limpia: la tabla de alturas de
+  F-47 (observación del dueño 6.1) deja casi nada entre Y 31 y 50, y la capa sobre la lava solo tiene ~4 bloques. Las
+  cámaras de las referencias miran ahí, por eso F-57 no cambia sus medias. Pregunta para A en `docs/preguntas-para-A.md`.
+- **Todo el Nether, más saturado y algo más oscuro** que el original (el verde y el azul, a la mitad): el humo y la
+  bruma del original lo agrisan. Va con lo anterior.

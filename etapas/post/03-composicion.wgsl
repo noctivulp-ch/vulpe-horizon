@@ -26,6 +26,9 @@ fn post(input: PostInput) -> vec4<f32> {
     // Orden de 23: borde, cueva, volumen, inmersión.
     c = adp_niebla_cueva(c, p, dir);
     let v = adp_volumen_reescalado(p.pixel, adp_post_distancia(p));
+    if opc_depuracion().vista == OPC_VISTA_FORMA_DIMENSION {
+        return vec4<f32>(vec3<f32>(1.0 - v.transmitancia), 1.0);
+    }
     c = c * adp_transmitancia_compuesta(v, adp_post_distancia(p), p.uv) + v.luz;
     c = adp_niebla_inmersion(c, adp_post_distancia(p));
     return vec4<f32>(c, adp_opacidad_bloom_niebla(v, p));
