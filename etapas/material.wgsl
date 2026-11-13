@@ -111,6 +111,8 @@ fn material(input: MaterialInput) -> Surface {
     if mena.emision > emision {
         emision = mena.emision;
         color_emision = mena.albedo;
+        // Más brillo en el píxel del mineral para que el bloom le dé un halo (F-46). Porqué: docs/efectos/menas-brillantes.md §«Halo (F-46)»
+        brillo_emision = OPC_MENAS_BRILLO;
     }
     if m.emision > 0.0 {
         emision = pow(m.emision, 2.0);

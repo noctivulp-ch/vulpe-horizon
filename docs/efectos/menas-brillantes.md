@@ -34,3 +34,17 @@ Menas brillantes sí/no e intensidad (60 %), en la página «Luz». Sensibilidad
 - **De día al aire libre** (`menas-dia.png`): el brillo apenas se nota, como pide la especificación (la emisión es
   moderada); con el aislamiento de color encendido las menas salen en gris como todo lo demás.
 - **No visto:** menas de mods.
+
+## Halo (F-46, 2026-11-12)
+
+Observación del dueño 2.3: solo brillaban los píxeles del mineral; faltaba la luz tenue sobre la piedra de alrededor.
+
+- En el original la mena no es fuente de luz: el halo lo pone el **bloom** de su emisión. En el pack la emisión de una
+  mena era `albedo × OPC_EMISION × 4` = 0,2 × albedo en lineal: en una cueva oscura el píxel no pasaba de lo que el
+  tonemap deja ver y el bloom (peso 0,3) apenas tenía qué derramar.
+- **Arreglo:** la emisión de las menas lleva su propio multiplicador `OPC_MENAS_BRILLO` = 6 (`opciones/menas.wgsl`),
+  aplicado como `brillo_emision` en la etapa material. El tonemap comprime el píxel (el mineral no se quema) y el exceso
+  sale como halo en el bloom. No hay luz de bloque nueva.
+- **Comprobado** (`pruebas/escenas/menas-halo.ctl`, caja de piedra a oscuras, menas a 5 bloques): cada veta tiene un
+  halo de su color de algo menos de medio bloque; antes, ninguno. El objetivo del dueño era medio bloque a un bloque:
+  si lo quiere más ancho, subir `OPC_MENAS_BRILLO` (a partir de ~10 el diamante empieza a blanquear).
