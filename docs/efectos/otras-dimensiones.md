@@ -175,3 +175,31 @@ es negro puro. Decisión del dueño: el centro de la tormenta se queda como lo d
 
 Mirando lejos queda a algo más de la mitad del original. La cámara del original no está anotada (la del pack mira desde
 (0,5, 90, 120,5)). Si al dueño le falta, el ajuste es `VOL_END_LUZ_AMBIENTE`.
+
+## Humo del Nether (F-63, 2026-11-13)
+
+Observación del dueño 2026-11-13 §7: la esfera despejada alrededor del jugador era demasiado grande. En el original
+solo la capa sobre la lava se despeja, a menos de 24 bloques; las columnas no tienen esfera (solo la caída con la
+distancia). Más la respuesta 18 de A. Todo en `vol_nether_densidad` (`nucleo/volumen/dimensiones.wgsl`):
+
+- **Tabla en extinción absoluta por bloque** (con la densidad del menú a 1). Antes se escalaba × 2,5 × 0,06 = 0,15:
+  el humo era ~6,7 veces más fino. `VOL_NETHER_ESCALA` desaparece y la capa sobre la lava pasa a `VOL_NETHER_CAPA` = 1
+  (la relación 1 : 0,27 con el pico de la banda, de F-47).
+- **Penacho:** ruido 2D de periodo 256 bloques (`VOL_NETHER_PENACHO_MOSAICO`; F-57 lo había dejado en 128), al
+  cuadrado, desplazado por el viento `((y − 30)/15)^2,1` bloques. Recorta la densidad (`1 − 2 · corte`) en la medida
+  que decide una erosión 3D de celdas de ~36 × 18 bloques que se mueve a 10 bloques/s (`corte` de 0,3 a 1 × penacho²).
+  El «se resta» de A se lee aquí como un recorte proporcional, para que una tabla de 0,07 no quede a cero; es una
+  interpretación.
+- **Caída con la distancia:** las columnas × `(1 − d / distancia de render)^5`.
+- **Esfera despejada:** fuera para las columnas y el techo. Solo la capa sobre la lava se abre, lineal hasta 24 bloques
+  en horizontal (`VOL_NETHER_CAPA_CLARO`), y la recorta el penacho suavizado.
+- **Apagado de la luz:** `exp(−15 · extinción)` (`VOL_NETHER_APAGADO` = 15 sobre la extinción absoluta: lo mismo que
+  F-57 sobre la escalada).
+
+Medias (original / pack, `pruebas/escenas/nether-referencias.ctl`): yermo 94,42,31 / 76,24,16; suelo 114,48,27 /
+87,33,15; yermo al frente 84,38,32 / 73,20,15; valle de almas 70,57,51 / 44,39,33. La lava queda más velada que con F-57.
+
+**Salvedad:** la caída depende de la distancia de renderizado. Mi instancia está a 8 chunks y no la puedo cambiar (norma
+del encargo): a los ~70 bloques de la lava la caída deja un 2 % (`(1 − 70/128)^5`), con 16 chunks un 13 %. Las masas de
+humo pegadas a la lava del original, si se midieron a 16 chunks, aquí no pueden salir. Comprobarlo en la instancia del
+dueño.
