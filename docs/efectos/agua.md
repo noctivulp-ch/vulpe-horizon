@@ -237,3 +237,18 @@ Rehecha según `vulpe-horizon-spec/formas/agua.md` (estructura y escalas). Códi
   contraste por el nivel de parche. La tabla de percentiles no se ha medido en el pack.
 - **Vista aislada**: `OPC_DEPURACION_VISTA_DEFECTO = 14` (normal ×4 en color, sin luz), escena
   `pruebas/escenas/forma-agua.ctl`. Visto (2026-11-12): ondulaciones alargadas en dos direcciones cruzadas; lejos, lisa.
+
+## Reflejo de nubes y niebla (F-48, 2026-11-12)
+
+Observación del dueño 4.1: faltaban los reflejos de las nubes y de la niebla; pasan de «opcionales» a obligatorios.
+
+- **Nubes:** el reflejo del cielo solo llevaba la capa de cúmulos grandes (`i = 1`): un día con solo cúmulos pequeños o
+  altoestratos no reflejaba ninguna nube. Ahora `adp_agua_reflejo` (`adaptadores/agua.wgsl`) evalúa la forma de las
+  **tres capas** (`vol_cobertura`, la de F-36) donde el rayo reflejado cruza la mitad de cada una, y las compone
+  `1 − Π(1 − forma·densidad)`. El color de nube sigue siendo el gris por la luminancia del cielo.
+- **Niebla:** hacia el horizonte el reflejo se funde con el color del horizonte (con el velo de lluvia del cielo, como la
+  niebla de borde de F-42), con peso `exp(−(r.y/0,08)²)` × (0,6 despejado, 1 con lluvia) (`OPC_AGUA_REFLEJO_NIEBLA*`).
+  Se aplica también al espejo de Horizon.
+- **Lecturas:** la etapa material sigue en 17 de 64.
+- **Comprobado** (`pruebas/escenas/agua-reflejo-nubes.ctl`, con `TIEMPO_ALEATORIO = false` a mano para tener nubes):
+  el agua lejana se funde con la niebla del horizonte y las nubes reflejadas se marcan algo más.

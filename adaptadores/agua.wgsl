@@ -69,13 +69,20 @@ fn adp_agua_reflejo(p: AdpPunto, n: vec3<f32>, r: vec3<f32>, luces: AdpLuces) ->
     let c = opc_cielo();
     let horizonte = adp_tabla(frame.sun_direction.y, ATM_FILA_HORIZONTE) * c.sol_color * c.brillo;
     var cielo = vol_cielo_aproximado(horizonte, adp_cielo_medio(c), max(r.y, 0.0)) * OPC_CIELO_BRILLO_DIBUJO;
-    // Nubes reflejadas en la dirección reflejada (subsistemas/07 §4)
+    // Nubes reflejadas en la dirección reflejada (07 §4, obligatorias desde la observación del dueño 4.1): la forma de
+    // las tres capas donde el rayo reflejado cruza la mitad de cada una, compuestas de abajo arriba.
+    // Porqué: docs/efectos/agua.md §«Reflejo de nubes y niebla (F-48)»
     if r.y > 0.02 && opc_volumen().nubes {
         let nubes_cfg = adp_nubes();
-        let h_nube = VOL_MAR + VOL_BASE[1];
-        let t_plano = max((h_nube - p.mundo.y) / r.y, 0.0);
-        let pos_nube = p.mundo.xz + r.xz * t_plano;
-        let cob = vol_cobertura(pos_nube, 1, nubes_cfg, ruido2d, ruido2d_sampler);
+        var cob = 0.0;
+        for (var i = 0; i < 3; i++) {
+            if nubes_cfg.perfil.cobertura[i] > 0.0 {
+                let h_nube = VOL_MAR + VOL_BASE[i] + VOL_ESPESOR[i] * 0.5;
+                let t_plano = max((h_nube - p.mundo.y) / r.y, 0.0);
+                let c = vol_cobertura(p.mundo.xz + r.xz * t_plano, i, nubes_cfg, ruido2d, ruido2d_sampler);
+                cob = 1.0 - (1.0 - cob) * (1.0 - c * min(nubes_cfg.perfil.densidad[i], 1.0));
+            }
+        }
         let lum_cielo = col_luminancia(cielo + luces.cielo * 0.5);
         cielo = mix(cielo, vec3<f32>(lum_cielo * 1.3), cob * 0.85);
     }
@@ -87,9 +94,19 @@ fn adp_agua_reflejo(p: AdpPunto, n: vec3<f32>, r: vec3<f32>, luces: AdpLuces) ->
         var terreno = col_decodificar_escena(texel.rgb, adp_codificacion());
         // Alfa < 0,75: bloque emisivo (marca de HDR del motor): reforzarlo.
         terreno *= select(1.0, 3.0, texel.a < 0.75);
-        return mix(terreno, cielo, peso);
+        return adp_agua_reflejo_niebla(mix(terreno, cielo, peso), r, horizonte);
     }
-    return cielo;
+    return adp_agua_reflejo_niebla(cielo, r, horizonte);
+}
+
+// Hacia el horizonte el reflejo atraviesa la niebla que hay sobre el agua, como se ve mirando de frente: se funde con el
+// color del horizonte (con el velo de lluvia del cielo), más cuanto más rasante.
+fn adp_agua_reflejo_niebla(reflejo: vec3<f32>, r: vec3<f32>, horizonte: vec3<f32>) -> vec3<f32> {
+    let c = opc_cielo();
+    var color = vol_cielo_aproximado(horizonte, adp_cielo_medio(c), 0.0) * OPC_CIELO_BRILLO_DIBUJO;
+    color = cie_aplicar_lluvia(color, 0.0, vec3<f32>(1.0), frame.camera_position.y, adp_lluvia(c));
+    let rasante = max(r.y, 0.0) / OPC_AGUA_REFLEJO_NIEBLA;
+    return mix(reflejo, color, exp(-rasante * rasante) * (OPC_AGUA_REFLEJO_NIEBLA_PESO + (1.0 - OPC_AGUA_REFLEJO_NIEBLA_PESO) * frame.rain));
 }
 
 // La luz del volumen de agua de este punto: las radiancias medidas del agua profunda (sol a 55°, todo iluminado), escaladas

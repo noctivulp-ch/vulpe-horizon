@@ -24,6 +24,10 @@ const OPC_AGUA_ESPECULAR_RUGOSIDAD: f32 = 0.07; // rugosidad efectiva del destel
 const OPC_AGUA_DISPERSION_CROMATICA: f32 = 0.25; // dispersión cromática de refracción (fino/07 §Ajustes)
 const OPC_AGUA_VELOCIDAD_CASCADA: f32 = 1.8; // velocidad de descenso en caras verticales (fino/07 §1)
 const OPC_AGUA_FRECUENCIA_ONDAS: f32 = 0.1;  // frecuencia nominal de ondas (paridad/07 §a)
+// Niebla del horizonte en el reflejo (F-48): anchura en seno de elevación del rayo reflejado y peso con el cielo
+// despejado (con lluvia, 1).
+const OPC_AGUA_REFLEJO_NIEBLA: f32 = 0.08;
+const OPC_AGUA_REFLEJO_NIEBLA_PESO: f32 = 0.6;
 
 struct OpcAgua {
     olas: AguOlas,
