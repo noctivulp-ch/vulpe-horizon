@@ -268,3 +268,38 @@ igual con `luz-nether` y `luz-end`).
 | End | `OPC_AMBIENTE_END` | 0,002 | 0,008 | el suelo de piedra del End se ve gris azulado; antes, casi negro |
 
 Para subir o bajar: cambiar el número y nada más.
+
+## 2026-11-12 — B-22, punto 12: rendimiento, **bloqueado por la medida**
+
+- **Medida base** (`horizon-ctl bench 10`, de día a cielo abierto en (170, 90, 166), ajustes tal cual, calidad general
+  Media): GPU 29,6 ms de media por fotograma (p50 22–26 ms). Las pasadas propias de Horizon (`gpu-passes`) suman unos
+  5 ms: World 2,0; Water mirror 1,0; World after copy 1,0; sombra del pack 0,8; sombra translúcida 0,3.
+- **Por qué no sirve para repartir el coste:** la ventana que abre un agente nace sin foco (`agent-control.md` §«The
+  window an agent opens») y Horizon la limita a 10 fps; `bench` da 10,0 fps. Con ese tope, el tiempo de GPU por
+  fotograma no sigue el trabajo del pack: **quitar la pasada de volumen entera, los reflejos, la oclusión, el bloom, el
+  TAA o el aislamiento no mueve el total** (29,6–30,3 ms, dentro del ruido, que es de varios ms en el p50), y el
+  desglose `gpu_passes` da saltos sin relación con el caso (World de 1,96 a 0,01 ms también donde no se toca el
+  material). No hay en la documentación un modo de medir sin ese tope, y el encargo no permite cambiar ajustes de
+  Horizon. `gpu-passes` se apagó al acabar (no se guarda en los `.txt` de la instancia).
+- **Lo que hace falta:** que alguien traiga la ventana de Horizon al frente (un clic en ella) o ejecute el `bench` con la
+  ventana visible. Con eso, la ablación (anular una parte cada vez, recargar y `bench 6`) reparte el coste en minutos.
+- **Inventario estático** (lecturas de textura por píxel en la calidad Media; a falta de medida, los candidatos):
+  | Etapa | Resolución | Qué pesa | Lecturas aprox. por píxel |
+  |---|---|---|---|
+  | Volumen (pasada 2) | ½ | nubes: hasta 14 pasos por capa de cúmulos; cada paso, forma (2), erosión gruesa y fina (`vol_ruido3d`: 8 `textureLoad` cada una), autosombra (3 tomas × 2), sombra entre capas (2–4) | ~30 por paso, cientos por píxel de cielo |
+  | Volumen | ½ | niebla: 6 pasos con niebla 3D (8), mapa de sombras (1) y sombra de nubes en los extremos | ~60 |
+  | Volumen, de noche con aurora | ½ | segundo tramo de niebla tras la primera nube (F-44), con la mitad de pasos | +~30 donde hay nube |
+  | Material | 1 | sombra: búsqueda de 4 + PCF de 8, más la translúcida (2–3) | ~15 por píxel de terreno |
+  | Material, agua | 1 | normal (3 alturas × 3 capas + parche = 12), refracción (4–5), reflejo con tres capas de nubes (F-48, 6) y espejo (1), cáusticas | ~25 |
+  | Final | 1 | nitidez (5), bloom (catmull-rom 9 + ancho 1), aislamiento (16 `surface_at` + fallback, F-39) | 61 de 64 |
+  | Bloom bajada / ancho | ¼ | 13 y 12 anillos | 55 |
+- **Primer candidato cuando haya medida:** `vol_ruido3d` hace el trilineal a mano con 8 `textureLoad` (para no sangrar
+  entre cortes del atlas 32³). Dos lecturas filtradas por corte (con el borde del corte a medio texel) bajarían la
+  erosión de las nubes y la niebla 3D a la cuarta parte sin cambio visible. No se ha hecho: el encargo pide medir antes
+  y después.
+
+## 2026-11-12 — B-22: visto de paso, sin tocar
+
+- **Costura vertical en la niebla con lluvia** (escena `lluvia-horizonte.ctl`, encuadre desde (150, 85, 230)): una línea
+  vertical clara en la niebla, debajo de un bloque flotante del mundo de pruebas, antes y después de F-42. Sospecha: el
+  reescalado del volumen de media resolución junto a un borde de geometría. Sin investigar.
