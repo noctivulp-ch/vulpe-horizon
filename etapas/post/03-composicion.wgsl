@@ -16,6 +16,7 @@ fn post(input: PostInput) -> vec4<f32> {
     if opc_vista_forma(opc_depuracion().vista) {
         return vec4<f32>(adp_vista_forma(p.uv, opc_depuracion().vista), 1.0);
     }
+    c = adp_aplicar_sombra_nubes(c, p);
     if !opc_quitar(2u) {
         c = adp_aplicar_oclusion(c, p);
     }

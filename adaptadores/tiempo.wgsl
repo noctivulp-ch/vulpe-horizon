@@ -47,6 +47,15 @@ fn adp_ambiente_cielo() -> vec3<f32> {
     return ambiente / (1.0 + col_luminancia(ambiente));
 }
 
+// De día la sombra de las nubes sobre el terreno sólido se calcula a ¼ de resolución en la pasada del mapa de la aurora
+// (libre de día) y la composición la aplica a la parte directa de la luz (opción «a» del dueño, F-68). De noche (luz de
+// luna, aurora) y en el agua y los translúcidos sigue en material. Porqué: docs/efectos/sombras.md §«Sombra de nubes a
+// ¼ de resolución (F-68)»
+fn adp_sombra_nubes_en_post() -> bool {
+    // Con el sol sobre el horizonte la aurora nunca está activa (necesita noche > 0): el destino está libre.
+    return adp_es_superficie() && frame.sun_direction.y > 0.02 && opc_volumen().nubes;
+}
+
 fn adp_sombra_nubes(mundo: vec3<f32>) -> f32 {
     if !opc_volumen().nubes {
         return 1.0;

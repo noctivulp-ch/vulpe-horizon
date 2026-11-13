@@ -58,3 +58,26 @@ fn adp_post_salida(color: vec3<f32>, alfa: f32) -> vec4<f32> {
     return vec4<f32>(color, alfa);
 }
 
+
+// La sombra de las nubes del terreno que se ve en un píxel de una pasada de post (1 en el cielo).
+fn adp_sombra_nubes_post(uv: vec2<f32>, profundidad: f32) -> f32 {
+    if profundidad <= 0.0 {
+        return 1.0;
+    }
+    let pos = view_position(uv, profundidad);
+    return mix(1.0, adp_sombra_nubes(pos + frame.camera_position), opc_volumen().sombra_nubes);
+}
+
+// Aplica la sombra de nubes de ¼ de resolución a la parte directa de la luz del terreno sólido (F-68).
+fn adp_aplicar_sombra_nubes(color: vec3<f32>, p: AdpPixel) -> vec3<f32> {
+    if p.es_cielo || !adp_sombra_nubes_en_post() || opc_quitar(2048u) {
+        return color;
+    }
+    let s = surface_at(vec2<i32>(p.pixel));
+    if !s.present {
+        return color;
+    }
+    let indirecta = sup_desempaquetar_dato(s.data).y;
+    let nubes = textureSampleLevel(mapa_aurora, linear_sampler, p.uv, 0.0).r;
+    return color * (indirecta + (1.0 - indirecta) * nubes);
+}

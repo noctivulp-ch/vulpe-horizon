@@ -187,7 +187,7 @@ fn adp_sombra(p: AdpPunto) -> AdpSombra {
     }
     let r = adp_sombra_punto(AdpEntradaSombra(p.posicion, p.normal_cara, p.luz_cielo, p.pixel), opc_sombras());
     var nubes = 1.0;
-    if !opc_quitar(2048u) {
+    if !opc_quitar(2048u) && (!adp_sombra_nubes_en_post() || p.translucido || p.fluido == 1u) {
         nubes = mix(1.0, adp_sombra_nubes(p.mundo), opc_volumen().sombra_nubes);
     }
     let elev_sol = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));

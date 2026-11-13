@@ -188,3 +188,22 @@ No se distingue a ojo.
 
 Probado antes y retirado (B-23): el atajo del filtro sin ocluyentes y 4 muestras con el radio mínimo
 (`docs/rendimiento.md`).
+
+## Sombra de nubes a ¼ de resolución (F-68, 2026-11-13)
+
+Decisión del dueño (B-23 lote 2, opción «a»): la sombra de las nubes a menor resolución. En `material` no se puede
+(no hay historial ni resolución propia), así que de día sale de `material` y pasa a post:
+
+- **Pasada 01** (el mapa de la aurora, ¼ de resolución): con el sol sobre el horizonte la aurora nunca está activa
+  (necesita noche > 0) y su destino está libre. En r guarda la sombra de las nubes del terreno de ese píxel
+  (`adp_sombra_nubes_post`, `adaptadores/post.wgsl`), con la posición reconstruida desde la profundidad.
+- **Composición:** `adp_aplicar_sombra_nubes` la aplica a la parte **directa** de la luz del terreno sólido, con la
+  fracción indirecta que guarda la superficie (`color × (indirecta + (1 − indirecta) · sombra)`), antes de la oclusión.
+- **`material`** la sigue calculando de noche (luz de luna), en el agua y en los translúcidos, que la composición no
+  ve (`adp_sombra_nubes_en_post`, `adaptadores/tiempo.wgsl`).
+
+**Medido** (ajustes del dueño, Overworld, 20 s, alternando versiones para quitar la deriva térmica): 19,08 → 18,65 y
+17,49 → 16,87 ms de GPU: **−0,45 a −0,6 ms** de los 0,8 que costaba.
+
+**A la vista:** capturas seguidas con el perfil de cúmulos, `pruebas/capturas/sombra-nubes{,-abajo}-F68-{viejo,nuevo}.png`:
+las mismas manchas y sin halos en los bordes de los árboles (la sombra de las nubes cambia muy despacio en el mundo).

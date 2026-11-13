@@ -144,6 +144,7 @@ files = [
     "adaptadores/fractal_dibujo.wgsl",
     "adaptadores/aurora.wgsl",
     "adaptadores/aurora_mapa.wgsl",
+    "adaptadores/post.wgsl",
 ]
 name = "Mapa de la aurora"
 output = "mapa_aurora"
