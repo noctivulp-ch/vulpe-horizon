@@ -170,3 +170,21 @@ Observación del dueño 2.4: bandas en una cara iluminada con el sol bajo.
   cambia nada; la sombra de contacto se conserva.
 - **Comprobado** (`pruebas/escenas/sombra-rasante.ctl`, hora 12000, caras de arriba de hormigón con el sol bajo): con un
   filtro de paso alto, las rayas diagonales que tenían antes las caras desaparecen.
+
+## Muestras lejos (F-67, 2026-11-13)
+
+Decisión del dueño (B-23 lote 2, opción «b»): menos muestras de sombra lejos de la cámara. A más de
+`OPC_SOMBRA_LEJOS` = 32 bloques (`opciones/sombras.wgsl`), `adp_sombra_punto` usa la mitad de muestras de filtro (mín.
+4) y de búsqueda (mín. 2). Con la calidad media, 8 → 4 y 4 → 2. La penumbra lejana ocupa pocos píxeles y el TAA la
+promedia.
+
+**Medido** (ajustes del dueño, Overworld, 2 × 20 s): GPU 17,75 → 17,3–17,5 ms, **~0,35 ms**. Poco: la búsqueda y el
+filtro no son lo caro de la sombra. Lo caro es la sombra entera (3,2 ms) y la de las nubes (0,8).
+
+**A la vista:** capturas seguidas en la misma sesión (sin la sombra de las nubes, que se mueve), antes → después:
+`pruebas/capturas/sombras-{cerca,lejos}-F67-{antes,despues}.png`. Diferencia media en el suelo frente al ruido entre
+dos capturas iguales: lejos 0,48 frente a 0,41; cerca (vallas a ~6 bloques) 0,52 frente a 0,27, en niveles de 0–255.
+No se distingue a ojo.
+
+Probado antes y retirado (B-23): el atajo del filtro sin ocluyentes y 4 muestras con el radio mínimo
+(`docs/rendimiento.md`).

@@ -5,6 +5,8 @@ const SOMBRAS_COLOR: bool = true;
 // Radio de la penumbra = mínimo + crecimiento × distancia al ocluyente, en bloques: con el PCF de 8 muestras da una
 // anchura de penumbra suave para follaje y copas a distancia (fino/04 §1).
 const OPC_SOMBRA_PENUMBRA_MIN: f32 = 0.051;
+// Bloques desde la cámara a partir de los que la sombra usa la mitad de muestras (F-67).
+const OPC_SOMBRA_LEJOS: f32 = 32.0;
 const OPC_SOMBRA_PENUMBRA_CRECE: f32 = 0.024;
 // Sesgo con luz rasante (F-40): desplazamiento por la normal en texels de mapa, de frente y × seno del ángulo; tope de la
 // pendiente (tangente) del sesgo de plano receptor del PCF (≈ 84°: más allá la cara casi no recibe luz).

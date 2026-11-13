@@ -63,7 +63,14 @@ fn adp_sombra_punto(e: AdpEntradaSombra, o: OpcSombras) -> AdpResultadoSombra {
     let mapa = shadow_position(pos);
     let ruido = adp_ruido_azul(e.pixel, 1u);
     let punto = LuzPuntoSombra(mapa, tpb, adp_bloques_por_profundidad(), frame.shadow_resolution, ruido, pendiente);
-    let s = luz_sombra(punto, o.ajustes, shadow_map, shadow_sampler);
+    // Lejos de la cámara, la mitad de muestras de búsqueda y de filtro (decisión del dueño, B-23 lote 2 «b»): la
+    // penumbra lejana ocupa pocos píxeles y el TAA la promedia. Porqué: docs/efectos/sombras.md §«Muestras lejos (F-67)»
+    var ajustes = o.ajustes;
+    if length(e.posicion) > OPC_SOMBRA_LEJOS {
+        ajustes.muestras = max(ajustes.muestras / 2, 4);
+        ajustes.muestras_busqueda = select(0, max(ajustes.muestras_busqueda / 2, 2), ajustes.muestras_busqueda > 0);
+    }
+    let s = luz_sombra(punto, ajustes, shadow_map, shadow_sampler);
     var luz = vec3<f32>(s.luz);
 
     if o.color && s.luz > 0.0 {
