@@ -406,3 +406,56 @@ Lo que queda:
 - **Tarde (11000–11500), −31 en la sombra.** El sol está detrás del cubo; el original tiene el cielo del sudoeste muy
   brillante (252, 250, 243), que con el sol bajo al oeste da más luz a las caras. Queda para el crepúsculo (F-55).
 - **18–24°, −20 a −35 en la sombra**: la ganancia ya ha vuelto casi a 1; se puede subir en la fila de 20°.
+
+## Noche y cuevas (F-59, 2026-11-13)
+
+Observaciones del dueño 2026-11-13 §1, decisión «mejorar sobre el original»: con luna nueva y en una cueva sin luz
+tienen que distinguirse los bloques lo justo para caminar (piedra o arena a 4–6 bloques con luma ~20–30), el pasto no
+negro, la luna por fase encima (llena ≈ 2,5 veces el suelo), y el crepúsculo empalmado con la noche sin escalones.
+
+Medido con `pruebas/escenas/noche-suelo.ctl` (`tools/noche/medir.py`) y `ocaso-noche.ctl` (`tools/noche/ocaso.py`),
+aislamiento apagado, despejado.
+
+**Tres causas:**
+
+1. **La curva fílmica aplasta el negro.** La de Hejl 2015 del original (`nucleo/color/tonemap.wgsl`) devuelve 0 por
+   debajo de ~0,006 de luz expuesta: con el mínimo de F-45 (0,006) la piedra quedaba en 8 y el pasto en 0. La curva no se
+   toca (es la del original y da el contraste del día): se sube la luz para que lo oscuro quede por encima.
+2. **El verde del pasto contaba como oclusión.** `input.tint` lleva juntos el color del bioma, el sombreado de la cara y
+   la oclusión de vértice; el pack tomaba su luminancia como oclusión. En el pasto (0x91BD59) daba ~0,74, y la cota de
+   oclusión (`luz_direccion_cielo`, 0,30 + 0,70·e^(−11,5·(1 − ao))) lo dejaba en un tercio del ambiente, siempre. Ahora:
+   canal mayor en vez de luminancia y, en los bloques con color de bioma, dividido por `OPC_AO_REF_BIOMA` = 0,74. Las
+   esquinas siguen oscureciéndose.
+3. **La luz de noche crecía con la profundidad del sol** (F-45: × `adp_factor_noche`), que daba la «noche invertida».
+
+**Ahora** (`opciones/luz.wgsl`):
+
+| constante | valor | qué es |
+|---|---|---|
+| `OPC_LUZ_NOCHE_SUELO` | 0,012 | suelo de noche a cielo abierto, azulado (`OPC_LUZ_NOCHE_COLOR`), constante: no depende del sol ni de la luna |
+| `OPC_LUZ_NOCHE_LUNA` | 0,012 | ambiente de la luna × `|4 − fase|/4` × su altura (entra con la luna aún en el horizonte, de −0,2 a 0,1 de seno) |
+| `OPC_LUZ_CUEVA_SUELO` | 0,035 | suelo donde no llega el cielo, neutro algo frío (`OPC_LUZ_CUEVA_COLOR`); sustituye a 0,0018 de `fino/03` |
+| `OPC_LUZ_CUEVA_FRENTE_PESO` | 0 | cuánto del atenuador frontal de `fino/03` se aplica al suelo de cueva (con todo, agujero oscuro en el centro) |
+| `OPC_AO_REF_BIOMA` | 0,74 | canal mayor del tinte de bioma que cuenta como sin oclusión |
+
+Los dos de noche pasan por la curva de la luz de cielo (en cuevas no llegan); el de cueva, por `1 − luz de cielo`.
+
+**Medido** (luma 0–255; antes → después):
+
+| escena | piedra | arena | pasto |
+|---|---|---|---|
+| luna nueva | 8,5 → **21,9** | 42 → 71 | 0 → **9,8** (verde, 1,13,4) |
+| luna en cuarto | 8,5 → 30,0 | 42 → 88 | 0 → 15,2 |
+| luna llena | 10,3 → 39,9 | 47 → 107 | 0 → 22,4 (4,29,11) |
+| cueva sin luz | 0 → **27,7** (26,28,30) | — | 0 → 31,6 |
+
+Luna llena frente a nueva en la piedra: 0,0083 → 0,021 de luz lineal, **2,5 veces**.
+
+Empalme del ocaso (piedra, luna llena): 12000 → 106; 12500 → 55; 12800 → 35; 13100 → 40; 13500 → 35; 14000 → 36;
+15000 → 39; 16500 → 35; 18000 → 40. Baja hasta la noche y se queda (±3 de ruido de la exposición). Antes subía de
+−12° a −35°.
+
+Capturas: `pruebas/capturas/noche-suelo-{nueva,llena,cueva}-antes.png` y `noche-suelo-*.png`.
+
+**Visto y sin tocar:** en la cueva, una franja oscura vertical en el centro de la vista que tapa el parche de arena; no
+viene del suelo de luz (sigue con el atenuador frontal quitado). Sospecha: la oclusión ambiental de pantalla (`08`).

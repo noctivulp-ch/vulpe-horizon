@@ -80,8 +80,8 @@ fn material(input: MaterialInput) -> Surface {
     let frontal = max(dot(n, p.vista), 0.0);
     let atenuador = 1.0 - (1.0 - OPC_LUZ_MINIMA_FRENTE) * frontal;
     let factor_cueva = mix(o.minima_cuevas, o.minima_exterior, smoothstep(0.0, 0.6, apertura)) * (1.0 - p.luz_cielo);
-    let minima = OPC_LUZ_MINIMA_CUEVA * factor_cueva * atenuador + frame.night_vision * 0.08;
-    let indirecta = albedo * (ambiente_cielo + bloque + relampago + vec3<f32>(minima)) + sss_cielo;
+    let minima = OPC_LUZ_CUEVA_COLOR * (OPC_LUZ_CUEVA_SUELO * factor_cueva * mix(1.0, atenuador, OPC_LUZ_CUEVA_FRENTE_PESO)) + vec3<f32>(frame.night_vision * 0.08);
+    let indirecta = albedo * (ambiente_cielo + bloque + relampago + minima) + sss_cielo;
 
     // Especular del sol y reflejo del ambiente.
     let f_ambiente = sup_fresnel_schlick_rugosidad(max(dot(n, p.vista), 0.0), m.f0, m.rugosidad);

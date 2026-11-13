@@ -54,7 +54,13 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
     if !p.cruzada {
         tinte /= sombreado;
     }
-    p.ao_vertice = select(clamp(col_luminancia(input.tint.rgb) / sombreado, 0.0, 1.0), 1.0, p.cruzada);
+    // La oclusión de vértice va en el tinte junto al color del bioma: el canal mayor, no la luminancia, para que el verde del
+    // pasto no cuente como sombra (F-59). Porqué: docs/efectos/luz-de-superficie.md §«Noche y cuevas (F-59)»
+    // En los bloques con color de bioma (tinte no gris) se divide además por el canal mayor de un verde típico de pasto.
+    let tinte_max = max(input.tint.r, max(input.tint.g, input.tint.b));
+    let bioma_tinte = max(abs(input.tint.r - input.tint.g), abs(input.tint.g - input.tint.b)) > 0.03;
+    let ref_bioma = select(1.0, OPC_AO_REF_BIOMA, bioma_tinte);
+    p.ao_vertice = select(clamp(tinte_max / (sombreado * ref_bioma), 0.0, 1.0), 1.0, p.cruzada);
     p.albedo = col_srgb_a_lineal(mat_saturar3(input.albedo.rgb * tinte));
     // Estaciones (03.2): solo los bloques con color de bioma (tinte no blanco), y las hojas con su propio tinte. Con
     // mod nativo sigue la estación continua del mundo; sin mod nativo, queda fija en la estación inicial.
@@ -166,7 +172,7 @@ fn adp_luces(o: OpcLuz) -> AdpLuces {
     // Ambiente medido de paridad/01, filtrado por las nubes del momento (F-12).
     // Más el mínimo nocturno azulado (F-45): de noche, con luna, el terreno a cielo abierto se lee sin antorchas.
     // Porqué: docs/efectos/luz-de-superficie.md §«Noche y otras dimensiones (F-45)»
-    let cielo = (adp_hacia_gris(adp_ambiente_cielo(), sol_bajo.y) * sol_bajo.x + OPC_LUZ_NOCHE_COLOR * (OPC_LUZ_NOCHE_CIELO * adp_factor_noche())) * o.cielo;
+    let cielo = (adp_hacia_gris(adp_ambiente_cielo(), sol_bajo.y) * sol_bajo.x + OPC_LUZ_NOCHE_COLOR * (OPC_LUZ_NOCHE_SUELO + OPC_LUZ_NOCHE_LUNA * adp_luna_factor_fase() * smoothstep(-0.2, 0.1, frame.moon_direction.y))) * o.cielo;
     return AdpLuces(false, d, directa, cielo, adp_suelo(c) * o.cielo * OPC_LUZ_CIELO_BASE);
 }
 

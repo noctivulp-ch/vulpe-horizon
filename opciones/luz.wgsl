@@ -17,16 +17,28 @@ const EMISION_LABPBR: f32 = 1.0;
 // Escalas en la escala común (convenciones.md): proporciones de partida afinadas en el juego.
 const OPC_LUZ_BLOQUE: f32 = 1.0;            // × la curva medida de la antorcha (paridad/03; antes 0,012 × refuerzo 3)
 const OPC_LUZ_MINIMA: f32 = 0.0004;           // base de otros mínimos (agua, ambiente del agua)
-const OPC_LUZ_MINIMA_CUEVA: f32 = 0.0018;
+const OPC_LUZ_MINIMA_CUEVA: f32 = 0.0018;    // valor de fino/03; desde F-59 manda OPC_LUZ_CUEVA_SUELO
 const OPC_LUZ_MINIMA_FRENTE: f32 = 0.30;      // multiplicador de la luz mínima de frente a la cámara (1 de canto; fino/03 §Medidos)
 const OPC_SSS_CIELO: f32 = 0.4;               // escala de la fase medida del SSS de cielo (1..2): 0,4..0,8, el tope de antes     // por unidad de la opción: calibrada con la medida exacta de paridad/03 (0.001766)
 // Ambiente de las otras dimensiones (17), en la misma escala.
 const OPC_AMBIENTE_NETHER: f32 = 0.035;      // F-45: ×10 (antes 0,0035), decisión del dueño 2.2
 const OPC_AMBIENTE_END: f32 = 0.008;         // F-45: ×4 (antes 0,002), decisión del dueño 2.2
-// Mínimo de luz de cielo de noche (F-45, decisión del dueño 2.1): ambiente azulado que se suma al del cielo nocturno a
-// cielo abierto (pasa por la curva de la luz de cielo: en cuevas no llega). Antes no había (0).
-const OPC_LUZ_NOCHE_CIELO: f32 = 0.006;
+// Luz de noche (F-59, observaciones del dueño 2026-11-13 §1; antes F-45). Porqué: docs/efectos/luz-de-superficie.md
+// §«Noche y cuevas (F-59)». Se suman al ambiente del cielo y pasan por la curva de la luz de cielo (en cuevas no llegan).
+// Suelo de noche: constante, no depende del sol ni de la luna (sin rampa: tras el ocaso la escena baja hasta él y se queda).
+const OPC_LUZ_NOCHE_SUELO: f32 = 0.012;
+// Ambiente de la luna con su fase |4 − fase|/4 y su altura: con luna llena la escena es ~2,5 veces el suelo.
+const OPC_LUZ_NOCHE_LUNA: f32 = 0.012;
 const OPC_LUZ_NOCHE_COLOR: vec3<f32> = vec3<f32>(0.55, 0.7, 1.0);
+// Suelo de cueva: donde no llega el cielo, para poder caminar sin antorchas; neutro algo frío. Sustituye al mínimo de
+// cueva de fino/03 (0,0018) como base, con su atenuador frontal.
+const OPC_LUZ_CUEVA_SUELO: f32 = 0.035;
+const OPC_LUZ_CUEVA_COLOR: vec3<f32> = vec3<f32>(0.85, 0.92, 1.0);
+// Canal mayor del tinte de bioma que cuenta como «sin oclusión» (verde del pasto de llanura, 0x91BD59 → 0,74), F-59.
+const OPC_AO_REF_BIOMA: f32 = 0.74;
+// Cuánto del atenuador frontal de la luz mínima (fino/03) se aplica al suelo de cueva: con todo, el suelo que mira a la
+// cámara queda en un 30 % y se abre un agujero oscuro en el centro de la vista (F-59).
+const OPC_LUZ_CUEVA_FRENTE_PESO: f32 = 0.0;
 const OPC_EMISION: f32 = 0.05;
 // La luz de cielo de la tabla (≈0,08 del sol a mediodía) se refuerza hasta el 0,1–0,2 de convenciones.md.
 const OPC_LUZ_CIELO_BASE: f32 = 1.8;

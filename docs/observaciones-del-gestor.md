@@ -337,3 +337,14 @@ Relación sombra/arriba de día: de 0,25–0,30 a 0,52–0,56 (original 0,45–0
    al sol; el pack se mide sin nubes. No lo he forzado.
 5. **La luna de día.** Al amanecer, mirando al oeste, la luna sale como un cuadrado muy brillante con halo y una
    banda naranja en el horizonte (`pruebas/capturas/carta-00500.png`, a la derecha). Visto de paso, sin tocar.
+
+## 2026-11-13 — B-23 punto 2: noche y cuevas (F-59)
+
+Tablas en `docs/efectos/luz-de-superficie.md` §«Noche y cuevas (F-59)». Resumen, luma de la piedra a ~5 bloques (antes →
+después): luna nueva 8,5 → 21,9; llena 10,3 → 39,9 (2,5× en lineal); cueva sin luz 0 → 27,7. Pasto con luna nueva
+0 → 9,8, verde (1,13,4). Ocaso: baja hasta la noche y se queda, sin noche invertida. Antes/después:
+`pruebas/capturas/noche-suelo-*-antes.png` → `noche-suelo-*.png`. Constantes para afinar con el dueño:
+`OPC_LUZ_NOCHE_SUELO`, `OPC_LUZ_NOCHE_LUNA`, `OPC_LUZ_CUEVA_SUELO` (`opciones/luz.wgsl`).
+
+El pasto negro era también un fallo propio: el verde del bioma contaba como oclusión de vértice y dejaba el pasto en un
+tercio del ambiente a todas horas (de día se notaba menos). Arreglado en el mismo commit.
