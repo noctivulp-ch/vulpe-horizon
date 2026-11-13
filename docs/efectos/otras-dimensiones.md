@@ -118,6 +118,10 @@ bordes blancos y grietas oscuras, con mucho contraste; los del pack salen como u
 propia niebla (la spec pide 3 muestras hacia el foco; el pack toma una) y el tamaño de los bancos. La isla del original
 sale clara, de color piedra; la del pack, azulada y más oscura (22,33,52 contra 43,64,89 en `end-suelo`).
 
+- **Destellos magenta lejos del centro:** desde (250, 90, 0) mirando hacia fuera apenas se leen (media 1,3,17, un tinte
+  magenta tenue). No los cambia F-56 (fuera de 350 bloques el vórtice no da luz), pero ahora quedan muy por debajo del
+  núcleo. Sin tocar; para revisar con la referencia si el gestor saca una vista lejana del original.
+
 ## Humo del Nether (F-57, 2026-11-13)
 
 Comparado con `referencias/original-dimensiones/` (mismas cámaras, `pruebas/escenas/dimensiones-referencias.ctl`) y

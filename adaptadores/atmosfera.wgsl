@@ -17,6 +17,9 @@ fn adp_observador() -> vec3<f32> {
 // medido con el ambiente de cielo (tabla constante, sin lecturas). 1 de día y de noche.
 // Porqué: docs/efectos/cielo-y-atmosfera.md §«Crepúsculo (F-55)»
 fn adp_ganancia_crepusculo() -> f32 {
+    if !adp_es_superficie() {
+        return 1.0;
+    }
     let elev = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
     if elev >= 0.0 || elev <= OPC_CREPUSCULO_ELEV[0] {
         return 1.0;

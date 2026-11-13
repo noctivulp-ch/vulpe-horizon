@@ -291,7 +291,9 @@ lo aplica, acercando a gris la parte añadida (`OPC_CREPUSCULO_GRIS` = 0,7), a:
 - la dispersión múltiple del sol (`adp_luz_sol`): cielo, nubes y niebla;
 - el ambiente de cielo de las superficies (`adp_ambiente_cielo`) y el de la niebla (`adaptadores/volumen.wgsl`).
 
-Con el sol a 0° o más, y a −14° o menos, la ganancia es exactamente 1 y la mezcla, 0: **el día, la noche y las nubes
+Fuera del Overworld la ganancia es 1 (allí `frame.sun_direction` sigue el reloj del mundo y no significa nada; guarda
+añadida después, comprobado que la tormenta del End no cambia: 48,73,118 antes y después). Con el sol a 0° o más, y a
+−14° o menos, la ganancia es exactamente 1 y la mezcla, 0: **el día, la noche y las nubes
 de día no cambian** (mismo cálculo). En el crepúsculo las nubes cambian de brillo y de tono, no de forma.
 
 | elev. | −14° | −12° | −10° | −8° | −6° | −3° | 0° |
