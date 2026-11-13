@@ -107,3 +107,26 @@ El brillo del color del calor se interpola igual entre el del polvo y el de la t
 Comprobado con `pruebas/escenas/tormenta-dias.ctl` (el desierto de (−9872, −2200), seis días seguidos con lluvia):
 `pruebas/capturas/tormenta-dias-hoja.png`. Los seis días tienen tormenta. El día 2 sale extremo (no se ve el suelo a
 ~20 bloques) y en los días 0 y 5 se ve el terreno. La nevada ligera (índice 0 del frío) ya no sale sola.
+
+## Diez niveles (F-64, precisión del dueño, 2026-11-13)
+
+Precisión del dueño a §8 (`observaciones-del-dueno-2026-11-13.md`): diez niveles de intensidad. Con lluvia, niveles
+1–5, de una llovizna (o un polvo o una nieve leve) a una lluvia, arena o nieve ligeramente fuerte. Con tormenta
+eléctrica, niveles 6–10, de fuerte pero no tanto a muy fuerte (~10 bloques de visibilidad). Vale para la arena, la
+nieve y la lluvia normal. Sustituye a la versión continua de arriba.
+
+- **Nivel del día** (`adp_tormenta_nivel`, `adaptadores/volumen.wgsl`): un sorteo por día para la lluvia (1–5) y otro
+  para la tormenta eléctrica (6–10). Al pasar de una a otra se usa el sorteo del otro tramo, fundido con
+  `frame.thunder`, que en Horizon sube y baja en segundos. Devuelve `t = (nivel − 1)/9`.
+- **Paso gradual:** la densidad va del nivel 1 al 10 con `t²`. Con interpolación lineal, el nivel 5 ya dejaba ~22
+  bloques de visibilidad; con `t²` el 5 queda en ~50 y el 6 en ~33.
+- **Niebla local** (arena y nieve): extinción por bloque de `OPC_LOCAL_NIVEL_1_UNIF` = 0,01 (manchas 0,05) a
+  `OPC_LOCAL_NIVEL_10_UNIF` = 0,35 (manchas 0,6). El brillo del color del calor va con `t`.
+- **Niebla de lluvia normal:** la densidad del perfil de lluvia del día (el cubo de su parámetro) × `OPC_LLUVIA_NIVEL_1`
+  = 0,5 en el nivel 1, hasta `OPC_LLUVIA_NIVEL_10_DENSIDAD` = 19,5 (× 0,02 por bloque = 0,39, ~10 bloques) en el 10.
+  Se devuelve como parámetro (raíz cúbica) a la niebla global.
+
+Comprobado con `pruebas/escenas/tormenta-niveles.ctl` (desierto y pradera, lluvia y tormenta eléctrica, tres días
+cada una): `pruebas/capturas/tormenta-niveles-hoja.png`. Cada día sale un nivel distinto, desde casi despejado (pradera,
+tercer día de lluvia) hasta cerrado. **Sin comprobar:** que la tormenta eléctrica quede siempre por encima de la lluvia.
+La fuerza del trueno de Horizon tarda en subir más que los 9 s que espera la escena.

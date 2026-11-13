@@ -57,7 +57,11 @@ fn adp_volumen_ajustes(bajo_agua: bool) -> VolAjustes {
     // En lluvia se conmuta a los perfiles de lluvia para nubes y niebla (fino/05 §4 y paridad/05)
     let pl = vol_perfil_lluvia(u32(max(m.dia, 0.0)), lluvia);
     let peso_lluvia = smoothstep(0.0, 0.5, lluvia);
-    let param_unif_base = mix(h.uniforme, pl.niebla_uniforme, peso_lluvia);
+    // Nivel de la lluvia (F-64): la densidad del perfil (cubo del parámetro) va de × OPC_LLUVIA_NIVEL_1 a la del nivel 10.
+    let t_lluvia = adp_tormenta_nivel(u32(max(m.dia, 0.0)));
+    let d_lluvia = pl.niebla_uniforme * pl.niebla_uniforme * pl.niebla_uniforme * OPC_LLUVIA_NIVEL_1;
+    let p_lluvia = pow(mix(d_lluvia, OPC_LLUVIA_NIVEL_10_DENSIDAD, t_lluvia * t_lluvia), 1.0 / 3.0);
+    let param_unif_base = mix(h.uniforme, p_lluvia, peso_lluvia);
     let param_manchas_base = mix(h.manchas, pl.niebla_manchas, peso_lluvia);
 
     // Niebla local (21): con un perfil activo la global se apaga (no se suman).
@@ -77,6 +81,16 @@ fn adp_volumen_ajustes(bajo_agua: bool) -> VolAjustes {
                       LuzRelampago(r.base, r.brillo * OPC_RELAMPAGO_NUBES * MAT_INV_PI * 0.25));
 }
 
+// Nivel de tormenta del día como t = (nivel − 1)/9 (F-64): 1–5 con lluvia y 6–10 con tormenta eléctrica, cada tramo con
+// su propio sorteo; el paso de un tramo al otro funde con la fuerza del trueno de Horizon (sube y baja en segundos).
+// Porqué: docs/efectos/niebla-local.md §«Diez niveles (F-64)»
+fn adp_tormenta_nivel(dia: u32) -> f32 {
+    let lluvia = 1.0 + floor(rui_hash21(vec2<i32>(i32(dia), 61)) * 4.999);
+    let trueno = 6.0 + floor(rui_hash21(vec2<i32>(i32(dia), 67)) * 4.999);
+    let nivel = mix(lluvia, trueno, smoothstep(0.2, 0.8, frame.thunder));
+    return (nivel - 1.0) / 9.0;
+}
+
 struct AdpNieblaLocal {
     uniforme: f32,
     manchas: f32,
@@ -92,17 +106,17 @@ fn adp_niebla_local(dia: u32, fuera: f32) -> AdpNieblaLocal {
     var r = AdpNieblaLocal(0.0, 0.0, vec3<f32>(0.0), 0.0);
     let t = frame.temperature;
     let clima = adp_clima_local_decodificar(textureLoad(bloom2, vec2<i32>(6, 0), 0).a);
-    // Intensidad del día, continua (F-64): de la tormenta suave a la extrema.
-    let intensidad = rui_hash21(vec2<i32>(i32(dia), 53));
+    let nivel = adp_tormenta_nivel(dia);
+    let curva = nivel * nivel;
     if clima.tipo == 1u && clima.peso > 0.0 {
-        let brillo = mix(col_luminancia(OPC_LOCAL_CALOR_COLOR[1]), col_luminancia(OPC_LOCAL_CALOR_COLOR[2]), intensidad);
+        let brillo = mix(col_luminancia(OPC_LOCAL_CALOR_COLOR[1]), col_luminancia(OPC_LOCAL_CALOR_COLOR[2]), nivel);
         let color = OPC_LOCAL_CALOR_TINTE * (brillo * OPC_LOCAL_BRILLO_CALOR);
-        r = AdpNieblaLocal(mix(OPC_LOCAL_CALOR_UNIF[1], OPC_LOCAL_EXTREMA_UNIF, intensidad),
-                           mix(OPC_LOCAL_CALOR_MANCHAS[1], OPC_LOCAL_EXTREMA_MANCHAS, intensidad), color, clima.peso);
+        r = AdpNieblaLocal(mix(OPC_LOCAL_NIVEL_1_UNIF, OPC_LOCAL_NIVEL_10_UNIF, curva),
+                           mix(OPC_LOCAL_NIVEL_1_MANCHAS, OPC_LOCAL_NIVEL_10_MANCHAS, curva), color, clima.peso);
     } else if clima.tipo == 2u && clima.peso > 0.0 {
         let color = OPC_LOCAL_FRIO_TINTE * (col_luminancia(OPC_LOCAL_FRIO_COLOR) * OPC_LOCAL_BRILLO_FRIO);
-        r = AdpNieblaLocal(mix(OPC_LOCAL_FRIO_UNIF[1], OPC_LOCAL_EXTREMA_UNIF, intensidad),
-                           mix(OPC_LOCAL_FRIO_MANCHAS[1], OPC_LOCAL_EXTREMA_MANCHAS, intensidad), color, clima.peso);
+        r = AdpNieblaLocal(mix(OPC_LOCAL_NIVEL_1_UNIF, OPC_LOCAL_NIVEL_10_UNIF, curva),
+                           mix(OPC_LOCAL_NIVEL_1_MANCHAS, OPC_LOCAL_NIVEL_10_MANCHAS, curva), color, clima.peso);
     } else {
         var categoria = 0u;
         var peso = 1.0;

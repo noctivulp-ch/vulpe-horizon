@@ -183,17 +183,24 @@ const OPC_LOCAL_FRIO: f32 = 0.4;              // por debajo, «zona fría»
 const OPC_LOCAL_FUNDIDO: f32 = 4.0;          // segundos en que el clima local entra o sale del todo (F-43; el mod usa lo mismo para el bioma)
 const OPC_LOCAL_VIENTO: f32 = 1.0;            // × el viento de la niebla global
 const OPC_LOCAL_DESCENSO: f32 = 0.3;          // bloques por segundo que bajan las manchas (sin medir)
-// Tormentas sin días vacíos (observación del dueño 2026-11-13 §8, F-64): cada día con lluvia en un bioma de tormenta la
-// hay, con una intensidad al azar por día y continua entre la «suave» de 21 (índice 1 de estas tablas) y una extrema, con
-// ~10 bloques de visibilidad (extinción 3,9/10). El índice 2 queda como referencia del color. Porqué:
-// docs/efectos/niebla-local.md §«Intensidad por día (F-64)»
-const OPC_LOCAL_EXTREMA_UNIF: f32 = 0.35;
-const OPC_LOCAL_EXTREMA_MANCHAS: f32 = 0.6;
-// Calor con lluvia: despejado, polvo, tormenta de arena (de 21; desde F-64 solo marcan los extremos).
+// Tormentas en 10 niveles (observaciones del dueño 2026-11-13 §8, F-64 y su precisión): cada día se sortea un nivel, 1–5
+// con lluvia y 6–10 con tormenta eléctrica, y la densidad crece de forma continua del 1 al 10 (con t², t = (nivel − 1)/9).
+// Vale para la arena y la nieve (niebla local) y para la niebla de lluvia normal. Porqué:
+// docs/efectos/niebla-local.md §«Diez niveles (F-64)»
+// Niebla local (extinción por bloque): nivel 1 polvo o nieve leve; nivel 10 la extrema, ~11 bloques de visibilidad.
+const OPC_LOCAL_NIVEL_1_UNIF: f32 = 0.01;
+const OPC_LOCAL_NIVEL_1_MANCHAS: f32 = 0.05;
+const OPC_LOCAL_NIVEL_10_UNIF: f32 = 0.35;
+const OPC_LOCAL_NIVEL_10_MANCHAS: f32 = 0.6;
+// Niebla de lluvia normal (densidad relativa, la que sale del cubo del parámetro del perfil de lluvia): nivel 1, × la del
+// perfil del día (llovizna); nivel 10, absoluta, ~10 bloques (19,5 × 0,02 por bloque = 0,39).
+const OPC_LLUVIA_NIVEL_1: f32 = 0.5;
+const OPC_LLUVIA_NIVEL_10_DENSIDAD: f32 = 19.5;
+// Calor con lluvia: despejado, polvo, tormenta de arena (de 21; desde F-64 solo el color del polvo y de la tormenta).
 const OPC_LOCAL_CALOR_UNIF = array<f32, 3>(0.0, 0.03, 0.08);
 const OPC_LOCAL_CALOR_MANCHAS = array<f32, 3>(0.0, 0.2, 0.5);
 const OPC_LOCAL_CALOR_COLOR = array<vec3<f32>, 3>(vec3<f32>(0.0), vec3<f32>(1.0, 0.5, 0.3), vec3<f32>(2.0, 0.6, 0.2));
-// Frío con nieve: nevada ligera, tormenta de nieve, ventisca (de 21; desde F-64 solo marcan los extremos).
+// Frío con nieve: nevada ligera, tormenta de nieve, ventisca (de 21; desde F-64 ya no se usan las densidades).
 const OPC_LOCAL_FRIO_UNIF = array<f32, 3>(0.0085, 0.03, 0.07);
 const OPC_LOCAL_FRIO_MANCHAS = array<f32, 3>(0.0, 0.2, 0.3);
 const OPC_LOCAL_FRIO_COLOR: vec3<f32> = vec3<f32>(2.0, 3.0, 5.0);
