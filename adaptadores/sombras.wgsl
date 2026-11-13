@@ -46,9 +46,14 @@ fn adp_sombra_punto(e: AdpEntradaSombra, o: OpcSombras) -> AdpResultadoSombra {
     }
     let clip = (frame.shadow_view_proj * vec4<f32>(e.posicion, 1.0)).xy;
     let tpb = adp_texeles_por_bloque(clip);
-    // Sesgo por la normal (Holbert): ~0,3 texels de mapa en bloques; más un poco hacia la luz.
+    // Sesgo por la normal (Holbert): ~0,3 texels de mapa en bloques de frente, creciendo con el seno del ángulo con la
+    // luz (04 §Sesgo; observación del dueño 2.4); más un poco hacia la luz. Porqué: docs/efectos/sombras.md §«Sol rasante (F-40)»
     let texel = 1.0 / tpb;
-    var pos = e.posicion + e.normal * texel * 0.35 + frame.light_direction * texel * 0.15;
+    let nl = clamp(dot(e.normal, frame.light_direction), 0.0, 1.0);
+    let seno = sqrt(1.0 - nl * nl);
+    var pos = e.posicion + e.normal * texel * (OPC_SOMBRA_SESGO_NORMAL.x + OPC_SOMBRA_SESGO_NORMAL.y * seno)
+            + frame.light_direction * texel * 0.15;
+    let pendiente = min(seno / max(nl, 1e-3), OPC_SOMBRA_PENDIENTE_MAX);
     // Fugas (1.ª parte): en interiores, la muestra se acerca al centro del bloque.
     let interior = 1.0 - smoothstep(0.1, 0.6, e.luz_cielo);
     let mundo = pos + frame.camera_position;
@@ -57,7 +62,7 @@ fn adp_sombra_punto(e: AdpEntradaSombra, o: OpcSombras) -> AdpResultadoSombra {
 
     let mapa = shadow_position(pos);
     let ruido = adp_ruido_azul(e.pixel, 1u);
-    let punto = LuzPuntoSombra(mapa, tpb, adp_bloques_por_profundidad(), frame.shadow_resolution, ruido);
+    let punto = LuzPuntoSombra(mapa, tpb, adp_bloques_por_profundidad(), frame.shadow_resolution, ruido, pendiente);
     let s = luz_sombra(punto, o.ajustes, shadow_map, shadow_sampler);
     var luz = vec3<f32>(s.luz);
 

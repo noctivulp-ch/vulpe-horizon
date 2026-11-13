@@ -6,6 +6,10 @@ const SOMBRAS_COLOR: bool = true;
 // anchura de penumbra suave para follaje y copas a distancia (fino/04 §1).
 const OPC_SOMBRA_PENUMBRA_MIN: f32 = 0.051;
 const OPC_SOMBRA_PENUMBRA_CRECE: f32 = 0.024;
+// Sesgo con luz rasante (F-40): desplazamiento por la normal en texels de mapa, de frente y × seno del ángulo; tope de la
+// pendiente (tangente) del sesgo de plano receptor del PCF (≈ 84°: más allá la cara casi no recibe luz).
+const OPC_SOMBRA_SESGO_NORMAL: vec2<f32> = vec2<f32>(0.35, 1.0);
+const OPC_SOMBRA_PENDIENTE_MAX: f32 = 10.0;
 
 // Sombra planetaria del horizonte (fino/04 §6), ajustada a la tabla medida (F-8): centro 560/elev − 55 bloques,
 // transición ±50, suelo 1 − exp(−0,0003·elev²). Porqué: docs/efectos/sombras.md §Sombra planetaria del horizonte

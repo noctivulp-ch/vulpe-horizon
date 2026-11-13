@@ -7,6 +7,7 @@ struct LuzPuntoSombra {
     bloques_por_profundidad: f32, // bloques por unidad de profundidad (proyección ortográfica: lineal)
     resolucion: f32,            // lado del mapa en texels
     ruido: f32,                 // 0..1 por píxel y fotograma: gira el disco de muestras
+    pendiente: f32,             // tangente del ángulo entre la normal y la luz (0 de frente; recortada)
 }
 
 struct LuzAjustesSombra {
@@ -88,10 +89,15 @@ fn luz_sombra(p: LuzPuntoSombra, a: LuzAjustesSombra, mapa: texture_depth_2d, co
     }
     // 3. PCF con ese radio: si la búsqueda no detectó ocluyentes, no se salta el filtrado, sino que se
     // ejecuta con el radio mínimo (fino/04 §Lo que está mal 1), evitando cortes bruscos en la silueta.
+    // Sesgo de plano receptor: en una cara rasante, la superficie misma se acerca a la luz al alejarse del centro del
+    // disco; cada muestra compara con la profundidad bajada en su distancia (bloques) por la pendiente, o la cara se
+    // sombrea a sí misma en rayas. Porqué: docs/efectos/sombras.md §«Sol rasante (F-40)»
     var luz = 0.0;
+    let sesgo_por_texel = p.pendiente / (p.texeles_por_bloque * p.bloques_por_profundidad);
     for (var i = 0; i < a.muestras; i++) {
-        let uv = p.mapa.xy + luz_vogel(i, a.muestras, giro) * radio_texeles / lado;
-        luz += textureSampleCompareLevel(mapa, comparacion, uv, p.mapa.z);
+        let desp = luz_vogel(i, a.muestras, giro) * radio_texeles;
+        let uv = p.mapa.xy + desp / lado;
+        luz += textureSampleCompareLevel(mapa, comparacion, uv, p.mapa.z - length(desp) * sesgo_por_texel);
     }
     return LuzSombra(luz / f32(a.muestras), grosor);
 }

@@ -155,3 +155,18 @@ Y = 128 da 0,45 (0,36); a 5° Y = 32/63/90 dan 0,16/0,59/0,92 (0,11/0,54/0,88); 
 10 bloques/°, se apagaba del todo a 26°): el efecto dura más (a 10° el terreno a Y ≤ 0 sigue a medias) y a 5° la cota
 de luz es 60, no 170. En `atardecer-oeste` (sol ≈ 12°) el suelo a Y ≈ 75 ya está iluminado por esta sombra; lo que
 lo apaga en el original a esa hora es la sombra de los altoestratos (C-08.1), no esta.
+
+## Sol rasante (F-40, 2026-11-12)
+
+Observación del dueño 2.4: bandas en una cara iluminada con el sol bajo.
+
+- **Por qué:** el PCF reúne muestras en un disco de 1 a 30 texels del mapa y las comparaba todas con la profundidad del
+  centro. En una cara casi paralela a la luz, la superficie misma está más cerca de la luz en un lado del disco que en
+  el centro: esas muestras la ven como ocluyente y la cara se sombrea a sí misma en rayas (acné de filtro). El
+  desplazamiento por la normal, fijo en 0,35 texels, tampoco crecía con el ángulo, como pide `04` §Sesgo.
+- **Arreglo:** sesgo de plano receptor por muestra: la profundidad de cada muestra baja `|desplazamiento|` (bloques) ×
+  tangente del ángulo entre la normal y la luz (recortada a 10, unos 84°; `OPC_SOMBRA_PENDIENTE_MAX`). Y el
+  desplazamiento por la normal pasa a `0,35 + 1,0 × seno` texels (`OPC_SOMBRA_SESGO_NORMAL`). De frente al sol no
+  cambia nada; la sombra de contacto se conserva.
+- **Comprobado** (`pruebas/escenas/sombra-rasante.ctl`, hora 12000, caras de arriba de hormigón con el sol bajo): con un
+  filtro de paso alto, las rayas diagonales que tenían antes las caras desaparecen.
