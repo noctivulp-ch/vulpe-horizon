@@ -58,3 +58,33 @@ del bioma, y faltaban transiciones.
 - **Comprobado** (`pruebas/escenas/tormenta-fundido.ctl`): lluvia puesta dentro del desierto, tormenta creciendo de 1 a
   6 s; entrar con lluvia desde fuera, paisaje aún visible a 0,5 s y tormenta a los 2 s. La tormenta de arena es tan densa
   que con poco peso ya tapa: el fundido se nota más en el polvo.
+
+## Color de las tormentas en la imagen (F-52, 2026-11-13)
+
+`subsistemas/28` §5: la ventisca tiene que salir gris neutro y la tormenta de arena dorada con saturación ~0,5 (matiz
+~40°); de noche, las dos casi negras.
+
+- **Por qué salían mal:** la luz que dispersa la niebla local se tiñe con el color propio de `21` y se apaga con una
+  extinción gris (el raymarch lleva una sola transmitancia). Con (2,0; 0,6; 0,2) la arena salía naranja rojiza (98,42,13
+  de fondo, matiz ~20°) y con (2; 3; 5) la ventisca, azul (77,99,127). En el original esos colores acaban más neutros en
+  la imagen (si la extinción es por canal, a mucha profundidad la luz dispersada vuelve al color de la luz), pero el
+  pack no tiene transmitancia por canal.
+- **Arreglo:** el tono de la niebla local en la imagen sale de la carta medida (`OPC_LOCAL_CALOR_TINTE`: 197,168,97 en
+  lineal normalizado a luminancia 1; `OPC_LOCAL_FRIO_TINTE`: gris neutro) y el color de `21` aporta su luminancia (el
+  brillo), por `OPC_LOCAL_BRILLO_CALOR` = 11 y `OPC_LOCAL_BRILLO_FRIO` = 2,3, ajustados a la carta. Las densidades de
+  `21` no cambian.
+- **Medido** (`pruebas/escenas/carta-tormentas.ctl`, cubo blanco a Y 100, elevación del sol 0°, perfil de tormenta del día):
+
+  | Escena | Zona | Antes | Ahora | Original |
+  |---|---|---|---|---|
+  | Arena | fondo | 98,42,13 | 154,136,73 | 197,168,97 |
+  | Arena | cara del cubo | 75,32,17 | 138,116,52 | 179,147,78 |
+  | Arena | cielo a través | 151,77,30 | 208,190,117 | 194,164,95 |
+  | Ventisca | fondo | 77,99,127 | 126,126,126 | 142,142,143 |
+  | Ventisca | cara del cubo | 50,69,97 | 97,98,99 | 120,122,123 |
+  | Ventisca | cielo a través | 123,149,180 | 180,180,180 | 137,138,141 |
+  | Arena y ventisca, medianoche | toda la imagen | casi negro | casi negro | casi negro |
+
+  El tono cuadra (gris con diferencia entre canales ≤ 3; arena con matiz ~45°). Los niveles quedan dentro de ±60: la
+  densidad cerca del cubo y la del fondo no se reparten igual que en el original. El polvo (perfil 1) toma el mismo
+  tono dorado.

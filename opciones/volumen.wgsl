@@ -191,6 +191,12 @@ const OPC_LOCAL_CALOR_COLOR = array<vec3<f32>, 3>(vec3<f32>(0.0), vec3<f32>(1.0,
 const OPC_LOCAL_FRIO_UNIF = array<f32, 3>(0.0085, 0.03, 0.07);
 const OPC_LOCAL_FRIO_MANCHAS = array<f32, 3>(0.0, 0.2, 0.3);
 const OPC_LOCAL_FRIO_COLOR: vec3<f32> = vec3<f32>(2.0, 3.0, 5.0);
+// Tono en la imagen de las tormentas (28 §5, F-52): el color propio de 21 da el brillo (su luminancia); el tono sale de
+// la carta medida en el original: arena dorada (197,168,97 → lineal normalizado a luminancia 1) y ventisca gris neutro.
+const OPC_LOCAL_CALOR_TINTE: vec3<f32> = vec3<f32>(1.371, 0.961, 0.293);
+const OPC_LOCAL_FRIO_TINTE: vec3<f32> = vec3<f32>(1.0, 1.0, 1.0);
+const OPC_LOCAL_BRILLO_CALOR: f32 = 11.0;       // × la luminancia del color de 21 (ajuste a la carta)
+const OPC_LOCAL_BRILLO_FRIO: f32 = 2.3;
 // Bioma (siempre): pantano, jungla, jardín pálido (este, solo con el mod).
 const OPC_LOCAL_BIOMA_UNIF = array<f32, 3>(0.01, 0.01, 0.07);
 const OPC_LOCAL_BIOMA_MANCHAS = array<f32, 3>(0.05, 0.0, 0.0);

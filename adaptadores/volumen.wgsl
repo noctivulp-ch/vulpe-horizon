@@ -94,9 +94,11 @@ fn adp_niebla_local(dia: u32, fuera: f32) -> AdpNieblaLocal {
     let clima = adp_clima_local_decodificar(textureLoad(bloom2, vec2<i32>(6, 0), 0).a);
     let k = dia % 3u;
     if clima.tipo == 1u && clima.peso > 0.0 {
-        r = AdpNieblaLocal(OPC_LOCAL_CALOR_UNIF[k], OPC_LOCAL_CALOR_MANCHAS[k], OPC_LOCAL_CALOR_COLOR[k], clima.peso);
+        let color = OPC_LOCAL_CALOR_TINTE * (col_luminancia(OPC_LOCAL_CALOR_COLOR[k]) * OPC_LOCAL_BRILLO_CALOR);
+        r = AdpNieblaLocal(OPC_LOCAL_CALOR_UNIF[k], OPC_LOCAL_CALOR_MANCHAS[k], color, clima.peso);
     } else if clima.tipo == 2u && clima.peso > 0.0 {
-        r = AdpNieblaLocal(OPC_LOCAL_FRIO_UNIF[k], OPC_LOCAL_FRIO_MANCHAS[k], OPC_LOCAL_FRIO_COLOR, clima.peso);
+        let color = OPC_LOCAL_FRIO_TINTE * (col_luminancia(OPC_LOCAL_FRIO_COLOR) * OPC_LOCAL_BRILLO_FRIO);
+        r = AdpNieblaLocal(OPC_LOCAL_FRIO_UNIF[k], OPC_LOCAL_FRIO_MANCHAS[k], color, clima.peso);
     } else {
         var categoria = 0u;
         var peso = 1.0;
