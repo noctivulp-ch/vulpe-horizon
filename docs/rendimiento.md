@@ -154,3 +154,35 @@ en blanco («a pass reads a blank one in place of the target it writes»), así 
 anterior. Guardarlo en otro destino no es posible: los cuatro destinos propios ya están en uso (mapa de la aurora,
 volumen, bloom, bloom2), y el del mapa de la aurora es de ¼ de resolución. **Para PR-Pending:** historial de los
 destinos propios (leer el del fotograma anterior en la pasada que lo escribe) o más destinos.
+
+## 2026-11-13: luz diferida completa (descartada)
+
+Segunda vuelta pedida por el gestor: la luz directa entera (sombra del sol con translúcidos y agua por delante, nubes y
+horizonte, SSS con el grosor de la sombra, especular) y `adp_luces` en la composición, una vez por píxel visible.
+Criterio para quedarse: al menos 2,5 ms menos en el Overworld (bosque y llanura), imagen igual y sin tocar las nubes.
+
+**Cómo se hizo** (retirado; el parche queda en `build/prototipos/luz-diferida/cambio.diff`, fuera de git):
+- **`material`:** el terreno sólido del Overworld que no es mena, emisivo, metal, agua ni translúcido no calcula la
+  sombra, la directa ni el especular. Su dato de `set_surface` va negativo (marca de diferido) y lleva el valor del
+  albedo en vez de la fracción indirecta: con el matiz y la saturación de la suavidad empaquetada lo reconstruye. Lleva
+  también F0 (5 bits), SSS en pasos de 0,3 (2 bits) y «cruzada» (1 bit).
+- **Composición:** después de la oclusión, `adp_luz_diferida` rehace la cuenta de `material`. Para ello `adp_luces` pasó
+  a un archivo compartido.
+
+**Medido** (ajustes del dueño, 20 s, alternando la constante):
+
+| vista | sin diferir | diferida | diferencia |
+|---|---|---|---|
+| bosque | 20,19 / 21,52 | 19,95 / 20,00 | −0,24 / −1,5 |
+| llanura | 17,37 / 17,05 | 15,91 / 16,05 | −1,46 / −1,0 |
+
+**Media ≈ −1,05 ms: menos que con solo la sombra diferida (−1,5).** `adp_luces` se calcula dos veces (en `material`
+para el ambiente y en la composición para la directa), y la composición suma su cuenta en todos los píxeles. Para
+pasar de ahí habría que diferir también el ambiente y quitar `adp_luces` de `material`. Eso necesita en `set_surface`
+la oclusión de vértice, la luz de bloque y su color, la mínima de cueva, el SSS de cielo y la marca de cara de abajo,
+que no caben en los dos `f32` que deja la API (hoy van llenos: suavidad, matiz, saturación y signo de mena; F0,
+fracción o valor y luz de cielo). Y el ahorro real de `adp_luces` es menor que los 2,6 ms del bit 1024. **Descartado.**
+No llegué a sacar las capturas de comparación: no pasó el criterio de rendimiento.
+
+**Para PR-Pending:** más canales en `set_surface` (un `vec4` de datos del pack) o un bloque de datos por fotograma
+legible en `material` harían viable diferir la luz entera.
