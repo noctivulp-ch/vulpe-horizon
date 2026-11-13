@@ -17,6 +17,16 @@ fn adp_aislar(color: vec3<f32>, uv: vec2<f32>, a: ImgAislamiento) -> vec3<f32> {
         hs = sup_desempaquetar_suavidad(centro.smoothness).yz;
     }
     var m = img_pertenece_hs(hs, a);
+    // Freno con el matiz de la imagen, con margen amplio: solo saca del rango, nunca mete. Bajo el agua la luz es azul y los
+    // bloques rojizos del fondo (tierra, arcilla) salían azul saturado, realzados (F-60).
+    // Porqué: docs/efectos/aislamiento-de-color.md §«Bajo el agua (F-60)»
+    if centro.present {
+        var ancho = a;
+        ancho.rango = a.rango + OPC_AISLAMIENTO_MARGEN_IMAGEN;
+        ancho.sat_minima = 0.0;
+        let imagen = sup_matiz_sat(color);
+        m *= mix(1.0, img_pertenece_hs(imagen, ancho), smoothstep(0.05, 0.15, imagen.y));
+    }
     if a.tamano > 0.0 && m > 0.001 {
         let umbral = a.exigencia;
         let paso = img_aislamiento_paso(frame.resolution, a.tamano);

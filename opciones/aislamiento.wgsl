@@ -9,6 +9,9 @@ const OPC_AISLAMIENTO_TAMANO: f32 = 5.0;
 const OPC_AISLAMIENTO_EXIGENCIA: f32 = 20.0;
 const OPC_AISLAMIENTO_DESATURACION: f32 = 80.0;
 const OPC_AISLAMIENTO_REALCE: f32 = 30.0;
+// Grados que se suman al rango para el freno con el matiz de la imagen (F-60): la luz de una antorcha o del cielo no
+// saca del rango un bloque rojo; la del agua, sí.
+const OPC_AISLAMIENTO_MARGEN_IMAGEN: f32 = 45.0;
 
 fn opc_aislamiento(exposicion: f32) -> ImgAislamiento {
     return ImgAislamiento(f32(aislamiento_matiz), f32(aislamiento_rango), OPC_AISLAMIENTO_SUAVIDAD, OPC_AISLAMIENTO_SAT_MINIMA * 0.01,

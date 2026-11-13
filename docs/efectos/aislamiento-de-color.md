@@ -52,3 +52,34 @@ Observación del dueño 5.1 (`observaciones-del-dueno-2026-11-12.md`): el aislam
   imagen. Las entidades y los objetos en la mano, igual.
 - **Comprobado** (`pruebas/escenas/aislamiento-hormigon.ctl`, cinco hormigones al sol y de noche con antorcha): el mismo
   resultado en las dos luces, y el rojo nunca por debajo del naranja.
+
+## Bajo el agua (F-60, 2026-11-13)
+
+Observación del dueño 2026-11-13 §3.1: bajo el agua salían manchas azules saturadas con forma de bloque. Reproducido
+con `pruebas/escenas/aislamiento-colores.ctl` (tierra, arcilla, terracota y hormigón rojo en el fondo del océano):
+`pruebas/capturas/aisl-agua-antes.png`. Desde F-39 la pertenencia al rango sale del color del **bloque**; la tierra y la
+arcilla son rojizas y entraban en el rango del rojo, y entonces el realce se aplicaba al color de la **imagen**, que bajo
+el agua es azul: azul realzado.
+
+**Arreglo:** un freno con el matiz de la imagen, con margen amplio (`OPC_AISLAMIENTO_MARGEN_IMAGEN` = 45° sumados al
+rango, sin saturación mínima, y solo cuando la imagen tiene algo de color): **solo puede sacar del rango, nunca meter**.
+La luz cálida de una antorcha o el cielo sobre un bloque rojo no lo saca (el matiz se mueve menos de 45°); el azul del
+agua, sí. Después: `pruebas/capturas/aisl-agua.png`, sin manchas.
+
+### Lo que se conserva y lo que no (§3.2), medido
+
+`tools/aislamiento/medir.py` sobre la fila de hormigón al sol (rango 20 alrededor del rojo), saturación HSV con el
+aislamiento entre sin él:
+
+| hormigón | matiz | sat. con / sin |
+|---|---|---|
+| rojo | 3° | **1,11** (realzado) |
+| marrón | 28° | 1,09 (entra en el rango) |
+| naranja | 40° | 0,95 (borde suave del rango) |
+| amarillo | 54° | **0,22** |
+| lima | 77° | 0,22 |
+| azul | 242° | 0,35 |
+
+A pleno sol ya hace lo que pide el dueño: el rango entero y realzado (×1,1 con el realce 30), y los demás conservan
+~1/5 de su saturación (el 80 % de desaturación) con su matiz. No se cambia; queda para comprobar con el dueño de noche, donde
+la saturación de partida es baja y 1/5 de ella apenas se ve. El freno de F-60 no cambia esta tabla.
