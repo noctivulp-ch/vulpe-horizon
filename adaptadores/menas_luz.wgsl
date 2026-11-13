@@ -4,7 +4,8 @@
 // Porqué: docs/efectos/menas-brillantes.md §«Luz de las menas (F-50)»
 fn adp_luz_menas(color: vec3<f32>, p: AdpPixel) -> vec3<f32> {
     let om = opc_menas();
-    if !OPC_MENAS_LUZ || !om.activas || p.es_cielo {
+    // En el End no hay menas: 1,2 de 8,5 ms de GPU por nada (B-23 lote 2, docs/rendimiento.md).
+    if !OPC_MENAS_LUZ || !om.activas || p.es_cielo || frame.dimension == 1 {
         return color;
     }
     let s = surface_at(vec2<i32>(p.pixel));

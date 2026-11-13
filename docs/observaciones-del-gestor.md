@@ -387,3 +387,11 @@ probar quitando de una en una el TAA, la luz de menas y la oclusión.
 
 Visto en esta sesión, para la misma fase: en la cueva de `noche-suelo` hay una franja oscura vertical en el centro de la
 vista (sospecha: la oclusión de pantalla; ver `docs/efectos/luz-de-superficie.md` §«Noche y cuevas (F-59)»).
+
+## 2026-11-13 — B-23 lote 2: rendimiento, **medido a medias**
+
+Todo en `docs/rendimiento.md`. Con foco: GPU por fotograma Overworld 17,3 ms, Nether 10,5, End 8,5 (ajustes del
+dueño, distancia 8). Aplicado: la luz de menas no corre en el End (−1,2 ms, sin cambio visible). Sin cuadrar: el dueño ve
+17 fps en el Nether y yo mido 10,5 ms de GPU allí; hace falta su sitio y su versión del pack. Bloqueado: a mitad de la
+sesión Horizon dejó de recibir el foco (se queda en 10 fps aunque niri lo enfoca), y sin eso la ablación pieza a pieza
+no vale. Mis ajustes de `vulpe-pruebas` ya están restaurados (`build/respaldo-ajustes/`).

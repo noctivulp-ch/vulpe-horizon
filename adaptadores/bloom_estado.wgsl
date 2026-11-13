@@ -5,6 +5,9 @@
 // Pasada 4: bajada a ¼ desde history; en la esquina, la medida y la adaptación (el estado anterior está en la
 // esquina de bloom2, que aún guarda el del fotograma anterior).
 fn adp_bloom_bajada(input: PostInput) -> vec4<f32> {
+    if opc_quitar(16u) && !(i32(input.pixel.y) == 0 && i32(input.pixel.x) <= 6) {
+        return vec4<f32>(0.0);
+    }
     let rgb = img_bloom_bajada(history, linear_sampler, input.uv);
     let texel = vec2<i32>(input.pixel);
     if texel.y != 0 || texel.x > 6 {
@@ -39,6 +42,9 @@ fn adp_bloom_bajada(input: PostInput) -> vec4<f32> {
 
 // Pasada 5: desenfoque ancho de bloom; copia el estado de la esquina.
 fn adp_bloom_ancho(input: PostInput) -> vec4<f32> {
+    if opc_quitar(16u) && !(i32(input.pixel.y) == 0 && i32(input.pixel.x) <= 6) {
+        return vec4<f32>(0.0);
+    }
     let aspecto = frame.resolution.x / frame.resolution.y;
     let giro = rui_tramado_ign(input.pixel);
     let rgb = img_bloom_ancho(bloom, linear_sampler, input.uv, OPC_BLOOM_RADIO, aspecto, OPC_BLOOM_ANILLOS, giro).rgb;

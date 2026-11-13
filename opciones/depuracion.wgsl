@@ -1,5 +1,12 @@
 // Ajustes de las vistas de depuración. Porqué: docs/efectos/nucleo.md §Vistas de depuración
 const OPC_DEPURACION_VISTA_DEFECTO: u32 = 0u;
+// Ablación para medir el coste por etapa (B-23 lote 2): cada bit quita una pieza. 0 en uso normal. Ver
+// docs/rendimiento.md. 1 volumen, 2 oclusión, 4 luz de menas, 8 reflejos de pantalla, 16 bloom, 32 TAA, 64 mapa de
+// la aurora, 128 sombras del sol, 256 cielo.
+const OPC_DEPURACION_QUITAR: u32 = 0u;
+fn opc_quitar(bit: u32) -> bool {
+    return (OPC_DEPURACION_QUITAR & bit) != 0u;
+}
 
 const OPC_VISTA_NORMAL: u32 = 0u;
 const OPC_VISTA_PROFUNDIDAD: u32 = 1u;

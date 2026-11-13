@@ -1,0 +1,25 @@
+quitar=0 overworld fps 10.0 gpu 32.20 ms cpu 5.91 ms
+quitar=0 nether fps 10.0 gpu 25.40 ms cpu 5.06 ms
+quitar=0 end fps 10.0 gpu 19.64 ms cpu 3.29 ms
+quitar=8 overworld fps 10.0 gpu 31.55 ms cpu 5.57 ms
+quitar=8 nether fps 10.0 gpu 25.37 ms cpu 5.32 ms
+quitar=8 end fps 10.0 gpu 21.19 ms cpu 3.57 ms
+quitar=16 overworld fps 10.0 gpu 31.60 ms cpu 5.36 ms
+quitar=16 nether fps 10.0 gpu 25.47 ms cpu 5.23 ms
+quitar=16 end fps 10.0 gpu 19.72 ms cpu 3.56 ms
+quitar=32 overworld fps 10.0 gpu 32.23 ms cpu 6.15 ms
+quitar=32 nether fps 10.0 gpu 24.79 ms cpu 5.66 ms
+quitar=32 end fps 10.0 gpu 19.94 ms cpu 3.80 ms
+quitar=128 overworld fps 10.0 gpu 29.00 ms cpu 5.59 ms
+quitar=128 nether fps 10.0 gpu 25.84 ms cpu 5.44 ms
+quitar=128 end fps 10.0 gpu 20.90 ms cpu 3.50 ms
+quitar=256 overworld fps 10.0 gpu 32.19 ms cpu 5.42 ms
+quitar=256 nether fps 10.0 gpu 26.41 ms cpu 5.05 ms
+quitar=256 end fps 10.0 gpu 21.65 ms cpu 3.31 ms
+quitar=511 overworld fps 10.0 gpu 24.72 ms cpu 5.95 ms
+quitar=511 nether fps 10.0 gpu 17.87 ms cpu 4.84 ms
+quitar=511 end fps 10.0 gpu 11.94 ms cpu 3.31 ms
+quitar=1 overworld fps 10.0 gpu 28.03 ms cpu 5.92 ms
+quitar=1 nether fps 10.0 gpu 24.23 ms cpu 5.31 ms
+quitar=1 end fps 10.0 gpu 17.87 ms cpu 3.34 ms
+hecho

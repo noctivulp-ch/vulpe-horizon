@@ -16,11 +16,17 @@ fn post(input: PostInput) -> vec4<f32> {
     if opc_vista_forma(opc_depuracion().vista) {
         return vec4<f32>(adp_vista_forma(p.uv, opc_depuracion().vista), 1.0);
     }
-    c = adp_aplicar_oclusion(c, p);
-    c = adp_luz_menas(c, p);
+    if !opc_quitar(2u) {
+        c = adp_aplicar_oclusion(c, p);
+    }
+    if !opc_quitar(4u) {
+        c = adp_luz_menas(c, p);
+    }
     let dir = adp_post_direccion(p);
     let o = opc_luz();
-    c += adp_post_reflejo(p, dir, o.pasos_reflejo, o.suavidad_reflejo);
+    if !opc_quitar(8u) {
+        c += adp_post_reflejo(p, dir, o.pasos_reflejo, o.suavidad_reflejo);
+    }
     let borde = adp_post_borde(p, dir);
     c = mix(c, borde.rgb, borde.a);
     // Orden de 23: borde, cueva, volumen, inmersión.

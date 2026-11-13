@@ -2,6 +2,9 @@
 // Porqué: docs/efectos/cielo-y-atmosfera.md y docs/efectos/cielo-fractal.md
 fn sky(input: SkyInput) -> vec4<f32> {
     let rayo = adp_cielo_rayo(input);
+    if opc_quitar(256u) {
+        return adp_cielo_salida(vec3<f32>(0.0), rayo.direccion);
+    }
     let dir = rayo.direccion;
     let ajustes = opc_cielo();
     let sol = adp_luz_sol(ajustes);
