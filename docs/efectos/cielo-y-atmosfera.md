@@ -274,3 +274,47 @@ Observación del dueño 3.1: en los últimos segundos del atardecer suben bandas
   fotograma (`rui_tramado_direccion` más la razón áurea por fotograma, ciclo de 64), y el TAA lo promedia. Mismo
   coste. Con la imagen fija no se ve el tramado.
 - **Comprobado:** con la misma escena, la franja queda de una pieza y se apaga de forma continua.
+
+## Crepúsculo (F-55, 2026-11-13)
+
+Spec `subsistemas/28-color-a-lo-largo-del-dia.md` §3: hasta −6° «todo conserva luz» y entre −6° y −12° el cielo cae
+unas 6 veces. En el pack la dispersión del sol se apagaba antes: a −6° el cubo y el cielo salían **negros**, más
+oscuros que la propia noche a −18° (que tiene el mínimo nocturno de F-45). Comprobado que no es la exposición: con
+7 s de espera (`pruebas/escenas/carta-crepusculo.ctl`, ver abajo) da lo mismo que con 2,5 s. La tabla del ambiente
+(`ATM_AMBIENTE_RGB`) baja 170 veces entre 0° y −6°.
+
+**Qué se hace.** `OPC_CREPUSCULO_PISO` (`opciones/cielo.wgsl`) da, por elevación del sol, la luminancia mínima del
+ambiente como fracción de la del sol en el horizonte; `adp_ganancia_crepusculo()` (`adaptadores/atmosfera.wgsl`)
+calcula cuánto falta (≥ 1) con la tabla constante del ambiente, sin lecturas de textura, y `adp_aplicar_crepusculo()`
+lo aplica, acercando a gris la parte añadida (`OPC_CREPUSCULO_GRIS` = 0,7), a:
+
+- la dispersión múltiple del sol (`adp_luz_sol`): cielo, nubes y niebla;
+- el ambiente de cielo de las superficies (`adp_ambiente_cielo`) y el de la niebla (`adaptadores/volumen.wgsl`).
+
+Con el sol a 0° o más, y a −14° o menos, la ganancia es exactamente 1 y la mezcla, 0: **el día, la noche y las nubes
+de día no cambian** (mismo cálculo). En el crepúsculo las nubes cambian de brillo y de tono, no de forma.
+
+| elev. | −14° | −12° | −10° | −8° | −6° | −3° | 0° |
+|---|---|---|---|---|---|---|---|
+| piso | 0 | 0,04 | 0,15 | 0,5 | 1 | 1 | 1 |
+
+**Medido** (perfil despejado fijo, `carta-crepusculo`, espera 7 s), pack antes → después / original:
+
+| hora (elev.) | arriba | norte | cielo alto | horizonte |
+|---|---|---|---|---|
+| 23500 (−6°, mañana) | 0,4,11 → 67,79,103 / 152,149,168 | 0,0,0 → 25,32,48 / 89,89,107 | 7,18,43 → 75,85,116 / 127,128,152 | 0,1,7 → 48,56,79 / 107,129,163 |
+| 12500 (−6°, tarde) | 2,7,16 → 75,87,112 / 155,150,166 | 0,0,1 → 29,37,54 / 92,89,105 | 0,2,10 → 64,74,105 / 178,158,159 | 0,2,10 → 46,56,80 / 235,212,175 |
+| 13000 (−12°) | 8,18,33 → 13,23,40 / 33,47,71 | 0,2,7 → 0,3,11 / 13,24,39 | 1,6,21 → 6,14,35 / 29,42,62 | 1,5,18 → 2,9,25 / 29,42,63 |
+
+**Lo que falta, y por qué no se fuerza más:**
+
+- **Nivel a −6°: la mitad del original.** Subir el piso rinde poco: la exposición automática
+  (`E = k / ln(1 + L + c)`, `opciones/imagen.wgsl`) normaliza; con L ≫ c la imagen final tiende a un brillo fijo y
+  más radiancia se compensa con menos exposición. Lo que separa al original es su clave de exposición en el
+  crepúsculo, no la radiancia. Ver `docs/observaciones-del-gestor.md` (2026-11-13).
+- **Ya a 0° el pack está oscuro** (arriba 75,83,93 contra 129,146,180; cielo 44,48,67 contra 183,179,187), y el piso
+  es relativo a 0°. Parte es que el «0°» del original es aproximado (órbita inclinada).
+- **Sombra/arriba a −6°: 0,37 contra 0,6.** Sin sol, el rebote del suelo (F-53) es 0; en el original las caras
+  laterales reciben casi lo mismo que la de arriba.
+- **El crema del horizonte en la puesta (235,212,175) no sale**: es dispersión simple hacia el sol bajo el
+  horizonte, que el piso (múltiple, gris) no da. No se pinta a mano.

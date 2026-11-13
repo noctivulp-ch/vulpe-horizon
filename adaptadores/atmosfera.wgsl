@@ -13,6 +13,29 @@ fn adp_observador() -> vec3<f32> {
     return vec3<f32>(0.0, atm_tierra().radio_planeta + ATM_ALTURA_OBSERVADOR + extra, 0.0);
 }
 
+// Ganancia del crepúsculo (F-55): lo que falta a la dispersión del sol para llegar al piso de OPC_CREPUSCULO_PISO,
+// medido con el ambiente de cielo (tabla constante, sin lecturas). 1 de día y de noche.
+// Porqué: docs/efectos/cielo-y-atmosfera.md §«Crepúsculo (F-55)»
+fn adp_ganancia_crepusculo() -> f32 {
+    let elev = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
+    if elev >= 0.0 || elev <= OPC_CREPUSCULO_ELEV[0] {
+        return 1.0;
+    }
+    var piso = OPC_CREPUSCULO_PISO[0];
+    for (var i = 1; i < 7; i++) {
+        let t = clamp((elev - OPC_CREPUSCULO_ELEV[i - 1]) / (OPC_CREPUSCULO_ELEV[i] - OPC_CREPUSCULO_ELEV[i - 1]), 0.0, 1.0);
+        piso = mix(piso, OPC_CREPUSCULO_PISO[i], t);
+    }
+    let ahora = col_luminancia(atm_ambiente_cielo(elev));
+    return max(1.0, piso * col_luminancia(atm_ambiente_cielo(0.0)) / max(ahora, 1e-9));
+}
+
+// La ganancia del crepúsculo, con la parte añadida acercada a gris (F-55).
+fn adp_aplicar_crepusculo(c: vec3<f32>) -> vec3<f32> {
+    let g = adp_ganancia_crepusculo();
+    return mix(c, vec3<f32>(col_luminancia(c)), OPC_CREPUSCULO_GRIS * (1.0 - 1.0 / g)) * g;
+}
+
 fn adp_luz_sol(ajustes: OpcCielo) -> AtmLuz {
     let d = frame.sun_direction;
     let color = ajustes.sol_color;
@@ -20,7 +43,7 @@ fn adp_luz_sol(ajustes: OpcCielo) -> AtmLuz {
              * atm_refuerzo_crepuscular(degrees(asin(clamp(d.y, -1.0, 1.0))));
     // En el crepúsculo el ambiente mantiene el gris azulado de la bóveda sobre la sombra de la Tierra (01.1).
     // Porqué: docs/efectos/cielo-y-atmosfera.md §Cinturón de Venus
-    let multiple = atm_multiple_crepusculo(base, d.y, ajustes.venus);
+    let multiple = adp_aplicar_crepusculo(atm_multiple_crepusculo(base, d.y, ajustes.venus));
     return AtmLuz(d, ATM_IRRADIANCIA_SOL * color, multiple * color);
 }
 

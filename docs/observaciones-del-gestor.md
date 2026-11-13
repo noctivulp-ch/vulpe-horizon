@@ -303,3 +303,37 @@ Para subir o bajar: cambiar el número y nada más.
 - **Costura vertical en la niebla con lluvia** (escena `lluvia-horizonte.ctl`, encuadre desde (150, 85, 230)): una línea
   vertical clara en la niebla, debajo de un bloque flotante del mundo de pruebas, antes y después de F-42. Sospecha: el
   reescalado del volumen de media resolución junto a un borde de geometría. Sin investigar.
+
+## 2026-11-13 — B-22, spec 28 (carta de color): F-53, F-54, F-55
+
+Medido con `tools/carta-color/medir.py` sobre las escenas `carta-color` (22 horas), `carta-color-dia` (4 de día) y
+`carta-crepusculo` (6 del crepúsculo, espera de 7 s), perfil despejado fijo y aislamiento apagado. Tablas completas en
+`docs/efectos/luz-de-superficie.md` §«Sombra y sol bajo (F-53, F-54)» y `docs/efectos/cielo-y-atmosfera.md`
+§«Crepúsculo (F-55)». Resumen, cara norte (la sombra), pack antes → después / original:
+
+| hora (elev.) | antes | después | original |
+|---|---|---|---|
+| 500 (6°) | 49,68,102 | 84,95,114 | 81,94,113 |
+| 1000 (12°) | 76,93,123 | 100,110,130 | 106,113,126 |
+| 3000 (35°) | 33,66,110 | 109,118,138 | 107,120,141 |
+| 6000 (55°) | 30,64,112 | 125,133,148 | 98,112,136 |
+| 9000 (35°) | 31,64,110 | 110,119,138 | 104,116,135 |
+| 23500 (−6°) | 0,0,0 | 25,32,48 | 89,89,107 |
+
+Relación sombra/arriba de día: de 0,25–0,30 a 0,52–0,56 (original 0,45–0,50).
+
+**Para que mires:**
+
+1. **Nubes.** F-53 y F-54 solo tocan `adp_luces` (superficies y agua): las nubes no los ven. F-55 sí llega a la
+   dispersión y a la niebla, pero solo con el sol entre −14° y 0°; fuera de ahí es el mismo cálculo exacto (ganancia
+   1, mezcla 0), así que de día y de noche las nubes son idénticas. En el crepúsculo cambian de brillo y tono, no de
+   forma. No he sacado la vista aislada antes/después en el crepúsculo.
+2. **Crepúsculo a la mitad del original.** Lo que queda lo frena la exposición automática, que normaliza el brillo.
+   Para llegar al original habría que cambiar la clave de exposición del crepúsculo (subir la imagen cuando no hay
+   sol), y eso toca también la noche, que es decisión del dueño (F-45). No lo he hecho.
+3. **Noche invertida.** El pack sube de −12° a −35° (cara de arriba 13 → 28) y el original baja (33 → 11): el mínimo
+   nocturno de F-45 crece con la profundidad del sol. Es nivel y es del dueño; no lo he tocado.
+4. **Cara de arriba con el sol bajo, −40.** En la captura del original el cielo de esas horas está lleno de cúmulos
+   al sol; el pack se mide sin nubes. No lo he forzado.
+5. **La luna de día.** Al amanecer, mirando al oeste, la luna sale como un cuadrado muy brillante con halo y una
+   banda naranja en el horizonte (`pruebas/capturas/carta-00500.png`, a la derecha). Visto de paso, sin tocar.

@@ -31,7 +31,7 @@ fn adp_horario() -> VolHorario {
 // claras que el cielo azul y neutras; las de lluvia, oscuras. Porqué: docs/efectos/luz-de-superficie.md §«Ambiente con nubes» (F-16)
 fn adp_ambiente_cielo() -> vec3<f32> {
     let elev = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
-    let despejado = atm_ambiente_cielo(elev);
+    let despejado = adp_aplicar_crepusculo(atm_ambiente_cielo(elev));
     if !opc_volumen().nubes {
         return despejado;
     }

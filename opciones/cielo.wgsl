@@ -86,3 +86,12 @@ fn opc_cielo() -> OpcCielo {
         venus,
     );
 }
+
+// Piso del crepúsculo (28 §3, F-55): hasta −6° «todo conserva luz» y de −6° a −12° el cielo cae ~6 veces. La
+// dispersión se apaga antes; esta tabla da, por elevación del sol en grados, la luminancia mínima del ambiente como
+// fracción de la del sol en el horizonte. Se aplica como ganancia ≥ 1 a la dispersión múltiple del sol (cielo, nubes,
+// niebla) y al ambiente de las superficies. Porqué: docs/efectos/cielo-y-atmosfera.md §«Crepúsculo (F-55)»
+const OPC_CREPUSCULO_ELEV = array<f32, 7>(-14.0, -12.0, -10.0, -8.0, -6.0, -3.0, 0.0);
+const OPC_CREPUSCULO_PISO = array<f32, 7>(0.0, 0.04, 0.15, 0.5, 1.0, 1.0, 1.0);
+// La luz que añade el piso se acerca a gris en esta fracción (28 §2: a −6° la sombra es gris lila, 92,89,105).
+const OPC_CREPUSCULO_GRIS: f32 = 0.7;
