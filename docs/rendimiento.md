@@ -127,3 +127,30 @@ falta menos de 16,6 ms entre las dos, es decir ~12 ms de GPU: unos 6 ms menos qu
 4. Un nivel de calidad «Media» por defecto en lugar de «Según la general», si la general del dueño está en «Alta».
 Sin pérdida no he encontrado más dentro de la API. Con un bloque de datos por fotograma legible en `material`
 (petición para Horizon) caerían también los cálculos repetidos de `adp_luces`.
+
+## 2026-11-13: sombra diferida (prototipo, descartado) y caché temporal del volumen (no se puede)
+
+Añadido del gestor a B-23: llevar el sombreado del terreno a una pasada de post con `set_surface`/`surface_at`, para
+pagarlo una vez por píxel visible y no por fragmento (sin pasada previa de profundidad y con hojas recortadas, en un
+bosque se paga varias veces). Regla: primero un prototipo con solo la sombra del sol; si no baja al menos 2 ms en el
+Overworld, se descarta.
+
+**Prototipo** (retirado; estaba detrás de `OPC_SOMBRA_DIFERIDA`): en `material`, el terreno sólido que mira a la luz
+no consulta el mapa de sombras (solo nubes y horizonte); en la composición, `adp_sombra_punto` con la posición
+reconstruida, la normal y la luz de cielo de `surface_at`, aplicada a la parte directa con la fracción indirecta de la
+superficie (como F-68). Ajustes del dueño, 20 s, alternando:
+
+| vista | sin diferir | diferida | diferencia |
+|---|---|---|---|
+| bosque (170,5, 90, 166,5) | 18,95 / 20,25 / 20,17 / 20,36 | 17,94 / 18,27 / 18,51 / 18,51 | −1,0 / −2,0 / −1,7 / −1,85: **media −1,6 ms** |
+| llanura (406,5, 80, 326,5) | 16,90 / 16,69 | 15,64 / 15,29 | −1,3 / −1,4: **media −1,35 ms** |
+
+**No llega a 2 ms: descartado.** Además perdía el grosor de la sombra que usa el SSS de las hojas y el color de la luz
+a través de los translúcidos; hacerlo bien costaría más empaquetado en `set_surface`. Llevar también `adp_luces` a post
+podría sumar algo, pero su coste real es menor que los 2,6 ms del bit 1024 (ver arriba).
+
+**Caché temporal del volumen: no se puede con la API 0.1.** Una pasada que escribe un destino propio lee ese destino
+en blanco («a pass reads a blank one in place of the target it writes»), así que el volumen no ve su fotograma
+anterior. Guardarlo en otro destino no es posible: los cuatro destinos propios ya están en uso (mapa de la aurora,
+volumen, bloom, bloom2), y el del mapa de la aurora es de ¼ de resolución. **Para PR-Pending:** historial de los
+destinos propios (leer el del fotograma anterior en la pasada que lo escribe) o más destinos.
