@@ -255,3 +255,16 @@ mundo del original tiene otro bloque ahí, igualarlo.
   `forma-agua.ctl`. Sacan la forma sin luz ni niebla para compararla con las vistas del original.
 - **Error mío corregido**: `cf57aea` devuelve a 0 tres valores por defecto del manifiesto (desenfoque de movimiento,
   rayos del fractal, matiz aislado) que un `sed` puso a 20 en `670e22f`.
+
+## 2026-11-12 — B-22, punto 7: luz de noche, Nether y End (F-45), para que decida el dueño
+
+Escena `pruebas/escenas/luz-dimensiones.ctl`; capturas en `pruebas/capturas/` (`luz-noche-antes.png` → `luz-noche.png`,
+igual con `luz-nether` y `luz-end`).
+
+| Dónde | Constante (`opciones/luz.wgsl`) | Antes | Ahora | Qué se ve ahora |
+|---|---|---|---|---|
+| Noche, cielo abierto | `OPC_LUZ_NOCHE_CIELO` (color `OPC_LUZ_NOCHE_COLOR`) | 0 (no existía) | 0,006 | el terreno a ~20 bloques se lee (formas, arena clara), apagado y gris azulado por el Purkinje; antes, negro |
+| Nether | `OPC_AMBIENTE_NETHER` | 0,0035 | 0,035 | las paredes de netherrack se adivinan rojizas; la lava sigue mandando en la exposición |
+| End | `OPC_AMBIENTE_END` | 0,002 | 0,008 | el suelo de piedra del End se ve gris azulado; antes, casi negro |
+
+Para subir o bajar: cambiar el número y nada más.

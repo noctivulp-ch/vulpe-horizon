@@ -143,7 +143,9 @@ fn adp_luces(o: OpcLuz) -> AdpLuces {
     let d = frame.light_direction;
     let directa = adp_irradiancia_astro(c);
     // Ambiente medido de paridad/01, filtrado por las nubes del momento (F-12).
-    let cielo = adp_ambiente_cielo() * o.cielo;
+    // Más el mínimo nocturno azulado (F-45): de noche, con luna, el terreno a cielo abierto se lee sin antorchas.
+    // Porqué: docs/efectos/luz-de-superficie.md §«Noche y otras dimensiones (F-45)»
+    let cielo = (adp_ambiente_cielo() + OPC_LUZ_NOCHE_COLOR * (OPC_LUZ_NOCHE_CIELO * adp_factor_noche())) * o.cielo;
     return AdpLuces(false, d, directa, cielo, adp_suelo(c) * o.cielo * OPC_LUZ_CIELO_BASE);
 }
 

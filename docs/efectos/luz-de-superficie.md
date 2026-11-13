@@ -325,3 +325,16 @@ doble a través de translúcidos, pirámide del bloom).
 **Corrección (2026-11-11, respuesta 14 de A):** el tope por oclusión va con el **valor** de la AO (1 despejado): 1 → 1,
 0,8 → 0,37, 0,6 → 0,31 y desde 0,4 → 0,30. `luz_direccion_cielo` usa `0,30 + 0,70·e^(−11,5·(1 − ao))` (antes
 `mix(0,356; 1; ao)`, que con AO 0,8 dejaba 0,87). Con muy poca oclusión la cara ya recibe el cielo como si mirara de lado.
+
+## Noche y otras dimensiones (F-45, 2026-11-12)
+
+Decisión del dueño (observaciones 2.1 y 2.2): la noche, el Nether y el End estaban demasiado oscuros.
+
+- **Noche:** se suma al ambiente del cielo nocturno (la tabla, casi nada sin luna alta) un mínimo azulado
+  `OPC_LUZ_NOCHE_COLOR` (0,55; 0,7; 1) × `OPC_LUZ_NOCHE_CIELO` (0,006) × factor de noche, en `adp_luces`. Pasa por la
+  curva de la luz de cielo como el resto del ambiente: en cuevas y bajo techo no llega. Criterio del dueño: a medianoche,
+  a cielo abierto, el terreno a 20 bloques se distingue sin parecer de día.
+- **Nether:** `OPC_AMBIENTE_NETHER` de 0,0035 a 0,035 (×10; con ×4 no se notaba porque la lava fija la exposición).
+- **End:** `OPC_AMBIENTE_END` de 0,002 a 0,008 (×4).
+- Son valores para que el dueño decida: capturas de antes y después en `pruebas/capturas/luz-*-antes.png` y
+  `luz-*.png` (escena `pruebas/escenas/luz-dimensiones.ctl`).

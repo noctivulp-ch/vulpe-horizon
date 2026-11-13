@@ -21,8 +21,12 @@ const OPC_LUZ_MINIMA_CUEVA: f32 = 0.0018;
 const OPC_LUZ_MINIMA_FRENTE: f32 = 0.30;      // multiplicador de la luz mínima de frente a la cámara (1 de canto; fino/03 §Medidos)
 const OPC_SSS_CIELO: f32 = 0.4;               // escala de la fase medida del SSS de cielo (1..2): 0,4..0,8, el tope de antes     // por unidad de la opción: calibrada con la medida exacta de paridad/03 (0.001766)
 // Ambiente de las otras dimensiones (17), en la misma escala.
-const OPC_AMBIENTE_NETHER: f32 = 0.0035;
-const OPC_AMBIENTE_END: f32 = 0.002;
+const OPC_AMBIENTE_NETHER: f32 = 0.035;      // F-45: ×10 (antes 0,0035), decisión del dueño 2.2
+const OPC_AMBIENTE_END: f32 = 0.008;         // F-45: ×4 (antes 0,002), decisión del dueño 2.2
+// Mínimo de luz de cielo de noche (F-45, decisión del dueño 2.1): ambiente azulado que se suma al del cielo nocturno a
+// cielo abierto (pasa por la curva de la luz de cielo: en cuevas no llega). Antes no había (0).
+const OPC_LUZ_NOCHE_CIELO: f32 = 0.006;
+const OPC_LUZ_NOCHE_COLOR: vec3<f32> = vec3<f32>(0.55, 0.7, 1.0);
 const OPC_EMISION: f32 = 0.05;
 // La luz de cielo de la tabla (≈0,08 del sol a mediodía) se refuerza hasta el 0,1–0,2 de convenciones.md.
 const OPC_LUZ_CIELO_BASE: f32 = 1.8;
