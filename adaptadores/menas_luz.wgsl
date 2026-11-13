@@ -8,7 +8,9 @@ fn adp_luz_menas(color: vec3<f32>, p: AdpPixel) -> vec3<f32> {
         return color;
     }
     let s = surface_at(vec2<i32>(p.pixel));
-    if !s.present {
+    // Una mena no se ilumina a sí misma ni a otra mena: solo a los vecinos (observación del dueño 2026-11-13 §6, F-61).
+    // Porqué: docs/efectos/menas-brillantes.md §«La mena no se tiñe a sí misma (F-61)»
+    if !s.present || sup_es_mena(s.smoothness) {
         return color;
     }
     let c = LuzAo(frame.view_inverse * frame.projection_inverse, frame.projection * frame.view, frame.resolution,

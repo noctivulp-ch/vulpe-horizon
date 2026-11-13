@@ -79,3 +79,16 @@ que va por la **ruta A**: reunir la luz en pantalla.
 - **Lecturas:** 6 × (superficie + profundidad) = 12, el presupuesto de la especificación.
 - **Límites aceptados:** solo ilumina desde menas visibles en pantalla; la oclusión es la de la profundidad; los
   niveles por mena de la tabla (redstone encendida ×1,35, Nether ×0,6) no se distinguen: todas a 1.
+
+## La mena no se tiñe a sí misma (F-61, 2026-11-13)
+
+Observación del dueño 2026-11-13 §6: la redstone saturaba de rojo toda su cara. La causa era la luz de las menas
+(F-50): para que no saliera granulada, F-50 marca el bloque de mena **entero** como fuente y guarda en él el color del
+mineral, así que la piedra de la propia mena recibía la luz roja de su mineral y además la multiplicaba por un albedo
+rojo (el que guardó la superficie). La emisión (F-46) ya estaba bien enmascarada al téxel de mineral.
+
+**Arreglo** (`adaptadores/menas_luz.wgsl`): un píxel de mena no recibe luz de menas; solo los vecinos. Escena
+`pruebas/escenas/menas-redstone.ctl` (redstone, diamante, oro y hierro en un muro, caja cerrada a oscuras):
+`pruebas/capturas/menas-redstone-antes.png` (caras enteras rojas y cian) → `menas-redstone.png` (la piedra de la mena
+gris, el mineral brillante, el suelo y el muro de al lado con su luz). La emisión de la redstone queda en el mineral; no
+hizo falta bajarla.
