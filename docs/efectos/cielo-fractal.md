@@ -171,3 +171,25 @@ estrellas y modo manual:** fuera de alcance por la propia especificación (apaga
 
 **Visto** (`banco-f.ctl`, `noche-fractal`, aislamiento a 0): el fractal ámbar cae ahora a la izquierda del encuadre, como en
 el panel del original; sale más brillante que el original (no se afina en este encargo).
+
+## El fractal no se veía (F-58, 2026-11-13)
+
+Observación del dueño 2026-11-13 §2.3: «hice un tp a 5000 bloques de altura y no hay nada en el cielo».
+
+**Reproducido** con `pruebas/escenas/fractal-altura.ctl` (medianoche, luna llena, mirando al cenit desde Y 90, 300,
+1000, 2000 y 5000): solo la luna. A Y 90 se ven vetas radiales amarillentas, que son los **conos de la aurora** que salen
+del fractal (`06`), no el fractal; a Y 300 la cámara está dentro de las nubes.
+
+**Diagnóstico:**
+- Pintar el cielo de verde por encima de Y 200 lo enseña entero a Y 1000–5000: la etapa `sky` llega a la pantalla.
+- Pintar solo el fondo (estrellas + fractal) × 1000 enseña el fractal con su forma: **se calcula bien, pero su
+  radiancia es ~1000 veces menor de lo que la exposición de noche deja ver.**
+- **Bisección:** en F-25 (b3f03ca, árbol aparte, misma escena) tampoco se veía por encima de las nubes
+  (`pruebas/capturas/fractal-altura-hoja-F25.png`). No lo apagó un cambio posterior: desde F-25 el fractal del cielo
+  quedó demasiado tenue, y desde el suelo lo tapaba la aurora.
+- `fino/02`, respuesta 13: de noche cerrada el fractal se lee (y conserva el color) con una radiancia de 10⁻³ a 10⁻²
+  antes de exponer. Con `fractal_brillo` 40 × `OPC_FRACTAL_ESCALA` 0,8·10⁻⁵ el pack quedaba en ~10⁻⁴ o menos.
+
+**Arreglo:** `OPC_FRACTAL_GANANCIA_CIELO` = 30 (`opciones/fractal.wgsl`), solo sobre el fractal que se dibuja en el
+cielo (`etapas/cielo.wgsl`). La aurora y los rayos, que también salen del fractal, no cambian. Hoja de alturas después:
+`pruebas/capturas/fractal-altura-hoja-despues.png`. El brillo fino lo sigue dando la opción del menú.

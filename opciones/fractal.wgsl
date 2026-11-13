@@ -16,6 +16,9 @@ const FRACTAL_HUECO: f32 = 40.0;
 
 // Escala de brillo y techo en la escala común: el fractal queda del orden de las estrellas tenues.
 const OPC_FRACTAL_ESCALA: f32 = 0.8e-5;
+// Ganancia del fractal dibujado en el cielo (no en la aurora ni en los rayos), B-23 §2.3 / F-58: con 1 su radiancia
+// quedaba en ~1e-4 y la noche no lo enseñaba. Porqué: docs/efectos/cielo-fractal.md §«El fractal no se veía (F-58)»
+const OPC_FRACTAL_GANANCIA_CIELO: f32 = 30.0;
 
 struct OpcFractal {
     activo: bool,

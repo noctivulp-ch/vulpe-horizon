@@ -25,7 +25,7 @@ fn sky(input: SkyInput) -> vec4<f32> {
     if fractal.activo && noche > 0.0 {
         let mascara = estrellas / max(ajustes.estrellas.brillo, 1e-9);
         let escena = CieFractalEscena(adp_cielo_jitter(dir), frame.sun_direction, noche, mascara);
-        fondo += cie_fractal(escena, adp_fractal_ajustes(fractal, adp_cielo_medio(ajustes)));
+        fondo += cie_fractal(escena, adp_fractal_ajustes(fractal, adp_cielo_medio(ajustes))) * OPC_FRACTAL_GANANCIA_CIELO;
     }
     // Bajo el horizonte: bruma cerca de él y suelo al mirar más abajo, con la misma regla de ángulo que la
     // niebla de borde (05). Así el terreno que acaba antes del horizonte se funde con lo que hay detrás a
