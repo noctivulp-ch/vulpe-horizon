@@ -89,7 +89,9 @@ frente, a Y 70 dentro de la banda de humo, a Y 40 sobre la lava, bosque carmesí
    calculado una vez por fotograma: los destinos propios solo los ven las pasadas de post. **Limitación de Horizon
    para PR-Pending:** un bloque de datos del pack calculado una vez por fotograma (o por pasada) y legible en
    `material`. Con eso, unos −2,5 ms en el Overworld sin cambio visible.
-3. **Volumen (1,5 ms en el Overworld y en el End):** `vol_ruido3d` hace 8 `textureLoad` por muestra. Con el atlas
-   regenerado con un téxel de margen por corte y filtrado lineal, bajaría a 2 lecturas sin cambio visible. Hay que
-   pasar un sampler por las 8 llamadas y por quien las llama, o leer un global desde `nucleo`.
+3. **Volumen (1,5 ms en el Overworld y en el End):** `vol_ruido3d` hace 8 `textureLoad` por muestra. **Probado y
+   descartado:** atlas con un téxel de margen por corte (`tools/ruido/margen3d.py`) y filtrado bilineal, 2 lecturas;
+   mismos valores (diferencia 4·10⁻¹⁴ simulado en Python). Medido dos veces contra la versión de 8 lecturas: End
+   5,1 → 4,5 ms, Nether igual, **Overworld 18,8 → 20,2 ms** (peor). Las nubes leen el ruido en direcciones muy
+   dispersas y el filtrado lineal de un atlas más ancho parece fallar más en la caché que 8 lecturas sin filtrar.
 4. **El Nether** se reparte sin un culpable: terreno 2,8, post 2,7 (menas 0,7, oclusión 0,4, volumen 0,4) y 5 de base.
