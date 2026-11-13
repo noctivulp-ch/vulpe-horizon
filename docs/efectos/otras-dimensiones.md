@@ -150,3 +150,28 @@ suelo 114,48,27 / 95,34,10; valle de almas 70,57,51 / 37,38,32; deltas 91,60,46 
   cámaras de las referencias miran ahí, por eso F-57 no cambia sus medias. Pregunta para A en `docs/preguntas-para-A.md`.
 - **Todo el Nether, más saturado y algo más oscuro** que el original (el verde y el azul, a la mitad): el humo y la
   bruma del original lo agrisan. Va con lo anterior.
+
+## Cielo del End (F-62, 2026-11-13)
+
+Observación del dueño 2026-11-13 §2.1: el cielo del End salía negro; en el original se ve la niebla azulada de la
+tormenta (`referencias/original-noche/end-cielo`, mirando lejos del vórtice 35° arriba), y donde no hay niebla tampoco
+es negro puro. Decisión del dueño: el centro de la tormenta se queda como lo dejó F-56.
+
+**Respuesta 17 de A aplicada** (`nucleo/volumen/dimensiones.wgsl`):
+
+- **Directa:** `VOL_END_LUZ_DIRECTA` = 1,2 × e^(−d/50), atenuada por la sombra de la propia niebla.
+- **Halo:** `VOL_END_LUZ_NUCLEO` = 3,0 × e^(−d/25,4), sin esa atenuación. Es el núcleo de F-56, que no cambia.
+- **Ambiente:** `VOL_END_LUZ_AMBIENTE` = 0,03, 1/100 del halo en su máximo. Es azulado (0,5 · 0,75 · 1,0), igual en todo
+  el volumen y 10 veces mayor en niebla fina que en espesa. Antes era 0,0004 y solo en los bordes finos.
+- **Fuera:** el término ancho inventado de F-56 (0,25 · e^(−d/100)). Con la directa y el ambiente ya no hace falta.
+
+**Medido** (`pruebas/escenas/end-cielo.ctl`, media de la imagen):
+
+| vista | antes | después | original |
+|---|---|---|---|
+| hacia el vórtice | 48,73,118 | 61,84,116 | 66,93,120 (`end-vortice`) |
+| lejos del vórtice, 35° arriba | ~1,3,17 | 34,52,74, bancos azules visibles | ~40–80, 67–108, 97–145 (`end-cielo`) |
+| desde (250, 90, 0) hacia fuera | 1,3,17 | 22,34,47 | — |
+
+Mirando lejos queda a algo más de la mitad del original. La cámara del original no está anotada (la del pack mira desde
+(0,5, 90, 120,5)). Si al dueño le falta, el ajuste es `VOL_END_LUZ_AMBIENTE`.

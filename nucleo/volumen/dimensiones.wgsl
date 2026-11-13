@@ -95,11 +95,15 @@ const VOL_END_GIRO_TIEMPO: f32 = 300.0;     // segundos por vuelta
 const VOL_END_MOSAICO: vec2<f32> = vec2<f32>(1200.0, 4000.0); // ruido base: grano ~300 bloques en horizontal (4 celdas), lento en vertical
 const VOL_END_MOSAICO_EROSION: f32 = 240.0; // erosión: grano ~30 bloques (8 celdas)
 const VOL_END_CAIDA_LUZ: f32 = 25.4;        // bloques: la luz de un foco cae a un 14 % a 50, un 2 % a 100
-// Luz del vórtice en dos términos (F-56): el foco de la spec (caída de 25,4 bloques) da el núcleo; uno ancho ilumina
-// los bancos lejanos, como en las referencias. Porqué: docs/efectos/otras-dimensiones.md §«Luz de la tormenta (F-56)»
-const VOL_END_LUZ_NUCLEO: f32 = 3.0;        // antes 0,03 (solo había este término)
-const VOL_END_LUZ_ANCHA: f32 = 0.25;
-const VOL_END_CAIDA_ANCHA: f32 = 100.0;     // bloques
+// Luz del vórtice (respuesta 17 de A, F-62): un término directo que cae con e^(−d/50) y lo atenúa la niebla entre el punto
+// y el foco, y un halo que cae con e^(−d/25) sin esa atenuación (el núcleo, que el dueño quiere como lo dejó F-56). Más
+// un ambiente azulado igual en todo el volumen, ~1/100 del foco, 10 veces mayor en niebla fina que en espesa: es lo que
+// se ve lejos del vórtice y en el cielo del End. Porqué: docs/efectos/otras-dimensiones.md §«Cielo del End (F-62)»
+const VOL_END_LUZ_NUCLEO: f32 = 3.0;        // halo (F-56; antes 0,03)
+const VOL_END_LUZ_DIRECTA: f32 = 1.2;
+const VOL_END_CAIDA_DIRECTA: f32 = 50.0;    // bloques
+const VOL_END_LUZ_AMBIENTE: f32 = 0.03;      // 1/100 del halo en su máximo (3,0), como dice la respuesta 17
+const VOL_END_AMBIENTE_COLOR: vec3<f32> = vec3<f32>(0.5, 0.75, 1.0);
 
 fn vol_end_densidad(mundo: vec3<f32>, rel: vec3<f32>, d: VolDimension, t3: texture_2d<f32>) -> f32 {
     let c = mundo - VOL_END_CENTRO;
@@ -173,11 +177,14 @@ fn vol_end(rayo: VolRayo, d: VolDimension, t3: texture_2d<f32>) -> VolResultado 
         // Sombra de la propia niebla hacia el foco (dos tomas): apaga y tiñe (lo denso recibe una luz más saturada).
         let sombra_v = den + vol_end_densidad(mundo + hacia_v * 15.0, rel + hacia_v * 15.0, d, t3);
         let t_v = exp(-sombra_v * 1.2);
-        let luz_v = (azul * t_v + azul * azul * (1.0 - t_v) * 0.5) * (VOL_END_LUZ_NUCLEO * vol_end_foco(length(VOL_END_VORTICE - mundo)) + VOL_END_LUZ_ANCHA * exp(-length(VOL_END_VORTICE - mundo) / VOL_END_CAIDA_ANCHA)) * peso_v;
+        let d_v = length(VOL_END_VORTICE - mundo);
+        let directa_v = azul * t_v * (VOL_END_LUZ_DIRECTA * exp(-d_v / VOL_END_CAIDA_DIRECTA));
+        let halo_v = (azul * t_v + azul * azul * (1.0 - t_v) * 0.5) * (VOL_END_LUZ_NUCLEO * vol_end_foco(d_v));
+        let luz_v = (directa_v + halo_v) * peso_v;
         let luz_d = magenta * (0.15 * destello * vol_end_foco(length(destello_pos - mundo))) * (1.0 - peso_v)
                   * exp(-den * 1.2);
         // Ambiente azul muy tenue, solo en los bordes finos de los bancos.
-        let ambiente = vec3<f32>(0.25, 0.3, 0.5) * 0.0004 * (1.0 - smoothstep(0.0, 0.5, den));
+        let ambiente = VOL_END_AMBIENTE_COLOR * (VOL_END_LUZ_AMBIENTE * mix(1.0, 0.1, smoothstep(0.0, 0.5, den)));
         vol_tramo(&r, sigma * (luz_v + luz_d + ambiente), sigma, paso);
     }
     return r;
