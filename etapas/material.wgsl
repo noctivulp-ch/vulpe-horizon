@@ -59,6 +59,9 @@ fn material(input: MaterialInput) -> Surface {
     // (en el original son gris neutro; panel cielo-dia). Porqué: docs/efectos/luz-de-superficie.md §«Caras hacia abajo» (F-14)
     let cielo_cara = mix(vec3<f32>(col_luminancia(luces.cielo)), luces.cielo, smoothstep(-OPC_LUZ_ABAJO_NEUTRA, 0.0, n.y));
     var ambiente_cielo = cielo_cara * luz_direccion_cielo(n, p.luz_cielo, p.cruzada, p.ao_vertice) * curva_cielo;
+    // Rebote del suelo iluminado sobre las caras que lo ven (28 §2): la sombra es gris azulada, no azul.
+    // Porqué: docs/efectos/luz-de-superficie.md §«Sombra y sol bajo (F-53)»
+    ambiente_cielo += luces.suelo * (OPC_LUZ_REBOTE_SUELO * (0.5 - 0.5 * n.y) * curva_cielo * min(p.ao_vertice * 1.4, 1.0));
     if luces.fija {
         ambiente_cielo = luz_hemisferica(n.y, luces.cielo, luces.suelo) * curva_cielo;
     }

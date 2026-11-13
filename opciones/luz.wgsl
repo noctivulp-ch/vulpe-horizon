@@ -30,6 +30,9 @@ const OPC_LUZ_NOCHE_COLOR: vec3<f32> = vec3<f32>(0.55, 0.7, 1.0);
 const OPC_EMISION: f32 = 0.05;
 // La luz de cielo de la tabla (≈0,08 del sol a mediodía) se refuerza hasta el 0,1–0,2 de convenciones.md.
 const OPC_LUZ_CIELO_BASE: f32 = 1.8;
+// Rebote del suelo sobre las caras que lo ven (28 §2, F-53): × la luz del suelo × (1 − n.y)/2. Antes no había (0);
+// 0.4 por medida (docs/efectos/luz-de-superficie.md §«Sombra y sol bajo (F-53)»).
+const OPC_LUZ_REBOTE_SUELO: f32 = 0.4;
 const OPC_LUZ_ABAJO_NEUTRA: f32 = 0.5;       // componente vertical de la normal desde la que la luz de cielo ya es gris (caras hacia abajo)
 
 // Ids de [[materials]] (horizon-shaders.toml).

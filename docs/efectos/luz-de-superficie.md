@@ -338,3 +338,29 @@ Decisión del dueño (observaciones 2.1 y 2.2): la noche, el Nether y el End est
 - **End:** `OPC_AMBIENTE_END` de 0,002 a 0,008 (×4).
 - Son valores para que el dueño decida: capturas de antes y después en `pruebas/capturas/luz-*-antes.png` y
   `luz-*.png` (escena `pruebas/escenas/luz-dimensiones.ctl`).
+
+## Sombra y sol bajo (F-53, 2026-11-13)
+
+Spec `subsistemas/28-color-a-lo-largo-del-dia.md` §2: la cara a la sombra del cubo blanco es **gris azulada**, con una
+relación sombra/arriba de 0,45 a 0,50 a lo largo del día. El pack daba 0,25 a 0,30 y un azul saturado (55°: 33, 66, 110
+contra 98, 112, 136): la cara vertical a la sombra solo recibía la luz del cielo, que es azul.
+
+Lo que faltaba es el **rebote del suelo iluminado**: una cara vertical ve medio suelo, y el suelo al sol es claro y
+casi neutro. Se suma al ambiente del cielo `luces.suelo × OPC_LUZ_REBOTE_SUELO × (1 − n.y)/2`, con la misma curva de luz
+de cielo y la misma oclusión de vértice que el ambiente, así que no entra en cuevas ni bajo techo. `(1 − n.y)/2` vale 0
+en las caras hacia arriba (no ven el suelo), ½ en las verticales y 1 en las de abajo.
+
+Medido con `pruebas/escenas/carta-color-dia.ctl` (perfil despejado fijo, hora congelada, `tools/carta-color/medir.py`),
+cara norte, pack contra original:
+
+| elevación (hora original) | sin rebote | 1,0 | 0,5 | **0,4** | original |
+|---|---|---|---|---|---|
+| ~3° (500) | — | 74, 82, 109 | 54, 71, 103 | 49, 68, 102 | 81, 94, 113 |
+| ~10° (1000) | — | 114, 118, 136 | 84, 98, 126 | 76, 93, 123 | 106, 113, 126 |
+| 35° (3000) | ~33, 66, 110 | 159, 160, 165 | 121, 127, 144 | **109, 118, 138** | 107, 120, 141 |
+| 55° (6000) | 30, 64, 112 | 176, 177, 179 | 138, 143, 155 | 126, 133, 148 | 98, 112, 136 |
+| sombra/arriba a 35° / 55° | 0,29 / 0,27 | 0,71 / 0,75 | 0,56 / 0,60 | 0,52 / 0,56 | 0,49 / 0,45 |
+
+Se queda en **0,4**: clava los 35°, deja los 55° algo claros (+28) y el sol bajo algo oscuro (−30). El sol bajo no se
+corrige aquí: ahí también la cara de arriba sale oscura y azul (−50 a −80), y eso es la ganancia y el tinte del sol por
+elevación (la palanca siguiente); al subir la luz del suelo con el sol bajo, el rebote sube con ella.
