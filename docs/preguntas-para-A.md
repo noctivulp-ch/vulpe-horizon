@@ -59,3 +59,11 @@ Lo que la especificación no aclara y B no debe inventar. Una por punto, con la 
 16. **Bandera del bioma en el formato 2** (`flexibilidad/mod-nativo.md` §5): la tabla del formato 2 pone «bit 4, bioma
     válido; bit 5, altura de entrada válida», pero en el formato 1 el bit 4 ya es «canal fijo en uso». He puesto el
     bioma en el bit 5 (y dejaría la altura en el 6). ¿Era eso, o el canal fijo debía moverse?
+
+## 2026-11-13 — Caída de la luz del vórtice del End (formas/otras-dimensiones.md §«Las luces»)
+
+La spec da «a 50 bloques queda un 14 % de la luz que hay en el foco; a 100, un 2 %». Con esa caída, desde el foco en
+(0, 200, 0), los bancos a 150–300 bloques no reciben casi nada, pero en `referencias/original-dimensiones/end-vortice`
+están iluminados en todo el encuadre. ¿Está esa caída medida en el espacio aplastado, como el giro (una vuelta cada
+9 bloques ahí, 450 en el mundo)? ¿Y en qué eje se aplasta? Mientras tanto, el pack suma un segundo término ancho
+(caída de 100 bloques) a ojo contra la referencia (F-56).

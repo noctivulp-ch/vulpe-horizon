@@ -88,6 +88,11 @@ const VOL_END_GIRO_TIEMPO: f32 = 300.0;     // segundos por vuelta
 const VOL_END_MOSAICO: vec2<f32> = vec2<f32>(1200.0, 4000.0); // ruido base: grano ~300 bloques en horizontal (4 celdas), lento en vertical
 const VOL_END_MOSAICO_EROSION: f32 = 240.0; // erosión: grano ~30 bloques (8 celdas)
 const VOL_END_CAIDA_LUZ: f32 = 25.4;        // bloques: la luz de un foco cae a un 14 % a 50, un 2 % a 100
+// Luz del vórtice en dos términos (F-56): el foco de la spec (caída de 25,4 bloques) da el núcleo; uno ancho ilumina
+// los bancos lejanos, como en las referencias. Porqué: docs/efectos/otras-dimensiones.md §«Luz de la tormenta (F-56)»
+const VOL_END_LUZ_NUCLEO: f32 = 3.0;        // antes 0,03 (solo había este término)
+const VOL_END_LUZ_ANCHA: f32 = 0.25;
+const VOL_END_CAIDA_ANCHA: f32 = 100.0;     // bloques
 
 fn vol_end_densidad(mundo: vec3<f32>, rel: vec3<f32>, d: VolDimension, t3: texture_2d<f32>) -> f32 {
     let c = mundo - VOL_END_CENTRO;
@@ -161,7 +166,7 @@ fn vol_end(rayo: VolRayo, d: VolDimension, t3: texture_2d<f32>) -> VolResultado 
         // Sombra de la propia niebla hacia el foco (dos tomas): apaga y tiñe (lo denso recibe una luz más saturada).
         let sombra_v = den + vol_end_densidad(mundo + hacia_v * 15.0, rel + hacia_v * 15.0, d, t3);
         let t_v = exp(-sombra_v * 1.2);
-        let luz_v = (azul * t_v + azul * azul * (1.0 - t_v) * 0.5) * (0.03 * vol_end_foco(length(VOL_END_VORTICE - mundo))) * peso_v;
+        let luz_v = (azul * t_v + azul * azul * (1.0 - t_v) * 0.5) * (VOL_END_LUZ_NUCLEO * vol_end_foco(length(VOL_END_VORTICE - mundo)) + VOL_END_LUZ_ANCHA * exp(-length(VOL_END_VORTICE - mundo) / VOL_END_CAIDA_ANCHA)) * peso_v;
         let luz_d = magenta * (0.15 * destello * vol_end_foco(length(destello_pos - mundo))) * (1.0 - peso_v)
                   * exp(-den * 1.2);
         // Ambiente azul muy tenue, solo en los bordes finos de los bancos.

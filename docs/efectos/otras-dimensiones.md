@@ -88,3 +88,32 @@ Observación del dueño 6.2: la espiral no parecía bien hecha. Rehecha según `
   16 (corte por z = 0, Y de −80 a 300). Capturas `pruebas/capturas/forma-end-planta.png` y `forma-end-corte.png`
   (escena `forma-end.ctl`): brazos de espiral alrededor de la isla y bancos grandes fuera; en el corte, la niebla del
   vacío y el hueco de la isla.
+
+## Luz de la tormenta (F-56, 2026-11-13)
+
+Comparado con `vulpe-horizon-spec/referencias/original-dimensiones/` (mismo mundo, mismas cámaras;
+`pruebas/escenas/dimensiones-referencias.ctl`). En el original, la tormenta del End es un vórtice luminoso: núcleo
+blanco azulado sobre la isla y bancos azules iluminados en todo el encuadre. En el pack casi no se veía (media de la
+imagen 5,7,9 contra 66,93,120): el foco del vórtice valía 0,03 con la caída de la spec (14 % a 50 bloques, 2 % a 100),
+así que solo llegaba luz a lo que estaba a pocas decenas de bloques de (0, 200, 0), y casi todo eso es el hueco.
+
+Probado:
+
+| luz del vórtice | media vórtice / arriba / suelo | qué se ve |
+|---|---|---|
+| antes: 0,03 · caída 25,4 | 5,7,9 / 0,1,4 / 5,6,5 | negro, un punto azul |
+| 1,0 · caída 25,4 | 15,24,42 / 9,16,34 / 4,6,8 | una mancha alrededor del vórtice; los bancos, a oscuras |
+| 0,3 · caída 100 | 43,68,116 / 43,64,113 / 23,34,53 | bancos iluminados, sin núcleo |
+| **3,0 · caída 25,4 + 0,25 · caída 100** | **48,73,118 / 42,67,113 / 22,33,52** | núcleo blanco y bancos iluminados |
+| original | 66,93,120 / 68,96,125 / 43,64,89 | |
+
+Se queda con dos términos (`VOL_END_LUZ_NUCLEO`, `VOL_END_LUZ_ANCHA`, `VOL_END_CAIDA_ANCHA` en
+`nucleo/volumen/dimensiones.wgsl`): el foco de la spec, con su caída, para el núcleo, y uno ancho para los bancos. La
+caída de la spec sola no puede dar a la vez el núcleo y los bancos lejanos que se ven en la referencia. La duda va a
+`docs/preguntas-para-A.md`: puede que la caída esté medida en el espacio aplastado, como el giro (una vuelta cada
+9 bloques ahí, 450 en el mundo).
+
+**Lo que queda, que es de forma** (se compara con la vista aislada, no con medias): los bancos del original tienen
+bordes blancos y grietas oscuras, con mucho contraste; los del pack salen como una bruma lisa. Es la sombra de la
+propia niebla (la spec pide 3 muestras hacia el foco; el pack toma una) y el tamaño de los bancos. La isla del original
+sale clara, de color piedra; la del pack, azulada y más oscura (22,33,52 contra 43,64,89 en `end-suelo`).
