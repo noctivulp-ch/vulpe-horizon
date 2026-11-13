@@ -365,3 +365,25 @@ brillantes. Subirlo sería el arreglo, pero hay que verlo en una escena donde se
 
 **Para seguir hace falta la escena del dueño:** coordenadas, hora, día del mundo (fase y perfil) y dirección de la mirada
 de `dueno-2026-11-12/nubes-sobre-aurora`, o una semilla y un sitio donde una nube pase por delante de los conos.
+
+## 2026-11-13 — B-23 §4: parpadeos (solo documentados, sin investigar)
+
+Lo que vio el dueño: parpadeos en los efectos bajo el agua; y volando rápido, la luz y las sombras de la superficie se
+rompen en triángulos que oscilan y se recomponen enseguida. No lo he reproducido. Sospechas, por orden:
+
+1. **TAA sin rechazo suficiente al moverse** (`etapas/post/06-taa.wgsl`): el historial se reproyecta con la profundidad;
+   al volar rápido, los píxeles que se destapan o cambian de superficie arrastran luz de otra superficie hasta que el
+   peso del historial cae. Que sea «por triángulos» casa con un historial que sigue la rejilla de la malla en los bordes.
+2. **Cascadas de sombra que saltan** al moverse la cámara: el mapa de sombras se recoloca con la cámara y, sin ajuste a
+   texel, los bordes de sombra tiemblan; con el PCF de receptor-plano de F-40 el tamaño del filtro depende de la
+   derivada de pantalla, que en los bordes de triángulo es discontinua.
+3. **Luz de las menas y oclusión ambiental de pantalla** (F-50, `08`): discos de Vogel que giran por fotograma y se
+   apoyan en el TAA; con movimiento rápido el TAA no los promedia y se ve el patrón.
+4. **Bajo el agua:** la refracción y las cáusticas leen el estado de los téxeles de bloom2 (nivel del agua, cruce); si
+   esos téxeles cambian de golpe (entrada/salida, `frame.in_water` a saltos) el efecto parpadea un fotograma.
+
+Para la fase de parpadeos: grabar con `horizon-ctl` una secuencia de capturas seguidas volando a velocidad fija, y
+probar quitando de una en una el TAA, la luz de menas y la oclusión.
+
+Visto en esta sesión, para la misma fase: en la cueva de `noche-suelo` hay una franja oscura vertical en el centro de la
+vista (sospecha: la oclusión de pantalla; ver `docs/efectos/luz-de-superficie.md` §«Noche y cuevas (F-59)»).
