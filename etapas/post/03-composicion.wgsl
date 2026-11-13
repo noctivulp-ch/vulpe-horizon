@@ -7,6 +7,9 @@ fn post(input: PostInput) -> vec4<f32> {
     if opc_depuracion().vista == OPC_VISTA_RELIEVE {
         return vec4<f32>(c, 1.0);
     }
+    if opc_depuracion().vista == OPC_VISTA_FORMA_END_PLANTA || opc_depuracion().vista == OPC_VISTA_FORMA_END_CORTE {
+        return vec4<f32>(adp_vista_end(p.uv, opc_depuracion().vista), 1.0);
+    }
     if opc_depuracion().vista == OPC_VISTA_FORMA_AGUA {
         return vec4<f32>(c, 1.0);
     }

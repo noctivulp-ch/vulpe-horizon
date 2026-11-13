@@ -58,3 +58,33 @@ Observación del dueño 6.1: la niebla estaba demasiado baja, pegada a los lagos
   F-45: sin ella la niebla no se ve contra la lava.
 - **Comprobado** (`pruebas/escenas/nether-niebla.ctl`; `pruebas/capturas/nether-niebla-70-antes.png` → `-70.png`): una
   bruma rojiza a media altura vela las paredes lejanas; la capa sobre la lava es fina.
+
+## Tormenta del End (F-49, 2026-11-12)
+
+Observación del dueño 6.2: la espiral no parecía bien hecha. Rehecha según `formas/otras-dimensiones.md` §End
+(`vol_end_densidad` y `vol_end`, `nucleo/volumen/dimensiones.wgsl`).
+
+- **Antes:** un toro de niebla de radio 150 como campo de densidad, con giro diferencial por radio y un hueco cilíndrico;
+  12 pasos hasta 320 bloques.
+- **Ahora:**
+  - Bancos del canal A del ruido 3D (mosaico de 1 200 × 4 000 bloques: grano de ~300 en horizontal y lento en vertical)
+    donde el ruido es bajo; fuera de la zona del vórtice (250–350 bloques del eje) la curva es más abrupta y los bancos
+    el doble de densos. Erosión fina (canal G, grano ~30) que resta hasta un 30 % y se desliza despacio.
+  - La espiral: la coordenada del ruido gira alrededor del eje vertical una vuelta cada 450 bloques de altura y una cada
+    5 minutos, apagándose de 200 a 400 bloques de (0, 100, 0).
+  - Huecos restados: esfera algo achatada de 75 bloques en (0, 100, 0) y anillo horizontal a 150 bloques del eje (limpio
+    en 12, cerrado a 85).
+  - Niebla del vacío: total bajo Y −60, ~11 % a −50, ~1 % a −20. Claro alrededor de la cámara: 0 a 0 bloques, total a
+    100, al cuadrado.
+  - Luces: vórtice azul frío (0,3; 0,5; 1) fijo en (0, 200, 0) para lo que está a menos de ~300 bloques del origen;
+    relámpago magenta (1; 0; 0,5) en una celda de 200 bloques alrededor de la cámara para lo de más lejos (salta cada
+    1,5 s, el 40 % de los ciclos encendido, sube en 0,5 s y baja en 1). Caída `exp(−d/25,4)` (14 % a 50, 2 % a 100).
+    Sombra de la niebla hacia el vórtice con una toma más, que apaga y tiñe (luz más saturada dentro de lo denso);
+    ambiente azul muy tenue solo en los bordes; bruma azulada que solo suma, más clara mirando arriba.
+  - 16 pasos hasta 384 bloques.
+- **Diferencias con la descripción:** la sombra hacia el foco usa dos tomas, no tres; el relámpago salta por ciclos fijos
+  de 1,5 s (el original sortea cada fotograma, sin memoria en el pack); el punto no «avanza a tirones».
+- **Vistas aisladas:** `OPC_DEPURACION_VISTA_DEFECTO` 15 (densidad a Y 60, 800 × 800 bloques alrededor del origen) y
+  16 (corte por z = 0, Y de −80 a 300). Capturas `pruebas/capturas/forma-end-planta.png` y `forma-end-corte.png`
+  (escena `forma-end.ctl`): brazos de espiral alrededor de la isla y bancos grandes fuera; en el corte, la niebla del
+  vacío y el hueco de la isla.

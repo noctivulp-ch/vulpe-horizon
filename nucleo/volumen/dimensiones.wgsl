@@ -75,53 +75,98 @@ fn vol_nether(rayo: VolRayo, d: VolDimension, t2: texture_2d<f32>, s2: sampler, 
     return r;
 }
 
-// End: anillo de niebla que gira alrededor del origen, hueco en la isla central, con la niebla del vacío debajo; luz
-// del vórtice sobre el centro y destellos magenta.
-fn vol_end_densidad(mundo: vec3<f32>, d: VolDimension, t3: texture_2d<f32>) -> f32 {
-    let r = length(mundo.xz);
-    let giro = d.tiempo * 0.02 * (1.0 + 80.0 / (r + 40.0));
-    let c = cos(giro);
-    let s = sin(giro);
-    let p = vec3<f32>(c * mundo.x - s * mundo.z, mundo.y, s * mundo.x + c * mundo.z);
-    let n = vol_ruido3d(t3, p / 70.0).a * 0.7 + vol_ruido3d(t3, p / 25.0).g * 0.3;
-    // Toro de radio 150 alrededor del origen, a Y ≈ 60, y hueco en la isla central.
-    let toro = length(vec2<f32>(r - 150.0, (mundo.y - 60.0) * 1.5));
-    let anillo = 1.0 - smoothstep(40.0, 110.0, toro);
-    let hueco = smoothstep(60.0, 90.0, length(mundo - vec3<f32>(0.0, 100.0, 0.0)));
-    let vacio = smoothstep(-20.0, -60.0, mundo.y);
-    return max(smoothstep(0.35, 0.75, n) * anillo * hueco, vacio * 0.6);
+// End (formas/otras-dimensiones.md §End; observación del dueño 2026-11-12, 6.2): bancos de un ruido 3D grande donde el
+// ruido es bajo, girados alrededor del eje vertical con un ángulo que crece con la altura y con el tiempo (la espiral),
+// con una esfera limpia alrededor de la isla y un anillo limpio a 150 bloques (el pasillo de los pilares), la niebla del
+// vacío bajo la isla y un claro alrededor de la cámara. Porqué: docs/efectos/otras-dimensiones.md §«Tormenta del End (F-49)»
+const VOL_END_CENTRO: vec3<f32> = vec3<f32>(0.0, 100.0, 0.0);
+const VOL_END_VORTICE: vec3<f32> = vec3<f32>(0.0, 200.0, 0.0);
+const VOL_END_ALCANCE: f32 = 384.0;
+const VOL_END_PASOS: i32 = 16;
+const VOL_END_GIRO_ALTURA: f32 = 450.0;     // bloques de altura por vuelta
+const VOL_END_GIRO_TIEMPO: f32 = 300.0;     // segundos por vuelta
+const VOL_END_MOSAICO: vec2<f32> = vec2<f32>(1200.0, 4000.0); // ruido base: grano ~300 bloques en horizontal (4 celdas), lento en vertical
+const VOL_END_MOSAICO_EROSION: f32 = 240.0; // erosión: grano ~30 bloques (8 celdas)
+const VOL_END_CAIDA_LUZ: f32 = 25.4;        // bloques: la luz de un foco cae a un 14 % a 50, un 2 % a 100
+
+fn vol_end_densidad(mundo: vec3<f32>, rel: vec3<f32>, d: VolDimension, t3: texture_2d<f32>) -> f32 {
+    let c = mundo - VOL_END_CENTRO;
+    let r_eje = length(mundo.xz);
+    // La espiral: giro con la altura y el tiempo, que se apaga de 200 a 400 bloques del centro.
+    let giro = (1.0 - smoothstep(200.0, 400.0, length(c)))
+             * MAT_TAU * (mundo.y / VOL_END_GIRO_ALTURA + d.tiempo / VOL_END_GIRO_TIEMPO);
+    let cg = cos(giro);
+    let sg = sin(giro);
+    let p = vec3<f32>(cg * mundo.x - sg * mundo.z, mundo.y, sg * mundo.x + cg * mundo.z);
+    let n = vol_ruido3d(t3, p / vec3<f32>(VOL_END_MOSAICO.x, VOL_END_MOSAICO.y, VOL_END_MOSAICO.x)).a;
+    // Bancos donde el ruido es bajo; fuera de la zona del vórtice, curva más abrupta y el doble de densos.
+    let fuera = smoothstep(250.0, 350.0, r_eje);
+    let corte = mix(0.12, 0.06, fuera);
+    var bancos = smoothstep(0.5 + corte, 0.5 - corte, n) * (1.0 + fuera);
+    let erosion = vol_ruido3d(t3, (p + vec3<f32>(d.tiempo * 0.5, 0.0, 0.0)) / VOL_END_MOSAICO_EROSION).g;
+    bancos *= 1.0 - 0.3 * erosion;
+    // Huecos: esfera algo achatada alrededor de la isla (75 bloques) y anillo horizontal a 150 bloques del eje.
+    let esfera = smoothstep(0.0, 75.0, length(vec3<f32>(c.x, c.y * 1.3, c.z)));
+    let anillo = smoothstep(12.0, 85.0, length(vec2<f32>(r_eje - 150.0, c.y)));
+    // Claro alrededor de la cámara: nada a 0, total a 100 (al cuadrado).
+    let claro = clamp(length(rel) / 100.0, 0.0, 1.0);
+    // Niebla del vacío: total bajo Y −60; un 11 % a −50, un 1 % a −20.
+    let sobre = mundo.y + 60.0;
+    let vacio = select(exp(-sobre / 4.5) + 0.02 * exp(-sobre / 40.0), 1.0, sobre <= 0.0);
+    return max(bancos * esfera * anillo * claro * claro, vacio);
+}
+
+// Luz de un foco con la caída del original.
+fn vol_end_foco(d: f32) -> f32 {
+    return exp(-d / VOL_END_CAIDA_LUZ);
 }
 
 fn vol_end(rayo: VolRayo, d: VolDimension, t3: texture_2d<f32>) -> VolResultado {
     var r = VolResultado(vec3<f32>(0.0), 1.0, 0.0, vec3<f32>(0.0));
-    let fin = min(rayo.escena, 320.0);
-    let pasos = 12;
+    let fin = min(rayo.escena, VOL_END_ALCANCE);
     let f = 6.0;
     var anterior = 0.0;
-    let vortice = vec3<f32>(0.0, 200.0, 0.0);
-    // Destello: posición sorteada cada 4 s, subida rápida y caída lenta.
-    let ciclo = floor(d.tiempo / 4.0);
-    let fase_d = fract(d.tiempo / 4.0);
+    // Relámpago magenta: un punto en una celda de 200 bloques alrededor de la cámara que salta cada 1,5 s; el 40 % de
+    // los ciclos se queda encendido (sube en medio segundo, baja en uno). Más brillo cuanto más lejos del centro de la
+    // celda (nulo a 5 bloques, total a 200).
+    let ciclo = floor(d.tiempo / 1.5);
+    let fase = fract(d.tiempo / 1.5) * 1.5;
     let h = rui_hash33(vec3<i32>(i32(ciclo), 7, 13));
-    let destello_pos = vec3<f32>((h.x - 0.5) * 360.0, 40.0 + h.y * 80.0, (h.z - 0.5) * 360.0);
-    let destello = smoothstep(0.0, 0.03, fase_d) * exp(-fase_d * 12.0);
-    for (var i = 0; i < pasos; i++) {
-        let t = (pow(f, (f32(i) + rayo.ruido) / f32(pasos)) - 1.0) / (f - 1.0) * fin;
-        let siguiente = (pow(f, (f32(i) + 1.0) / f32(pasos)) - 1.0) / (f - 1.0) * fin;
+    let encendido = select(0.0, 1.0, rui_hash21(vec2<i32>(i32(ciclo), 29)) < 0.4);
+    let celda = floor(rayo.camara / 200.0) * 200.0 + vec3<f32>(100.0);
+    let destello_pos = celda + (h - 0.5) * 200.0;
+    let destello = encendido * smoothstep(0.0, 0.5, fase) * (1.0 - smoothstep(0.5, 1.5, fase))
+                 * smoothstep(5.0, 200.0, length(destello_pos - celda) * 1.7);
+    let azul = vec3<f32>(0.3, 0.5, 1.0);
+    let magenta = vec3<f32>(1.0, 0.0, 0.5);
+    for (var i = 0; i < VOL_END_PASOS; i++) {
+        let t = (pow(f, (f32(i) + rayo.ruido) / f32(VOL_END_PASOS)) - 1.0) / (f - 1.0) * fin;
+        let siguiente = (pow(f, (f32(i) + 1.0) / f32(VOL_END_PASOS)) - 1.0) / (f - 1.0) * fin;
         let paso = max(siguiente - anterior, 1e-3);
         anterior = siguiente;
-        let mundo = rayo.camara + rayo.dir * t;
-        let den = vol_end_densidad(mundo, d, t3);
+        let rel = rayo.dir * t;
+        let mundo = rayo.camara + rel;
+        // Bruma tenue azulada, más clara mirando arriba: solo suma.
+        r.luz += r.transmitancia * vec3<f32>(0.3, 0.35, 0.6) * (0.000004 * d.cantidad * (0.6 + 0.4 * max(rayo.dir.y, 0.0)) * paso);
+        let den = vol_end_densidad(mundo, rel, d, t3);
         if den <= 0.001 {
             continue;
         }
         let sigma = den * 0.03 * d.cantidad;
-        let dv = length(vortice - mundo);
-        let dd = length(destello_pos - mundo);
-        let luz_v = vec3<f32>(0.7, 0.75, 1.0) * 0.0025 / (1.0 + dv * dv / 20000.0);
-        let luz_d = vec3<f32>(1.0, 0.25, 0.9) * 0.02 * destello / (1.0 + dd * dd / 3000.0);
-        let fuente = sigma * (luz_v + luz_d + vec3<f32>(0.25, 0.22, 0.4) * 0.0002);
-        vol_tramo(&r, fuente, sigma, paso);
+        // Cada punto recibe el foco que le toca: el vórtice cerca del origen, el relámpago lejos.
+        let r_origen = length(mundo);
+        let peso_v = 1.0 - smoothstep(250.0, 350.0, r_origen);
+        let hacia_v = normalize(VOL_END_VORTICE - mundo);
+        let hacia_d = normalize(destello_pos - mundo);
+        // Sombra de la propia niebla hacia el foco (dos tomas): apaga y tiñe (lo denso recibe una luz más saturada).
+        let sombra_v = den + vol_end_densidad(mundo + hacia_v * 15.0, rel + hacia_v * 15.0, d, t3);
+        let t_v = exp(-sombra_v * 1.2);
+        let luz_v = (azul * t_v + azul * azul * (1.0 - t_v) * 0.5) * (0.03 * vol_end_foco(length(VOL_END_VORTICE - mundo))) * peso_v;
+        let luz_d = magenta * (0.15 * destello * vol_end_foco(length(destello_pos - mundo))) * (1.0 - peso_v)
+                  * exp(-den * 1.2);
+        // Ambiente azul muy tenue, solo en los bordes finos de los bancos.
+        let ambiente = vec3<f32>(0.25, 0.3, 0.5) * 0.0004 * (1.0 - smoothstep(0.0, 0.5, den));
+        vol_tramo(&r, sigma * (luz_v + luz_d + ambiente), sigma, paso);
     }
     return r;
 }

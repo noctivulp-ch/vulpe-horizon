@@ -270,3 +270,15 @@ fn adp_vista_forma(uv: vec2<f32>, vista: u32) -> vec3<f32> {
     let d = vol_nube(vec3<f32>(x, y, frame.camera_position.z), i, n, ruido2d, ruido2d_sampler, ruido3d, true, 0.0);
     return vec3<f32>(d / max(n.perfil.densidad[i], 1e-3));
 }
+
+// Vista aislada de la tormenta del End (formas/otras-dimensiones.md): su densidad sin luz, sin el claro de la cámara.
+fn adp_vista_end(uv: vec2<f32>, vista: u32) -> vec3<f32> {
+    let d = VolDimension(vec3<f32>(0.0), 1.0, frame.time);
+    let aspecto = frame.resolution.x / frame.resolution.y;
+    let x = (uv.x - 0.5) * aspecto * 800.0;
+    var mundo = vec3<f32>(x, 60.0, (uv.y - 0.5) * 800.0);
+    if vista == OPC_VISTA_FORMA_END_CORTE {
+        mundo = vec3<f32>(x, mix(300.0, -80.0, uv.y), 0.0);
+    }
+    return vec3<f32>(clamp(vol_end_densidad(mundo, vec3<f32>(1000.0), d, ruido3d) * 0.5, 0.0, 1.0));
+}
