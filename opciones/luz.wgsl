@@ -118,3 +118,13 @@ const OPC_RELAMPAGO_DURACION: f32 = 1.0;                        // segundos de d
 const OPC_RELAMPAGO_BRILLO: f32 = 6.0;                          // luz sobre superficies, escala de la luz de bloque
 const OPC_RELAMPAGO_COLOR: vec3<f32> = vec3<f32>(0.80, 0.88, 1.0); // blanco algo azulado
 const OPC_RELAMPAGO_NUBES: f32 = 3.0;                           // luz dentro de nubes y niebla
+
+// Ganancia de la luz de cielo sobre las superficies con el sol bajo (28 §1–2, F-54), por elevación del sol en grados.
+// Solo superficies (adp_luces): las nubes y la niebla siguen con atm_ambiente_cielo sin tocar.
+// Porqué: docs/efectos/luz-de-superficie.md §«Sombra y sol bajo (F-53, F-54)» › «Sol bajo (F-54)»
+const OPC_LUZ_SOL_BAJO_ELEV = array<f32, 6>(-6.0, 0.0, 6.0, 12.0, 20.0, 30.0);
+const OPC_LUZ_SOL_BAJO_GANANCIA = array<f32, 6>(1.0, 1.4, 1.9, 1.6, 1.2, 1.0);
+// Cuánto se acerca ese ambiente a gris (0 = color de la tabla del cielo, 1 = gris de igual luminancia).
+const OPC_LUZ_SOL_BAJO_GRIS = array<f32, 6>(0.0, 0.5, 0.6, 0.5, 0.25, 0.0);
+// Lo mismo para la luz directa del sol sobre las superficies (28 §1: saturación ≤ 0,25, crema y no naranja).
+const OPC_LUZ_SOL_BAJO_GRIS_SOL = array<f32, 6>(0.0, 0.25, 0.28, 0.2, 0.0, 0.0);

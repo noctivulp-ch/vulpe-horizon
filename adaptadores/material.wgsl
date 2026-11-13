@@ -128,6 +128,26 @@ struct AdpLuces {
     suelo: vec3<f32>,
 }
 
+// Ganancia del ambiente de cielo de las superficies con el sol bajo, interpolada por elevación (F-54).
+// Porqué: docs/efectos/luz-de-superficie.md §«Sombra y sol bajo (F-53, F-54)» › «Sol bajo (F-54)»
+fn adp_sol_bajo_t(i: i32, elev: f32) -> f32 {
+    return clamp((elev - OPC_LUZ_SOL_BAJO_ELEV[i - 1]) / (OPC_LUZ_SOL_BAJO_ELEV[i] - OPC_LUZ_SOL_BAJO_ELEV[i - 1]), 0.0, 1.0);
+}
+
+// x: ganancia del cielo, y: gris del cielo, z: gris del sol, interpolados por la elevación del sol.
+fn adp_sol_bajo() -> vec3<f32> {
+    let elev = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
+    var v = vec3<f32>(OPC_LUZ_SOL_BAJO_GANANCIA[0], OPC_LUZ_SOL_BAJO_GRIS[0], OPC_LUZ_SOL_BAJO_GRIS_SOL[0]);
+    for (var i = 1; i < 6; i++) {
+        v = mix(v, vec3<f32>(OPC_LUZ_SOL_BAJO_GANANCIA[i], OPC_LUZ_SOL_BAJO_GRIS[i], OPC_LUZ_SOL_BAJO_GRIS_SOL[i]), adp_sol_bajo_t(i, elev));
+    }
+    return v;
+}
+
+fn adp_hacia_gris(c: vec3<f32>, gris: f32) -> vec3<f32> {
+    return mix(c, vec3<f32>(col_luminancia(c)), gris);
+}
+
 fn adp_luces(o: OpcLuz) -> AdpLuces {
     if !adp_es_superficie() {
         // Nether y End (17): sin sol ni cielo; un ambiente propio, hemisférico (en el Nether, más desde abajo).
@@ -141,11 +161,12 @@ fn adp_luces(o: OpcLuz) -> AdpLuces {
     }
     let c = opc_cielo();
     let d = frame.light_direction;
-    let directa = adp_irradiancia_astro(c);
+    let sol_bajo = adp_sol_bajo();
+    let directa = adp_hacia_gris(adp_irradiancia_astro(c), sol_bajo.z);
     // Ambiente medido de paridad/01, filtrado por las nubes del momento (F-12).
     // Más el mínimo nocturno azulado (F-45): de noche, con luna, el terreno a cielo abierto se lee sin antorchas.
     // Porqué: docs/efectos/luz-de-superficie.md §«Noche y otras dimensiones (F-45)»
-    let cielo = (adp_ambiente_cielo() + OPC_LUZ_NOCHE_COLOR * (OPC_LUZ_NOCHE_CIELO * adp_factor_noche())) * o.cielo;
+    let cielo = (adp_hacia_gris(adp_ambiente_cielo(), sol_bajo.y) * sol_bajo.x + OPC_LUZ_NOCHE_COLOR * (OPC_LUZ_NOCHE_CIELO * adp_factor_noche())) * o.cielo;
     return AdpLuces(false, d, directa, cielo, adp_suelo(c) * o.cielo * OPC_LUZ_CIELO_BASE);
 }
 

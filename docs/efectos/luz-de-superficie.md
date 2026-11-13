@@ -339,7 +339,7 @@ Decisión del dueño (observaciones 2.1 y 2.2): la noche, el Nether y el End est
 - Son valores para que el dueño decida: capturas de antes y después en `pruebas/capturas/luz-*-antes.png` y
   `luz-*.png` (escena `pruebas/escenas/luz-dimensiones.ctl`).
 
-## Sombra y sol bajo (F-53, 2026-11-13)
+## Sombra y sol bajo (F-53, F-54, 2026-11-13)
 
 Spec `subsistemas/28-color-a-lo-largo-del-dia.md` §2: la cara a la sombra del cubo blanco es **gris azulada**, con una
 relación sombra/arriba de 0,45 a 0,50 a lo largo del día. El pack daba 0,25 a 0,30 y un azul saturado (55°: 33, 66, 110
@@ -364,3 +364,45 @@ cara norte, pack contra original:
 Se queda en **0,4**: clava los 35°, deja los 55° algo claros (+28) y el sol bajo algo oscuro (−30). El sol bajo no se
 corrige aquí: ahí también la cara de arriba sale oscura y azul (−50 a −80), y eso es la ganancia y el tinte del sol por
 elevación (la palanca siguiente); al subir la luz del suelo con el sol bajo, el rebote sube con ella.
+
+### Sol bajo (F-54)
+
+Con el sol entre 0° y ~20°, la sombra salía oscura y **azul** (6°: 49, 68, 102 contra 81, 94, 113) y la cara al sol, un
+punto naranja (saturación 0,32; la spec pide crema, ≤ 0,25). El ambiente de cielo medido (`atm_ambiente_cielo`) es muy
+azul con el sol bajo, y subirlo solo en brillo (primera prueba, ganancia 1,9) dio sombras más claras pero más azules
+(66, 96, 138). Lo que falta es **color**, no solo nivel.
+
+`adp_sol_bajo()` interpola tres tablas por la elevación del sol (`opciones/luz.wgsl`, `OPC_LUZ_SOL_BAJO_*`):
+ganancia del ambiente de cielo, cuánto se acerca ese ambiente a gris de igual luminancia, y cuánto se acerca a gris la
+luz directa. Las tres valen 1 / 0 / 0 a partir de 30° y por debajo de −6°, así que el día alto y la noche no cambian.
+**Solo en `adp_luces`** (superficies y agua): las nubes y la niebla usan `atm_ambiente_cielo` directamente y no lo ven.
+
+| elev. | ganancia cielo | gris cielo | gris sol |
+|---|---|---|---|
+| −6° | 1,0 | 0 | 0 |
+| 0° | 1,4 | 0,5 | 0,25 |
+| 6° | 1,9 | 0,6 | 0,28 |
+| 12° | 1,6 | 0,5 | 0,2 |
+| 20° | 1,2 | 0,25 | 0 |
+| 30° | 1,0 | 0 | 0 |
+
+Carta completa tras F-53 y F-54 (perfil despejado fijo), pack contra original:
+
+| hora (elev.) | arriba | este | norte |
+|---|---|---|---|
+| 500 (6°) | 154,163,180 / 198,190,183 | 234,219,192 / 245,234,191 | **84,95,114 / 81,94,113** |
+| 1000 (12°) | 194,194,199 / 234,226,210 | 244,237,220 / 251,245,220 | **100,110,130 / 106,113,126** |
+| 1500 (18°) | 210,207,204 / 229,224,214 | 245,240,223 / 232,224,200 | 100,110,129 / 121,128,138 |
+| 2000 (24°) | 220,216,212 / 243,239,228 | 244,239,225 / 247,242,225 | 102,113,133 / 137,142,145 |
+| 3000 (35°) | 229,227,223 / 247,245,237 | 240,236,225 / 244,240,226 | **109,118,138 / 107,120,141** |
+| 9000 (35°) | 229,227,223 / 245,242,233 | 109,119,137 / 104,116,135 | **110,119,138 / 104,116,135** |
+| 11000 (12°, tarde) | 181,182,187 / 228,221,206 | 85,95,113 / 116,120,126 | 86,96,115 / 117,121,127 |
+
+Lo que queda:
+
+- **Cara de arriba con el sol bajo, −40 a −45.** En la captura del original el cielo de esa hora está lleno de cúmulos
+  blancos al sol («despejado» en el original no es sin nubes), y la cara de arriba ve ese cielo entero. El pack se mide
+  con el perfil despejado fijo, sin nubes. No se fuerza: sería ajustar a otra cobertura.
+- **Tarde (11000–11500), −31 en la sombra.** El sol está detrás del cubo; el original tiene el cielo del sudoeste muy
+  brillante (252, 250, 243), que con el sol bajo al oeste da más luz a las caras. Queda para el crepúsculo (F-55).
+- **18–24°, −20 a −35 en la sombra**: la ganancia ya ha vuelto casi a 1; se puede subir en la fila de 20°.
