@@ -17,6 +17,7 @@ fn post(input: PostInput) -> vec4<f32> {
         return vec4<f32>(adp_vista_forma(p.uv, opc_depuracion().vista), 1.0);
     }
     c = adp_aplicar_oclusion(c, p);
+    c = adp_luz_menas(c, p);
     let dir = adp_post_direccion(p);
     let o = opc_luz();
     c += adp_post_reflejo(p, dir, o.pasos_reflejo, o.suavidad_reflejo);

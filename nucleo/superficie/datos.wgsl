@@ -49,7 +49,11 @@ fn sup_empaquetar_suavidad(suavidad: f32, albedo_srgb: vec3<f32>) -> f32 {
     return (a * 256.0 + b) * 256.0 + c;
 }
 
-// x = suavidad, y = matiz, z = saturación.
+// x = suavidad, y = matiz, z = saturación. El signo negativo marca un píxel de mineral de una mena (25, F-47b).
 fn sup_desempaquetar_suavidad(v: f32) -> vec3<f32> {
-    return sup_desempaquetar_dato(v);
+    return sup_desempaquetar_dato(abs(v));
+}
+
+fn sup_es_mena(v: f32) -> bool {
+    return v < 0.0;
 }

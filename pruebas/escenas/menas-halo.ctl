@@ -4,6 +4,8 @@ close
 command weather clear
 command gamerule advance_time false
 time 18000
+command tp @s 236.5 120.4 236.5 90 5
+sleep 6
 command fill 230 118 230 252 126 242 stone
 command fill 231 119 231 251 125 241 air
 command setblock 231 121 234 minecraft:diamond_ore

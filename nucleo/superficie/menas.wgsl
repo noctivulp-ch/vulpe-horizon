@@ -70,3 +70,14 @@ fn sup_mena(color: vec3<f32>, m: array<vec3<f32>, 16>, umbral: f32, carbon: bool
     }
     return SupMena(mascara, oscuro);
 }
+
+// Luz de las menas (25): caída cuadrática hasta el alcance, y color pleno del matiz del mineral (lineal).
+fn sup_mena_luz_caida(d: f32, alcance: f32) -> f32 {
+    let x = clamp(1.0 - d / alcance, 0.0, 1.0);
+    return x * x;
+}
+
+fn sup_color_matiz(h: f32, s: f32, v: f32) -> vec3<f32> {
+    let k = fract(vec3<f32>(h) + vec3<f32>(1.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0;
+    return v * mix(vec3<f32>(1.0), clamp(abs(k) - 1.0, vec3<f32>(0.0), vec3<f32>(1.0)), s);
+}

@@ -122,7 +122,7 @@ fn material(input: MaterialInput) -> Surface {
 
     if !p.translucido {
         let total = col_luminancia(directa + indirecta) + 1e-6;
-        set_surface(n, sup_empaquetar_suavidad(m.suavidad, col_lineal_a_srgb(albedo)), sup_empaquetar_dato(m.f0.g, col_luminancia(indirecta) / total, p.luz_cielo));
+        set_surface(n, select(sup_empaquetar_suavidad(m.suavidad, col_lineal_a_srgb(albedo)), -sup_empaquetar_suavidad(m.suavidad, mena.mineral), mena.fuente), sup_empaquetar_dato(m.f0.g, col_luminancia(indirecta) / total, p.luz_cielo));
         return adp_material_salida(color, p.alfa, p);
     }
     return adp_material_salida(translucido(p, n, m, luces, color), 1.0, p);

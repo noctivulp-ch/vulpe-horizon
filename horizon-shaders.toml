@@ -192,6 +192,9 @@ files = [
     "adaptadores/reflejo.wgsl",
     "nucleo/luz/oclusion.wgsl",
     "adaptadores/oclusion.wgsl",
+    "nucleo/superficie/menas.wgsl",
+    "opciones/menas.wgsl",
+    "adaptadores/menas_luz.wgsl",
 ]
 name = "Composición"
 
