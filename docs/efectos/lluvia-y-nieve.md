@@ -57,3 +57,15 @@ no ve lo de detrás ni puede dejar una máscara para el post: se aproxima.
 
 **Visto** (`lluvia-aclarado-*.png`, escena `lluvia-aclarado`): trazos claros, sin color propio, sobre el cielo y sobre
 las sombras del suelo. Las medidas varían ±2 puntos entre capturas: la lluvia y el cielo cambian entre ellas.
+
+## Partículas del mod (F-51, 2026-11-13)
+
+Decisión del dueño (`subsistemas/26`): la lluvia y la nieve pasan a ser partículas del mod nativo (port de Particle
+Rain), encendidas por defecto, y sustituyen a las del pack.
+
+- Con el bit 7 de la cabecera de `frame.mods` (formato 2, `adp_mod().clima_particulas`), la etapa `weather` no dibuja
+  nada (`etapas/clima.wgsl`). El mod lo enciende cuando su lluvia y su nieve de partículas están encendidas.
+- Siguen en el pack: el mojado y los charcos (`wetness`), la niebla de lluvia, el oscurecimiento del cielo y la
+  inclinación de la niebla local. Sin el mod, o con sus partículas apagadas, el pack dibuja su lluvia como antes.
+- El detalle del mod (nacimiento, viento, movimiento, texturas propias) está en `vulpe-horizon-mod/docs/decisiones.md`
+  §7.

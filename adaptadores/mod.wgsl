@@ -38,6 +38,7 @@ struct AdpModDatos {
     tiene_bioma: bool,      // formato 2, bit 5
     bioma: u32,             // 0 desconocido, 1 pantano, 2 jungla, 3 jardín pálido
     bioma_peso: f32,        // 0..0,99, suavizado por el mod
+    clima_particulas: bool, // formato 2, bit 7: la lluvia y la nieve las dibuja el mod como partículas (26)
 }
 
 fn adp_mod() -> AdpModDatos {
@@ -61,6 +62,7 @@ fn adp_mod() -> AdpModDatos {
             false,
             0u,
             0.0,
+            false,
         );
     }
 
@@ -115,6 +117,7 @@ fn adp_mod() -> AdpModDatos {
         tiene_bioma,
         bioma,
         bioma_peso,
+        v2 && (banderas & 128u) != 0u,
     );
 }
 
