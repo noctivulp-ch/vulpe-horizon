@@ -19,6 +19,7 @@ const VOL_AURORA_DEPURAR_SIN_VENTANA: u32 = 2u;
 
 // Constantes de Vulpe (prioridad baja en la especificación: no son opciones).
 const VOL_AURORA_ALCANCE_CONO: f32 = 1.0;       // del velo
+const VOL_AURORA_NUBES: f32 = 0.15;             // fracción del color del mapa que las nubes devuelven por su opacidad (F-44)
 const VOL_AURORA_APERTURA: f32 = 1.5;           // radio del cono por bloque bajo el tope
 const VOL_AURORA_PUNTOS: f32 = 0.3;             // fracción de la línea que emite cono
 const VOL_AURORA_SEPARACION: f32 = 32.0;        // bloques

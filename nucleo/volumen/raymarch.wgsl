@@ -285,16 +285,35 @@ fn vol_integrar(rayo: VolRayo, luz: VolLuz, a: VolAjustes, mapa: texture_depth_2
         }
     }
     var r = VolResultado(vec3<f32>(0.0), 1.0, 0.0, vec3<f32>(0.0));
+    var detras = VolResultado(vec3<f32>(0.0), 1.0, 0.0, vec3<f32>(0.0));
     if a.con_niebla {
-        let hasta = min(min(rayo.escena, a.alcance), impacto);
+        let alcance = min(rayo.escena, a.alcance);
+        let hasta = min(alcance, impacto);
         if hasta > 0.0 {
             vol_tramo_niebla(&r, 0.0, hasta, rayo, luz, a, mapa, comparacion, t2, s2, t3, ta, sa);
         }
+        // Lo que queda detrás de la primera nube (con la aurora dentro) se integra aparte, con la mitad de pasos, y se
+        // compone detrás de las nubes con su transmitancia: la aurora se apaga suave tras el borde de la nube en vez de
+        // cortarse en el umbral del impacto (observación del dueño 3.2). Porqué: docs/efectos/niebla-y-nubes.md §«Nubes
+        // delante de la aurora (F-44)»
+        if a.aurora.activa && alcance > hasta && nubes.transmitancia > 0.01 {
+            var a_detras = a;
+            a_detras.pasos_niebla = max(a.pasos_niebla / 2, 2);
+            vol_tramo_niebla(&detras, hasta, alcance, rayo, luz, a_detras, mapa, comparacion, t2, s2, t3, ta, sa);
+        }
     }
-    r.luz += r.transmitancia * nubes.luz;
-    r.transmitancia *= nubes.transmitancia;
+    if a.aurora.activa && nubes.transmitancia < 0.999 && rayo.dir.y > 0.0 {
+        // Las nubes reciben algo del resplandor de la aurora que tienen encima: el color del mapa en esa dirección por
+        // su opacidad (una lectura por píxel, no por paso).
+        nubes.luz += vol_aurora_mapa(ta, sa, rayo.dir.xz).rgb * (a.aurora.noche * VOL_AURORA_NUBES * (1.0 - nubes.transmitancia));
+    }
+    r.luz += r.transmitancia * (nubes.luz + nubes.transmitancia * detras.luz);
+    r.transmitancia *= nubes.transmitancia * detras.transmitancia;
     if a.aurora.activa {
-        r.luz += vol_aurora_ventana(rayo.camara, rayo.dir, r.ventana, r.color_ventana, a.aurora, ta, sa);
+        // La ventana es el cielo de detrás: la tapan las nubes como al resto del cielo.
+        let ventana = vol_aurora_ventana(rayo.camara, rayo.dir, r.ventana + detras.ventana, r.color_ventana + detras.color_ventana,
+                                         a.aurora, ta, sa);
+        r.luz += ventana * nubes.transmitancia;
     }
     return r;
 }

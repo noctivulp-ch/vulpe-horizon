@@ -527,3 +527,22 @@ Observación del dueño 1.3: con lluvia y poca niebla, una capa blanquecina sobr
   sobre los árboles del horizonte desaparece; el terreno lejano se funde con el cielo de lluvia.
 - **Visto de paso, sin tocar:** una costura vertical clara en la niebla debajo de un bloque flotante en el mismo
   encuadre (se ve antes y después del cambio); apuntada en `docs/observaciones-del-gestor.md`.
+
+## Nubes delante de la aurora (F-44, 2026-11-12)
+
+Observación del dueño 3.2: la nube salía como una mancha oscura de borde duro recortada sobre la aurora.
+
+- **Por qué:** desde F-17 la niebla (y con ella la luz de los conos de la aurora, que vive dentro de la niebla) se corta
+  en el primer punto con nube de verdad, que es un **umbral**: a un lado del borde de la nube la aurora está entera y
+  al otro desaparece. Y la ventana de la aurora (el cielo fractal visto a través de los conos) se sumaba al final sin la
+  transmitancia de las nubes.
+- **Arreglo** (`vol_integrar`, `nucleo/volumen/raymarch.wgsl`): con la aurora activa, lo que queda de niebla detrás de
+  la primera nube se integra en un segundo tramo (la mitad de pasos) y se compone **detrás** de las nubes:
+  `delante + T_delante · (nubes + T_nubes · detrás)`. La ventana se multiplica por `T_nubes`. Y la nube devuelve algo
+  del resplandor de la aurora: el color del mapa de la aurora en esa dirección × noche × 0,15 (`VOL_AURORA_NUBES`) ×
+  su opacidad, con una sola lectura por píxel. La luna ya la iluminaba.
+- **Coste:** el segundo tramo solo corre con la aurora activa, de noche, en los píxeles donde la nube queda dentro del
+  alcance de la niebla.
+- **Comprobado** (`pruebas/escenas/aurora-nubes.ctl`): para tener nubes de noche hubo que poner a mano
+  `TIEMPO_ALEATORIO = false` (perfil fijo con cúmulos), sin commitear. Antes, el borde de la nube recortaba la aurora
+  en seco; ahora la aurora se apaga detrás con la transmitancia y el borde de la nube toma un poco de su color.
