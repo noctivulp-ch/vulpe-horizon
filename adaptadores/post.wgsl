@@ -38,7 +38,11 @@ fn adp_post_borde(p: AdpPixel, dir: vec3<f32>) -> vec4<f32> {
     let peso = vol_borde(length(pos.xz), frame.render_distance, dir.y, fuera);
     let c = opc_cielo();
     let horizonte = adp_tabla(frame.sun_direction.y, ATM_FILA_HORIZONTE) * c.sol_color * c.brillo;
-    let cielo = vol_cielo_aproximado(horizonte, adp_cielo_medio(c), dir.y) * OPC_CIELO_BRILLO_DIBUJO;
+    var cielo = vol_cielo_aproximado(horizonte, adp_cielo_medio(c), dir.y) * OPC_CIELO_BRILLO_DIBUJO;
+    // El color del borde es el del cielo de detrás, así que lleva el mismo velo de lluvia que el cielo: sin él pintaba
+    // el horizonte claro del cielo despejado sobre los bloques lejanos (observación del dueño 1.3).
+    // Porqué: docs/efectos/niebla-y-nubes.md §«Borde con lluvia (F-42)»
+    cielo = cie_aplicar_lluvia(cielo, dir.y, vec3<f32>(1.0), frame.camera_position.y, adp_lluvia(c));
     return vec4<f32>(cielo, peso);
 }
 

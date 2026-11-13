@@ -512,3 +512,18 @@ por umbral y rampa de F-4 y la cúpula de F-14 en los cúmulos; los altoestratos
   `vol_cobertura`, que ahora es la forma nueva: su calibración puede necesitar repaso con el banco.
 - **Vista aislada**: `OPC_DEPURACION_VISTA_DEFECTO` a 9, 10 u 11 (mapa cenital de la forma de cada capa, 8, 16 y 160 km)
   o 12 y 13 (corte vertical de pequeños y grandes con erosión, 1 y 2 km). Ver `docs/efectos/nucleo.md`.
+
+## Borde con lluvia (F-42, 2026-11-12)
+
+Observación del dueño 1.3: con lluvia y poca niebla, una capa blanquecina sobre los bloques a la altura del horizonte.
+
+- **Por qué:** la niebla de borde (`vol_borde`, últimos tramos de la distancia de renderizado y solo cerca de la
+  horizontal de la mirada) se pinta con el color del cielo cerca del horizonte, sacado de la tabla del cielo
+  **despejado**. El cielo con lluvia, en cambio, se mezcla hacia el cielo medio (`cie_aplicar_lluvia`) y queda más
+  oscuro y gris. Con lluvia el borde era más claro que el cielo de detrás: una franja clara sobre el terreno lejano.
+- **Arreglo:** el color del borde pasa por el mismo `cie_aplicar_lluvia` que el cielo (con transmitancia 1: el borde
+  no tiene la del rayo de vista), en `adp_post_borde` (`adaptadores/post.wgsl`).
+- **Comprobado** (`pruebas/escenas/lluvia-horizonte.ctl`, 10 s después de empezar a llover): el resplandor blanco
+  sobre los árboles del horizonte desaparece; el terreno lejano se funde con el cielo de lluvia.
+- **Visto de paso, sin tocar:** una costura vertical clara en la niebla debajo de un bloque flotante en el mismo
+  encuadre (se ve antes y después del cambio); apuntada en `docs/observaciones-del-gestor.md`.
