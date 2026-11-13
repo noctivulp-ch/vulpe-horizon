@@ -348,3 +348,20 @@ después): luna nueva 8,5 → 21,9; llena 10,3 → 39,9 (2,5× en lineal); cueva
 
 El pasto negro era también un fallo propio: el verde del bioma contaba como oclusión de vértice y dejaba el pasto en un
 tercio del ambiente a todas horas (de día se notaba menos). Arreglado en el mismo commit.
+
+## 2026-11-13 — B-23 punto 6: nubes sobre la aurora, **sin reproducir**
+
+Probado con `pruebas/escenas/aurora-nubes.ctl` (medianoche, tres días, cenit y 45°) y el perfil fijo con cúmulos
+(`TIEMPO_ALEATORIO = false`, perfil 10; sin commitear), frente al mismo con el perfil despejado (perfil 0):
+`pruebas/capturas/aurora-nubes-hoja-perfil10.png` y `-despejado.png`. En las dos la aurora ocupa la misma zona (los
+conos a un lado del centro del fractal) y las nubes quedan del otro lado, junto a la luna: **en esta escena ninguna nube
+se cruza con la aurora**. Subir el resplandor que la nube devuelve (`VOL_AURORA_NUBES` de 0,15 a 0,6) no cambia ni un
+píxel, así que no se puede juzgar aquí y lo he deshecho.
+
+Lo que el código hace hoy (F-44): la aurora queda detrás de la primera nube y se apaga con su transmitancia, y la nube
+devuelve 0,15 del color del mapa de la aurora por su opacidad. Mi sospecha para la captura del dueño: una nube espesa
+delante de la aurora queda **oscura** porque solo la ilumina la luna, y ese 0,15 es poco al lado de unos conos tan
+brillantes. Subirlo sería el arreglo, pero hay que verlo en una escena donde se crucen.
+
+**Para seguir hace falta la escena del dueño:** coordenadas, hora, día del mundo (fase y perfil) y dirección de la mirada
+de `dueno-2026-11-12/nubes-sobre-aurora`, o una semilla y un sitio donde una nube pase por delante de los conos.
