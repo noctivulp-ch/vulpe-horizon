@@ -36,3 +36,25 @@ bloques. Llanura nevada: nevada ligera (velo azul claro), tormenta y ventisca bl
 Jungla: velo verde azulado ligero. Pantano: bruma amarilla verdosa. **Desierto** (−9872, −2200, encontrado con `locate` desde −6000, 0): polvo y tormenta de arena iguales que en la sabana; la
 captura del perfil «despejado» salió antes de cargar la zona (mar y lluvia). **Sin ver:** cruzar andando la frontera de un bioma
 (salto brusco esperado, ver límites) y el jardín pálido (sin mod).
+
+## Fundido del clima (F-43, 2026-11-12)
+
+Observaciones del dueño 1.1 y 1.2: la tormenta de arena o de nieve a veces no salía al poner la lluvia estando dentro
+del bioma, y faltaban transiciones.
+
+- **Lo que se vio:** en `pruebas/escenas/tormenta-desierto.ctl` (lluvia puesta dentro del desierto, tres días) la
+  tormenta sí sale cuando la cámara está de verdad en el desierto (el primer día la zona aún no estaba cargada y la
+  cámara estaba sobre el océano: sin efecto, como debe). Pero el tipo de clima (calor o frío) se decidía con la
+  temperatura del bioma **en ese instante** y la fuerza con `frame.rain` y una rampa de 0,3: entrar con lluvia era un
+  salto, y empezar a llover dentro, una rampa corta. El orden importaba. Además, uno de cada tres días el perfil es
+  «nada» (`21`): eso no es un fallo, pero puede parecerlo.
+- **Arreglo:** el tipo de clima y su peso se guardan entre fotogramas en el téxel (6,0) de bloom2 como `tipo·2 + peso`
+  (`adp_clima_local_estado`, `adaptadores/marco.wgsl`; lo escribe la pasada de bajada del bloom). Objetivo: tipo por
+  temperatura y precipitación, peso = `frame.rain`. El peso va hacia el objetivo a 1/4 por segundo
+  (`OPC_LOCAL_FUNDIDO` = 4 s, lo mismo que el mod para el bioma); si el tipo cambia, primero baja el anterior a 0. Da
+  igual qué cambie antes, la lluvia o el bioma: el resultado tras el fundido es el mismo.
+- **El mod:** no necesitaba cambio. Manda el bioma desde el primer fotograma en que lo lee (su bandera se enciende en
+  cuanto `native_biome` responde), y su peso sube en 4 s.
+- **Comprobado** (`pruebas/escenas/tormenta-fundido.ctl`): lluvia puesta dentro del desierto, tormenta creciendo de 1 a
+  6 s; entrar con lluvia desde fuera, paisaje aún visible a 0,5 s y tormenta a los 2 s. La tormenta de arena es tan densa
+  que con poco peso ya tapa: el fundido se nota más en el polvo.

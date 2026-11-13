@@ -85,19 +85,18 @@ struct AdpNieblaLocal {
 }
 
 // El perfil local del momento (21), decidido por el bioma de la cámara: calor o frío con la lluvia (uno de tres por día,
-// con el sorteo diario de la lluvia), y pantano o jungla siempre. La categoría del bioma la da el mod (`mods[1].w`); sin
-// él, por la temperatura y la humedad de vanilla. Con el mod (formato 2) el bioma entra y sale con el peso que suaviza el
-// mod; sin él, de golpe al cruzar la frontera. El clima entra con la fuerza de la lluvia. Porqué: docs/efectos/niebla-local.md (F-28)
+// con el sorteo diario de la lluvia), con tipo y peso fundidos en el tiempo (adp_clima_local_estado, F-43); y pantano, jungla o jardín
+// pálido siempre. La categoría del bioma la da el mod (`mods[1].w`, formato 2, ya fundida); sin él, por la temperatura y
+// la humedad de vanilla, de golpe al cruzar la frontera. Porqué: docs/efectos/niebla-local.md (F-28, F-43)
 fn adp_niebla_local(dia: u32, fuera: f32) -> AdpNieblaLocal {
     var r = AdpNieblaLocal(0.0, 0.0, vec3<f32>(0.0), 0.0);
     let t = frame.temperature;
-    let lluvia = smoothstep(0.0, OPC_LOCAL_RAMPA_LLUVIA, frame.rain);
-    if lluvia > 0.0 && t > OPC_LOCAL_CALOR && frame.precipitation == 0u {
-        let k = dia % 3u;
-        r = AdpNieblaLocal(OPC_LOCAL_CALOR_UNIF[k], OPC_LOCAL_CALOR_MANCHAS[k], OPC_LOCAL_CALOR_COLOR[k], lluvia);
-    } else if lluvia > 0.0 && t < OPC_LOCAL_FRIO && frame.precipitation == 2u {
-        let k = dia % 3u;
-        r = AdpNieblaLocal(OPC_LOCAL_FRIO_UNIF[k], OPC_LOCAL_FRIO_MANCHAS[k], OPC_LOCAL_FRIO_COLOR, lluvia);
+    let clima = adp_clima_local_decodificar(textureLoad(bloom2, vec2<i32>(6, 0), 0).a);
+    let k = dia % 3u;
+    if clima.tipo == 1u && clima.peso > 0.0 {
+        r = AdpNieblaLocal(OPC_LOCAL_CALOR_UNIF[k], OPC_LOCAL_CALOR_MANCHAS[k], OPC_LOCAL_CALOR_COLOR[k], clima.peso);
+    } else if clima.tipo == 2u && clima.peso > 0.0 {
+        r = AdpNieblaLocal(OPC_LOCAL_FRIO_UNIF[k], OPC_LOCAL_FRIO_MANCHAS[k], OPC_LOCAL_FRIO_COLOR, clima.peso);
     } else {
         var categoria = 0u;
         var peso = 1.0;

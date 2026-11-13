@@ -7,8 +7,11 @@
 fn adp_bloom_bajada(input: PostInput) -> vec4<f32> {
     let rgb = img_bloom_bajada(history, linear_sampler, input.uv);
     let texel = vec2<i32>(input.pixel);
-    if texel.y != 0 || texel.x > 5 {
+    if texel.y != 0 || texel.x > 6 {
         return vec4<f32>(rgb, 0.0);
+    }
+    if texel.x == 6 {
+        return vec4<f32>(rgb, adp_clima_local_estado(textureLoad(bloom2, texel, 0).a));
     }
     if texel.x == 5 {
         return vec4<f32>(rgb, select(0.0, 1.0, frame.eye_in == 1u));
@@ -41,7 +44,7 @@ fn adp_bloom_ancho(input: PostInput) -> vec4<f32> {
     let rgb = img_bloom_ancho(bloom, linear_sampler, input.uv, OPC_BLOOM_RADIO, aspecto, OPC_BLOOM_ANILLOS, giro).rgb;
     let texel = vec2<i32>(input.pixel);
     var alfa = 0.0;
-    if texel.y == 0 && texel.x <= 5 {
+    if texel.y == 0 && texel.x <= 6 {
         alfa = textureLoad(bloom, texel, 0).a;
     }
     return vec4<f32>(rgb, alfa);

@@ -180,7 +180,7 @@ fn opc_volumen() -> OpcVolumen {
 const OPC_LOCAL_ALCANCE: f32 = 64.0;          // bloques: la niebla local es cercana
 const OPC_LOCAL_CALOR: f32 = 1.0;             // temperatura del bioma por encima de la cual es «zona caliente»
 const OPC_LOCAL_FRIO: f32 = 0.4;              // por debajo, «zona fría»
-const OPC_LOCAL_RAMPA_LLUVIA: f32 = 0.3;      // fuerza de lluvia en que el perfil de clima está entero (sustituye al suavizado)
+const OPC_LOCAL_FUNDIDO: f32 = 4.0;          // segundos en que el clima local entra o sale del todo (F-43; el mod usa lo mismo para el bioma)
 const OPC_LOCAL_VIENTO: f32 = 1.0;            // × el viento de la niebla global
 const OPC_LOCAL_DESCENSO: f32 = 0.3;          // bloques por segundo que bajan las manchas (sin medir)
 // Calor con lluvia: despejado, polvo, tormenta de arena (uno por día).
