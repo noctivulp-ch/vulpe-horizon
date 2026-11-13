@@ -40,3 +40,21 @@ Niebla del Nether y del End (0–2, 1), en la página «Niebla y nubes». Van 51
 - **Visto (End):** la isla con su ambiente y una niebla gris violácea entre las torres de obsidiana.
 - **No visto:** las columnas de humo como formas verticales claras (el humo sale más como bruma), los destellos
   magenta del End (no coincidió ninguno con la captura), la niebla del vacío, los deltas de basalto.
+
+## Niebla del Nether (F-47, 2026-11-12)
+
+Observación del dueño 6.1: la niebla estaba demasiado baja, pegada a los lagos de lava.
+
+- **Antes:** el humo crecía desde la lava hacia arriba (fondo de 0,15 a 0,6 entre Y 31 y 110), la capa sobre la lava
+  caía a una décima en ~18 bloques y su luz era tan baja (0,004 de la lava) que, con la exposición puesta por la lava
+  emisiva, solo se veía el brillo pegado a los lagos.
+- **Ahora** (`vol_nether_densidad`, `nucleo/volumen/dimensiones.wgsl`): densidad máxima de las columnas por altura con la
+  tabla de la observación (0 en Y 31, 0,07 en 35, … 0,27 en 70, … 0 en 95), recortada por el ruido de columnas
+  (inclinado por el viento con la altura) y la erosión 3D; capa sobre la lava `exp(−(y − 31)/1,74)` (una décima en 4
+  bloques), despejada en ~24 bloques alrededor de la cámara; humo del techo de Y 40 a 90 como antes. Relación capa :
+  pico de la banda = 1 : 0,27, escalada por `VOL_NETHER_ESCALA` = 2,5.
+- **Luz:** naranja cálido fijo de la lava (sin caída con la altura) más la bruma del color de la niebla del bioma
+  (`frame.fog_color` normalizado, ya estaba), todo × `VOL_NETHER_LUZ` = 10, la misma subida que el ambiente del Nether en
+  F-45: sin ella la niebla no se ve contra la lava.
+- **Comprobado** (`pruebas/escenas/nether-niebla.ctl`; `pruebas/capturas/nether-niebla-70-antes.png` → `-70.png`): una
+  bruma rojiza a media altura vela las paredes lejanas; la capa sobre la lava es fina.
