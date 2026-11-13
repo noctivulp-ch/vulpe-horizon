@@ -186,7 +186,10 @@ fn adp_sombra(p: AdpPunto) -> AdpSombra {
         return AdpSombra(vec3<f32>(1.0), 0.0);
     }
     let r = adp_sombra_punto(AdpEntradaSombra(p.posicion, p.normal_cara, p.luz_cielo, p.pixel), opc_sombras());
-    let nubes = mix(1.0, adp_sombra_nubes(p.mundo), opc_volumen().sombra_nubes);
+    var nubes = 1.0;
+    if !opc_quitar(2048u) {
+        nubes = mix(1.0, adp_sombra_nubes(p.mundo), opc_volumen().sombra_nubes);
+    }
     let elev_sol = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
     let horizonte = luz_sombra_horizonte(p.mundo.y, elev_sol, OPC_SOMBRA_HORIZONTE);
     return AdpSombra(r.luz * nubes * horizonte, r.grosor);

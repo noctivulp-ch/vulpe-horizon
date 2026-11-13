@@ -32,7 +32,7 @@ fn adp_horario() -> VolHorario {
 fn adp_ambiente_cielo() -> vec3<f32> {
     let elev = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
     let despejado = adp_aplicar_crepusculo(atm_ambiente_cielo(elev));
-    if !opc_volumen().nubes {
+    if !opc_volumen().nubes || opc_quitar(4096u) {
         return despejado;
     }
     let p = adp_nubes().perfil;

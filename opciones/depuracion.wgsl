@@ -3,7 +3,8 @@ const OPC_DEPURACION_VISTA_DEFECTO: u32 = 0u;
 // Ablación para medir el coste por etapa (B-23 lote 2): cada bit quita una pieza. 0 en uso normal. Ver
 // docs/rendimiento.md. 1 volumen, 2 oclusión, 4 luz de menas, 8 reflejos de pantalla, 16 bloom, 32 TAA, 64 mapa de
 // la aurora, 128 sombras del sol, 256 cielo, 512 sombreado del terreno (material devuelve el albedo), 1024 luces
-// constantes en material (sin adp_luces).
+// constantes en material (sin adp_luces), 2048 sombra de las nubes sobre el terreno,
+// 4096 ambiente de cielo sin nubes (adp_ambiente_cielo sin el perfil del día).
 const OPC_DEPURACION_QUITAR: u32 = 0u;
 fn opc_quitar(bit: u32) -> bool {
     return (OPC_DEPURACION_QUITAR & bit) != 0u;

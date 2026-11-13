@@ -95,3 +95,35 @@ frente, a Y 70 dentro de la banda de humo, a Y 40 sobre la lava, bosque carmesí
    5,1 → 4,5 ms, Nether igual, **Overworld 18,8 → 20,2 ms** (peor). Las nubes leen el ruido en direcciones muy
    dispersas y el filtrado lineal de un atlas más ancho parece fallar más en la caché que 8 lecturas sin filtrar.
 4. **El Nether** se reparte sin un culpable: terreno 2,8, post 2,7 (menas 0,7, oclusión 0,4, volumen 0,4) y 5 de base.
+
+## 2026-11-13, tercera vuelta: decisiones del gestor (sombras y adp_luces)
+
+Medidas de 20 s en el Overworld (el ruido entre medidas de 10 s es de ±1,5 ms; con 20 s, ±0,3).
+
+| prueba | GPU Overworld | resultado |
+|---|---|---|
+| base | 17,8–17,9 ms | |
+| sombras del sol fuera (128) | 14,6 | la sombra entera cuesta 3,2 |
+| sombra de las nubes fuera (2048, bit nuevo) | 17,1 | **0,8** |
+| ambiente de cielo sin nubes (4096, bit nuevo) | 17,6 | 0,27 |
+| atajo seguro del filtro (búsqueda que cubre la huella del radio mínimo, sin ocluyentes → 1) | 17,9–20,5 | **sin ahorro medible**: en el bosque casi todo píxel tiene ocluyentes cerca. Y cambia sombras de 1–2 téxeles (barras de la valla, barrotes): la búsqueda de 4 muestras no las ve. **Retirado** |
+| 4 muestras de filtro con el radio mínimo (≤ 1,5 téxeles) | 17,6 | −0,25 ms y bordes algo distintos (diferencia media 1,98 frente a 0,93 de ruido en `sombras-finas`). **Retirado** |
+
+**`adp_luces` en la etapa de vértices: no se puede.** La etapa de vértices de Horizon es
+`fn vertex(input: VertexInput) -> vec3<f32>`: solo devuelve la posición, sin interpolantes propios hacia `material`.
+Los 2,6 ms del bit 1024 sobrestiman lo que se ahorraría: con luces constantes el compilador simplifica también el resto
+del sombreado. Pasarlo por el mod en `frame.mods` obligaría a rehacer en Rust la atmósfera del pack (tablas, textura de
+transmitancia, opciones), con el riesgo de que se separen. No lo he hecho.
+
+**Por qué el Overworld va a 37 fps con 18 ms de GPU:** la presentación es Fifo a 145 Hz (6,9 ms por refresco), y la
+CPU (4,3 ms) y la GPU no se solapan del todo: ~22 ms se redondean a 4 refrescos, 27,6 ms, 36 fps. Para 60 fps hacen
+falta menos de 16,6 ms entre las dos, es decir ~12 ms de GPU: unos 6 ms menos que hoy.
+
+**Lo que bajaría ese tiempo y cambia algo visible** (para decidir):
+1. Sombra de las nubes calculada a menor resolución o cada dos fotogramas (0,8 ms).
+2. Menos muestras de búsqueda y de filtro de sombra a partir de cierta distancia (hasta ~2 ms; las penumbras lejanas
+   salen más duras).
+3. Volumen a menos pasos o a un cuarto de resolución en el Overworld (1,5–3,6 ms; nubes y niebla menos finas).
+4. Un nivel de calidad «Media» por defecto en lugar de «Según la general», si la general del dueño está en «Alta».
+Sin pérdida no he encontrado más dentro de la API. Con un bloque de datos por fotograma legible en `material`
+(petición para Horizon) caerían también los cálculos repetidos de `adp_luces`.
