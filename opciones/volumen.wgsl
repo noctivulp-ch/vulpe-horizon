@@ -183,11 +183,17 @@ const OPC_LOCAL_FRIO: f32 = 0.4;              // por debajo, «zona fría»
 const OPC_LOCAL_FUNDIDO: f32 = 4.0;          // segundos en que el clima local entra o sale del todo (F-43; el mod usa lo mismo para el bioma)
 const OPC_LOCAL_VIENTO: f32 = 1.0;            // × el viento de la niebla global
 const OPC_LOCAL_DESCENSO: f32 = 0.3;          // bloques por segundo que bajan las manchas (sin medir)
-// Calor con lluvia: despejado, polvo, tormenta de arena (uno por día).
+// Tormentas sin días vacíos (observación del dueño 2026-11-13 §8, F-64): cada día con lluvia en un bioma de tormenta la
+// hay, con una intensidad al azar por día y continua entre la «suave» de 21 (índice 1 de estas tablas) y una extrema, con
+// ~10 bloques de visibilidad (extinción 3,9/10). El índice 2 queda como referencia del color. Porqué:
+// docs/efectos/niebla-local.md §«Intensidad por día (F-64)»
+const OPC_LOCAL_EXTREMA_UNIF: f32 = 0.35;
+const OPC_LOCAL_EXTREMA_MANCHAS: f32 = 0.6;
+// Calor con lluvia: despejado, polvo, tormenta de arena (de 21; desde F-64 solo marcan los extremos).
 const OPC_LOCAL_CALOR_UNIF = array<f32, 3>(0.0, 0.03, 0.08);
 const OPC_LOCAL_CALOR_MANCHAS = array<f32, 3>(0.0, 0.2, 0.5);
 const OPC_LOCAL_CALOR_COLOR = array<vec3<f32>, 3>(vec3<f32>(0.0), vec3<f32>(1.0, 0.5, 0.3), vec3<f32>(2.0, 0.6, 0.2));
-// Frío con nieve: nevada ligera, tormenta de nieve, ventisca (uno por día).
+// Frío con nieve: nevada ligera, tormenta de nieve, ventisca (de 21; desde F-64 solo marcan los extremos).
 const OPC_LOCAL_FRIO_UNIF = array<f32, 3>(0.0085, 0.03, 0.07);
 const OPC_LOCAL_FRIO_MANCHAS = array<f32, 3>(0.0, 0.2, 0.3);
 const OPC_LOCAL_FRIO_COLOR: vec3<f32> = vec3<f32>(2.0, 3.0, 5.0);

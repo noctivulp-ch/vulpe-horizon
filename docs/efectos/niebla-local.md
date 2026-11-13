@@ -88,3 +88,22 @@ del bioma, y faltaban transiciones.
   El tono cuadra (gris con diferencia entre canales ≤ 3; arena con matiz ~45°). Los niveles quedan dentro de ±60: la
   densidad cerca del cubo y la del fondo no se reparten igual que en el original. El polvo (perfil 1) toma el mismo
   tono dorado.
+
+## Intensidad por día (F-64, 2026-11-13)
+
+Observación del dueño 2026-11-13 §8: «que no exista algunas veces no me parece; sería mejor que la intensidad fuera
+aleatoria, desde una no muy fuerte a una extrema». Sustituye a la regla de uno de cada tres días «nada».
+
+`adp_niebla_local` (`adaptadores/volumen.wgsl`): cada día con lluvia en un bioma de tormenta (calor sin precipitación o
+frío con nieve) sortea `intensidad` = `rui_hash21(día, 53)`, uniforme en 0..1, y la niebla local va **de forma
+continua** entre:
+
+- **mínima:** la «suave» de `21` (índice 1 de las tablas: calor 0,03 uniforme y 0,2 de manchas; frío 0,03 y 0,2);
+- **máxima:** `OPC_LOCAL_EXTREMA_UNIF` = 0,35 por bloque y `OPC_LOCAL_EXTREMA_MANCHAS` = 0,6. Por Koschmieder
+  (visibilidad ≈ 3,9/σ), unos 11 bloques: más que la ventisca (0,07, ~55 bloques).
+
+El brillo del color del calor se interpola igual entre el del polvo y el de la tormenta de arena; el tono es el de F-52.
+
+Comprobado con `pruebas/escenas/tormenta-dias.ctl` (el desierto de (−9872, −2200), seis días seguidos con lluvia):
+`pruebas/capturas/tormenta-dias-hoja.png`. Los seis días tienen tormenta. El día 2 sale extremo (no se ve el suelo a
+~20 bloques) y en los días 0 y 5 se ve el terreno. La nevada ligera (índice 0 del frío) ya no sale sola.

@@ -84,21 +84,25 @@ struct AdpNieblaLocal {
     peso: f32,              // 0..1: cuánto sustituye a la niebla global
 }
 
-// El perfil local del momento (21), decidido por el bioma de la cámara: calor o frío con la lluvia (uno de tres por día,
-// con el sorteo diario de la lluvia), con tipo y peso fundidos en el tiempo (adp_clima_local_estado, F-43); y pantano, jungla o jardín
+// El perfil local del momento (21), decidido por el bioma de la cámara: calor o frío con la lluvia (con una intensidad
+// al azar por día, F-64), con tipo y peso fundidos en el tiempo (adp_clima_local_estado, F-43); y pantano, jungla o jardín
 // pálido siempre. La categoría del bioma la da el mod (`mods[1].w`, formato 2, ya fundida); sin él, por la temperatura y
 // la humedad de vanilla, de golpe al cruzar la frontera. Porqué: docs/efectos/niebla-local.md (F-28, F-43)
 fn adp_niebla_local(dia: u32, fuera: f32) -> AdpNieblaLocal {
     var r = AdpNieblaLocal(0.0, 0.0, vec3<f32>(0.0), 0.0);
     let t = frame.temperature;
     let clima = adp_clima_local_decodificar(textureLoad(bloom2, vec2<i32>(6, 0), 0).a);
-    let k = dia % 3u;
+    // Intensidad del día, continua (F-64): de la tormenta suave a la extrema.
+    let intensidad = rui_hash21(vec2<i32>(i32(dia), 53));
     if clima.tipo == 1u && clima.peso > 0.0 {
-        let color = OPC_LOCAL_CALOR_TINTE * (col_luminancia(OPC_LOCAL_CALOR_COLOR[k]) * OPC_LOCAL_BRILLO_CALOR);
-        r = AdpNieblaLocal(OPC_LOCAL_CALOR_UNIF[k], OPC_LOCAL_CALOR_MANCHAS[k], color, clima.peso);
+        let brillo = mix(col_luminancia(OPC_LOCAL_CALOR_COLOR[1]), col_luminancia(OPC_LOCAL_CALOR_COLOR[2]), intensidad);
+        let color = OPC_LOCAL_CALOR_TINTE * (brillo * OPC_LOCAL_BRILLO_CALOR);
+        r = AdpNieblaLocal(mix(OPC_LOCAL_CALOR_UNIF[1], OPC_LOCAL_EXTREMA_UNIF, intensidad),
+                           mix(OPC_LOCAL_CALOR_MANCHAS[1], OPC_LOCAL_EXTREMA_MANCHAS, intensidad), color, clima.peso);
     } else if clima.tipo == 2u && clima.peso > 0.0 {
         let color = OPC_LOCAL_FRIO_TINTE * (col_luminancia(OPC_LOCAL_FRIO_COLOR) * OPC_LOCAL_BRILLO_FRIO);
-        r = AdpNieblaLocal(OPC_LOCAL_FRIO_UNIF[k], OPC_LOCAL_FRIO_MANCHAS[k], color, clima.peso);
+        r = AdpNieblaLocal(mix(OPC_LOCAL_FRIO_UNIF[1], OPC_LOCAL_EXTREMA_UNIF, intensidad),
+                           mix(OPC_LOCAL_FRIO_MANCHAS[1], OPC_LOCAL_EXTREMA_MANCHAS, intensidad), color, clima.peso);
     } else {
         var categoria = 0u;
         var peso = 1.0;
