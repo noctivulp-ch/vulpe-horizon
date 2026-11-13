@@ -3,7 +3,14 @@
 fn material(input: MaterialInput) -> Surface {
     let o = opc_luz();
     var p = adp_material_punto(input, o);
-    let luces = adp_luces(o);
+    if opc_quitar(512u) {
+        return adp_material_salida(p.albedo * 0.2, 1.0, p);
+    }
+    // Bits de medida 512 y 1024 (docs/rendimiento.md): con 0 no cuestan nada.
+    var luces = AdpLuces(false, frame.light_direction, vec3<f32>(3.0), vec3<f32>(0.2, 0.25, 0.35), vec3<f32>(0.1));
+    if !opc_quitar(1024u) {
+        luces = adp_luces(o);
+    }
     if p.fluido == 1u && p.translucido {
         return agua(input, p, luces);
     }

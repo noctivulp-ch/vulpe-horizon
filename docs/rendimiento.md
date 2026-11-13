@@ -52,3 +52,44 @@ más finos. Candidatos para cuando se pueda medir, por orden:
 2. Sombras del sol en el Overworld: PCF de receptor plano (F-40); probar menos muestras lejos de la cámara.
 3. Luz de las menas: 12 lecturas por píxel de terreno en todo el Overworld; saltarla donde no hay ninguna mena en un
    mosaico de pantalla (una pasada barata que marque los mosaicos con mena).
+
+## 2026-11-13, segunda vuelta (sin el tope de inactividad)
+
+El tope de 10 fps no era el foco: es `inactivityFpsLimit:"afk"` de `options.txt` (sin teclado ni ratón, 30 fps al
+minuto y 10 a los 10 minutos). El gestor lo puso en `"minimized"` en `vulpe-pruebas` y copió allí los ajustes
+gráficos del dueño (LOD 32 y recortes), que ya quedan fijos. Datos crudos: `rendimiento-ablacion-2026-11-13-c.txt`.
+
+GPU por fotograma (ms):
+
+| quitado | Overworld | Nether | End |
+|---|---|---|---|
+| nada (base) | 17,5–19,7 (34–39 fps) | 10,5–10,9 (51–53 fps) | 5,0 (70–75 fps) |
+| volumen (1) | −1,5 a −3,6 | −0,4 | −1,5 |
+| oclusión (2) | ≈ −0,2 | −0,4 | ≈ 0 |
+| luz de menas (4) | ≈ 0 | −0,7 | ≈ 0 |
+| reflejos de pantalla (8), bloom (16), TAA (32), cielo (256) | ≈ 0 cada uno | ≈ 0 | ≈ 0 |
+| sombras del sol (128) | **−3,3** | 0 | 0 |
+| **sombreado del terreno (512)** | **−9,7** (incluye las sombras) | **−2,8** | −0,3 |
+| `adp_luces` constante (1024) | **−2,6** | 0 | 0 |
+| todo (1023) | 6,6 | 5,0 | 2,2 |
+
+Lo que queda con todo quitado (6,6 / 5,0 / 2,2 ms) es la rasterización del terreno con el LOD y el trabajo propio de
+Horizon: el pack no lo controla.
+
+**El Nether del dueño a 17 fps sigue sin reproducirse:** con sus ajustes, cinco vistas (yermo mirando abajo y al
+frente, a Y 70 dentro de la banda de humo, a Y 40 sobre la lava, bosque carmesí, valle de almas) dan 46–54 fps y
+10,6 ms de GPU. El fotograma (p50 ~18,5 ms) es más largo que GPU + CPU (~15 ms): hay espera de presentación (Fifo).
+
+**Dónde está el peso y qué se puede hacer:**
+
+1. **Sombreado del terreno en el Overworld (9,7 ms).** Las sombras se llevan 3,3. La spec prohíbe saltarse el PCF
+   cuando la búsqueda no encuentra ocluyentes (fino/04), así que el atajo habitual queda para decisión del gestor.
+2. **`adp_luces` (2,6 ms en el Overworld).** Calcula en cada píxel lo que es igual en todo el fotograma (tablas de la
+   atmósfera, perfil de nubes, tablas por elevación, piso del crepúsculo). La etapa `material` no puede leer nada
+   calculado una vez por fotograma: los destinos propios solo los ven las pasadas de post. **Limitación de Horizon
+   para PR-Pending:** un bloque de datos del pack calculado una vez por fotograma (o por pasada) y legible en
+   `material`. Con eso, unos −2,5 ms en el Overworld sin cambio visible.
+3. **Volumen (1,5 ms en el Overworld y en el End):** `vol_ruido3d` hace 8 `textureLoad` por muestra. Con el atlas
+   regenerado con un téxel de margen por corte y filtrado lineal, bajaría a 2 lecturas sin cambio visible. Hay que
+   pasar un sampler por las 8 llamadas y por quien las llama, o leer un global desde `nucleo`.
+4. **El Nether** se reparte sin un culpable: terreno 2,8, post 2,7 (menas 0,7, oclusión 0,4, volumen 0,4) y 5 de base.
