@@ -5,6 +5,15 @@
 // cristales transparentes cerca o el tiempo está despejado.
 // Porqué: docs/efectos/tiempo-en-los-cristales.md §Arquitectura y coste
 
+fn adp_cp_sobre(base_col: vec3<f32>, base_op: f32, nueva_col: vec3<f32>, nueva_op: f32) -> vec4<f32> {
+    let op_out = nueva_op + base_op * (1.0 - nueva_op);
+    if op_out <= 1e-4 {
+        return vec4<f32>(0.0);
+    }
+    let col_out = (nueva_col * nueva_op + base_col * base_op * (1.0 - nueva_op)) / op_out;
+    return vec4<f32>(col_out, op_out);
+}
+
 fn adp_cristales_post_evaluar_cara(
     b: vec3<i32>,
     p_mundo: vec3<f32>,
@@ -36,13 +45,22 @@ fn adp_cristales_post_evaluar_cara(
         return vec4<f32>(0.0);
     }
 
+    let es_arriba = n_cara.y > 0.5;
+    let es_abajo = n_cara.y < -0.5;
+    let cara_idx = u32(sup_cristal_indice_cara(n_cara));
+    let variante = sup_cr_hash_u32(u32(b.x * 73856093) ^ u32(b.y * 19349663) ^ u32(b.z * 83492791) ^ cara_idx) & 3u;
+
+    let n_l = max(dot(n_cara, luces.direccion), 0.0);
+    let contraluz = pow(max(dot(-vista, luces.direccion), 0.0), 3.0) * 0.35;
+    let cielo_ext_ref = select(0.85, 1.0, entorno.llega_cielo || entorno.es_exterior);
+    let luz_base = luces.directa * (n_l + contraluz) * 0.60
+                 + luces.cielo * cielo_ext_ref * 1.10
+                 + vec3<f32>(OPC_LUZ_NOCHE_SUELO * 1.8 * cielo_ext_ref);
+
     var capa_col = vec3<f32>(0.0);
     var capa_op = 0.0;
 
     // Capa 1 — Lluvia global desde el lienzo `cristal_clima` (27 v2 §Capa 1).
-    let es_arriba = n_cara.y > 0.5;
-    let es_abajo = n_cara.y < -0.5;
-    let cara_idx = u32(sup_cristal_indice_cara(n_cara));
     let cara_op_idx = cara_idx ^ 1u;
     let panel_ll = select(cara_idx, 4u, es_arriba);
     let panel_ll_op = select(cara_op_idx, 4u, es_arriba);
@@ -64,15 +82,10 @@ fn adp_cristales_post_evaluar_cara(
         lluvia_rgba.a *= aten_dist;
 
         if lluvia_rgba.a > 0.002 {
-            let n_l = max(dot(n_cara, luces.direccion), 0.0);
-            let contraluz = pow(max(dot(-vista, luces.direccion), 0.0), 3.0) * 0.35;
-            let cielo_ext = select(0.85, 1.0, lluvia_en_exterior);
             let luz_lluvia = luces.directa * (n_l + contraluz) * 0.55
-                           + luces.cielo * cielo_ext * 1.45
-                           + vec3<f32>(0.06) * cielo_ext;
-            capa_col = lluvia_rgba.rgb * luz_lluvia;
-            capa_op = lluvia_rgba.a;
-
+                           + luces.cielo * cielo_ext_ref * 1.45
+                           + vec3<f32>(0.06) * cielo_ext_ref;
+            var col_ll = lluvia_rgba.rgb * luz_lluvia;
             let gota_a = tx.b * aten_dist;
             if gota_a > 0.05 {
                 let pend = sup_cr_desempaquetar_pendiente(tx.a) * gota_a;
@@ -80,7 +93,36 @@ fn adp_cristales_post_evaluar_cara(
                 let dir_cielo = normalize(vec3<f32>(0.12, 0.96, 0.22));
                 let esp = sup_especular(n_gota, vista, dir_cielo, 0.07, vec3<f32>(0.05))
                         * max(dot(n_gota, dir_cielo), 0.0) * luces.cielo * (OPC_CRISTAL_GOTA_ESPECULAR * gota_a);
-                capa_col += esp / max(capa_op, 0.05);
+                col_ll += esp / max(lluvia_rgba.a, 0.05);
+            }
+            let comp = adp_cp_sobre(capa_col, capa_op, col_ll, lluvia_rgba.a);
+            capa_col = comp.rgb;
+            capa_op = comp.a;
+        }
+    }
+
+    // Capa 2 — Escarcha de fuera y repisa de nieve (27 v2 §Capa 2).
+    let frio_activo = bioma_frio && (c0.y > 0.001 || c0.z > 0.001) && c2.z > 0.001;
+    if frio_activo && (entorno.es_exterior || entorno.es_interior_fria) {
+        var esc = sup_cristal_escarcha_v2(plano, entorno.dist_marco, c0.y, c2.z, co.z, variante, false, 1.0);
+        esc.alfa *= aten_dist;
+        if esc.alfa > 0.002 {
+            let col_esc = esc.color * (luz_base * 1.15 + luces.cielo * cielo_ext_ref * 0.30)
+                        + vec3<f32>(esc.destello) * (luces.directa * 0.6 + luces.cielo * cielo_ext_ref * 0.9);
+            let comp = adp_cp_sobre(capa_col, capa_op, col_esc, esc.alfa);
+            capa_col = comp.rgb;
+            capa_op = comp.a;
+        }
+
+        let muestra_rep = c0.z > 0.005 && (entorno.llega_cielo || (entorno.es_interior && entorno.opuesta_llega_cielo));
+        if muestra_rep {
+            var rep = sup_cristal_repisa_nieve(plano, entorno.bordes, c0.z, c2.z, co.z);
+            rep.alfa *= aten_dist;
+            if rep.alfa > 0.002 {
+                let col_rep = rep.color * (luz_base * 1.12 + luces.cielo * cielo_ext_ref * 0.25);
+                let comp = adp_cp_sobre(capa_col, capa_op, col_rep, rep.alfa);
+                capa_col = comp.rgb;
+                capa_op = comp.a;
             }
         }
     }

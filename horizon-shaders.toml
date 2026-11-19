@@ -310,6 +310,7 @@ files = [
     "opciones/menas.wgsl",
     "adaptadores/menas_luz.wgsl",
     "nucleo/superficie/cristal_lluvia.wgsl",
+    "nucleo/superficie/cristal_escarcha.wgsl",
     "adaptadores/cristal_mapa.wgsl",
     "adaptadores/cristal_sim_datos.wgsl",
     "adaptadores/cristales_post.wgsl",

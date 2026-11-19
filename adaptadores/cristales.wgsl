@@ -166,17 +166,9 @@ fn adp_cristal_evaluar(
     let cielo_exposicion = select(0.0, 1.0, entorno.llega_cielo);
     let curva_cielo = luz_curva_cielo(p.luz_cielo);
     let aten_dist = 1.0 - smoothstep(OPC_CRISTAL_DIST_INICIO, OPC_CRISTAL_DIST_FIN, dist);
+    let b_cristal = vec3<i32>(floor(p.mundo - p.normal_cara * 0.02));
+    let variante = sup_cr_hash_u32(u32(b_cristal.x * 73856093) ^ u32(b_cristal.y * 19349663) ^ u32(b_cristal.z * 83492791) ^ cara_idx) & 3u;
 
-    // Capas aún en transición (pasos 3..8 sustituyen escarcha, copos, arena, condensación, vaho y blur):
-    let esc_bruta = sup_cristal_escarcha(
-        plano,
-        select(0.0, 1.0, entorno.es_exterior || entorno.es_interior_fria),
-        select(1.0, 0.72, entorno.bordes != 0u),
-        select(0.0, c0.y, frio_activo),
-        c2.z,
-        interior_activo,
-        dist,
-    );
     let aliento = sup_cristal_aliento(
         plano,
         p.posicion,
@@ -187,28 +179,47 @@ fn adp_cristal_evaluar(
         c0.y,
         adp_tiempo().segundos,
     );
-    let suprime_helecho = 1.0 - smoothstep(0.0, 0.72, aliento.derrite) * 0.92;
-    let esc = SupCristalEscarcha(
-        esc_bruta.cobertura * suprime_helecho * select(0.0, 1.0, entorno.bordes != 0u || frame.has_ray_tracing == 0u),
-        max(esc_bruta.borroso, aliento.borroso),
-        esc_bruta.cristalino * (1.0 - aliento.derrite),
-        esc_bruta.grad_uv * suprime_helecho,
-    );
+    let suprime_escarcha = 1.0 - smoothstep(0.0, 0.72, aliento.derrite) * 0.92;
 
+    // Capa 2 — Escarcha de fuera y repisa de nieve desde el marco de la ventana entera (27 v2 §Capa 2).
+    let muestra_esc_ext = frio_activo && (entorno.es_exterior || entorno.es_interior_fria);
+    var esc_capa = sup_cristal_escarcha_v2(
+        plano,
+        entorno.dist_marco,
+        select(0.0, c0.y, muestra_esc_ext),
+        c2.z,
+        co.z,
+        variante,
+        false,
+        1.0,
+    );
+    esc_capa.alfa *= suprime_escarcha * aten_dist;
+
+    let muestra_repisa = frio_activo && c0.z > 0.005 && (entorno.llega_cielo || (entorno.es_interior && entorno.opuesta_llega_cielo));
+    var repisa_capa = sup_cristal_repisa_nieve(
+        plano,
+        entorno.bordes,
+        select(0.0, c0.z, muestra_repisa),
+        c2.z,
+        co.z,
+    );
+    repisa_capa.alfa *= aten_dist;
+
+    // Copos temporales (se sustituyen por las 8 tiras globales en el paso 4) y arena (paso 5):
     let nieve_bruta = sup_cristal_nieve(
         plano,
         p.normal_cara,
         cielo_exposicion,
-        select(1.0, 0.72, (entorno.bordes & ADP_CR_BORDE_ABAJO) != 0u),
+        1.0,
         c1.xy,
         adp_tiempo().segundos,
         select(0.0, c0.x, frio_activo && c0.x > OPC_CRISTAL_CLIMA_UMBRAL),
-        select(0.0, c0.z, frio_activo && (entorno.bordes & ADP_CR_BORDE_ABAJO) != 0u),
+        0.0,
         c2.z,
         dist,
     );
     let copo_vivo = nieve_bruta.copo * (1.0 - smoothstep(0.0, 0.65, aliento.derrite));
-    let nieve = SupCristalNieve(copo_vivo, nieve_bruta.monton, max(copo_vivo, nieve_bruta.monton), nieve_bruta.relieve_y);
+    let nieve = SupCristalNieve(copo_vivo, 0.0, copo_vivo, 0.0);
 
     let arena = sup_cristal_arena(
         plano,
@@ -230,7 +241,6 @@ fn adp_cristal_evaluar(
     let lluvia_en_exterior = entorno.llega_cielo;
     let lluvia_desde_interior = !lluvia_en_exterior && entorno.es_interior && entorno.opuesta_llega_cielo && plano.vertical;
     if lluvia_activa && (lluvia_en_exterior || lluvia_desde_interior) && !bioma_frio && !bioma_seco {
-        let b_cristal = vec3<i32>(floor(p.mundo - p.normal_cara * 0.02));
         let normal_muestra = select(-p.normal_cara, p.normal_cara, lluvia_en_exterior);
         var plano_muestra = plano;
         if !lluvia_en_exterior {
@@ -238,8 +248,8 @@ fn adp_cristal_evaluar(
         }
         let coord_lluvia = sup_cristal_lluvia_texel(b_cristal, normal_muestra, plano_muestra, co.z);
         let tx = textureLoad(cristal_clima, coord_lluvia, 0);
-        let mascara_agua = (1.0 - smoothstep(0.35, 0.75, esc.cobertura))
-                         * (1.0 - smoothstep(0.15, 0.55, nieve.cobertura))
+        let mascara_agua = (1.0 - smoothstep(0.35, 0.75, esc_capa.alfa))
+                         * (1.0 - smoothstep(0.15, 0.55, max(nieve.cobertura, repisa_capa.alfa)))
                          * (1.0 - smoothstep(0.15, 0.55, arena.cobertura))
                          * aten_dist;
         lluvia_rgba = sup_cristal_lluvia_color(tx, regueros && plano.vertical);
@@ -249,7 +259,7 @@ fn adp_cristal_evaluar(
         lluvia_mojado = select(0.0, clamp(c0.x, 0.0, 1.0) * 0.4 * mascara_agua, llueve_bioma && c0.x > OPC_CRISTAL_CLIMA_UMBRAL);
     }
 
-    if lluvia_rgba.a <= 0.002 && lluvia_mojado <= 0.002 && esc.cobertura <= 0.001 && nieve.cobertura <= 0.001 && aliento.vaho <= 0.001 && arena.cobertura <= 0.001 {
+    if lluvia_rgba.a <= 0.002 && lluvia_mojado <= 0.002 && esc_capa.alfa <= 0.002 && repisa_capa.alfa <= 0.002 && nieve.cobertura <= 0.001 && aliento.vaho <= 0.001 && arena.cobertura <= 0.001 {
         return r;
     }
     r.activo = true;
@@ -258,10 +268,11 @@ fn adp_cristal_evaluar(
     // Luz difusa + dispersión frontal (SSS) sobre capas del cristal.
     let n_l = max(dot(n_base, luces.direccion), 0.0);
     let contraluz = pow(max(dot(-p.vista, luces.direccion), 0.0), 3.0) * 0.35;
+    let cielo_ext_ref = max(curva_cielo, select(0.0, 0.85, entorno.es_interior && (entorno.opuesta_llega_cielo || entorno.es_interior_fria)));
     let luz_capa = luces.directa * sombra_luz * (n_l + contraluz)
-                 + luces.cielo * curva_cielo * 0.95
+                 + luces.cielo * cielo_ext_ref * 0.95
                  + bloque_luz
-                 + vec3<f32>(OPC_LUZ_NOCHE_SUELO * curva_cielo);
+                 + vec3<f32>(OPC_LUZ_NOCHE_SUELO * cielo_ext_ref);
 
     if aliento.vaho > 0.001 {
         let col_vaho = OPC_CRISTAL_VAHO_COLOR * (luz_capa + luces.cielo * curva_cielo * 0.25);
@@ -272,22 +283,25 @@ fn adp_cristal_evaluar(
         r.desenfoque = max(r.desenfoque, aliento.borroso);
     }
 
-    if esc.cobertura > 0.001 {
-        let n_esc = normalize(n_base + plano.tangente * esc.grad_uv.x + plano.bitangente * esc.grad_uv.y);
-        let luz_esc = luz_capa * 1.18
-                    + luces.cielo * curva_cielo * 0.45
-                    + vec3<f32>(OPC_LUZ_NOCHE_SUELO * 1.8 * curva_cielo);
-        let esp_esc = sup_especular(n_esc, p.vista, luces.direccion, 0.14, vec3<f32>(0.06))
-                    * max(dot(n_esc, luces.direccion), 0.0) * luces.directa * sombra_luz * 0.8;
-        let brillo_cristal = (0.4 + 2.2 * esc.cristalino)
-                           * (luces.directa * sombra_luz + luces.cielo * curva_cielo * 1.3 + bloque_luz + vec3<f32>(OPC_LUZ_NOCHE_SUELO * 2.0 * curva_cielo));
-        let col_esc = OPC_CRISTAL_ESCARCHA_COLOR * luz_esc + brillo_cristal * (0.35 * esc.cobertura) + esp_esc;
-        let op_esc = clamp(esc.cobertura * 0.58, 0.0, 0.58);
-        let comp = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_esc, op_esc);
+    if esc_capa.alfa > 0.002 {
+        let luz_esc = luz_capa * 1.15
+                    + luces.cielo * cielo_ext_ref * 0.35
+                    + vec3<f32>(OPC_LUZ_NOCHE_SUELO * 1.6 * cielo_ext_ref);
+        let destello_luz = esc_capa.destello * (luces.directa * sombra_luz * 0.9 + luces.cielo * cielo_ext_ref * 0.8 + bloque_luz * 0.8);
+        let col_esc = esc_capa.color * luz_esc + destello_luz;
+        let comp = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_esc, esc_capa.alfa);
         r.capa_color = comp.rgb;
         r.capa_opacidad = comp.a;
-        r.desenfoque = max(r.desenfoque, esc.borroso);
-        r.normal = normalize(mix(r.normal, n_esc, esc.cobertura * 0.45));
+    }
+
+    if repisa_capa.alfa > 0.002 {
+        // La repisa de nieve va por delante de la escarcha (27 §Bloques y caras: 0,005 vs 0,0025).
+        let luz_rep = luz_capa * 1.10 + luces.cielo * cielo_ext_ref * 0.25;
+        let col_rep = repisa_capa.color * luz_rep;
+        let comp = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_rep, repisa_capa.alfa);
+        r.capa_color = comp.rgb;
+        r.capa_opacidad = comp.a;
+        r.mate = max(r.mate, repisa_capa.alfa * 0.9);
     }
 
     if lluvia_rgba.a > 0.002 || lluvia_mojado > 0.002 {
