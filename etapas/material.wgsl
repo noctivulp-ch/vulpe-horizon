@@ -129,27 +129,6 @@ fn material(input: MaterialInput) -> Surface {
         set_surface(n, select(sup_empaquetar_suavidad(m.suavidad, col_lineal_a_srgb(albedo)), -sup_empaquetar_suavidad(m.suavidad, mena.mineral), mena.fuente), sup_empaquetar_dato(m.f0.g, col_luminancia(indirecta) / total, p.luz_cielo));
         return adp_material_salida(color, p.alfa, p);
     }
-    // Cristal transparente (`block/glass` y `block/glass_pane_top`, id 11 en pasada translúcida):
-    // el marco opaco (`p.alfa >= 0.5`) sale idéntico al recorte vanilla; el interior (`p.alfa < 0.08`, alfa 6/255 en
-    // el mod) devuelve alfa 0 cuando no hay capas activas (idéntico a `e7ad1c4`, sin coste global).
-    if p.material == OPC_MAT_CRISTAL_CLARO {
-        if p.alfa >= 0.5 {
-            return adp_material_salida(color, 1.0, p);
-        }
-        if p.es_cristal && p.alfa < OPC_CRISTAL_ALFA_CLARO_MAX {
-            let cr = adp_cristal_evaluar(p, n, luces, sombra.luz, bloque);
-            if !cr.activo {
-                return adp_material_salida(vec3<f32>(0.0), 0.0, p);
-            }
-            if cr.desenfoque > 0.01 || cr.usa_refraccion {
-                let refr = adp_cristal_refraccion(p, cr.normal, cr.refraccion, cr.desenfoque);
-                let fondo = mix(refr.color * (1.0 - cr.oscurecer_fondo), cr.capa_color, cr.capa_opacidad);
-                return adp_material_salida(fondo + cr.especular_extra, 1.0, p);
-            }
-            return adp_material_salida(cr.capa_color + cr.especular_extra, cr.capa_opacidad, p);
-        }
-        return adp_material_salida(vec3<f32>(0.0), 0.0, p);
-    }
     return adp_material_salida(translucido(p, n, m, luces, sombra.luz, bloque, color), 1.0, p);
 }
 

@@ -87,8 +87,26 @@ files = ["adaptadores/cristal_mapa.wgsl", "adaptadores/cristal_mapa_escritura.wg
 name = "Mapa de cristales"
 dispatch = [48, 24, 2]
 workgroup = [8, 4, 1]
-reads = ["datos_cuadro"]
+reads = ["datos_cuadro", "cristal_sim"]
 writes = ["cristal_mapa"]
+
+[[before_world]]
+file = "etapas/cristal_sim.wgsl"
+files = ["nucleo/superficie/cristal_lluvia.wgsl", "adaptadores/cristal_mapa.wgsl", "adaptadores/cristal_sim_datos.wgsl", "adaptadores/cristal_sim.wgsl"]
+name = "Simulación cristales"
+dispatch = [16, 1, 1]
+workgroup = [1, 1, 1]
+reads = ["datos_cuadro", "cristal_mapa"]
+writes = ["cristal_sim"]
+
+[[before_world]]
+file = "etapas/cristal_lienzo.wgsl"
+files = ["nucleo/superficie/cristal_lluvia.wgsl", "adaptadores/cristal_sim_datos.wgsl", "adaptadores/cristal_lienzo.wgsl"]
+name = "Lienzo cristales"
+dispatch = [512, 512, 1]
+workgroup = [8, 8, 1]
+reads = ["datos_cuadro", "cristal_sim", "cristal_clima_previous"]
+writes = ["cristal_clima"]
 
 [sky]
 file = "etapas/cielo.wgsl"
@@ -157,7 +175,7 @@ files = [
     "adaptadores/cristales_entorno.wgsl",
     "adaptadores/cristales.wgsl",
 ]
-reads = ["datos_cuadro", "cristal_mapa"]
+reads = ["datos_cuadro", "cristal_mapa", "cristal_sim", "cristal_clima"]
 
 [ray_tracing]        # consultas por bloque solo en píxeles de cristal (27 §En Horizon, opción b)
 
@@ -181,8 +199,20 @@ keep = "view"
 
 [[resource]]
 name = "cristal_mapa"
-buffer = 442432
+buffer = 450560
 element = "u32"
+keep = "view"
+
+[[resource]]
+name = "cristal_sim"
+buffer = 43280
+element = "vec4<f32>"
+keep = "view"
+
+[[resource]]
+name = "cristal_clima"
+format = "rgba16float"
+size = [512, 512]
 keep = "view"
 
 [[resource]]
@@ -279,10 +309,14 @@ files = [
     "nucleo/superficie/menas.wgsl",
     "opciones/menas.wgsl",
     "adaptadores/menas_luz.wgsl",
+    "nucleo/superficie/cristal_lluvia.wgsl",
+    "adaptadores/cristal_mapa.wgsl",
+    "adaptadores/cristal_sim_datos.wgsl",
+    "adaptadores/cristales_post.wgsl",
 ]
 name = "Composición"
 output = "composicion"
-reads = ["volumen", "bloom2_previous", "datos_cuadro"]
+reads = ["volumen", "bloom2_previous", "datos_cuadro", "cristal_mapa", "cristal_sim", "cristal_clima"]
 
 [[post]]
 file = "etapas/post/04-bloom-bajada.wgsl"
@@ -957,16 +991,16 @@ sprites = ["block/*_ore", "block/gilded_blackstone"]
 id = 10
 sprites = ["block/sand", "block/red_sand", "block/suspicious_sand*"]
 
-[[materials]]       # cristal transparente en pasada translúcida (interior alfa >= 0,02 en el mod; 27)
+[[materials]]       # cristal transparente y paneles (identificado para caché DDA en 03-composicion; 27)
 id = 11
 sprites = ["block/glass", "block/glass_pane_top"]
-translucent = true
+blocks = ["glass", "glass_pane"]
 
 # --- Etiquetas de sprites (bits de MaterialInput.tags; API 0.2) -------------------------------
 
 [[tags]]            # bit 0: cristales y paneles (transparente, tintados y ahumado; 27)
 id = "cristal"
-sprites = ["block/glass", "block/*_stained_glass", "block/tinted_glass"]
+sprites = ["block/glass", "block/glass_pane_top", "block/*_stained_glass", "block/*_stained_glass_pane_top", "block/tinted_glass"]
 
 # --- Colores de la luz de bloque (03.1): block_light_color en el material ---------------------
 

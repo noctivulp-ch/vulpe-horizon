@@ -125,6 +125,7 @@ fn adp_cristal_evaluar(
     let co = datos_cuadro[ADP_CUADRO_CRISTAL_VAHO_OPT]; // x: aliento_op, y: aliento_bl, z: k_res, w: con_mod
 
     let flags = u32(max(round(cf.x), 0.0));
+    let regueros = (flags & OPC_CR_FLAG_REGUEROS) != 0u;
     let interior_activo = (flags & OPC_CR_FLAG_INTERIOR) != 0u;
     let arena_roja = (flags & OPC_CR_FLAG_ARENA_ROJA) != 0u;
     let bioma_seco = (flags & OPC_CR_FLAG_BIOMA_SECO) != 0u;
@@ -133,7 +134,18 @@ fn adp_cristal_evaluar(
     let borde_estilo = (flags >> 8u) & 3u;
     let blur_nivel = (flags >> 10u) & 3u;
 
-    let lluvia_activa = llueve_bioma && c0.x > OPC_CRISTAL_CLIMA_UMBRAL && c2.y > 0.001;
+    // Comprueba si el panel de lluvia de esta orientación (o su cara opuesta vista desde dentro) tiene gotas o rastros vivos.
+    let es_arriba = p.normal_cara.y > 0.5;
+    let es_abajo = p.normal_cara.y < -0.5;
+    let cara_idx = u32(sup_cristal_indice_cara(p.normal_cara));
+    let cara_opuesta_idx = cara_idx ^ 1u;
+    let panel_lluvia = select(cara_idx, 4u, es_arriba);
+    let panel_lluvia_op = select(cara_opuesta_idx, 4u, es_arriba);
+    let hdr_lluvia = cristal_sim[panel_lluvia];
+    let hdr_lluvia_op = cristal_sim[panel_lluvia_op];
+    let panel_lluvia_vivo = !es_abajo && (hdr_lluvia.z > 0.5 || hdr_lluvia.w > 0.0 || hdr_lluvia_op.z > 0.5 || hdr_lluvia_op.w > 0.0);
+
+    let lluvia_activa = panel_lluvia_vivo && c2.y > 0.001;
     let frio_activo = bioma_frio && (c0.y > 0.001 || c0.z > 0.001) && c2.z > 0.001;
     let arena_activa = bioma_seco && c2.x > OPC_CRISTAL_ARENA_MIN && c2.w > 0.001;
     let cond_activa = interior_activo && bioma_frio && (c0.w > 0.001 || (borde_estilo == 1u && c0.y > 0.001));
@@ -153,9 +165,9 @@ fn adp_cristal_evaluar(
 
     let cielo_exposicion = select(0.0, 1.0, entorno.llega_cielo);
     let curva_cielo = luz_curva_cielo(p.luz_cielo);
+    let aten_dist = 1.0 - smoothstep(OPC_CRISTAL_DIST_INICIO, OPC_CRISTAL_DIST_FIN, dist);
 
-    // Pasos 2..8 sustituirán cada capa con el comportamiento v2; en el paso 1 comprobamos arquitectura y coste
-    // manteniendo las capas actuales conectadas al nuevo entorno (cristal transparente + ray queries).
+    // Capas aún en transición (pasos 3..8 sustituyen escarcha, copos, arena, condensación, vaho y blur):
     let esc_bruta = sup_cristal_escarcha(
         plano,
         select(0.0, 1.0, entorno.es_exterior || entorno.es_interior_fria),
@@ -209,26 +221,35 @@ fn adp_cristal_evaluar(
         dist,
     );
 
-    let lluvia = sup_cristal_lluvia(
-        plano,
-        p.normal_cara,
-        cielo_exposicion,
-        c1.xy,
-        adp_tiempo().segundos,
-        select(0.0, min(c0.x, 1.0), lluvia_activa),
-        select(1.0, 0.0, lluvia_activa),
-        frame.thunder,
-        c2.y,
-        dist,
-    );
-    let mascara_agua = (1.0 - smoothstep(0.35, 0.75, esc.cobertura))
-                     * (1.0 - smoothstep(0.15, 0.55, nieve.cobertura))
-                     * (1.0 - smoothstep(0.15, 0.55, arena.cobertura));
-    let gota = lluvia.gota * mascara_agua;
-    let rastro = lluvia.rastro * mascara_agua;
-    let cobertura_agua = max(gota, rastro * 0.7);
+    // Capa 1 — Lluvia global desde el lienzo de cómputo `cristal_clima` (27 v2 §Capa 1).
+    // Se dibuja en caras exteriores mojadas, y también se ve a través del cristal cuando miramos desde la cara interior.
+    var lluvia_rgba = vec4<f32>(0.0);
+    var lluvia_pend = vec2<f32>(0.0);
+    var lluvia_gota_a = 0.0;
+    var lluvia_mojado = 0.0;
+    let lluvia_en_exterior = entorno.llega_cielo;
+    let lluvia_desde_interior = !lluvia_en_exterior && entorno.es_interior && entorno.opuesta_llega_cielo && plano.vertical;
+    if lluvia_activa && (lluvia_en_exterior || lluvia_desde_interior) && !bioma_frio && !bioma_seco {
+        let b_cristal = vec3<i32>(floor(p.mundo - p.normal_cara * 0.02));
+        let normal_muestra = select(-p.normal_cara, p.normal_cara, lluvia_en_exterior);
+        var plano_muestra = plano;
+        if !lluvia_en_exterior {
+            plano_muestra = sup_cristal_plano(p.mundo, normal_muestra);
+        }
+        let coord_lluvia = sup_cristal_lluvia_texel(b_cristal, normal_muestra, plano_muestra, co.z);
+        let tx = textureLoad(cristal_clima, coord_lluvia, 0);
+        let mascara_agua = (1.0 - smoothstep(0.35, 0.75, esc.cobertura))
+                         * (1.0 - smoothstep(0.15, 0.55, nieve.cobertura))
+                         * (1.0 - smoothstep(0.15, 0.55, arena.cobertura))
+                         * aten_dist;
+        lluvia_rgba = sup_cristal_lluvia_color(tx, regueros && plano.vertical);
+        lluvia_rgba.a *= mascara_agua;
+        lluvia_gota_a = tx.b * mascara_agua;
+        lluvia_pend = sup_cr_desempaquetar_pendiente(tx.a) * lluvia_gota_a;
+        lluvia_mojado = select(0.0, clamp(c0.x, 0.0, 1.0) * 0.4 * mascara_agua, llueve_bioma && c0.x > OPC_CRISTAL_CLIMA_UMBRAL);
+    }
 
-    if cobertura_agua <= 0.001 && lluvia.mojado <= 0.001 && esc.cobertura <= 0.001 && nieve.cobertura <= 0.001 && aliento.vaho <= 0.001 && arena.cobertura <= 0.001 {
+    if lluvia_rgba.a <= 0.002 && lluvia_mojado <= 0.002 && esc.cobertura <= 0.001 && nieve.cobertura <= 0.001 && aliento.vaho <= 0.001 && arena.cobertura <= 0.001 {
         return r;
     }
     r.activo = true;
@@ -269,35 +290,34 @@ fn adp_cristal_evaluar(
         r.normal = normalize(mix(r.normal, n_esc, esc.cobertura * 0.45));
     }
 
-    if cobertura_agua > 0.001 || lluvia.mojado > 0.001 {
-        let grad_agua = lluvia.grad_uv * mascara_agua;
+    if lluvia_rgba.a > 0.002 || lluvia_mojado > 0.002 {
         let n_gota = normalize(
             n_base
-            + plano.tangente * (grad_agua.x * 0.95)
-            + plano.bitangente * (grad_agua.y * 0.95),
+            + plano.tangente * (lluvia_pend.x * 0.65)
+            - plano.bitangente * (lluvia_pend.y * 0.65),
         );
-        r.normal = normalize(mix(r.normal, n_gota, cobertura_agua));
-        r.refraccion = mix(OPC_TRANSL_REFRACCION * 0.0006, OPC_CRISTAL_GOTA_REFRACCION, cobertura_agua);
-        r.usa_refraccion = cobertura_agua > 0.05;
-        r.f0_extra = OPC_CRISTAL_MOJADO_F0_EXTRA * lluvia.mojado * mascara_agua + 0.08 * gota;
-        r.oscurecer_fondo = lluvia.borde * mascara_agua * OPC_CRISTAL_GOTA_BORDE;
+        r.normal = normalize(mix(r.normal, n_gota, lluvia_gota_a));
+        r.refraccion = mix(OPC_TRANSL_REFRACCION * 0.0006, OPC_CRISTAL_GOTA_REFRACCION, lluvia_gota_a);
+        r.usa_refraccion = lluvia_gota_a > 0.20;
+        r.f0_extra = OPC_CRISTAL_MOJADO_F0_EXTRA * lluvia_mojado + 0.05 * lluvia_gota_a;
 
-        let col_gota = mix(OPC_CRISTAL_LLUVIA_CUERPO, OPC_CRISTAL_LLUVIA_BRILLO, clamp(lluvia.caustica * 1.4, 0.0, 1.0)) * luz_capa;
-        let op_gota = clamp(max(gota * 0.65, rastro * 0.28), 0.0, 0.85);
-        let comp_gota = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_gota, op_gota);
+        // Iluminación del mundo sobre la capa de lluvia (paleta Weather Glass cuerpo/brillo/sombra).
+        // Usa el cielo exterior real aunque se mire desde el interior, para que el brillo destaque bajo cielo lluvioso.
+        let cielo_ext = max(curva_cielo, select(0.0, 0.85, lluvia_desde_interior));
+        let luz_lluvia = luz_capa * 1.25 + luces.cielo * cielo_ext * 0.65 + vec3<f32>(0.06) * cielo_ext;
+        let col_lluvia = lluvia_rgba.rgb * luz_lluvia;
+        let comp_gota = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_lluvia, lluvia_rgba.a);
         r.capa_color = comp_gota.rgb;
         r.capa_opacidad = comp_gota.a;
 
-        let esp_astro = sup_especular(r.normal, p.vista, luces.direccion, 0.035, vec3<f32>(0.05))
-                      * max(dot(r.normal, luces.direccion), 0.0) * luces.directa * sombra_luz;
-        let dir_cielo = normalize(vec3<f32>(0.12, 0.96, 0.22));
-        let esp_cielo = sup_especular(r.normal, p.vista, dir_cielo, 0.06, vec3<f32>(0.06))
-                      * max(dot(r.normal, dir_cielo), 0.0) * luces.cielo * curva_cielo * 1.45;
-        let esp_bloque = vec3<f32>(pow(max(dot(r.normal, normalize(p.vista + vec3<f32>(0.0, 0.35, 0.0))), 0.0), 32.0))
-                       * bloque_luz * 0.55;
-        let caustica = (luces.cielo * curva_cielo * 0.65 + luces.directa * sombra_luz * 0.35 + bloque_luz * 0.4)
-                     * (lluvia.caustica * mascara_agua * OPC_CRISTAL_GOTA_CAUSTICA);
-        r.especular_extra = (esp_astro + esp_cielo + esp_bloque) * (OPC_CRISTAL_GOTA_ESPECULAR * cobertura_agua) + caustica;
+        if lluvia_gota_a > 0.05 {
+            let esp_astro = sup_especular(r.normal, p.vista, luces.direccion, 0.04, vec3<f32>(0.05))
+                          * max(dot(r.normal, luces.direccion), 0.0) * luces.directa * sombra_luz;
+            let dir_cielo = normalize(vec3<f32>(0.12, 0.96, 0.22));
+            let esp_cielo = sup_especular(r.normal, p.vista, dir_cielo, 0.07, vec3<f32>(0.05))
+                          * max(dot(r.normal, dir_cielo), 0.0) * luces.cielo * curva_cielo * 1.1;
+            r.especular_extra = (esp_astro + esp_cielo) * (OPC_CRISTAL_GOTA_ESPECULAR * lluvia_gota_a);
+        }
     }
 
     if nieve.cobertura > 0.001 {
