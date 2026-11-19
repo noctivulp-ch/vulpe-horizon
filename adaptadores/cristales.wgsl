@@ -132,6 +132,7 @@ fn adp_cristal_evaluar(
         dist,
     );
     let aliento = sup_cristal_aliento(
+        plano,
         p.posicion,
         p.normal_cara,
         cv.xyz,
@@ -140,12 +141,12 @@ fn adp_cristal_evaluar(
         c1.z * min(c1.w, 1.0),
         adp_tiempo().segundos,
     );
-    // Dentro de la mancha de vaho, la escarcha se vuelve condensación lisa (sin dibujo de helecho ni facetas).
-    let suprime_helecho = 1.0 - aliento.vaho * 0.85;
+    // Dentro de la mancha de vaho, la escarcha se disuelve suavemente en condensación lisa (sin aro duro).
+    let suprime_helecho = 1.0 - smoothstep(0.0, 0.72, aliento.derrite) * 0.92;
     let esc = SupCristalEscarcha(
         esc_bruta.cobertura * suprime_helecho,
         max(esc_bruta.borroso, aliento.borroso),
-        esc_bruta.cristalino * (1.0 - aliento.vaho),
+        esc_bruta.cristalino * (1.0 - aliento.derrite),
         esc_bruta.grad_uv * suprime_helecho,
     );
 
@@ -304,9 +305,10 @@ fn adp_cristal_evaluar(
     if !p.translucido {
         let texel = floor(plano.uv * OPC_CRISTAL_REJILLA);
         let dither = rui_hash21(vec2<i32>(i32(texel.x), i32(texel.y)));
+        let dither_fino = rui_hash21(vec2<i32>(i32(p.pixel.x), i32(p.pixel.y)));
         let hay_arena = arena.cobertura >= 0.45;
         let hay_nieve = nieve.monton >= 0.40 || nieve.copo >= 0.45;
-        let hay_vaho = aliento.vaho > 0.16 && aliento.vaho > dither * 0.78;
+        let hay_vaho = aliento.vaho > 0.08 && aliento.vaho > dither_fino * 0.82;
         let hay_escarcha = esc.cobertura >= 0.58 || (esc.cobertura > 0.18 && esc.cobertura > dither * 0.85);
         let hay_gota = gota >= 0.45 || rastro >= 0.55;
         if hay_arena {
