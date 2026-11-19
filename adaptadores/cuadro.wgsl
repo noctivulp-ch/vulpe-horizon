@@ -27,3 +27,8 @@ const ADP_CUADRO_SOL_DISCO: u32 = 13u;   // xyz: atm_luz_directa_sol(elev_sol) *
 const ADP_CUADRO_HORARIO: u32 = 14u;     // xy: horario (uniforme, manchas), z: clima.tipo, w: clima.peso
 const ADP_CUADRO_RELAMPAGO: u32 = 15u;   // xyz: relampago.base, w: relampago.brillo
 const ADP_CUADRO_CRUCE: u32 = 16u;       // x: t en segundos (<0 sin cruce), y: rapidez con signo (+salida/-entrada), z: dentro_antes (0/1), w: firma dimensión+10
+const ADP_CUADRO_CRISTAL_0: u32 = 17u;   // x: lluvia_pico, y: secado (0..1), z: escala_lluvia, w: tormenta
+const ADP_CUADRO_CRISTAL_1: u32 = 18u;   // xy: viento_xz, z: escarcha, w: escala_nieve
+const ADP_CUADRO_CRISTAL_2: u32 = 19u;   // x: copos, y: monton, z: arena, w: escala_arena
+const ADP_CUADRO_CRISTAL_VAHO: u32 = 20u;// xyz: pos relativa de vaho, w: peso (negativo = desactivado/espectador)
+const ADP_CUADRO_CRISTAL_FLAGS: u32 = 21u;// x: escarcha_interior (0/1), y: arena_roja (0/1), z: con_mod (0/1), w: reservado

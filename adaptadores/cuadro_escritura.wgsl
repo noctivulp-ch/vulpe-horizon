@@ -115,4 +115,40 @@ fn adp_cuadro_escribir() {
             datos_cuadro[ADP_CUADRO_CRUCE] = vec4<f32>(t_cruce, vel_cruce, en_agua_f, firma_dim);
         }
     }
+
+    // Estado por fotograma de «el tiempo en los cristales» (27): decodifica mods[6..7] una sola vez por cuadro,
+    // con respaldo sin mod usando frame.rain, frame.thunder, frame.precipitation y OPC_VIENTO.
+    let md = adp_mod();
+    let cm = md.cristales;
+    if cm.activo {
+        let escala_lluvia = opc_cristal_escala_nivel(cm.nivel_lluvia);
+        let escala_nieve = opc_cristal_escala_nivel(cm.nivel_nieve);
+        let escala_arena = opc_cristal_escala_nivel(cm.nivel_arena);
+        datos_cuadro[ADP_CUADRO_CRISTAL_0] = vec4<f32>(cm.lluvia_pico, cm.lluvia_secado, escala_lluvia, frame.thunder);
+        datos_cuadro[ADP_CUADRO_CRISTAL_1] = vec4<f32>(cm.viento_xz, cm.escarcha, escala_nieve);
+        datos_cuadro[ADP_CUADRO_CRISTAL_2] = vec4<f32>(cm.copos, cm.monton, cm.arena, escala_arena);
+        let vaho_w = select(-1.0, cm.vaho_peso, cm.aliento_activo && !cm.espectador);
+        datos_cuadro[ADP_CUADRO_CRISTAL_VAHO] = vec4<f32>(cm.vaho_pos, vaho_w);
+        datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS] = vec4<f32>(
+            select(0.0, 1.0, cm.escarcha_interior),
+            select(0.0, 1.0, cm.arena_roja),
+            1.0,
+            0.0,
+        );
+    } else {
+        // Sin mod: sin secado gradual, sin arena, vaho sin memoria.
+        let llueve = frame.precipitation == 1u && frame.rain > 0.01;
+        let lluvia_sin_mod = select(0.0, frame.rain * (0.72 + 0.28 * frame.thunder), llueve);
+        let viento_base = normalize(OPC_VIENTO) * 0.55;
+        datos_cuadro[ADP_CUADRO_CRISTAL_0] = vec4<f32>(
+            lluvia_sin_mod,
+            select(1.0, 0.0, llueve),
+            OPC_CRISTAL_NIVEL_DEFECTO,
+            frame.thunder,
+        );
+        datos_cuadro[ADP_CUADRO_CRISTAL_1] = vec4<f32>(viento_base, 0.0, OPC_CRISTAL_NIVEL_DEFECTO);
+        datos_cuadro[ADP_CUADRO_CRISTAL_2] = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+        datos_cuadro[ADP_CUADRO_CRISTAL_VAHO] = vec4<f32>(0.0);
+        datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS] = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+    }
 }

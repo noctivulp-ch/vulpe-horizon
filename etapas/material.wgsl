@@ -125,17 +125,48 @@ fn material(input: MaterialInput) -> Surface {
     color = mix(color, color_emision * OPC_EMISION * brillo_emision * 4.0, emision);
 
     if !p.translucido {
+        // Cristal transparente (cutout: `glass`, `glass_pane`, 27): en los texeles transparentes del interior
+        // dibuja las gotas/efectos del tiempo cuando superan la cobertura; fuera de ellos conserva `p.alfa`.
+        var alfa_salida = p.alfa;
+        if p.es_cristal && p.alfa < 0.5 {
+            let cr = adp_cristal_evaluar(p, n, luces, sombra.luz, bloque);
+            if cr.cobertura_cutout >= 0.5 {
+                color = cr.color_cutout;
+                alfa_salida = 1.0;
+            }
+        }
         let total = col_luminancia(directa + indirecta) + 1e-6;
         set_surface(n, select(sup_empaquetar_suavidad(m.suavidad, col_lineal_a_srgb(albedo)), -sup_empaquetar_suavidad(m.suavidad, mena.mineral), mena.fuente), sup_empaquetar_dato(m.f0.g, col_luminancia(indirecta) / total, p.luz_cielo));
-        return adp_material_salida(color, p.alfa, p);
+        return adp_material_salida(color, alfa_salida, p);
     }
-    return adp_material_salida(translucido(p, n, m, luces, color), 1.0, p);
+    return adp_material_salida(translucido(p, n, m, luces, sombra.luz, bloque, color), 1.0, p);
 }
 
 // Translúcidos que no son agua (22): lo de detrás refractado y teñido por el color normalizado, la superficie encima
 // por su opacidad y el reflejo con Fresnel, que la vuelve espejo de refilón. Sale opaco, como el agua.
-// Porqué: docs/efectos/translucidos.md
-fn translucido(p: AdpPunto, n: vec3<f32>, m: SupMaterial, luces: AdpLuces, superficie: vec3<f32>) -> vec3<f32> {
+// En los cristales (`p.es_cristal`) compone además «el tiempo en los cristales» (27).
+// Porqué: docs/efectos/translucidos.md y docs/efectos/tiempo-en-los-cristales.md
+fn translucido(
+    p: AdpPunto,
+    n: vec3<f32>,
+    m: SupMaterial,
+    luces: AdpLuces,
+    sombra_luz: vec3<f32>,
+    bloque_luz: vec3<f32>,
+    superficie: vec3<f32>,
+) -> vec3<f32> {
+    if p.es_cristal {
+        let cr = adp_cristal_evaluar(p, n, luces, sombra_luz, bloque_luz);
+        let refr = adp_cristal_refraccion(p, cr.normal, cr.refraccion);
+        let a = clamp(p.alfa, 0.0, 1.0);
+        let peso_tinte = select(0.0, clamp(a / OPC_TRANSL_TINTE_MIN, 0.0, 1.0), OPC_TRANSL_TINTE);
+        let tinte = mix(vec3<f32>(1.0), normalize(max(p.albedo, vec3<f32>(1e-4))), peso_tinte);
+        let fondo = mix(refr.color * tinte * (1.0 - cr.oscurecer_fondo), superficie, a);
+        let f0 = select(vec3<f32>(OPC_TRANSL_F0), m.f0, p.con_pbr) + vec3<f32>(cr.f0_extra);
+        let f = col_luminancia(sup_fresnel_schlick(max(dot(cr.normal, p.vista), 0.0), f0));
+        let reflejo = adp_agua_reflejo(p, cr.normal, reflect(-p.vista, cr.normal), luces) * luz_curva_cielo(max(p.luz_cielo, 0.3));
+        return mix(fondo, reflejo, f) + cr.especular_extra;
+    }
     let refr = adp_agua_refraccion(p, n, OPC_TRANSL_REFRACCION * 0.0006);
     let a = clamp(p.alfa, 0.0, 1.0);
     let peso_tinte = select(0.0, clamp(a / OPC_TRANSL_TINTE_MIN, 0.0, 1.0), OPC_TRANSL_TINTE);

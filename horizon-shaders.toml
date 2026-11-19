@@ -63,6 +63,7 @@ shared = [
     "opciones/gotas.wgsl",
     "opciones/viento.wgsl",
     "opciones/varios.wgsl",
+    "opciones/cristales.wgsl",
     "adaptadores/mod.wgsl",
     "adaptadores/marco.wgsl",
     "adaptadores/atmosfera.wgsl",
@@ -111,6 +112,7 @@ fog = "pack"        # la niebla es nuestra (subsistema 05)
 
 [material]
 file = "etapas/material.wgsl"
+coverage = "pack"
 files = [
     "nucleo/agua/optica.wgsl",
     "nucleo/agua/olas.wgsl",
@@ -124,6 +126,7 @@ files = [
     "nucleo/superficie/humedad.wgsl",
     "nucleo/superficie/escarcha.wgsl",
     "nucleo/superficie/arena_viento.wgsl",
+    "nucleo/superficie/cristal_lluvia.wgsl",
     "opciones/suelo_clima.wgsl",
     "nucleo/superficie/emision.wgsl",
     "nucleo/superficie/menas.wgsl",
@@ -137,6 +140,7 @@ files = [
     "adaptadores/cuadro_lectura.wgsl",
     "adaptadores/material.wgsl",
     "adaptadores/agua.wgsl",
+    "adaptadores/cristales.wgsl",
 ]
 reads = ["datos_cuadro"]
 
@@ -940,6 +944,12 @@ sprites = ["block/*_ore", "block/gilded_blackstone"]
 [[materials]]       # arena (suelo con viento en biomas desérticos, N-02)
 id = 10
 sprites = ["block/sand", "block/red_sand", "block/suspicious_sand*"]
+
+# --- Etiquetas de sprites (bits de MaterialInput.tags; API 0.2) -------------------------------
+
+[[tags]]            # bit 0: cristales y paneles (transparente, tintados y ahumado; 27)
+id = "cristal"
+sprites = ["block/glass", "block/*_stained_glass", "block/tinted_glass"]
 
 # --- Colores de la luz de bloque (03.1): block_light_color en el material ---------------------
 

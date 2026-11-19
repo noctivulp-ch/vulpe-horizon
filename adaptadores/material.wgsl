@@ -23,6 +23,7 @@ struct AdpPunto {
     altura_mapa: f32,
     con_pbr: bool,
     ao_vertice: f32,
+    es_cristal: bool,
 }
 
 fn adp_es_cruzada(m: u32) -> bool {
@@ -48,6 +49,7 @@ fn adp_sss_lista(m: u32) -> f32 {
 fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
     var p: AdpPunto;
     p.material = input.material;
+    p.es_cristal = (input.tags & OPC_TAG_CRISTAL) != 0u;
     p.cruzada = adp_es_cruzada(input.material);
     let tinte_gamma = adp_lineal_a_gamma22(input.shaded_tint.rgb);
     let sombreado = max(adp_sombreado_vanilla(input.normal), 0.5);

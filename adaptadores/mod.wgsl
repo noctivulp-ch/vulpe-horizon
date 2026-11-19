@@ -1,8 +1,31 @@
-// Lectura y adaptación de los datos del mod nativo (formatos 1 y 2, API 84).
+// Lectura y adaptación de los datos del mod nativo (formatos 1, 2 y 3, API 84).
 // Porqué: docs/efectos/mod-nativo.md §Adaptador y ../vulpe-horizon-spec/flexibilidad/mod-nativo.md §5
 
 const ADP_MOD_FIRMA_V1: f32 = 1001.0;
 const ADP_MOD_FIRMA_V2: f32 = 1002.0;   // formato 2: bioma de la cámara en mods[1].w (bit 5)
+const ADP_MOD_FIRMA_V3: f32 = 1003.0;   // formato 3: estado de cristales en mods[6..7] (bit 8)
+
+struct AdpCristalMod {
+    activo: bool,           // formato 3, bit 8 (256)
+    lluvia_pico: f32,       // 0..1 fuerza pico de lluvia/tormenta
+    lluvia_secado: f32,     // 0..1 progreso del secado de 30 s tras parar
+    escarcha: f32,          // 0..1 escarcha acumulada
+    copos: f32,             // 0..1 copos pegados
+    monton: f32,            // 0..1 montón de nieve abajo
+    arena: f32,             // 0..1 arena acumulada
+    nivel_lluvia: u32,      // 0 apagada, 1 ligera, 2 normal, 3 intensa
+    nivel_nieve: u32,
+    nivel_arena: u32,
+    aliento_activo: bool,
+    escarcha_interior: bool,
+    arena_roja: bool,
+    espectador: bool,
+    bioma_seco: bool,
+    bioma_frio: bool,
+    viento_xz: vec2<f32>,   // dirección y fuerza normalizada [-1, 1] de 26
+    vaho_pos: vec3<f32>,    // posición relativa a la cámara del último cristal cercano
+    vaho_peso: f32,         // 0..1 peso suavizado del aliento (5 s)
+}
 
 struct AdpRayoMod {
     posicion: vec3<f32>,    // relativa a la cámara en bloques
@@ -34,16 +57,30 @@ struct AdpModDatos {
     rayo: AdpRayoMod,       // bit 1
     jugador: AdpJugadorMod, // bit 3
 
-    formato: u32,           // 1 o 2
-    tiene_bioma: bool,      // formato 2, bit 5
+    formato: u32,           // 1, 2 o 3
+    tiene_bioma: bool,      // formato >= 2, bit 5
     bioma: u32,             // 0 desconocido, 1 pantano, 2 jungla, 3 jardín pálido
     bioma_peso: f32,        // 0..0,99, suavizado por el mod
-    clima_particulas: bool, // formato 2, bit 7: la lluvia y la nieve las dibuja el mod como partículas (26)
+    clima_particulas: bool, // formato >= 2, bit 7: la lluvia y la nieve las dibuja el mod como partículas (26)
+    cristales: AdpCristalMod,
+}
+
+fn adp_cristal_mod_vacio() -> AdpCristalMod {
+    return AdpCristalMod(
+        false,
+        0.0, 1.0,
+        0.0, 0.0, 0.0, 0.0,
+        2u, 2u, 2u,
+        true, false, false, false, false, false,
+        vec2<f32>(0.0),
+        vec3<f32>(0.0), 0.0,
+    );
 }
 
 fn adp_mod() -> AdpModDatos {
-    // Sin la firma del formato 1 o del 2, todo vuelve a los valores por defecto (sin mod).
-    let v2 = abs(frame.mods[0].x - ADP_MOD_FIRMA_V2) < 0.5;
+    // Sin la firma del formato 1, 2 o 3, todo vuelve a los valores por defecto (sin mod).
+    let v3 = abs(frame.mods[0].x - ADP_MOD_FIRMA_V3) < 0.5;
+    let v2 = v3 || abs(frame.mods[0].x - ADP_MOD_FIRMA_V2) < 0.5;
     let activo = v2 || abs(frame.mods[0].x - ADP_MOD_FIRMA_V1) < 0.5;
     if !activo {
         return AdpModDatos(
@@ -63,12 +100,14 @@ fn adp_mod() -> AdpModDatos {
             0u,
             0.0,
             false,
+            adp_cristal_mod_vacio(),
         );
     }
 
     let version_tabla = u32(max(round(frame.mods[0].y), 0.0));
     let banderas = u32(max(round(frame.mods[0].z), 0.0));
-    let ajustes_en_vivo = u32(clamp(round(frame.mods[0].w), 0.0, 16.0));
+    let tope_vivo = select(16.0, 8.0, v3);
+    let ajustes_en_vivo = u32(clamp(round(frame.mods[0].w), 0.0, tope_vivo));
 
     // Bit 0: tiempo válido (día acumulado y fase lunar 0..7).
     let tiene_tiempo = (banderas & 1u) != 0u;
@@ -101,6 +140,41 @@ fn adp_mod() -> AdpModDatos {
     let bioma = select(0u, u32(floor(w)), tiene_bioma);
     let bioma_peso = select(0.0, fract(w), tiene_bioma);
 
+    // Formato 3, bit 8: estado de «el tiempo en los cristales» (27) en mods[6] y mods[7].
+    var cristales = adp_cristal_mod_vacio();
+    if v3 && (banderas & 256u) != 0u {
+        let m6 = frame.mods[6];
+        let m7 = frame.mods[7];
+        let c_lluvia = u32(max(round(m6.x), 0.0));
+        let c_frio = u32(max(round(m6.y), 0.0));
+        let c_arena = u32(max(round(m6.z), 0.0));
+        let c_viento = u32(max(round(m6.w), 0.0));
+        let flags12 = c_arena & 4095u;
+        let vx = (f32(min(c_viento / 4096u, 4095u)) / 4095.0) * 2.0 - 1.0;
+        let vz = (f32(c_viento & 4095u) / 4095.0) * 2.0 - 1.0;
+        cristales = AdpCristalMod(
+            true,
+            f32(min(c_lluvia / 4096u, 4095u)) / 4095.0,
+            f32(c_lluvia & 4095u) / 4095.0,
+            f32(c_frio & 255u) / 255.0,
+            f32((c_frio >> 8u) & 255u) / 255.0,
+            f32((c_frio >> 16u) & 255u) / 255.0,
+            f32(min(c_arena / 4096u, 4095u)) / 4095.0,
+            flags12 & 3u,
+            (flags12 >> 2u) & 3u,
+            (flags12 >> 4u) & 3u,
+            (flags12 & 64u) != 0u,
+            (flags12 & 128u) != 0u,
+            (flags12 & 256u) != 0u,
+            (flags12 & 512u) != 0u,
+            (flags12 & 1024u) != 0u,
+            (flags12 & 2048u) != 0u,
+            vec2<f32>(vx, vz),
+            m7.xyz,
+            clamp(m7.w, 0.0, 1.0),
+        );
+    }
+
     return AdpModDatos(
         true,
         version_tabla,
@@ -113,11 +187,12 @@ fn adp_mod() -> AdpModDatos {
         estacion,
         rayo,
         jugador,
-        select(1u, 2u, v2),
+        select(select(1u, 2u, v2), 3u, v3),
         tiene_bioma,
         bioma,
         bioma_peso,
         v2 && (banderas & 128u) != 0u,
+        cristales,
     );
 }
 
@@ -134,7 +209,8 @@ fn adp_mod_param(id: u32, min_val: f32, max_val: f32, fijo_val: f32, def_val: f3
     if !m.activo || m.version_tabla != 1u || m.ajustes_en_vivo == 0u {
         return base;
     }
-    let n = min(m.ajustes_en_vivo, 16u);
+    let tope = select(16u, 8u, m.formato >= 3u);
+    let n = min(m.ajustes_en_vivo, tope);
     for (var i = 0u; i < n; i++) {
         let code_f = frame.mods[4u + (i / 4u)][i % 4u];
         if code_f >= 0.0 {
