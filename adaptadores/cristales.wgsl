@@ -280,22 +280,23 @@ fn adp_cristal_evaluar(
         r.especular_extra *= (1.0 - op_nieve);
     }
 
-    // Capa más exterior (27 §5): arena opaca y mate (amarilla en desierto/sabana, roja en mesas).
+    // Capa más exterior (27 §5): velo fino de polvo y granos sutiles, mate (amarilla en desierto, terracota en mesas).
     var color_arena = vec3<f32>(0.0);
     if arena.cobertura > 0.001 {
         let base_arena = select(OPC_CRISTAL_ARENA_COLOR_AMARILLA, OPC_CRISTAL_ARENA_COLOR_ROJA, cf.y > 0.5);
-        let grano_color = base_arena * (0.82 + 0.36 * arena.variacion);
+        let grano_color = base_arena * (0.90 + 0.20 * arena.variacion);
         let n_arena = normalize(n_base + vec3<f32>(0.0, arena.relieve_y, 0.0));
         let n_l_arena = max(dot(n_arena, luces.direccion), 0.0);
-        let luz_arena = luces.directa * sombra_luz * n_l_arena
-                      + luces.cielo * curva_cielo * 0.90
+        let luz_arena = luces.directa * sombra_luz * (n_l_arena + contraluz * 0.25)
+                      + luces.cielo * curva_cielo * 0.92
                       + bloque_luz
                       + vec3<f32>(OPC_LUZ_NOCHE_SUELO * curva_cielo);
         color_arena = grano_color * luz_arena;
-        let op_arena = clamp(arena.cobertura, 0.0, 1.0);
+        let op_arena = clamp(arena.cobertura, 0.0, 0.78);
         let comp_arena = adp_cristal_sobre(r.capa_color, r.capa_opacidad, color_arena, op_arena);
         r.capa_color = comp_arena.rgb;
         r.capa_opacidad = comp_arena.a;
+        r.desenfoque = max(r.desenfoque, smoothstep(0.10, 0.55, op_arena) * 0.45);
         r.mate = max(r.mate, op_arena);
         r.especular_extra *= (1.0 - op_arena);
     }
@@ -306,7 +307,7 @@ fn adp_cristal_evaluar(
         let texel = floor(plano.uv * OPC_CRISTAL_REJILLA);
         let dither = rui_hash21(vec2<i32>(i32(texel.x), i32(texel.y)));
         let dither_fino = rui_hash21(vec2<i32>(i32(p.pixel.x), i32(p.pixel.y)));
-        let hay_arena = arena.cobertura >= 0.45;
+        let hay_arena = arena.cobertura > 0.08 && arena.cobertura > dither_fino * 0.92;
         let hay_nieve = nieve.monton >= 0.40 || nieve.copo >= 0.45;
         let hay_vaho = aliento.vaho > 0.08 && aliento.vaho > dither_fino * 0.82;
         let hay_escarcha = esc.cobertura >= 0.58 || (esc.cobertura > 0.18 && esc.cobertura > dither * 0.85);

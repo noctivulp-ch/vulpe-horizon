@@ -1,11 +1,11 @@
-// Arena acumulada tras tormenta en bioma seco (desierto, sabana, mesa), rejilla de 32 (27 §5).
+// Velo fino de polvo y granos sutiles de arena tras tormenta en bioma seco, sin bandas horizontales (27 §5).
 // Función pura del núcleo: no lee `frame` ni recursos del motor.
 // Porqué: docs/efectos/tiempo-en-los-cristales.md §5
 
 struct SupCristalArena {
-    cobertura: f32,         // 0..1 cobertura opaca de granos y acumulación
-    variacion: f32,         // 0..1 variación tonal por grano en la rejilla de 32
-    relieve_y: f32,         // leve inclinación del montículo inferior
+    cobertura: f32,         // 0..1 velo continuo de polvo + granos sutiles (más denso abajo)
+    variacion: f32,         // 0..1 variación tonal suave del polvo y granos
+    relieve_y: f32,         // leve inclinación difusa del polvo
 }
 
 fn sup_cristal_arena(
@@ -34,54 +34,51 @@ fn sup_cristal_arena(
         return vacio;
     }
 
-    let texel = floor(plano.uv * OPC_CRISTAL_REJILLA);
-    let uv_q = (texel + 0.5) / OPC_CRISTAL_REJILLA;
-
-    // Más arena en las caras que dan al viento.
+    // Más polvo y arena en las caras que dan al viento.
     let viento_len = length(viento_xz);
     let viento_dir = select(vec2<f32>(-1.0, 0.0), viento_xz / max(viento_len, 1e-4), viento_len > 0.01);
     let viento_3d = vec3<f32>(viento_dir.x, 0.0, viento_dir.y);
     let barlovento = select(0.5, dot(normal_cara, -viento_3d), plano.vertical);
-    let factor_viento = clamp(1.0 + OPC_CRISTAL_ARENA_BARLOVENTO * barlovento, 0.45, 1.45);
-    let fuerza = clamp(nivel_arena * factor_viento * escala_ajuste, 0.0, 1.4);
+    let factor_viento = clamp(1.0 + OPC_CRISTAL_ARENA_BARLOVENTO * barlovento, 0.45, 1.40);
+    let fuerza = clamp(nivel_arena * factor_viento * escala_ajuste, 0.0, 1.35);
 
+    let uv = plano.uv;
+    let texel = floor(uv * OPC_CRISTAL_REJILLA);
+
+    // 1) Velo fino de polvo en coordenadas continuas del mundo (sin repetición ni bandas por bloque).
+    // Ligeramente estirado horizontalmente por el viento para imitar polvo arrastrado sobre el cristal.
+    let n_nube = rui_valor2(vec2<f32>(uv.x * 0.55, uv.y * 0.85) + vec2<f32>(2.3, 6.1));
+    let n_estria = rui_valor2(vec2<f32>(uv.x * 1.9, uv.y * 3.4) + vec2<f32>(n_nube * 0.6, 1.7));
+    let n_polvo = rui_valor2(uv * 11.0 + vec2<f32>(4.9, 8.3));
+    let velo_base = 0.35 * n_nube + 0.40 * n_estria + 0.25 * n_polvo;
+
+    // 2) Granos sutiles en la rejilla de 32 texeles/bloque (mezclados suavemente sobre el velo).
     let h = rui_hash33(vec3<i32>(i32(texel.x), i32(texel.y), 97));
-    let local = fract(uv_q);
-    let dist_x = min(local.x, 1.0 - local.x);
-    let dist_y = min(local.y, 1.0 - local.y);
-    let dist_borde = min(dist_x, dist_y);
-    let marco_solido = smoothstep(0.99, 0.80, ao_vertice);
+    let grano = smoothstep(0.55, 0.96, h.x);
 
-    var cobertura = 0.0;
+    var densidad = 0.0;
     var relieve_y = 0.0;
 
     if plano.vertical {
-        // 1) Acumulación principal en la parte de abajo de la cara (más gruesa sobre marco/alféizar).
-        let y_tex = local.y * OPC_CRISTAL_REJILLA;
-        let duna = rui_valor2(vec2<f32>(uv_q.x * 4.5, floor(uv_q.y) * 2.1 + 3.7));
-        let peso_base = mix(0.55, 1.0, marco_solido);
-        let altura_base = mix(OPC_CRISTAL_ARENA_BASE_MIN, OPC_CRISTAL_ARENA_BASE_MAX, duna) * fuerza * peso_base;
-        if y_tex < altura_base {
-            cobertura = 1.0;
-            relieve_y = 0.35 * (1.0 - y_tex / max(altura_base, 1.0));
-        }
-
-        // 2) Granos dispersos subiendo desde abajo y pegados al marco (menos hacia arriba).
-        let peso_abajo = pow(1.0 - local.y, 2.2) * 0.72;
-        let peso_marco = (1.0 - smoothstep(0.0, OPC_CRISTAL_ARENA_MARCO * mix(0.45, 1.0, marco_solido), dist_borde)) * 0.55;
-        let prob_grano = clamp(max(peso_abajo, peso_marco) * fuerza, 0.0, 0.92);
-        if h.x < prob_grano {
-            cobertura = 1.0;
-        }
+        // Más denso en la parte baja de cada cristal con gradiente continuo (sin franja dura ni bandas).
+        let local_y = fract(uv.y);
+        let peso_abajo = pow(1.0 - local_y, 2.4) * 0.42;
+        let marco_solido = smoothstep(0.99, 0.80, ao_vertice);
+        let grad_abajo = peso_abajo * (0.45 + 0.55 * n_nube) * mix(0.65, 1.25, marco_solido);
+        let velo = (velo_base * 0.52 + grad_abajo) * OPC_CRISTAL_ARENA_VELO_MAX * fuerza;
+        let aporte_grano = grano * (0.35 + 0.65 * (1.0 - local_y)) * OPC_CRISTAL_ARENA_GRANO_PESO * fuerza;
+        densidad = clamp(velo + aporte_grano, 0.0, 0.72);
+        relieve_y = 0.18 * densidad;
     } else {
-        // Cara superior: capa polvorienta de granos de arena en la rejilla de 32.
-        let n = rui_valor2(uv_q * 3.2 + vec2<f32>(1.4, 8.2));
-        let prob = clamp((0.25 + 0.65 * n) * fuerza, 0.0, 0.95);
-        if h.x < prob {
-            cobertura = 1.0;
-            relieve_y = 0.2;
-        }
+        // Cara superior: capa fina y homogénea de polvo de arena.
+        densidad = clamp((velo_base * 0.65 + grano * 0.25) * OPC_CRISTAL_ARENA_VELO_MAX * fuerza, 0.0, 0.68);
+        relieve_y = 0.15 * densidad;
     }
 
-    return SupCristalArena(cobertura * exp_cielo * atenuacion_dist, h.y, relieve_y * exp_cielo * atenuacion_dist);
+    let variacion = mix(n_polvo, h.y, 0.35);
+    return SupCristalArena(
+        densidad * exp_cielo * atenuacion_dist,
+        variacion,
+        relieve_y * exp_cielo * atenuacion_dist,
+    );
 }
