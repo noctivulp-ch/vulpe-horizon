@@ -30,12 +30,12 @@ const OPC_CRISTAL_ESCARCHA_INTERIOR: bool = false; // respaldo sin mod: escarcha
 const OPC_CRISTAL_ESCARCHA_CIELO_MIN: f32 = 0.68;  // exposición al aire frío (incluso bajo aleros)
 const OPC_CRISTAL_ESCARCHA_CIELO_MAX: f32 = 0.88;
 const OPC_CRISTAL_ESCARCHA_INT_PESO: f32 = 0.65;   // fuerza relativa en cara interior cuando está activada
-const OPC_CRISTAL_ESCARCHA_ALCANCE: f32 = 0.42;    // cuánto penetra la escarcha desde el borde exterior (bloques)
-const OPC_CRISTAL_ESCARCHA_ESQUINA: f32 = 0.56;    // radio mayor en las esquinas
-const OPC_CRISTAL_ESCARCHA_JUNTA_PESO: f32 = 0.30; // más fina en juntas interiores entre cristales contiguos
-const OPC_CRISTAL_ESCARCHA_COLOR: vec3<f32> = vec3<f32>(0.78, 0.90, 1.0); // blanca azulada en lineal
-const OPC_CRISTAL_ESCARCHA_OPACIDAD: f32 = 0.72;   // translúcida, dispersa la luz
-const OPC_CRISTAL_ESCARCHA_DESENFOQUE: f32 = 0.009;// radio de desenfoque de lo de detrás (UV de pantalla)
+const OPC_CRISTAL_ESCARCHA_ALCANCE: f32 = 0.24;    // penetración suave desde el borde (bloques)
+const OPC_CRISTAL_ESCARCHA_ESQUINA: f32 = 0.34;    // radio algo mayor en las esquinas
+const OPC_CRISTAL_ESCARCHA_JUNTA_PESO: f32 = 0.22; // delicada en juntas interiores entre cristales contiguos
+const OPC_CRISTAL_ESCARCHA_COLOR: vec3<f32> = vec3<f32>(0.86, 0.95, 1.0); // blanca azulada cristalina (lineal)
+const OPC_CRISTAL_ESCARCHA_OPACIDAD: f32 = 0.48;   // translúcida: deja ver a través difuso
+const OPC_CRISTAL_ESCARCHA_DESENFOQUE: f32 = 0.011;// radio de desenfoque de lo de detrás (UV de pantalla)
 const OPC_CRISTAL_ESCARCHA_TEMP_NIEVE: f32 = 0.15; // umbral de temperatura de nieve en Minecraft (sin mod)
 
 // Copos y montón de nieve (27 §3)

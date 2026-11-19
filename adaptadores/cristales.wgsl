@@ -72,6 +72,21 @@ fn adp_cristal_refraccion(p: AdpPunto, n: vec3<f32>, cantidad: f32, desenfoque: 
     return AdpRefraccion(col, 0.0);
 }
 
+// Composición Porter-Duff «sobre» en alfa recto: evita oscurecer capas translúcidas al mezclar sobre vec3(0.0).
+fn adp_cristal_sobre(
+    base_col: vec3<f32>,
+    base_op: f32,
+    nueva_col: vec3<f32>,
+    nueva_op: f32,
+) -> vec4<f32> {
+    let op_out = nueva_op + base_op * (1.0 - nueva_op);
+    if op_out <= 1e-4 {
+        return vec4<f32>(0.0);
+    }
+    let col_out = (nueva_col * nueva_op + base_col * base_op * (1.0 - nueva_op)) / op_out;
+    return vec4<f32>(col_out, op_out);
+}
+
 fn adp_cristal_evaluar(
     p: AdpPunto,
     n_base: vec3<f32>,
@@ -193,21 +208,32 @@ fn adp_cristal_evaluar(
                  + bloque_luz
                  + vec3<f32>(OPC_LUZ_NOCHE_SUELO * curva_cielo);
 
-    // Composición de dentro afuera (27 §Composición): vaho -> escarcha -> gotas -> copos y montón de nieve.
+    // Composición de dentro afuera (27 §Composición): vaho -> escarcha -> gotas -> copos/montón -> arena.
     if aliento.vaho > 0.001 {
-        r.capa_color = OPC_CRISTAL_VAHO_COLOR * luz_capa;
-        r.capa_opacidad = clamp(aliento.vaho * OPC_CRISTAL_VAHO_OPACIDAD, 0.0, 0.75);
+        let col_vaho = OPC_CRISTAL_VAHO_COLOR * (luz_capa + luces.cielo * curva_cielo * 0.25);
+        let op_vaho = clamp(aliento.vaho * OPC_CRISTAL_VAHO_OPACIDAD, 0.0, 0.72);
+        let comp = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_vaho, op_vaho);
+        r.capa_color = comp.rgb;
+        r.capa_opacidad = comp.a;
         r.desenfoque = max(r.desenfoque, aliento.borroso);
     }
 
     if esc.cobertura > 0.001 {
-        let brillo_cristal = (0.35 + 1.4 * esc.cristalino) * (luces.directa * sombra_luz + luces.cielo * curva_cielo + bloque_luz);
-        let col_esc = OPC_CRISTAL_ESCARCHA_COLOR * luz_capa + brillo_cristal * (0.28 * esc.cobertura);
-        let op_esc = clamp(esc.cobertura * OPC_CRISTAL_ESCARCHA_OPACIDAD, 0.0, 0.88);
-        r.capa_color = mix(r.capa_color, col_esc, op_esc);
-        r.capa_opacidad = 1.0 - (1.0 - r.capa_opacidad) * (1.0 - op_esc);
-        r.desenfoque = max(r.desenfoque, esc.borroso);
         let n_esc = normalize(n_base + plano.tangente * esc.grad_uv.x + plano.bitangente * esc.grad_uv.y);
+        // Iluminación cristalina de la escarcha: dispersión de luz + reflejo frío del cielo + destellos de facetas.
+        let luz_esc = luz_capa * 1.18
+                    + luces.cielo * curva_cielo * 0.45
+                    + vec3<f32>(OPC_LUZ_NOCHE_SUELO * 1.8 * curva_cielo);
+        let esp_esc = sup_especular(n_esc, p.vista, luces.direccion, 0.14, vec3<f32>(0.06))
+                    * max(dot(n_esc, luces.direccion), 0.0) * luces.directa * sombra_luz * 0.8;
+        let brillo_cristal = (0.4 + 2.2 * esc.cristalino)
+                           * (luces.directa * sombra_luz + luces.cielo * curva_cielo * 1.3 + bloque_luz + vec3<f32>(OPC_LUZ_NOCHE_SUELO * 2.0 * curva_cielo));
+        let col_esc = OPC_CRISTAL_ESCARCHA_COLOR * luz_esc + brillo_cristal * (0.35 * esc.cobertura) + esp_esc;
+        let op_esc = clamp(esc.cobertura * OPC_CRISTAL_ESCARCHA_OPACIDAD, 0.0, 0.58);
+        let comp = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_esc, op_esc);
+        r.capa_color = comp.rgb;
+        r.capa_opacidad = comp.a;
+        r.desenfoque = max(r.desenfoque, esc.borroso);
         r.normal = normalize(mix(r.normal, n_esc, esc.cobertura * 0.45));
     }
 
@@ -246,8 +272,9 @@ fn adp_cristal_evaluar(
                       + vec3<f32>(OPC_LUZ_NOCHE_SUELO * curva_cielo);
         color_nieve = OPC_CRISTAL_NIEVE_COLOR * luz_nieve;
         let op_nieve = max(nieve.copo * OPC_CRISTAL_NIEVE_OPACIDAD_COPO, nieve.monton * OPC_CRISTAL_NIEVE_OPACIDAD_MONTON);
-        r.capa_color = mix(r.capa_color, color_nieve, op_nieve);
-        r.capa_opacidad = max(r.capa_opacidad, op_nieve);
+        let comp_nieve = adp_cristal_sobre(r.capa_color, r.capa_opacidad, color_nieve, op_nieve);
+        r.capa_color = comp_nieve.rgb;
+        r.capa_opacidad = comp_nieve.a;
         r.mate = max(r.mate, op_nieve * 0.85);
         r.especular_extra *= (1.0 - op_nieve);
     }
@@ -265,8 +292,9 @@ fn adp_cristal_evaluar(
                       + vec3<f32>(OPC_LUZ_NOCHE_SUELO * curva_cielo);
         color_arena = grano_color * luz_arena;
         let op_arena = clamp(arena.cobertura, 0.0, 1.0);
-        r.capa_color = mix(r.capa_color, color_arena, op_arena);
-        r.capa_opacidad = max(r.capa_opacidad, op_arena);
+        let comp_arena = adp_cristal_sobre(r.capa_color, r.capa_opacidad, color_arena, op_arena);
+        r.capa_color = comp_arena.rgb;
+        r.capa_opacidad = comp_arena.a;
         r.mate = max(r.mate, op_arena);
         r.especular_extra *= (1.0 - op_arena);
     }
@@ -278,8 +306,8 @@ fn adp_cristal_evaluar(
         let dither = rui_hash21(vec2<i32>(i32(texel.x), i32(texel.y)));
         let hay_arena = arena.cobertura >= 0.45;
         let hay_nieve = nieve.monton >= 0.40 || nieve.copo >= 0.45;
-        let hay_vaho = aliento.vaho > 0.14 && aliento.vaho > dither * 0.72;
-        let hay_escarcha = esc.cobertura >= 0.42 || (esc.cobertura > 0.14 && esc.cobertura > dither * 0.65);
+        let hay_vaho = aliento.vaho > 0.16 && aliento.vaho > dither * 0.78;
+        let hay_escarcha = esc.cobertura >= 0.58 || (esc.cobertura > 0.18 && esc.cobertura > dither * 0.85);
         let hay_gota = gota >= 0.45 || rastro >= 0.55;
         if hay_arena {
             r.cobertura_cutout = 1.0;
