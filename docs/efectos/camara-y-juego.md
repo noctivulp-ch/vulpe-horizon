@@ -22,11 +22,27 @@ el estado en `adaptadores/bloom_estado.wgsl`; constantes en `opciones/gotas.wgsl
 
 ## Calor
 
-`frame.in_lava` (ya suavizado por Horizon con media vida de 0,25 s) o, con el mod, `mods[3].z` («en llamas»). Ruido
-que sube a 0,3 de la altura por segundo, cuadrático hacia abajo y nulo en el tercio superior, más un acercamiento al
-centro del 2 %. Fuerza 0,7 (el ajuste 70).
-- Diferencia: la especificación pide que se apague en unos 3 s; con `in_lava` se apaga en ~1 s. Hacerlo bien pide
-  otro téxel de estado (cabe ahora: la final quedó en 60 lecturas). Pendiente si el gestor lo ve necesario.
+`adp_estado_calor` (`adaptadores/bloom_estado.wgsl`) guarda el nivel suavizado (`0..1`) en el téxel `(7,0).a` de
+`bloom`/`bloom2`, usando la función pura `img_calor_nivel` (`nucleo/imagen/gotas.wgsl`): sube en `OPC_CALOR_SUBE`
+(0,5 s) cuando el jugador arde (`mods[3].z > 0,5` con bit 3 activo del mod) o la cámara está en lava
+(`frame.eye_in == 2u`), y baja en `OPC_CALOR_BAJA` (3,0 s) al salir. Sin el mod, el estado «en llamas» queda inactivo
+(solo actúa con la cámara en lava).
+
+En la pasada final (`adp_calor` en `adaptadores/imagen.wgsl`), una salida temprana comprueba `opc_calor_fuerza() <= 0`
+(opción `efectos_juego`: 0 apagado, 1 sutil ×0,5, 2 defecto ×1, 3 intenso ×1,5) y `nivel <= 0,001` con una sola lectura
+uniforme de `(7,0).a`, evitando el ruido procedural y cualquier llamada a `adp_mod()` por píxel cuando no arde. Cuando
+está activo, aplica `smoothstep(0, 1, nivel)` al ruido que sube a 0,3 de la altura por segundo, cuadrático hacia abajo
+y nulo en el tercio superior, más un acercamiento al centro del 2 % (fuerza 0,7 por defecto). El calor del desierto no
+se hace (decisión del dueño, `observaciones-del-dueno-2026-11-13.md` §5.2b).
+
+- Comprobado en `vulpe-pruebas` (`native-dd67b76-9841443bb307`, `pruebas/escenas/calor-llamas.ctl`, 2026-11-19):
+  `tools/validar.sh` pasa (Final 64/64 lecturas); en fuego y a 3 s tras salir se aprecia la ondulación y el
+  acercamiento al centro (diferencia media 10,81 en el cuadrante inferior derecho frente a 12 s), a 10 s cae a la mitad
+  (5,20, en plena bajada de 3 s) y a 12 s desaparece por completo; al entrar en agua se apaga en ~3 s; en lava activo.
+  Coste sin fuego (`bench 20` bosque): 48,33 fps, CPU 4,30 ms (`tick` 0,48 ms), GPU 13,60 ms.
+- Nota observada al capturar: el efecto previo de gotas de agua en cámara (`adp_estado_cruce`, téxel `(4,0).a`) puede
+  quedar atascado tras un teletransporte (`nivel = 7` → valor 57 en `rgba16float`, donde el paso de precisión f16 es
+  0,03125 s > `delta_time` a >32 fps). No afecta al téxel `(7,0).a` del calor (rango 0..1, paso f16 0,00049).
 
 ## Lecturas de la pasada final
 

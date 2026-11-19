@@ -46,6 +46,15 @@ fn img_agua_camara(uv: vec2<f32>, aspecto: f32, t: f32, salida: bool, vel: vec2<
     return ImgGotasResultado(uv + (uv - centro) * k, 0.0);
 }
 
+// Evolución suave del nivel de calor (0..1): sube en `sube` s y baja en `baja` s.
+fn img_calor_nivel(anterior: f32, activo: bool, dt: f32, sube: f32, baja: f32) -> f32 {
+    let d = max(dt, 0.0);
+    if activo {
+        return clamp(anterior + d / max(sube, 1e-3), 0.0, 1.0);
+    }
+    return clamp(anterior - d / max(baja, 1e-3), 0.0, 1.0);
+}
+
 // Aire caliente: ondas de ruido que suben (0,3 de la altura por segundo), fuertes abajo y nulas en el tercio superior,
 // y un leve acercamiento al centro. `nivel` 0..1, `fuerza` el ajuste 0..1 (70 por defecto = 0,7).
 fn img_calor(uv: vec2<f32>, aspecto: f32, segundos: f32, nivel: f32, fuerza: f32) -> vec2<f32> {
@@ -55,6 +64,6 @@ fn img_calor(uv: vec2<f32>, aspecto: f32, segundos: f32, nivel: f32, fuerza: f32
     let abajo = smoothstep(0.33, 1.0, uv.y);
     let p = vec2<f32>(uv.x * aspecto * 8.0, (uv.y + segundos * 0.3) * 10.0);
     let n = vec2<f32>(rui_valor2(p), rui_valor2(p + vec2<f32>(13.1, 7.7))) - 0.5;
-    let k = nivel * fuerza;
+    let k = smoothstep(0.0, 1.0, nivel) * fuerza;
     return mix(uv, vec2<f32>(0.5), 0.02 * k) + n * (0.012 * k * abajo * abajo);
 }

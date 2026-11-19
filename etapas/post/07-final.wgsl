@@ -51,7 +51,7 @@ fn post(input: PostInput) -> vec4<f32> {
         uv = img_zoom(uv, OPC_CAM_ZOOM);
     }
     let gotas = adp_gotas_camara(uv, bloom2);
-    uv = adp_calor(gotas.uv);
+    uv = adp_calor(gotas.uv, bloom2);
     let c4 = img_nitidez(historial, linear_sampler, uv, nitidez);
     var c = adp_desenfoque_movimiento(c4.rgb, uv, p, historial) * (1.0 - gotas.borde * 0.3);
     c = adp_bloom_final(c, c4.a, uv, o, bloom, bloom2, volumen);

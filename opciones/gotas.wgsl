@@ -9,3 +9,13 @@ const OPC_CALOR_BAJA: f32 = 3.0;              // segundos para apagarse
 fn opc_gotas() -> ImgGotasAjustes {
     return ImgGotasAjustes(OPC_GOTAS_DURACION, OPC_GOTAS_FUERZA, OPC_GOTAS_RAPIDEZ_REF);
 }
+
+// Fuerza efectiva del calor según la opción `efectos_juego` (0 apagados, 1 sutiles, 2 defecto, 3 intensos).
+fn opc_calor_fuerza() -> f32 {
+    switch opc_efectos_juego() {
+        case 0u: { return 0.0; }
+        case 1u: { return OPC_CALOR_FUERZA * 0.5; }
+        case 3u: { return OPC_CALOR_FUERZA * 1.5; }
+        default: { return OPC_CALOR_FUERZA; }
+    }
+}

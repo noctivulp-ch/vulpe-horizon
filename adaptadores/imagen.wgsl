@@ -109,13 +109,19 @@ fn adp_gotas_camara(uv: vec2<f32>, t_bloom2: texture_2d<f32>) -> ImgGotasResulta
     return img_agua_camara(uv, aspecto, c.t, c.salida, vel, opc_gotas());
 }
 
-// Calor (19): en lava (frame.in_lava, ya suavizado) o en llamas con el mod (mods[3].z). Porqué: docs/efectos/camara-y-juego.md
-fn adp_calor(uv: vec2<f32>) -> vec2<f32> {
-    let m = adp_mod();
-    let llamas = select(0.0, m.jugador.en_llamas, m.jugador.activo);
-    let nivel = max(frame.in_lava, llamas);
+// Calor (19): nivel suavizado (0,5 s subida, 3 s bajada) en el téxel (7,0) de bloom2.
+// Salida temprana cuando no arde: sin coste de ruido ni deformación. Porqué: docs/efectos/camara-y-juego.md
+fn adp_calor(uv: vec2<f32>, t_bloom2: texture_2d<f32>) -> vec2<f32> {
+    let fuerza = opc_calor_fuerza();
+    if fuerza <= 0.0 {
+        return uv;
+    }
+    let nivel = textureLoad(t_bloom2, vec2<i32>(7, 0), 0).a;
+    if nivel <= 0.001 {
+        return uv;
+    }
     let aspecto = frame.resolution.x / max(frame.resolution.y, 1.0);
-    return img_calor(uv, aspecto, adp_tiempo().segundos, nivel, OPC_CALOR_FUERZA);
+    return img_calor(uv, aspecto, adp_tiempo().segundos, nivel, fuerza);
 }
 
 // Estado del cruce del agua en un solo valor (texel (4,0).a): 0 sin cruce; si no, ±(1 + 8·nivel de rapidez + t),
