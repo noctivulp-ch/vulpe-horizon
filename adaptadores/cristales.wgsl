@@ -3,6 +3,7 @@
 // Porqué: docs/efectos/tiempo-en-los-cristales.md
 
 struct AdpCristalResultado {
+    activo: bool,           // false = sin efecto en este píxel -> camino idéntico a antes de F-74
     normal: vec3<f32>,      // normal perturbada por las gotas o escarcha
     refraccion: f32,        // fuerza de refracción en pantalla
     desenfoque: f32,        // 0..1 borrosidad detrás del cristal (escarcha, vaho)
@@ -79,6 +80,7 @@ fn adp_cristal_evaluar(
     bloque_luz: vec3<f32>,
 ) -> AdpCristalResultado {
     var r = AdpCristalResultado(
+        false,
         n_base,
         OPC_TRANSL_REFRACCION * 0.0006,
         0.0,
@@ -181,6 +183,7 @@ fn adp_cristal_evaluar(
     if cobertura_agua <= 0.001 && lluvia.mojado <= 0.001 && esc.cobertura <= 0.001 && nieve.cobertura <= 0.001 && aliento.vaho <= 0.001 && arena.cobertura <= 0.001 {
         return r;
     }
+    r.activo = true;
 
     // Luz difusa + dispersión frontal (SSS) sobre capas del cristal (vaho, escarcha, nieve, arena).
     let n_l = max(dot(n_base, luces.direccion), 0.0);
@@ -212,19 +215,25 @@ fn adp_cristal_evaluar(
         let grad_agua = lluvia.grad_uv * mascara_agua;
         let n_gota = normalize(
             n_base
-            + plano.tangente * (grad_agua.x * 0.65)
-            + plano.bitangente * (grad_agua.y * 0.65),
+            + plano.tangente * (grad_agua.x * 0.95)
+            + plano.bitangente * (grad_agua.y * 0.95),
         );
         r.normal = normalize(mix(r.normal, n_gota, cobertura_agua));
         r.refraccion = mix(OPC_TRANSL_REFRACCION * 0.0006, OPC_CRISTAL_GOTA_REFRACCION, cobertura_agua);
-        r.f0_extra = OPC_CRISTAL_MOJADO_F0_EXTRA * lluvia.mojado * mascara_agua + 0.04 * gota;
+        r.f0_extra = OPC_CRISTAL_MOJADO_F0_EXTRA * lluvia.mojado * mascara_agua + 0.08 * gota;
         r.oscurecer_fondo = lluvia.borde * mascara_agua * OPC_CRISTAL_GOTA_BORDE;
 
-        let esp_astro = sup_especular(r.normal, p.vista, luces.direccion, 0.04, vec3<f32>(0.04))
+        // Brillo especular: astro directo + cenit del cielo nublado (visible también bajo lluvia cerrada) + luz cercana.
+        let esp_astro = sup_especular(r.normal, p.vista, luces.direccion, 0.035, vec3<f32>(0.05))
                       * max(dot(r.normal, luces.direccion), 0.0) * luces.directa * sombra_luz;
+        let dir_cielo = normalize(vec3<f32>(0.12, 0.96, 0.22));
+        let esp_cielo = sup_especular(r.normal, p.vista, dir_cielo, 0.06, vec3<f32>(0.06))
+                      * max(dot(r.normal, dir_cielo), 0.0) * luces.cielo * curva_cielo * 1.45;
         let esp_bloque = vec3<f32>(pow(max(dot(r.normal, normalize(p.vista + vec3<f32>(0.0, 0.35, 0.0))), 0.0), 32.0))
-                       * bloque_luz * 0.45;
-        r.especular_extra = (esp_astro + esp_bloque) * (OPC_CRISTAL_GOTA_ESPECULAR * cobertura_agua);
+                       * bloque_luz * 0.55;
+        let caustica = (luces.cielo * curva_cielo * 0.65 + luces.directa * sombra_luz * 0.35 + bloque_luz * 0.4)
+                     * (lluvia.caustica * mascara_agua * OPC_CRISTAL_GOTA_CAUSTICA);
+        r.especular_extra = (esp_astro + esp_cielo + esp_bloque) * (OPC_CRISTAL_GOTA_ESPECULAR * cobertura_agua) + caustica;
     }
 
     var color_nieve = vec3<f32>(0.0);

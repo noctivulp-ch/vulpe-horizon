@@ -130,7 +130,7 @@ fn material(input: MaterialInput) -> Surface {
         var alfa_salida = p.alfa;
         if p.es_cristal && p.alfa < 0.5 {
             let cr = adp_cristal_evaluar(p, n, luces, sombra.luz, bloque);
-            if cr.cobertura_cutout >= 0.5 {
+            if cr.activo && cr.cobertura_cutout >= 0.5 {
                 color = cr.color_cutout;
                 alfa_salida = 1.0;
             }
@@ -144,7 +144,8 @@ fn material(input: MaterialInput) -> Surface {
 
 // Translúcidos que no son agua (22): lo de detrás refractado y teñido por el color normalizado, la superficie encima
 // por su opacidad y el reflejo con Fresnel, que la vuelve espejo de refilón. Sale opaco, como el agua.
-// En los cristales (`p.es_cristal`) compone además «el tiempo en los cristales» (27).
+// En los cristales (`p.es_cristal`) compone además «el tiempo en los cristales» (27); si el efecto está apagado o
+// despejado (`!cr.activo`), sigue el camino exacto de `22` sin alteración.
 // Porqué: docs/efectos/translucidos.md y docs/efectos/tiempo-en-los-cristales.md
 fn translucido(
     p: AdpPunto,
@@ -157,16 +158,18 @@ fn translucido(
 ) -> vec3<f32> {
     if p.es_cristal {
         let cr = adp_cristal_evaluar(p, n, luces, sombra_luz, bloque_luz);
-        let refr = adp_cristal_refraccion(p, cr.normal, cr.refraccion, cr.desenfoque);
-        let a = clamp(p.alfa, 0.0, 1.0);
-        let peso_tinte = select(0.0, clamp(a / OPC_TRANSL_TINTE_MIN, 0.0, 1.0), OPC_TRANSL_TINTE);
-        let tinte = mix(vec3<f32>(1.0), normalize(max(p.albedo, vec3<f32>(1e-4))), peso_tinte);
-        var fondo = mix(refr.color * tinte * (1.0 - cr.oscurecer_fondo), superficie, a);
-        fondo = mix(fondo, cr.capa_color, cr.capa_opacidad);
-        let f0 = select(vec3<f32>(OPC_TRANSL_F0), m.f0, p.con_pbr) + vec3<f32>(cr.f0_extra);
-        let f = col_luminancia(sup_fresnel_schlick(max(dot(cr.normal, p.vista), 0.0), f0)) * (1.0 - max(cr.capa_opacidad * 0.75, cr.mate));
-        let reflejo = adp_agua_reflejo(p, cr.normal, reflect(-p.vista, cr.normal), luces) * luz_curva_cielo(max(p.luz_cielo, 0.3));
-        return mix(fondo, reflejo, f) + cr.especular_extra;
+        if cr.activo {
+            let refr = adp_cristal_refraccion(p, cr.normal, cr.refraccion, cr.desenfoque);
+            let a = clamp(p.alfa, 0.0, 1.0);
+            let peso_tinte = select(0.0, clamp(a / OPC_TRANSL_TINTE_MIN, 0.0, 1.0), OPC_TRANSL_TINTE);
+            let tinte = mix(vec3<f32>(1.0), normalize(max(p.albedo, vec3<f32>(1e-4))), peso_tinte);
+            var fondo = mix(refr.color * tinte * (1.0 - cr.oscurecer_fondo), superficie, a);
+            fondo = mix(fondo, cr.capa_color, cr.capa_opacidad);
+            let f0 = select(vec3<f32>(OPC_TRANSL_F0), m.f0, p.con_pbr) + vec3<f32>(cr.f0_extra);
+            let f = col_luminancia(sup_fresnel_schlick(max(dot(cr.normal, p.vista), 0.0), f0)) * (1.0 - max(cr.capa_opacidad * 0.75, cr.mate));
+            let reflejo = adp_agua_reflejo(p, cr.normal, reflect(-p.vista, cr.normal), luces) * luz_curva_cielo(max(p.luz_cielo, 0.3));
+            return mix(fondo, reflejo, f) + cr.especular_extra;
+        }
     }
     let refr = adp_agua_refraccion(p, n, OPC_TRANSL_REFRACCION * 0.0006);
     let a = clamp(p.alfa, 0.0, 1.0);
