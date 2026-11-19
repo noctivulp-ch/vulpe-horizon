@@ -163,7 +163,7 @@ fn adp_cuadro_escribir() {
         let nevando_sin_mod = select(0.0, frame.rain, frame.precipitation == 2u && frame.rain > 0.01);
         datos_cuadro[ADP_CUADRO_CRISTAL_1] = vec4<f32>(viento_base, escarcha_sin_mod, OPC_CRISTAL_NIVEL_DEFECTO);
         datos_cuadro[ADP_CUADRO_CRISTAL_2] = vec4<f32>(nevando_sin_mod, nevando_sin_mod, 0.0, 0.0);
-        datos_cuadro[ADP_CUADRO_CRISTAL_VAHO] = vec4<f32>(0.0);
+        datos_cuadro[ADP_CUADRO_CRISTAL_VAHO] = vec4<f32>(0.0, 0.0, 0.0, select(-1.0, 0.0, OPC_CRISTAL_ALIENTO_ACTIVO));
         datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS] = vec4<f32>(
             select(0.0, 1.0, OPC_CRISTAL_ESCARCHA_INTERIOR),
             0.0,

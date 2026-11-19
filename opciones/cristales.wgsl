@@ -45,6 +45,14 @@ const OPC_CRISTAL_NIEVE_JUNTA_PESO: f32 = 0.45;    // altura reducida en juntas 
 const OPC_CRISTAL_NIEVE_OPACIDAD_COPO: f32 = 0.90;
 const OPC_CRISTAL_NIEVE_OPACIDAD_MONTON: f32 = 0.96;
 
+// Vaho del aliento (27 §4)
+const OPC_CRISTAL_ALIENTO_ACTIVO: bool = true;     // respaldo sin mod
+const OPC_CRISTAL_VAHO_DIST: f32 = 1.5;            // distancia máxima cámara-cristal en bloques
+const OPC_CRISTAL_VAHO_RADIO: f32 = 1.0;           // radio máximo de la mancha (~1 bloque)
+const OPC_CRISTAL_VAHO_PERIODO: f32 = 3.5;         // pulso de respiración en segundos (~3–4 s)
+const OPC_CRISTAL_VAHO_COLOR: vec3<f32> = vec3<f32>(0.90, 0.94, 0.98); // condensación lisa, más clara que la escarcha
+const OPC_CRISTAL_VAHO_OPACIDAD: f32 = 0.62;
+
 // Convierte el código 0..3 del mod (apagada / ligera / normal / intensa) a multiplicador de intensidad.
 fn opc_cristal_escala_nivel(codigo: u32) -> f32 {
     switch codigo {

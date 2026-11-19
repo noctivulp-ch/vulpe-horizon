@@ -96,13 +96,14 @@ fn adp_cristal_evaluar(
     let c0 = datos_cuadro[ADP_CUADRO_CRISTAL_0]; // x: lluvia_pico, y: secado (0..1), z: escala_lluvia, w: tormenta
     let c1 = datos_cuadro[ADP_CUADRO_CRISTAL_1]; // xy: viento_xz, z: escarcha, w: escala_nieve
     let c2 = datos_cuadro[ADP_CUADRO_CRISTAL_2]; // x: copos, y: monton, z: arena, w: escala_arena
+    let cv = datos_cuadro[ADP_CUADRO_CRISTAL_VAHO]; // xyz: pos relativa de vaho, w: peso (<0 desactivado/espectador)
     let cf = datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS]; // x: escarcha_interior, y: arena_roja, z: con_mod
     let plano = sup_cristal_plano(p.mundo, p.normal_cara);
     let dist = length(p.posicion);
     let curva_cielo = luz_curva_cielo(p.luz_cielo);
 
-    // 1) Escarcha en el frío (27 §2).
-    let esc = sup_cristal_escarcha(
+    // 1) Escarcha en el frío (27 §2) y vaho del aliento (27 §4).
+    let esc_bruta = sup_cristal_escarcha(
         plano,
         p.luz_cielo,
         p.ao_vertice,
@@ -110,6 +111,23 @@ fn adp_cristal_evaluar(
         c1.w,
         cf.x > 0.5,
         dist,
+    );
+    let aliento = sup_cristal_aliento(
+        p.posicion,
+        p.normal_cara,
+        cv.xyz,
+        cv.w,
+        cf.z > 0.5,
+        c1.z * min(c1.w, 1.0),
+        adp_tiempo().segundos,
+    );
+    // Dentro de la mancha de vaho, la escarcha se vuelve condensación lisa (sin dibujo de helecho ni facetas).
+    let suprime_helecho = 1.0 - aliento.vaho * 0.85;
+    let esc = SupCristalEscarcha(
+        esc_bruta.cobertura * suprime_helecho,
+        max(esc_bruta.borroso, aliento.borroso),
+        esc_bruta.cristalino * (1.0 - aliento.vaho),
+        esc_bruta.grad_uv * suprime_helecho,
     );
 
     // 2) Copos pegados y montón inferior de nieve (27 §3).
@@ -144,11 +162,11 @@ fn adp_cristal_evaluar(
     let rastro = lluvia.rastro * mascara_agua;
     let cobertura_agua = max(gota, rastro * 0.7);
 
-    if cobertura_agua <= 0.001 && lluvia.mojado <= 0.001 && esc.cobertura <= 0.001 && nieve.cobertura <= 0.001 {
+    if cobertura_agua <= 0.001 && lluvia.mojado <= 0.001 && esc.cobertura <= 0.001 && nieve.cobertura <= 0.001 && aliento.vaho <= 0.001 {
         return r;
     }
 
-    // Luz difusa + dispersión frontal (SSS) sobre capas del cristal (escarcha, nieve, arena).
+    // Luz difusa + dispersión frontal (SSS) sobre capas del cristal (vaho, escarcha, nieve, arena).
     let n_l = max(dot(n_base, luces.direccion), 0.0);
     let contraluz = pow(max(dot(-p.vista, luces.direccion), 0.0), 3.0) * 0.35;
     let luz_capa = luces.directa * sombra_luz * (n_l + contraluz)
@@ -156,12 +174,20 @@ fn adp_cristal_evaluar(
                  + bloque_luz
                  + vec3<f32>(OPC_LUZ_NOCHE_SUELO * curva_cielo);
 
-    // Composición de dentro afuera (27 §Composición): escarcha -> gotas -> copos y montón de nieve.
+    // Composición de dentro afuera (27 §Composición): vaho -> escarcha -> gotas -> copos y montón de nieve.
+    if aliento.vaho > 0.001 {
+        r.capa_color = OPC_CRISTAL_VAHO_COLOR * luz_capa;
+        r.capa_opacidad = clamp(aliento.vaho * OPC_CRISTAL_VAHO_OPACIDAD, 0.0, 0.75);
+        r.desenfoque = max(r.desenfoque, aliento.borroso);
+    }
+
     if esc.cobertura > 0.001 {
         let brillo_cristal = (0.35 + 1.4 * esc.cristalino) * (luces.directa * sombra_luz + luces.cielo * curva_cielo + bloque_luz);
-        r.capa_color = OPC_CRISTAL_ESCARCHA_COLOR * luz_capa + brillo_cristal * (0.28 * esc.cobertura);
-        r.capa_opacidad = clamp(esc.cobertura * OPC_CRISTAL_ESCARCHA_OPACIDAD, 0.0, 0.88);
-        r.desenfoque = esc.borroso;
+        let col_esc = OPC_CRISTAL_ESCARCHA_COLOR * luz_capa + brillo_cristal * (0.28 * esc.cobertura);
+        let op_esc = clamp(esc.cobertura * OPC_CRISTAL_ESCARCHA_OPACIDAD, 0.0, 0.88);
+        r.capa_color = mix(r.capa_color, col_esc, op_esc);
+        r.capa_opacidad = 1.0 - (1.0 - r.capa_opacidad) * (1.0 - op_esc);
+        r.desenfoque = max(r.desenfoque, esc.borroso);
         let n_esc = normalize(n_base + plano.tangente * esc.grad_uv.x + plano.bitangente * esc.grad_uv.y);
         r.normal = normalize(mix(r.normal, n_esc, esc.cobertura * 0.45));
     }
@@ -206,6 +232,7 @@ fn adp_cristal_evaluar(
         let texel = floor(plano.uv * OPC_CRISTAL_REJILLA);
         let dither = rui_hash21(vec2<i32>(i32(texel.x), i32(texel.y)));
         let hay_nieve = nieve.monton >= 0.40 || nieve.copo >= 0.45;
+        let hay_vaho = aliento.vaho > 0.14 && aliento.vaho > dither * 0.72;
         let hay_escarcha = esc.cobertura >= 0.42 || (esc.cobertura > 0.14 && esc.cobertura > dither * 0.65);
         let hay_gota = gota >= 0.45 || rastro >= 0.55;
         if hay_nieve {
@@ -217,7 +244,7 @@ fn adp_cristal_evaluar(
             let cuerpo = (luces.cielo * curva_cielo * 0.28 + bloque_luz * 0.2 + refl_cielo * 0.65) * (1.0 - r.oscurecer_fondo);
             r.cobertura_cutout = 1.0;
             r.color_cutout = cuerpo + r.especular_extra;
-        } else if hay_escarcha {
+        } else if hay_escarcha || hay_vaho {
             r.cobertura_cutout = 1.0;
             r.color_cutout = r.capa_color;
         }

@@ -69,3 +69,16 @@ Efecto propio de Vulpe para Horizon. Especificación: `vulpe-horizon-spec/subsis
   sólido, más baja en juntas superiores sin bloque debajo). El mod lo acumula en ~18 s mientras nieva y lo funde despacio
   (`~45 s` en frío, más rápido al calentarse, `mods[6].y` bits 16..23). Se compone por encima de la escarcha y bloquea
   las gotas de lluvia.
+
+## 4. Vaho del aliento (`F-77` / `N-08.4`)
+
+- **Núcleo puro:** [`nucleo/superficie/cristal_aliento.wgsl`](../../nucleo/superficie/cristal_aliento.wgsl).
+- **Cuándo:** solo en cristales con escarcha y con la cámara a menos de `1,5` bloques (por dentro o por fuera). El mod
+  comprueba el modo de juego del jugador local (`ClientSession::client_tab_list`) y apaga el efecto en modo espectador
+  (`bit 9` de `mods[6].z`, `vaho_w < 0` en `datos_cuadro`).
+- **Memoria de 5 s y pulso:** el mod busca el punto más cercano de cristal en los bloques adyacentes, suaviza su peso
+  (sube en ~6 s y se desvanece en `5 s` al alejarse) y envía la posición relativa a la cámara en `mods[7].xyz`. El
+  shader modula el radio hasta `~1` bloque con un pulso de respiración cada `3,5 s`. Sin mod funciona en vivo sin
+  memoria (se borra al alejarse).
+- **Fusión con la escarcha:** dentro de la mancha, el dibujo de helecho y las facetas se atenúan y dan paso a una
+  condensación lisa más clara con desenfoque detrás (`27` §4).
