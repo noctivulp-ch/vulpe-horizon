@@ -140,15 +140,34 @@ fn adp_cuadro_escribir() {
         let llueve = frame.precipitation == 1u && frame.rain > 0.01;
         let lluvia_sin_mod = select(0.0, frame.rain * (0.72 + 0.28 * frame.thunder), llueve);
         let viento_base = normalize(OPC_VIENTO) * 0.55;
+        let alt_extra = max(frame.camera_position.y - 80.0, 0.0);
+        let temp_eff = frame.temperature - alt_extra * 0.00125;
+        let frio = temp_eff < OPC_CRISTAL_ESCARCHA_TEMP_NIEVE || frame.precipitation == 2u;
+        let escarcha_sin_mod = select(
+            0.0,
+            clamp(
+                0.48 + 0.32 * clamp((OPC_CRISTAL_ESCARCHA_TEMP_NIEVE - temp_eff) / 0.45, 0.0, 1.0)
+                + 0.22 * adp_factor_noche()
+                + 0.25 * select(0.0, frame.rain, frame.precipitation == 2u || frio),
+                0.0,
+                1.0,
+            ),
+            frio,
+        );
         datos_cuadro[ADP_CUADRO_CRISTAL_0] = vec4<f32>(
             lluvia_sin_mod,
             select(1.0, 0.0, llueve),
             OPC_CRISTAL_NIVEL_DEFECTO,
             frame.thunder,
         );
-        datos_cuadro[ADP_CUADRO_CRISTAL_1] = vec4<f32>(viento_base, 0.0, OPC_CRISTAL_NIVEL_DEFECTO);
+        datos_cuadro[ADP_CUADRO_CRISTAL_1] = vec4<f32>(viento_base, escarcha_sin_mod, OPC_CRISTAL_NIVEL_DEFECTO);
         datos_cuadro[ADP_CUADRO_CRISTAL_2] = vec4<f32>(0.0, 0.0, 0.0, 0.0);
         datos_cuadro[ADP_CUADRO_CRISTAL_VAHO] = vec4<f32>(0.0);
-        datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS] = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+        datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS] = vec4<f32>(
+            select(0.0, 1.0, OPC_CRISTAL_ESCARCHA_INTERIOR),
+            0.0,
+            0.0,
+            0.0,
+        );
     }
 }

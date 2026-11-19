@@ -41,3 +41,20 @@ Efecto propio de Vulpe para Horizon. Especificación: `vulpe-horizon-spec/subsis
   los rastros (`0–8 s`), después las gotas pequeñas (`5–18 s`) y por último las grandes (`15–30 s`). Sin mod, el efecto
   sigue `frame.rain` sin secado gradual.
 - **Estilo alternativo:** `OPC_CRISTAL_ESTILO_REGUEROS` cambia a regueros verticales animados en la misma rejilla de 32.
+
+## 2. Escarcha en el frío (`F-75` / `N-08.2`)
+
+- **Núcleo puro:** [`nucleo/superficie/cristal_escarcha.wgsl`](../../nucleo/superficie/cristal_escarcha.wgsl).
+- **Cuándo:** temperatura efectiva por debajo del umbral de nieve (`0,15`, incluyendo la caída de `0,00125` por bloque
+  sobre Y = 80). El mod acumula y retira la escarcha de forma gradual (`16 s` al crecer, más rápida mientras nieva, y
+  `24 s` al calentarse), con refuerzo de noche y nevando. Sin mod se evalúa en vivo en `[[before_world]]`.
+- **Forma de helecho y bordes del conjunto:** dos ejes girados de ruido en cresta en la rejilla de 32 texeles por bloque
+  crecen desde los bordes y con mayor radio desde las esquinas. La oclusión de vértice (`p.ao_vertice`) distingue el
+  perímetro pegado a bloques sólidos del marco (AO reducido, escarcha gruesa) de las juntas interiores entre cristales
+  contiguos (AO ≈ 1, escarcha reducida a `OPC_CRISTAL_ESCARCHA_JUNTA_PESO` y modulada en gran escala para evitar una
+  cuadrícula).
+- **Óptica:** blanca azulada (`OPC_CRISTAL_ESCARCHA_COLOR`), translúcida con dispersión frontal a contraluz y destellos
+  de facetas cristalinas; en cristales translúcidos emborrona lo que hay detrás con 4 lecturas protegidas por profundidad
+  (`adp_cristal_refraccion`). Las gotas de lluvia se atenúan sobre la escarcha gruesa.
+- **Interior opcional:** `[cristales].escarcha_interior` (o `OPC_CRISTAL_ESCARCHA_INTERIOR` sin mod) añade escarcha más
+  ligera en las caras interiores de ventanas que reciben luz de cielo del exterior.

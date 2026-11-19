@@ -24,6 +24,19 @@ const OPC_CRISTAL_SECADO_RASTRO: vec2<f32> = vec2<f32>(0.0, 0.28);  // 0..8 s: p
 const OPC_CRISTAL_SECADO_PEQUENAS: vec2<f32> = vec2<f32>(0.18, 0.62);// 5..18 s: luego las gotas pequeñas
 const OPC_CRISTAL_SECADO_GRANDES: vec2<f32> = vec2<f32>(0.50, 1.0); // 15..30 s: al final las grandes
 
+// Escarcha en el frío (27 §2)
+const OPC_CRISTAL_ESCARCHA_INTERIOR: bool = false; // respaldo sin mod: escarcha también por dentro
+const OPC_CRISTAL_ESCARCHA_CIELO_MIN: f32 = 0.68;  // exposición al aire frío (incluso bajo aleros)
+const OPC_CRISTAL_ESCARCHA_CIELO_MAX: f32 = 0.88;
+const OPC_CRISTAL_ESCARCHA_INT_PESO: f32 = 0.65;   // fuerza relativa en cara interior cuando está activada
+const OPC_CRISTAL_ESCARCHA_ALCANCE: f32 = 0.42;    // cuánto penetra la escarcha desde el borde exterior (bloques)
+const OPC_CRISTAL_ESCARCHA_ESQUINA: f32 = 0.56;    // radio mayor en las esquinas
+const OPC_CRISTAL_ESCARCHA_JUNTA_PESO: f32 = 0.30; // más fina en juntas interiores entre cristales contiguos
+const OPC_CRISTAL_ESCARCHA_COLOR: vec3<f32> = vec3<f32>(0.78, 0.90, 1.0); // blanca azulada en lineal
+const OPC_CRISTAL_ESCARCHA_OPACIDAD: f32 = 0.72;   // translúcida, dispersa la luz
+const OPC_CRISTAL_ESCARCHA_DESENFOQUE: f32 = 0.009;// radio de desenfoque de lo de detrás (UV de pantalla)
+const OPC_CRISTAL_ESCARCHA_TEMP_NIEVE: f32 = 0.15; // umbral de temperatura de nieve en Minecraft (sin mod)
+
 // Convierte el código 0..3 del mod (apagada / ligera / normal / intensa) a multiplicador de intensidad.
 fn opc_cristal_escala_nivel(codigo: u32) -> f32 {
     switch codigo {

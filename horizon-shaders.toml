@@ -127,6 +127,7 @@ files = [
     "nucleo/superficie/escarcha.wgsl",
     "nucleo/superficie/arena_viento.wgsl",
     "nucleo/superficie/cristal_lluvia.wgsl",
+    "nucleo/superficie/cristal_escarcha.wgsl",
     "opciones/suelo_clima.wgsl",
     "nucleo/superficie/emision.wgsl",
     "nucleo/superficie/menas.wgsl",
