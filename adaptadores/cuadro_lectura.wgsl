@@ -75,3 +75,7 @@ fn adp_relampago_cuadro() -> LuzRelampago {
     let r = datos_cuadro[ADP_CUADRO_RELAMPAGO];
     return LuzRelampago(r.xyz, r.w);
 }
+
+fn adp_relampago_activo_cuadro() -> bool {
+    return datos_cuadro[ADP_CUADRO_VOL_CIELO].w > 0.5;
+}

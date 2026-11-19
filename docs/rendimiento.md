@@ -232,3 +232,6 @@ GPU p50 por fotograma (ms, 20 s, alternando `F-71` y `F-72`):
 
 Capturas comparadas contra `base` y `F-71`: carta de color (`06000`, `12500`, `18000`), agua, tormenta, nubes, noche con
 fractal, giro rápido en bosque y en el End, y vuelo rápido en llanura — sin estelas ni cambio en la forma de las nubes.
+En `F-72b` se añade la invalidación de la caché temporal durante un relámpago (`brillo > 0` en este fotograma o el
+anterior, bandera en `datos_cuadro[ADP_CUADRO_VOL_CIELO].w`) porque el parpadeo de 20 Hz del destello dejaba visible
+un tablero 2×2 sobre la niebla; sin relámpago el coste es 0.

@@ -67,7 +67,9 @@ fn adp_cuadro_escribir() {
     let directa_sol = atm_luz_directa_sol(elev_sol) * c.sol_color;
     let horario = adp_horario();
     let clima_obj = adp_clima_local_objetivo();
+    let relampago_ant = datos_cuadro[ADP_CUADRO_RELAMPAGO].w;
     let relampago = adp_relampago();
+    let relampago_activo = select(0.0, 1.0, relampago.brillo > 0.0 || relampago_ant > 0.0);
 
     datos_cuadro[ADP_CUADRO_LUZ_DIR] = vec4<f32>(luces.direccion, select(0.0, 1.0, luces.fija));
     datos_cuadro[ADP_CUADRO_LUZ_DIRECTA] = vec4<f32>(luces.directa, elev_sol);
@@ -77,7 +79,7 @@ fn adp_cuadro_escribir() {
     datos_cuadro[ADP_CUADRO_CIELO_MEDIO] = vec4<f32>(cielo_medio, 0.0);
     datos_cuadro[ADP_CUADRO_NUBES_COB] = vec4<f32>(nubes.perfil.cobertura, 0.0);
     datos_cuadro[ADP_CUADRO_NUBES_DENS] = vec4<f32>(nubes.perfil.densidad, 0.0);
-    datos_cuadro[ADP_CUADRO_VOL_CIELO] = vec4<f32>(despejado * frame.eye_light_smooth.y, 0.0);
+    datos_cuadro[ADP_CUADRO_VOL_CIELO] = vec4<f32>(despejado * frame.eye_light_smooth.y, relampago_activo);
     datos_cuadro[ADP_CUADRO_VOL_DIRECTA] = vec4<f32>(irr_astro, 0.0);
     datos_cuadro[ADP_CUADRO_SUELO_RAW] = vec4<f32>(suelo_raw, 0.0);
     datos_cuadro[ADP_CUADRO_SOL_MULT] = vec4<f32>(sol.multiple, 0.0);

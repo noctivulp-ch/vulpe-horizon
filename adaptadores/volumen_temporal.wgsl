@@ -62,7 +62,7 @@ fn adp_volumen_temporal(input: ComputeInput) {
     let by = fase & 1u;
     let toca = qx == bx && qy == by;
     let transicion_agua = frame.in_water > 0.01 && frame.in_water < 0.99;
-    let reinicio = frame.delta_time <= 0.0 || transicion_agua
+    let reinicio = frame.delta_time <= 0.0 || transicion_agua || adp_relampago_activo_cuadro()
         || (frame.reset_reasons & (REASON_LOAD | REASON_RESET | REASON_WORLD | REASON_TELEPORT | REASON_PAUSE | REASON_SIZE)) != 0u;
 
     if !toca && !reinicio {
