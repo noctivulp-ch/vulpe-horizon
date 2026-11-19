@@ -58,3 +58,14 @@ Efecto propio de Vulpe para Horizon. Especificación: `vulpe-horizon-spec/subsis
   (`adp_cristal_refraccion`). Las gotas de lluvia se atenúan sobre la escarcha gruesa.
 - **Interior opcional:** `[cristales].escarcha_interior` (o `OPC_CRISTAL_ESCARCHA_INTERIOR` sin mod) añade escarcha más
   ligera en las caras interiores de ventanas que reciben luz de cielo del exterior.
+
+## 3. Copos y montón de nieve (`F-76` / `N-08.3`)
+
+- **Núcleo puro:** [`nucleo/superficie/cristal_nieve.wgsl`](../../nucleo/superficie/cristal_nieve.wgsl).
+- **Copos pegados:** copos blancos de 1–2 texeles (rejilla de 32) en las caras exteriores expuestas (luz de cielo 14–15),
+  con más densidad a barlovento. El mod los retira en ~8 s tras parar de nevar (`mods[6].y` bits 8..15); sin mod siguen
+  `frame.rain`.
+- **Montón inferior:** franja ondulada de `4–6` texeles de alto en la base de cada cara exterior (completa sobre alféizar
+  sólido, más baja en juntas superiores sin bloque debajo). El mod lo acumula en ~18 s mientras nieva y lo funde despacio
+  (`~45 s` en frío, más rápido al calentarse, `mods[6].y` bits 16..23). Se compone por encima de la escarcha y bloquea
+  las gotas de lluvia.

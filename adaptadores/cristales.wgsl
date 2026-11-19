@@ -95,6 +95,7 @@ fn adp_cristal_evaluar(
 
     let c0 = datos_cuadro[ADP_CUADRO_CRISTAL_0]; // x: lluvia_pico, y: secado (0..1), z: escala_lluvia, w: tormenta
     let c1 = datos_cuadro[ADP_CUADRO_CRISTAL_1]; // xy: viento_xz, z: escarcha, w: escala_nieve
+    let c2 = datos_cuadro[ADP_CUADRO_CRISTAL_2]; // x: copos, y: monton, z: arena, w: escala_arena
     let cf = datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS]; // x: escarcha_interior, y: arena_roja, z: con_mod
     let plano = sup_cristal_plano(p.mundo, p.normal_cara);
     let dist = length(p.posicion);
@@ -111,7 +112,21 @@ fn adp_cristal_evaluar(
         dist,
     );
 
-    // 2) Gotas de lluvia (27 §1): no se dibujan sobre escarcha gruesa (27 §Composición).
+    // 2) Copos pegados y montón inferior de nieve (27 §3).
+    let nieve = sup_cristal_nieve(
+        plano,
+        p.normal_cara,
+        p.luz_cielo,
+        p.ao_vertice,
+        c1.xy,
+        adp_tiempo().segundos,
+        c2.x,
+        c2.y,
+        c1.w,
+        dist,
+    );
+
+    // 3) Gotas de lluvia (27 §1): no se dibujan sobre escarcha gruesa ni sobre nieve (27 §Composición).
     let lluvia = sup_cristal_lluvia(
         plano,
         p.normal_cara,
@@ -124,12 +139,12 @@ fn adp_cristal_evaluar(
         c0.z,
         dist,
     );
-    let mascara_sin_escarcha = 1.0 - smoothstep(0.35, 0.75, esc.cobertura);
-    let gota = lluvia.gota * mascara_sin_escarcha;
-    let rastro = lluvia.rastro * mascara_sin_escarcha;
+    let mascara_agua = (1.0 - smoothstep(0.35, 0.75, esc.cobertura)) * (1.0 - smoothstep(0.15, 0.55, nieve.cobertura));
+    let gota = lluvia.gota * mascara_agua;
+    let rastro = lluvia.rastro * mascara_agua;
     let cobertura_agua = max(gota, rastro * 0.7);
 
-    if cobertura_agua <= 0.001 && lluvia.mojado <= 0.001 && esc.cobertura <= 0.001 {
+    if cobertura_agua <= 0.001 && lluvia.mojado <= 0.001 && esc.cobertura <= 0.001 && nieve.cobertura <= 0.001 {
         return r;
     }
 
@@ -141,7 +156,7 @@ fn adp_cristal_evaluar(
                  + bloque_luz
                  + vec3<f32>(OPC_LUZ_NOCHE_SUELO * curva_cielo);
 
-    // Composición de dentro afuera (27 §Composición): escarcha -> gotas.
+    // Composición de dentro afuera (27 §Composición): escarcha -> gotas -> copos y montón de nieve.
     if esc.cobertura > 0.001 {
         let brillo_cristal = (0.35 + 1.4 * esc.cristalino) * (luces.directa * sombra_luz + luces.cielo * curva_cielo + bloque_luz);
         r.capa_color = OPC_CRISTAL_ESCARCHA_COLOR * luz_capa + brillo_cristal * (0.28 * esc.cobertura);
@@ -152,7 +167,7 @@ fn adp_cristal_evaluar(
     }
 
     if cobertura_agua > 0.001 || lluvia.mojado > 0.001 {
-        let grad_agua = lluvia.grad_uv * mascara_sin_escarcha;
+        let grad_agua = lluvia.grad_uv * mascara_agua;
         let n_gota = normalize(
             n_base
             + plano.tangente * (grad_agua.x * 0.65)
@@ -160,8 +175,8 @@ fn adp_cristal_evaluar(
         );
         r.normal = normalize(mix(r.normal, n_gota, cobertura_agua));
         r.refraccion = mix(OPC_TRANSL_REFRACCION * 0.0006, OPC_CRISTAL_GOTA_REFRACCION, cobertura_agua);
-        r.f0_extra = OPC_CRISTAL_MOJADO_F0_EXTRA * lluvia.mojado * mascara_sin_escarcha + 0.04 * gota;
-        r.oscurecer_fondo = lluvia.borde * mascara_sin_escarcha * OPC_CRISTAL_GOTA_BORDE;
+        r.f0_extra = OPC_CRISTAL_MOJADO_F0_EXTRA * lluvia.mojado * mascara_agua + 0.04 * gota;
+        r.oscurecer_fondo = lluvia.borde * mascara_agua * OPC_CRISTAL_GOTA_BORDE;
 
         let esp_astro = sup_especular(r.normal, p.vista, luces.direccion, 0.04, vec3<f32>(0.04))
                       * max(dot(r.normal, luces.direccion), 0.0) * luces.directa * sombra_luz;
@@ -170,14 +185,33 @@ fn adp_cristal_evaluar(
         r.especular_extra = (esp_astro + esp_bloque) * (OPC_CRISTAL_GOTA_ESPECULAR * cobertura_agua);
     }
 
+    var color_nieve = vec3<f32>(0.0);
+    if nieve.cobertura > 0.001 {
+        let n_nieve = normalize(n_base + vec3<f32>(0.0, nieve.relieve_y, 0.0));
+        let n_l_nieve = max(dot(n_nieve, luces.direccion), 0.0);
+        let luz_nieve = luces.directa * sombra_luz * (n_l_nieve + contraluz * 0.4)
+                      + luces.cielo * curva_cielo * (0.95 + 0.2 * nieve.relieve_y)
+                      + bloque_luz
+                      + vec3<f32>(OPC_LUZ_NOCHE_SUELO * curva_cielo);
+        color_nieve = OPC_CRISTAL_NIEVE_COLOR * luz_nieve;
+        let op_nieve = max(nieve.copo * OPC_CRISTAL_NIEVE_OPACIDAD_COPO, nieve.monton * OPC_CRISTAL_NIEVE_OPACIDAD_MONTON);
+        r.capa_color = mix(r.capa_color, color_nieve, op_nieve);
+        r.capa_opacidad = max(r.capa_opacidad, op_nieve);
+        r.especular_extra *= (1.0 - op_nieve);
+    }
+
     // Cristal transparente (cutout, `input.translucent == false`): en los texeles del interior dibuja
-    // las gotas y los cristales de escarcha (con tramado estable en la rejilla de 32 para el borde fino).
+    // nieve, gotas y cristales de escarcha (orden de fuera adentro).
     if !p.translucido {
         let texel = floor(plano.uv * OPC_CRISTAL_REJILLA);
         let dither = rui_hash21(vec2<i32>(i32(texel.x), i32(texel.y)));
+        let hay_nieve = nieve.monton >= 0.40 || nieve.copo >= 0.45;
         let hay_escarcha = esc.cobertura >= 0.42 || (esc.cobertura > 0.14 && esc.cobertura > dither * 0.65);
         let hay_gota = gota >= 0.45 || rastro >= 0.55;
-        if hay_gota {
+        if hay_nieve {
+            r.cobertura_cutout = 1.0;
+            r.color_cutout = color_nieve;
+        } else if hay_gota {
             let refl_dir = reflect(-p.vista, r.normal);
             let refl_cielo = adp_agua_reflejo(p, r.normal, refl_dir, luces) * luz_curva_cielo(max(p.luz_cielo, 0.3));
             let cuerpo = (luces.cielo * curva_cielo * 0.28 + bloque_luz * 0.2 + refl_cielo * 0.65) * (1.0 - r.oscurecer_fondo);

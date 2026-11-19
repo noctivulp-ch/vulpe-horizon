@@ -37,6 +37,14 @@ const OPC_CRISTAL_ESCARCHA_OPACIDAD: f32 = 0.72;   // translúcida, dispersa la 
 const OPC_CRISTAL_ESCARCHA_DESENFOQUE: f32 = 0.009;// radio de desenfoque de lo de detrás (UV de pantalla)
 const OPC_CRISTAL_ESCARCHA_TEMP_NIEVE: f32 = 0.15; // umbral de temperatura de nieve en Minecraft (sin mod)
 
+// Copos y montón de nieve (27 §3)
+const OPC_CRISTAL_NIEVE_COLOR: vec3<f32> = vec3<f32>(0.92, 0.95, 1.0); // blanco frío en lineal
+const OPC_CRISTAL_NIEVE_MONTON_MIN: f32 = 4.0;     // altura mínima del montón inferior en texeles de 32
+const OPC_CRISTAL_NIEVE_MONTON_MAX: f32 = 6.0;     // altura máxima del montón inferior en texeles de 32
+const OPC_CRISTAL_NIEVE_JUNTA_PESO: f32 = 0.45;    // altura reducida en juntas superiores sin alféizar sólido
+const OPC_CRISTAL_NIEVE_OPACIDAD_COPO: f32 = 0.90;
+const OPC_CRISTAL_NIEVE_OPACIDAD_MONTON: f32 = 0.96;
+
 // Convierte el código 0..3 del mod (apagada / ligera / normal / intensa) a multiplicador de intensidad.
 fn opc_cristal_escala_nivel(codigo: u32) -> f32 {
     switch codigo {
