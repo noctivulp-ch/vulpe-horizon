@@ -35,26 +35,26 @@ Efecto propio de Vulpe para Horizon. Especificación: `vulpe-horizon-spec/subsis
   gotas que bajan hacia donde sopla el viento.
 - **Gotas a tirones y fusión:** dos capas de gotas que bajan con `sup_cristal_tiron` (quietas ~68 % del ciclo y resbalan de
   golpe varios texeles) más una capa de gotas quietas (1–2 texeles). Al cruzar zonas con gotas quietas su radio aumenta
-  (hasta ~3–4 texeles en tormenta). Cada gota deja un rastro fino detrás y desvía la normal en espacio tangente para
-  refracción (`adp_cristal_refraccion`), especular (sol, luna y luz de bloque) y reflejo (`adp_agua_reflejo`).
+  (hasta ~3–4 texeles en tormenta). Cada gota tiene forma de lágrima, cúpula refractiva fuerte (`OPC_CRISTAL_GOTA_REFRACCION`),
+  brillo especular directo + cenital (visible también en lluvia nublada), cáustica inferior y borde oscuro (`F-79`). Cuando el
+  efecto está apagado o en despejado (`!cr.activo`), `translucido` sigue exactamente el camino previo de `22`.
 - **Secado escalonado (~30 s):** el mod recuerda `lluvia_pico` y el avance del secado en `mods[6].x`. Primero desaparecen
   los rastros (`0–8 s`), después las gotas pequeñas (`5–18 s`) y por último las grandes (`15–30 s`). Sin mod, el efecto
   sigue `frame.rain` sin secado gradual.
 - **Estilo alternativo:** `OPC_CRISTAL_ESTILO_REGUEROS` cambia a regueros verticales animados en la misma rejilla de 32.
 
-## 2. Escarcha en el frío (`F-75` / `N-08.2`)
+## 2. Escarcha en el frío (`F-75`, `F-80` / `N-08.2`)
 
 - **Núcleo puro:** [`nucleo/superficie/cristal_escarcha.wgsl`](../../nucleo/superficie/cristal_escarcha.wgsl).
 - **Cuándo:** temperatura efectiva por debajo del umbral de nieve (`0,15`, incluyendo la caída de `0,00125` por bloque
   sobre Y = 80). El mod acumula y retira la escarcha de forma gradual (`16 s` al crecer, más rápida mientras nieva, y
   `24 s` al calentarse), con refuerzo de noche y nevando. Sin mod se evalúa en vivo en `[[before_world]]`.
 - **Forma de helecho y bordes del conjunto:** dos ejes girados de ruido en cresta en la rejilla de 32 texeles por bloque
-  crecen desde los bordes y con mayor radio desde las esquinas. La oclusión de vértice (`p.ao_vertice`) distingue el
-  perímetro pegado a bloques sólidos del marco (AO reducido, escarcha gruesa) de las juntas interiores entre cristales
-  contiguos (AO ≈ 1, escarcha reducida a `OPC_CRISTAL_ESCARCHA_JUNTA_PESO` y modulada en gran escala para evitar una
-  cuadrícula).
-- **Óptica:** blanca azulada (`OPC_CRISTAL_ESCARCHA_COLOR`), translúcida con dispersión frontal a contraluz y destellos
-  de facetas cristalinas; en cristales translúcidos emborrona lo que hay detrás con 4 lecturas protegidas por profundidad
+  (suavizada a < 2 bloques de distancia) crecen de forma delicada desde los bordes y esquinas con modulación orgánica
+  multibloque para no encerrar cada bloque en una cuadrícula gruesa.
+- **Óptica y composición (`F-80`):** blanca azulada cristalina (`OPC_CRISTAL_ESCARCHA_COLOR`), translúcida (`opacidad`
+  hasta `0,48`) con composición Porter-Duff «sobre» (`adp_cristal_sobre`) para no oscurecer bordes semitransparentes,
+  destellos especulares de facetas con la luz diurna/nocturna y desenfoque detrás de 4 muestras protegidas por profundidad
   (`adp_cristal_refraccion`). Las gotas de lluvia se atenúan sobre la escarcha gruesa.
 - **Interior opcional:** `[cristales].escarcha_interior` (o `OPC_CRISTAL_ESCARCHA_INTERIOR` sin mod) añade escarcha más
   ligera en las caras interiores de ventanas que reciben luz de cielo del exterior.
@@ -70,26 +70,27 @@ Efecto propio de Vulpe para Horizon. Especificación: `vulpe-horizon-spec/subsis
   (`~45 s` en frío, más rápido al calentarse, `mods[6].y` bits 16..23). Se compone por encima de la escarcha y bloquea
   las gotas de lluvia.
 
-## 4. Vaho del aliento (`F-77` / `N-08.4`)
+## 4. Vaho del aliento (`F-77`, `F-81` / `N-08.4`)
 
 - **Núcleo puro:** [`nucleo/superficie/cristal_aliento.wgsl`](../../nucleo/superficie/cristal_aliento.wgsl).
 - **Cuándo:** solo en cristales con escarcha y con la cámara a menos de `1,5` bloques (por dentro o por fuera). El mod
   comprueba el modo de juego del jugador local (`ClientSession::client_tab_list`) y apaga el efecto en modo espectador
   (`bit 9` de `mods[6].z`, `vaho_w < 0` en `datos_cuadro`).
-- **Memoria de 5 s y pulso:** el mod busca el punto más cercano de cristal en los bloques adyacentes, suaviza su peso
-  (sube en ~6 s y se desvanece en `5 s` al alejarse) y envía la posición relativa a la cámara en `mods[7].xyz`. El
-  shader modula el radio hasta `~1` bloque con un pulso de respiración cada `3,5 s`. Sin mod funciona en vivo sin
-  memoria (se borra al alejarse).
-- **Fusión con la escarcha:** dentro de la mancha, el dibujo de helecho y las facetas se atenúan y dan paso a una
-  condensación lisa más clara con desenfoque detrás (`27` §4).
+- **Empañado suave, memoria de 5 s y pulso (`F-81`):** el mod busca el punto más cercano de cristal en los bloques
+  adyacentes, suaviza su peso (sube en ~6 s y se desvanece en `5 s` al alejarse) y envía la posición relativa a la cámara
+  en `mods[7].xyz`. El shader evalúa ruido continuo interpolado (`5,5`, `16` y `32` ciclos/bloque) con envolvente radial
+  gaussiana y pulso de respiración cada `3,5 s` hasta `~1` bloque de radio, sin bloques pixelados ni borde duro. Sin mod
+  funciona en vivo sin memoria.
+- **Fusión con la escarcha:** una máscara amplia (`aliento.derrite`) disuelve gradualmente el dibujo de helecho y las
+  facetas para dejar condensación lisa y borrosa detrás (`27` §4).
 
-## 5. Arena tras tormenta en bioma seco (`F-78` / `N-08.5`)
+## 5. Arena tras tormenta en bioma seco (`F-78`, `F-82` / `N-08.5`)
 
 - **Núcleo puro:** [`nucleo/superficie/cristal_arena.wgsl`](../../nucleo/superficie/cristal_arena.wgsl).
 - **Cuándo:** solo en biomas secos del Overworld (`!has_precipitation && temperature >= 1,0`: desierto, sabana, mesas y
   biomas secos de mods), gestionado por el mod nativo. Acumula durante lluvia/tormenta (más fuerte y rápido con tormenta
   eléctrica) y el viento se la lleva en `~3 min` tras despejar (`mods[6].z` bits 12..23). Sin el mod queda apagada.
-- **Cómo:** granos en la rejilla de 32 acumulados sobre todo en la base (`3–6,5` texeles) y pegados al marco, con más
-  cantidad a barlovento y menos hacia arriba. Amarilla (`OPC_CRISTAL_ARENA_COLOR_AMARILLA`) en desierto/sabana y roja
-  (`OPC_CRISTAL_ARENA_COLOR_ROJA`, `bit 8`) en mesas (`badlands`). Opaca y completamente mate (`cr.mate = 1`), tapa lo
-  de detrás y anula el brillo especular y el reflejo Fresnel donde se posa.
+- **Velo fino de polvo y granos sutiles (`F-82`):** velo continuo de polvo arrastrado por el viento en coordenadas de mundo
+  (sin bandas horizontales repetidas por bloque), más denso hacia la base y a barlovento, mezclado con granos sutiles en la
+  rejilla de 32. Polvo amarillo (`OPC_CRISTAL_ARENA_COLOR_AMARILLA`) en desierto/sabana y terracota polvoriento
+  (`OPC_CRISTAL_ARENA_COLOR_ROJA`, `bit 8`) en mesas (`badlands`), mate y sin reflejo donde se acumula.

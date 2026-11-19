@@ -235,3 +235,28 @@ fractal, giro rápido en bosque y en el End, y vuelo rápido en llanura — sin 
 En `F-72b` se añade la invalidación de la caché temporal durante un relámpago (`brillo > 0` en este fotograma o el
 anterior, bandera en `datos_cuadro[ADP_CUADRO_VOL_CIELO].w`) porque el parpadeo de 20 Hz del destello dejaba visible
 un tablero 2×2 sobre la niebla; sin relámpago el coste es 0.
+
+## 2026-11-19 (N-08): el tiempo en los cristales (`F-74`..`F-82` + mod `N-08.1`..`N-08.5`)
+
+Medidas de 20 s en `vulpe-pruebas` (`HORIZON_HOME=~/.local/share/horizon/instances/vulpe-pruebas`, versión nativa
+`native-dd67b76-060022b89a45`, `gpu-passes on`, `time set 6000`) comparando el pack anterior (`e7ad1c4`) contra el
+efecto completo (`F-82`) en:
+- **Bosque** (`170,5, 90, 166,5`, despejado, sin cristales visibles);
+- **Muro grande de cristal en lluvia** (`170,5, 110, 150,5` frente a un muro de 17×9 bloques con cristal transparente,
+  tintado azul, ahumado y paneles transparentes y blancos).
+
+| escena (20 s) | antes (`e7ad1c4`) | después (`F-82`) | diferencia (GPU p50) | pasadas clave |
+|---|---|---|---|---|
+| Overworld bosque (despejado) | 38,0 fps · GPU p50 **13,64 ms** (media 19,50) | 34,1 fps · GPU p50 **15,27 ms** (media 22,21) | **+1,63 ms** | `World` 1,43 → 1,52 ms (+0,09), `World after copy` 0,68 → 0,71 ms (+0,03), `Datos del cuadro` 0,0072 → 0,0075 ms |
+| Muro de cristal 17×9 (lluvia) | 37,7 fps · GPU p50 **14,67 ms** (media 19,43) | 34,5 fps · GPU p50 **15,90 ms** (media 21,75) | **+1,23 ms** | `World after copy` 3,40 → 3,44 ms (+0,04), `Datos del cuadro` 0,0073 → 0,0078 ms |
+
+**Notas de coste:**
+- Lecturas de textura en `material`: **17 / 64** (cero lecturas nuevas; el desenfoque de la escarcha reutiliza
+  `opaque_color`/`opaque_depth` y solo corre en píxeles de cristal translúcido con escarcha o vaho). Expresiones en
+  `material`: `11 165` → `14 037 / 20 000`.
+- En el muro de cristal con lluvia, el incremento directo en la pasada de translúcidos (`World after copy`) es solo
+  **+0,04 ms**. La mayor parte de los ~+1,2–1,6 ms de GPU total proviene de activar `[material] coverage = "pack"`,
+  necesario para poder dibujar en el interior transparente del cristal *cutout* (`glass` y `glass_pane`), que bajo
+  `coverage = "engine"` Horizon descarta por alfa < 0,5; en GPU esto desactiva *early-Z* en terreno sólido/recortado.
+  **Petición opcional para Horizon:** un `coverage = "pack"` acotado a `[[tags]]` (o dibujar `glass`/`glass_pane` en la
+  pasada translúcida) eliminaría ese ~1,5 ms en escenas sin cristal.
