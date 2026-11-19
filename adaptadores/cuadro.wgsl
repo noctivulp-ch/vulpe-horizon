@@ -27,8 +27,9 @@ const ADP_CUADRO_SOL_DISCO: u32 = 13u;   // xyz: atm_luz_directa_sol(elev_sol) *
 const ADP_CUADRO_HORARIO: u32 = 14u;     // xy: horario (uniforme, manchas), z: clima.tipo, w: clima.peso
 const ADP_CUADRO_RELAMPAGO: u32 = 15u;   // xyz: relampago.base, w: relampago.brillo
 const ADP_CUADRO_CRUCE: u32 = 16u;       // x: t en segundos (<0 sin cruce), y: rapidez con signo (+salida/-entrada), z: dentro_antes (0/1), w: firma dimensión+10
-const ADP_CUADRO_CRISTAL_0: u32 = 17u;   // x: lluvia_pico, y: secado (0..1), z: escala_lluvia, w: tormenta
-const ADP_CUADRO_CRISTAL_1: u32 = 18u;   // xy: viento_xz, z: escarcha, w: escala_nieve
-const ADP_CUADRO_CRISTAL_2: u32 = 19u;   // x: copos, y: monton, z: arena, w: escala_arena
-const ADP_CUADRO_CRISTAL_VAHO: u32 = 20u;// xyz: pos relativa de vaho, w: peso (negativo = desactivado/espectador)
-const ADP_CUADRO_CRISTAL_FLAGS: u32 = 21u;// x: escarcha_interior (0/1), y: arena_roja (0/1), z: con_mod (0/1), w: reservado
+const ADP_CUADRO_CRISTAL_0: u32 = 17u;        // x: clima, y: escarcha, z: repisa, w: condensacion
+const ADP_CUADRO_CRISTAL_1: u32 = 18u;        // xy: viento_lluvia (tau 1 s), zw: viento_arena (tau 5 s)
+const ADP_CUADRO_CRISTAL_2: u32 = 19u;        // x: arena, y: escala_lluvia, z: escala_nieve, w: escala_arena
+const ADP_CUADRO_CRISTAL_VAHO: u32 = 20u;     // xyz: pos relativa de vaho, w: peso (<0 desactivado/espectador)
+const ADP_CUADRO_CRISTAL_FLAGS: u32 = 21u;    // x: flags24, y: cond_opacidad, z: cond_blancura, w: vaho_escala
+const ADP_CUADRO_CRISTAL_VAHO_OPT: u32 = 22u; // x: aliento_opacidad, y: aliento_blancura, z: resolucion_k, w: con_mod

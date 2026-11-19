@@ -81,6 +81,15 @@ dispatch = [1, 1, 1]
 workgroup = [1, 1, 1]
 writes = ["datos_cuadro"]
 
+[[before_world]]
+file = "etapas/cristal_mapa.wgsl"
+files = ["adaptadores/cristal_mapa.wgsl", "adaptadores/cristal_mapa_escritura.wgsl"]
+name = "Mapa de cristales"
+dispatch = [48, 24, 2]
+workgroup = [8, 4, 1]
+reads = ["datos_cuadro"]
+writes = ["cristal_mapa"]
+
 [sky]
 file = "etapas/cielo.wgsl"
 files = [
@@ -144,9 +153,13 @@ files = [
     "adaptadores/cuadro_lectura.wgsl",
     "adaptadores/material.wgsl",
     "adaptadores/agua.wgsl",
+    "adaptadores/cristal_mapa.wgsl",
+    "adaptadores/cristales_entorno.wgsl",
     "adaptadores/cristales.wgsl",
 ]
-reads = ["datos_cuadro"]
+reads = ["datos_cuadro", "cristal_mapa"]
+
+[ray_tracing]        # consultas por bloque solo en píxeles de cristal (27 §En Horizon, opción b)
 
 [displacement]       # relieve geométrico con teselación (subsistema 18)
 distance = 12.0
@@ -167,6 +180,12 @@ element = "vec4<f32>"
 keep = "view"
 
 [[resource]]
+name = "cristal_mapa"
+buffer = 442432
+element = "u32"
+keep = "view"
+
+[[resource]]
 name = "volumen"
 format = "rgba16float"
 scale = 0.5
@@ -176,18 +195,6 @@ keep = "view"
 name = "volumen_prof"
 format = "r32float"
 scale = 0.5
-keep = "view"
-
-[[resource]]
-name = "composicion"
-format = "rgba16float"
-scale = 1.0
-keep = "view"
-
-[[resource]]
-name = "bloom"
-format = "rgba16float"
-scale = 0.25
 keep = "view"
 
 [[resource]]
@@ -282,6 +289,7 @@ file = "etapas/post/04-bloom-bajada.wgsl"
 files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/bloom_estado.wgsl"]
 name = "Bloom: bajada"
 output = "bloom"
+scale = 0.25
 reads = ["historial_previous", "bloom2_previous", "datos_cuadro"]
 
 [[post]]
@@ -289,20 +297,20 @@ file = "etapas/post/05-bloom-ancho.wgsl"
 files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/bloom_estado.wgsl"]
 name = "Bloom: ancho"
 output = "bloom2"
-reads = ["bloom", "datos_cuadro"]
+reads = ["datos_cuadro"]
 
 [[post]]
 file = "etapas/post/06-taa.wgsl"
 files = ["nucleo/imagen/taa.wgsl", "adaptadores/taa.wgsl"]
 name = "TAA"
 output = "historial"
-reads = ["composicion", "historial_previous"]
+reads = ["historial_previous"]
 
 [[post]]
 file = "etapas/post/07-final.wgsl"
 files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/nitidez.wgsl", "nucleo/imagen/aislamiento.wgsl", "opciones/aislamiento.wgsl", "nucleo/volumen/fase.wgsl", "nucleo/imagen/rayos.wgsl", "opciones/rayos.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/rayos.wgsl", "adaptadores/aislamiento.wgsl"]
 name = "Final"
-reads = ["historial", "volumen", "bloom", "bloom2", "datos_cuadro"]
+reads = ["historial", "volumen", "bloom2", "datos_cuadro"]
 
 [tonemap]
 file = "etapas/tonemap.wgsl"
@@ -948,6 +956,11 @@ sprites = ["block/*_ore", "block/gilded_blackstone"]
 [[materials]]       # arena (suelo con viento en biomas desérticos, N-02)
 id = 10
 sprites = ["block/sand", "block/red_sand", "block/suspicious_sand*"]
+
+[[materials]]       # cristal transparente en pasada translúcida (interior alfa >= 0,02 en el mod; 27)
+id = 11
+sprites = ["block/glass", "block/glass_pane_top"]
+translucent = true
 
 # --- Etiquetas de sprites (bits de MaterialInput.tags; API 0.2) -------------------------------
 

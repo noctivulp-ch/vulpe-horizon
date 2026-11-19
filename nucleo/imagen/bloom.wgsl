@@ -5,26 +5,24 @@
 // cada uno de los cinco grupos: un píxel muy brillante aislado no da un halo que parpadea.
 fn img_bloom_bajada(t: texture_2d<f32>, s: sampler, uv: vec2<f32>) -> vec3<f32> {
     let px = 1.0 / vec2<f32>(textureDimensions(t));
-    let a = textureSampleLevel(t, s, uv + px * vec2<f32>(-2.0, -2.0), 0.0).rgb;
-    let b = textureSampleLevel(t, s, uv + px * vec2<f32>(0.0, -2.0), 0.0).rgb;
-    let c = textureSampleLevel(t, s, uv + px * vec2<f32>(2.0, -2.0), 0.0).rgb;
-    let d = textureSampleLevel(t, s, uv + px * vec2<f32>(-1.0, -1.0), 0.0).rgb;
-    let e = textureSampleLevel(t, s, uv + px * vec2<f32>(1.0, -1.0), 0.0).rgb;
-    let f = textureSampleLevel(t, s, uv + px * vec2<f32>(-2.0, 0.0), 0.0).rgb;
-    let g = textureSampleLevel(t, s, uv, 0.0).rgb;
-    let h = textureSampleLevel(t, s, uv + px * vec2<f32>(2.0, 0.0), 0.0).rgb;
-    let i = textureSampleLevel(t, s, uv + px * vec2<f32>(-1.0, 1.0), 0.0).rgb;
-    let j = textureSampleLevel(t, s, uv + px * vec2<f32>(1.0, 1.0), 0.0).rgb;
-    let k = textureSampleLevel(t, s, uv + px * vec2<f32>(-2.0, 2.0), 0.0).rgb;
-    let l = textureSampleLevel(t, s, uv + px * vec2<f32>(0.0, 2.0), 0.0).rgb;
-    let m = textureSampleLevel(t, s, uv + px * vec2<f32>(2.0, 2.0), 0.0).rgb;
+    let offs = array<vec2<f32>, 13>(
+        vec2<f32>(-2.0, -2.0), vec2<f32>(0.0, -2.0), vec2<f32>(2.0, -2.0),
+        vec2<f32>(-1.0, -1.0), vec2<f32>(1.0, -1.0),
+        vec2<f32>(-2.0, 0.0),  vec2<f32>(0.0, 0.0),  vec2<f32>(2.0, 0.0),
+        vec2<f32>(-1.0, 1.0),  vec2<f32>(1.0, 1.0),
+        vec2<f32>(-2.0, 2.0),  vec2<f32>(0.0, 2.0),  vec2<f32>(2.0, 2.0),
+    );
+    var m: array<vec3<f32>, 13>;
+    for (var idx = 0; idx < 13; idx++) {
+        m[idx] = textureSampleLevel(t, s, uv + px * offs[idx], 0.0).rgb;
+    }
     var suma = vec3<f32>(0.0);
     var pesos = 0.0;
-    suma += img_bloom_grupo(d, e, i, j, 0.5, &pesos);
-    suma += img_bloom_grupo(a, b, f, g, 0.125, &pesos);
-    suma += img_bloom_grupo(b, c, g, h, 0.125, &pesos);
-    suma += img_bloom_grupo(f, g, k, l, 0.125, &pesos);
-    suma += img_bloom_grupo(g, h, l, m, 0.125, &pesos);
+    suma += img_bloom_grupo(m[3], m[4], m[8], m[9], 0.5, &pesos);
+    suma += img_bloom_grupo(m[0], m[1], m[5], m[6], 0.125, &pesos);
+    suma += img_bloom_grupo(m[1], m[2], m[6], m[7], 0.125, &pesos);
+    suma += img_bloom_grupo(m[5], m[6], m[10], m[11], 0.125, &pesos);
+    suma += img_bloom_grupo(m[6], m[7], m[11], m[12], 0.125, &pesos);
     return suma / max(pesos, 1e-6);
 }
 

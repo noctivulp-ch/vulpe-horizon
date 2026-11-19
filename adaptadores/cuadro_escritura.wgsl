@@ -116,57 +116,88 @@ fn adp_cuadro_escribir() {
         }
     }
 
-    // Estado por fotograma de «el tiempo en los cristales» (27): decodifica mods[6..7] una sola vez por cuadro,
-    // con respaldo sin mod usando frame.rain, frame.thunder, frame.precipitation y OPC_VIENTO.
+    // Estado por fotograma de «el tiempo en los cristales» (27 v2): decodifica mods[6..7] (formato 4) una vez
+    // por cuadro y suaviza el viento (tau ~1 s lluvia, ~5 s arena), con respaldo completo sin mod.
     let cm = adp_mod_cristales();
+    let clima_global = frame.rain * (1.0 + 0.4 * frame.thunder);
+    let dt_cr = clamp(frame.delta_time, 0.0, 0.5);
+    let v_ant = datos_cuadro[ADP_CUADRO_CRISTAL_1];
+    let reinicio_cr = frame.delta_time <= 0.0 || abs(cruce_ant.w - firma_dim) > 0.5;
+    let alfa_vl = select(1.0 - exp(-dt_cr / OPC_CRISTAL_VIENTO_TAU_LLUVIA), 1.0, reinicio_cr);
+    let alfa_va = select(1.0 - exp(-dt_cr / OPC_CRISTAL_VIENTO_TAU_ARENA), 1.0, reinicio_cr);
+
     if cm.activo {
-        let escala_lluvia = opc_cristal_escala_nivel(cm.nivel_lluvia);
-        let escala_nieve = opc_cristal_escala_nivel(cm.nivel_nieve);
-        let escala_arena = opc_cristal_escala_nivel(cm.nivel_arena);
-        datos_cuadro[ADP_CUADRO_CRISTAL_0] = vec4<f32>(cm.lluvia_pico, cm.lluvia_secado, escala_lluvia, frame.thunder);
-        datos_cuadro[ADP_CUADRO_CRISTAL_1] = vec4<f32>(cm.viento_xz, cm.escarcha, escala_nieve);
-        datos_cuadro[ADP_CUADRO_CRISTAL_2] = vec4<f32>(cm.copos, cm.monton, cm.arena, escala_arena);
-        let vaho_w = select(-1.0, cm.vaho_peso, cm.aliento_activo && !cm.espectador);
+        let escala_lluvia = opc_cristal_escala_lluvia(cm.nivel_lluvia);
+        let escala_nieve = opc_cristal_escala_lluvia(cm.nivel_nieve);
+        let escala_arena = opc_cristal_escala_arena(cm.nivel_arena);
+        let v_obj = select(vec2<f32>(0.0), cm.viento_xz, cm.seguir_viento);
+        let v_lluvia = mix(v_ant.xy, v_obj, alfa_vl);
+        let v_arena = mix(v_ant.zw, v_obj, alfa_va);
+        var flags: u32 = 0u;
+        if cm.estilo_regueros { flags |= OPC_CR_FLAG_REGUEROS; }
+        if cm.seguir_viento { flags |= OPC_CR_FLAG_VIENTO; }
+        if cm.interior { flags |= OPC_CR_FLAG_INTERIOR; }
+        if cm.arena_roja { flags |= OPC_CR_FLAG_ARENA_ROJA; }
+        if cm.espectador { flags |= OPC_CR_FLAG_ESPECTADOR; }
+        if cm.bioma_seco { flags |= OPC_CR_FLAG_BIOMA_SECO; }
+        if cm.bioma_frio { flags |= OPC_CR_FLAG_BIOMA_FRIO; }
+        if cm.llueve_en_bioma { flags |= OPC_CR_FLAG_LLUEVE_BIOMA; }
+        flags |= (cm.borde_helado & 3u) << 8u;
+        flags |= (cm.desenfoque & 3u) << 10u;
+
+        datos_cuadro[ADP_CUADRO_CRISTAL_0] = vec4<f32>(clima_global, cm.escarcha, cm.repisa, cm.condensacion);
+        datos_cuadro[ADP_CUADRO_CRISTAL_1] = vec4<f32>(v_lluvia, v_arena);
+        datos_cuadro[ADP_CUADRO_CRISTAL_2] = vec4<f32>(cm.arena, escala_lluvia, escala_nieve, escala_arena);
+        let vaho_activo = cm.interior && !cm.espectador && cm.aliento_opacidad > 0.001;
+        let vaho_w = select(-1.0, cm.vaho_peso, vaho_activo);
         datos_cuadro[ADP_CUADRO_CRISTAL_VAHO] = vec4<f32>(cm.vaho_pos, vaho_w);
-        datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS] = vec4<f32>(
-            select(0.0, 1.0, cm.escarcha_interior),
-            select(0.0, 1.0, cm.arena_roja),
+        datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS] = vec4<f32>(f32(flags), cm.cond_opacidad, cm.cond_blancura, cm.vaho_escala);
+        datos_cuadro[ADP_CUADRO_CRISTAL_VAHO_OPT] = vec4<f32>(
+            cm.aliento_opacidad,
+            cm.aliento_blancura,
+            opc_cristal_k_resolucion(cm.resolucion_cod),
             1.0,
-            0.0,
         );
     } else {
-        // Sin mod: sin secado gradual, sin arena, vaho sin memoria.
-        let llueve = frame.precipitation == 1u && frame.rain > 0.01;
-        let lluvia_sin_mod = select(0.0, frame.rain * (0.72 + 0.28 * frame.thunder), llueve);
-        let viento_base = normalize(OPC_VIENTO) * 0.55;
+        // Respaldo sin mod: deduce bioma frío/lluvia, noche y tormenta desde `frame`.
         let alt_extra = max(frame.camera_position.y - 80.0, 0.0);
         let temp_eff = frame.temperature - alt_extra * 0.00125;
-        let frio = temp_eff < OPC_CRISTAL_ESCARCHA_TEMP_NIEVE || frame.precipitation == 2u;
-        let escarcha_sin_mod = select(
-            0.0,
-            clamp(
-                0.48 + 0.32 * clamp((OPC_CRISTAL_ESCARCHA_TEMP_NIEVE - temp_eff) / 0.45, 0.0, 1.0)
-                + 0.22 * adp_factor_noche()
-                + 0.25 * select(0.0, frame.rain, frame.precipitation == 2u || frio),
-                0.0,
-                1.0,
-            ),
-            frio,
-        );
-        datos_cuadro[ADP_CUADRO_CRISTAL_0] = vec4<f32>(
-            lluvia_sin_mod,
-            select(1.0, 0.0, llueve),
-            OPC_CRISTAL_NIVEL_DEFECTO,
-            frame.thunder,
-        );
-        let nevando_sin_mod = select(0.0, frame.rain, frame.precipitation == 2u && frame.rain > 0.01);
-        datos_cuadro[ADP_CUADRO_CRISTAL_1] = vec4<f32>(viento_base, escarcha_sin_mod, OPC_CRISTAL_NIVEL_DEFECTO);
-        datos_cuadro[ADP_CUADRO_CRISTAL_2] = vec4<f32>(nevando_sin_mod, nevando_sin_mod, 0.0, 0.0);
+        let bioma_seco = frame.precipitation == 0u && frame.temperature >= 1.0;
+        let bioma_frio = (temp_eff < OPC_CRISTAL_TEMP_NIEVE || frame.precipitation == 2u) && !bioma_seco;
+        let llueve_bioma = frame.precipitation == 1u;
+        let precip = clima_global > OPC_CRISTAL_CLIMA_UMBRAL;
+        let nevando = bioma_frio && precip;
+        let noche = frame.day_time >= (12542.0 / 24000.0) && frame.day_time <= (23460.0 / 24000.0);
+        let escarcha = select(0.0, select(select(0.45, 0.70, noche), 1.0, nevando), bioma_frio);
+        let repisa = select(0.0, 1.0, nevando);
+        let cond = select(0.0, 1.0, noche || (precip && frame.thunder > 0.5));
+        let v_obj = select(vec2<f32>(0.0), normalize(OPC_VIENTO) * 0.55, OPC_CRISTAL_SEGUIR_VIENTO);
+        let v_lluvia = mix(v_ant.xy, v_obj, alfa_vl);
+        let v_arena = mix(v_ant.zw, v_obj, alfa_va);
+        var flags: u32 = 0u;
+        if OPC_CRISTAL_ESTILO_REGUEROS { flags |= OPC_CR_FLAG_REGUEROS; }
+        if OPC_CRISTAL_SEGUIR_VIENTO { flags |= OPC_CR_FLAG_VIENTO; }
+        if OPC_CRISTAL_INTERIOR_ACTIVO { flags |= OPC_CR_FLAG_INTERIOR; }
+        if bioma_seco { flags |= OPC_CR_FLAG_BIOMA_SECO; }
+        if bioma_frio { flags |= OPC_CR_FLAG_BIOMA_FRIO; }
+        if llueve_bioma { flags |= OPC_CR_FLAG_LLUEVE_BIOMA; }
+        flags |= (OPC_CRISTAL_BORDE_ESTILO_DEF & 3u) << 8u;
+        flags |= (OPC_CRISTAL_DESENFOQUE_DEF & 3u) << 10u;
+
+        datos_cuadro[ADP_CUADRO_CRISTAL_0] = vec4<f32>(clima_global, escarcha, repisa, cond);
+        datos_cuadro[ADP_CUADRO_CRISTAL_1] = vec4<f32>(v_lluvia, v_arena);
+        datos_cuadro[ADP_CUADRO_CRISTAL_2] = vec4<f32>(0.0, OPC_CRISTAL_NIVEL_DEFECTO, OPC_CRISTAL_NIVEL_DEFECTO, 0.0);
         datos_cuadro[ADP_CUADRO_CRISTAL_VAHO] = vec4<f32>(0.0, 0.0, 0.0, select(-1.0, 0.0, OPC_CRISTAL_ALIENTO_ACTIVO));
         datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS] = vec4<f32>(
-            select(0.0, 1.0, OPC_CRISTAL_ESCARCHA_INTERIOR),
-            0.0,
-            0.0,
+            f32(flags),
+            OPC_CRISTAL_COND_OPACIDAD_DEF,
+            OPC_CRISTAL_COND_BLANCURA_DEF,
+            1.0,
+        );
+        datos_cuadro[ADP_CUADRO_CRISTAL_VAHO_OPT] = vec4<f32>(
+            OPC_CRISTAL_ALIENTO_OPACIDAD_DEF,
+            OPC_CRISTAL_ALIENTO_BLANCURA_DEF,
+            1.0,
             0.0,
         );
     }
