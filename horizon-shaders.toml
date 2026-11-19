@@ -165,6 +165,12 @@ scale = 0.5
 keep = "view"
 
 [[resource]]
+name = "volumen_prof"
+format = "r32float"
+scale = 0.5
+keep = "view"
+
+[[resource]]
 name = "composicion"
 format = "rgba16float"
 scale = 1.0
@@ -218,16 +224,19 @@ files = [
     "nucleo/volumen/raymarch.wgsl",
     "nucleo/volumen/agua.wgsl",
     "nucleo/volumen/dimensiones.wgsl",
-    "adaptadores/post.wgsl",
     "opciones/cruce_agua.wgsl",
     "adaptadores/cruce_agua.wgsl",
     "adaptadores/aurora.wgsl",
     "adaptadores/cuadro_lectura.wgsl",
     "adaptadores/volumen.wgsl",
+    "adaptadores/volumen_temporal.wgsl",
 ]
 name = "Volumen"
-output = "volumen"
-reads = ["bloom2_previous", "datos_cuadro"]
+compute = true
+dispatch = "pixels"
+workgroup = [8, 8, 1]
+reads = ["bloom2_previous", "datos_cuadro", "volumen_previous", "volumen_prof_previous"]
+writes = ["volumen", "volumen_prof"]
 
 [[post]]
 file = "etapas/post/03-composicion.wgsl"

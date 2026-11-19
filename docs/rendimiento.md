@@ -186,3 +186,49 @@ No llegué a sacar las capturas de comparación: no pasó el criterio de rendimi
 
 **Para PR-Pending:** más canales en `set_surface` (un `vec4` de datos del pack) o un bloque de datos por fotograma
 legible en `material` harían viable diferir la luz entera.
+
+## 2026-11-19 (N-05): rendimiento con la Shader API 0.2
+
+Medidas de 20 s en `vulpe-pruebas` con los ajustes del dueño (`renderDistance:8`, `lodDistance:32`, `gpuCulling:true`,
+`leafCulling:hidden`, `inactivityFpsLimit:"minimized"`, `gpu-passes on`), alternando versiones en la misma sesión.
+
+### F-71: datos por fotograma en `[[before_world]]` (`datos_cuadro`)
+
+Una pasada de cómputo `[[before_world]]` (`etapas/cuadro.wgsl`, despacho `[1, 1, 1]`, **0,01 ms**) calcula una vez por
+fotograma las luces del terreno (`adp_luces`), las tablas por elevación del sol, el ambiente de nubes, el horizonte, el
+cielo medio, el suelo, la dispersión múltiple de sol/luna, el horario de la niebla, el clima local y el relámpago, y los
+escribe en el buffer `datos_cuadro` (256 bytes, 16 `vec4<f32>`). Lo leen `[sky]`, `[material]`, `01-aurora`,
+`02-volumen` y `03-composicion`.
+
+GPU p50 por fotograma (ms, 20 s, alternando `4c8aeaa` y `F-71`):
+
+| escena | base (`4c8aeaa`) | F-71 (`f71-1` / `f71-2`) | diferencia (p50) |
+|---|---|---|---|
+| Overworld bosque | 17,88 / 17,56 (media **17,72**) | 14,19 / 12,68 (media **13,44**) | **−4,28 ms** (41,5 → 51,8 fps) |
+| Overworld llanura | 15,59 / 14,47 (media **15,03**) | 12,51 / 11,71 (media **12,11**) | **−2,92 ms** (47,2 → 55,0 fps) |
+| Nether | 9,88 / 9,89 (media **9,89**) | 9,82 / 9,84 (media **9,83**) | −0,06 ms |
+| End | 4,74 / 4,67 (media **4,71**) | 4,66 / 4,68 (media **4,67**) | −0,04 ms |
+
+Capturas comparadas contra `base`: carta de color (`06000`, `12500`, `18000`), agua, tormenta, nubes y noche con fractal
+— iguales a la vista.
+
+### F-72: caché temporal del volumen (tablero 2×2 en cómputo)
+
+La pasada `02-volumen.wgsl` pasa a cómputo (`compute = true`, `workgroup = [8, 8, 1]`) y escribe `volumen`
+(`rgba16float`, escala 0,5) y `volumen_prof` (`r32float`, escala 0,5, `keep = "view"`). Cada fotograma calcula 1/4 de
+los téxeles en orden Bayer 2×2 con mapeo por cuadrantes (para que 3 de cada 4 warps salten el raymarch por completo) y
+reconstruye los otros 3/4 reproyectando `volumen_previous` con `frame.previous_view_projection`, rechazando historial si
+el punto sale de pantalla, cambia entre cielo y terreno, o su distancia difiere más de `OPC_VOL_CACHE_UMBRAL_PROF` (8 %)
+respecto a `volumen_prof_previous` (y en reinicios o transición de agua).
+
+GPU p50 por fotograma (ms, 20 s, alternando `F-71` y `F-72`):
+
+| escena | F-71 (`f71-2` / `f71-ab1`) | F-72 (`f72-1` / `f72-2`) | diferencia (p50) | pasada `Volumen` |
+|---|---|---|---|---|
+| Overworld bosque | 12,68 / 14,81 (media **13,75**) | 11,86 / 12,08 (media **11,97**) | **−1,78 ms** (54–55 fps) | 1,12 → **0,43 ms** |
+| Overworld llanura | 11,71 / 12,66 (media **12,19**) | 10,97 / 11,12 (media **11,05**) | **−1,14 ms** (57–58 fps) | 0,89 → **0,40 ms** |
+| Nether | 9,84 / 9,89 (media **9,87**) | 9,54 / 9,62 (media **9,58**) | **−0,29 ms** (62–63 fps) | 0,52 → **0,26 ms** |
+| End | 4,68 / 4,73 (media **4,71**) | 3,83 / 3,85 (media **3,84**) | **−0,87 ms** (85–86 fps) | 1,32 → **0,60 ms** |
+
+Capturas comparadas contra `base` y `F-71`: carta de color (`06000`, `12500`, `18000`), agua, tormenta, nubes, noche con
+fractal, giro rápido en bosque y en el End, y vuelo rápido en llanura — sin estelas ni cambio en la forma de las nubes.

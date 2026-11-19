@@ -1,8 +1,6 @@
-// Pasada 1 (media resolución, destino «volumen»): aire, niebla y nubes en un solo raymarch (subsistema 05).
-// Porqué: docs/efectos/niebla-y-nubes.md
-fn post(input: PostInput) -> vec4<f32> {
-    if opc_quitar(1u) {
-        return adp_volumen_salida(VolResultado(vec3<f32>(0.0), 1.0, 0.0, vec3<f32>(0.0)));
-    }
-    return adp_volumen_salida(adp_volumen(input.uv, input.pixel));
+// Pasada 2 (cómputo a media resolución, destinos «volumen» y «volumen_prof»):
+// aire, niebla y nubes con caché temporal 2×2 y reproyección (subsistema 05).
+// Porqué: docs/efectos/niebla-y-nubes.md y docs/rendimiento.md
+fn compute(input: ComputeInput) {
+    adp_volumen_temporal(input);
 }

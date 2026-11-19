@@ -46,6 +46,11 @@ const OPC_NUBES_HUELLA: f32 = 0.0023;                             // bloques por
 const OPC_NUBES_AUTOSOMBRA: f32 = 5.0;
 const OPC_NUBES_AUTOSOMBRA_PASO: vec2<f32> = vec2<f32>(20.0, 20.0);
 
+// Caché temporal del volumen (tablero 2×2 con reproyección y rechazo por profundidad).
+// Porqué: docs/rendimiento.md
+const OPC_VOL_CACHE_UMBRAL_PROF: f32 = 0.08;    // diferencia relativa de distancia que invalida el historial
+const OPC_VOL_CACHE_CIELO_DIST: f32 = 5e5;      // umbral que separa cielo (1e6) de terreno
+
 // Otras dimensiones (17).
 const OPC_NIEBLA_NETHER_DEFECTO: f32 = 1.0;
 const OPC_NIEBLA_END_DEFECTO: f32 = 1.0;

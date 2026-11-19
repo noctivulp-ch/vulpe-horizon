@@ -35,12 +35,12 @@ fn adp_volumen_luz() -> VolLuz {
 // principal el terreno y el cielo valen 0 aunque haya niebla o nubes; a través del agua o de un translúcido, 0,75 de
 // la opacidad del volumen que hay detrás; con la cámara bajo el agua, la opacidad del agua.
 // Porqué: docs/efectos/bloom.md §«Bloom de niebla del original» (F-20)
-fn adp_opacidad_bloom_niebla(v: VolResultado, p: AdpPixel) -> f32 {
+fn adp_opacidad_bloom_niebla(v: VolResultado, es_cielo: bool, pixel: vec2<f32>) -> f32 {
     let opacidad = 1.0 - v.transmitancia;
     if frame.in_water > 0.5 || !adp_es_superficie() {
         return opacidad;
     }
-    if p.es_cielo || surface_at(vec2<i32>(p.pixel)).present {
+    if es_cielo || surface_at(vec2<i32>(pixel)).present {
         return 0.0;
     }
     return OPC_BLOOM_NIEBLA_TRANSLUCIDO * opacidad;
@@ -239,11 +239,11 @@ fn adp_niebla_inmersion(color: vec3<f32>, distancia: f32) -> vec3<f32> {
 
 // Niebla de cueva (05.3): añade una niebla tenue azul oscura que crece con la distancia.
 // Porqué: docs/efectos/niebla-y-nubes.md §Niebla de cueva
-fn adp_niebla_cueva(color: vec3<f32>, p: AdpPixel, dir: vec3<f32>) -> vec3<f32> {
-    if p.es_cielo || !adp_es_superficie() || frame.in_water > 0.0 || frame.in_lava > 0.0 || frame.eye_in != 0u {
+fn adp_niebla_cueva(color: vec3<f32>, es_cielo: bool, distancia: f32, dir: vec3<f32>) -> vec3<f32> {
+    if es_cielo || !adp_es_superficie() || frame.in_water > 0.0 || frame.in_lava > 0.0 || frame.eye_in != 0u {
         return color;
     }
-    return color + vol_niebla_cueva(adp_post_distancia(p), frame.render_distance, dir.y, adp_detector_cueva(), opc_niebla_cueva());
+    return color + vol_niebla_cueva(distancia, frame.render_distance, dir.y, adp_detector_cueva(), opc_niebla_cueva());
 }
 
 
