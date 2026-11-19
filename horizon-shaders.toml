@@ -112,7 +112,7 @@ fog = "pack"        # la niebla es nuestra (subsistema 05)
 
 [material]
 file = "etapas/material.wgsl"
-coverage = "pack"
+# coverage = "pack" # solo necesario si se activa OPC_CRISTAL_CUTOUT_INTERIOR en opciones/cristales.wgsl (~+2,8 ms en bosque)
 files = [
     "nucleo/agua/optica.wgsl",
     "nucleo/agua/olas.wgsl",

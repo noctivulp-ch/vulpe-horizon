@@ -236,27 +236,49 @@ En `F-72b` se añade la invalidación de la caché temporal durante un relámpag
 anterior, bandera en `datos_cuadro[ADP_CUADRO_VOL_CIELO].w`) porque el parpadeo de 20 Hz del destello dejaba visible
 un tablero 2×2 sobre la niebla; sin relámpago el coste es 0.
 
-## 2026-11-19 (N-08): el tiempo en los cristales (`F-74`..`F-82` + mod `N-08.1`..`N-08.5`)
+## 2026-11-19 (N-08): el tiempo en los cristales (`F-74`..`F-84` + mod `N-08.1`..`N-08.5`)
 
-Medidas de 20 s en `vulpe-pruebas` (`HORIZON_HOME=~/.local/share/horizon/instances/vulpe-pruebas`, versión nativa
-`native-dd67b76-060022b89a45`, `gpu-passes on`, `time set 6000`) comparando el pack anterior (`e7ad1c4`) contra el
-efecto completo (`F-82`) en:
+Medidas A/B alternas (2 rondas de 20 s por pareja) en `vulpe-pruebas`
+(`HORIZON_HOME=~/.local/share/horizon/instances/vulpe-pruebas`, versión nativa `native-dd67b76-060022b89a45`,
+`gpu-passes on`, `time set 6000`) en:
 - **Bosque** (`170,5, 90, 166,5`, despejado, sin cristales visibles);
 - **Muro grande de cristal en lluvia** (`170,5, 110, 150,5` frente a un muro de 17×9 bloques con cristal transparente,
   tintado azul, ahumado y paneles transparentes y blancos).
 
-| escena (20 s) | antes (`e7ad1c4`) | después (`F-82`) | diferencia (GPU p50) | pasadas clave |
-|---|---|---|---|---|
-| Overworld bosque (despejado) | 38,0 fps · GPU p50 **13,64 ms** (media 19,50) | 34,1 fps · GPU p50 **15,27 ms** (media 22,21) | **+1,63 ms** | `World` 1,43 → 1,52 ms (+0,09), `World after copy` 0,68 → 0,71 ms (+0,03), `Datos del cuadro` 0,0072 → 0,0075 ms |
-| Muro de cristal 17×9 (lluvia) | 37,7 fps · GPU p50 **14,67 ms** (media 19,43) | 34,5 fps · GPU p50 **15,90 ms** (media 21,75) | **+1,23 ms** | `World after copy` 3,40 → 3,44 ms (+0,04), `Datos del cuadro` 0,0073 → 0,0078 ms |
+*(Nota sobre `p50` frente a `gpu_avg`: con presentación Fifo a 145 Hz el p50 de GPU salta de forma bimodal entre ~14 y
+~25 ms según el encaje con el refresco; `gpu_avg` y `avg_fps` son estables a ±0,15 ms entre rondas y reflejan el coste
+real.)*
 
-**Notas de coste:**
-- Lecturas de textura en `material`: **17 / 64** (cero lecturas nuevas; el desenfoque de la escarcha reutiliza
-  `opaque_color`/`opaque_depth` y solo corre en píxeles de cristal translúcido con escarcha o vaho). Expresiones en
-  `material`: `11 165` → `14 037 / 20 000`.
-- En el muro de cristal con lluvia, el incremento directo en la pasada de translúcidos (`World after copy`) es solo
-  **+0,04 ms**. La mayor parte de los ~+1,2–1,6 ms de GPU total proviene de activar `[material] coverage = "pack"`,
-  necesario para poder dibujar en el interior transparente del cristal *cutout* (`glass` y `glass_pane`), que bajo
-  `coverage = "engine"` Horizon descarta por alfa < 0,5; en GPU esto desactiva *early-Z* en terreno sólido/recortado.
-  **Petición opcional para Horizon:** un `coverage = "pack"` acotado a `[[tags]]` (o dibujar `glass`/`glass_pane` en la
-  pasada translúcida) eliminaría ese ~1,5 ms en escenas sin cristal.
+### 1. Diagnóstico A/B: `e7ad1c4` vs `504fae1` (`F-83`, con `[material] coverage = "pack"`)
+
+| escena (2 rondas × 20 s) | `e7ad1c4` (R1 / R2 · media) | `504fae1` (R1 / R2 · media) | diferencia (`gpu_avg`) |
+|---|---|---|---|
+| Overworld bosque (sin cristal) | 38,90 / 37,70 fps · avg 19,38 / 19,60 (**19,49 ms**) | 33,83 / 33,25 fps · avg 22,29 / 22,41 (**22,35 ms**) | **+2,86 ms** (−4,76 fps) |
+| Muro de cristal 17×9 (lluvia) | 37,95 / 37,59 fps · avg 19,27 / 19,42 (**19,35 ms**) | 33,76 fps · avg 21,92 ms *(R1; R2 perdió foco)* | **+2,57 ms** |
+
+### 2. Aislamiento y corrección (`F-84`)
+
+1. **Quitar `[material] coverage = "pack"`** (dejando el camino *cutout* tras `OPC_CRISTAL_CUTOUT_INTERIOR = false`):
+   en Bosque bajó de **22,35 ms** a **20,45 ms** (**−1,90 ms**, `33,54 → 36,45 fps`). En Horizon API 0.2 no existe
+   `coverage` por etiqueta/material (`shaders-reference-0.2.md:101-111`, `shaders.md:212-216`); se probó también mover
+   `block/glass` con `[[materials]] translucent = true` (`shaders.md:100`) bajo `coverage = "engine"`, pero Horizon sigue
+   descartando los texeles con `albedo.a < 0,01` (`shaders-reference-0.2.md:105-106`), por lo que el efecto queda por
+   defecto en todos los cristales tintados, paneles tintados y cristal ahumado.
+2. **Separar `adp_mod_cristales()` de `adp_mod()` y evitar llamar a `adp_mod()` en `adp_mod_param()`:**
+   al quedar todavía `+0,97 ms` en Bosque (`Cielo +0,14`, `World +0,13`, `Composición +0,06`, `Final +0,02`), se vio que
+   `adp_mod_param()` (invocada ~23 veces por píxel entre etapas) llamaba a `adp_mod()`, que en `F-74` además
+   desempaquetaba `mods[6..7]` (19 campos de `AdpCristalMod`). Sacando `adp_mod_cristales()` para llamarla solo en
+   `[[before_world]]` y leyendo `frame.mods[0]` directo en `adp_mod_param()`, el coste en Bosque bajó otro **−1,13 ms**.
+
+### 3. Resultado final A/B: `e7ad1c4` vs `F-84` (2 rondas alternas × 20 s)
+
+| escena (2 rondas × 20 s) | `e7ad1c4` (R1 / R2 · media) | `F-84` (R1 / R2 · media) | diferencia (`gpu_avg`) | pasadas clave |
+|---|---|---|---|---|
+| Overworld bosque (sin cristal) | 38,55 / 38,19 fps (**38,37**) · avg 19,39 / 19,61 (**19,50 ms**) · p50 13,98 / 25,29 | 38,43 / 38,29 fps (**38,36**) · avg 19,29 / 19,36 (**19,32 ms**) · p50 13,53 / 13,64 | **−0,17 ms** (objetivo ≤ 0,2 ms cumplido) | `Cielo` 1,42 → 1,38 ms, `Composición` 1,22 → 1,21 ms, `World after copy` 0,96 → 0,96 ms |
+| Muro de cristal 17×9 (lluvia) | 38,15 / 37,78 fps (**37,97**) · avg 19,29 / 19,47 (**19,38 ms**) · p50 14,56 / 14,73 | 37,46 / 37,02 fps (**37,24**) · avg 19,57 / 19,66 (**19,62 ms**) · p50 14,82 / 24,08 | **+0,24 ms** | `World after copy` 3,17 → 3,58 ms (+0,41 ms solo con muro lleno de cristal), `Cielo` 1,47 → 1,43 ms |
+
+- Lecturas de textura en `material`: **17 / 64** (cero lecturas nuevas; el desenfoque de escarcha/vaho reutiliza
+  `opaque_color`/`opaque_depth`). Expresiones en `material`: `14 110 / 20 000`.
+- **Petición opcional para Horizon:** `coverage = "pack"` acotado a `[[tags]]` o permitir que `[[materials]]
+  translucent = true` conserve los texeles `albedo.a < 0,01` bajo `coverage = "engine"`, para habilitar el interior de
+  `glass` y `glass_pane` sin pagar el coste global de *early-Z* en terreno sólido.

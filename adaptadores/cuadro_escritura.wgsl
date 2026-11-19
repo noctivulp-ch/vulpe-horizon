@@ -118,8 +118,7 @@ fn adp_cuadro_escribir() {
 
     // Estado por fotograma de «el tiempo en los cristales» (27): decodifica mods[6..7] una sola vez por cuadro,
     // con respaldo sin mod usando frame.rain, frame.thunder, frame.precipitation y OPC_VIENTO.
-    let md = adp_mod();
-    let cm = md.cristales;
+    let cm = adp_mod_cristales();
     if cm.activo {
         let escala_lluvia = opc_cristal_escala_nivel(cm.nivel_lluvia);
         let escala_nieve = opc_cristal_escala_nivel(cm.nivel_nieve);

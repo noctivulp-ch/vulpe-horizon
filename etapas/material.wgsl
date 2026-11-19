@@ -125,10 +125,10 @@ fn material(input: MaterialInput) -> Surface {
     color = mix(color, color_emision * OPC_EMISION * brillo_emision * 4.0, emision);
 
     if !p.translucido {
-        // Cristal transparente (cutout: `glass`, `glass_pane`, 27): en los texeles transparentes del interior
-        // dibuja las gotas/efectos del tiempo cuando superan la cobertura; fuera de ellos conserva `p.alfa`.
+        // Cristal transparente (cutout: `glass`, `glass_pane`, 27): detrás de `OPC_CRISTAL_CUTOUT_INTERIOR` (apagada
+        // por defecto porque requiere `[material] coverage = "pack"`). Con `false` no añade coste en terreno sólido.
         var alfa_salida = p.alfa;
-        if p.es_cristal && p.alfa < 0.5 {
+        if OPC_CRISTAL_CUTOUT_INTERIOR && p.es_cristal && p.alfa < 0.5 {
             let cr = adp_cristal_evaluar(p, n, luces, sombra.luz, bloque);
             if cr.activo && cr.cobertura_cutout >= 0.5 {
                 color = cr.color_cutout;

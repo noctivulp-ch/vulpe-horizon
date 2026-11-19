@@ -62,7 +62,6 @@ struct AdpModDatos {
     bioma: u32,             // 0 desconocido, 1 pantano, 2 jungla, 3 jardín pálido
     bioma_peso: f32,        // 0..0,99, suavizado por el mod
     clima_particulas: bool, // formato >= 2, bit 7: la lluvia y la nieve las dibuja el mod como partículas (26)
-    cristales: AdpCristalMod,
 }
 
 fn adp_cristal_mod_vacio() -> AdpCristalMod {
@@ -74,6 +73,49 @@ fn adp_cristal_mod_vacio() -> AdpCristalMod {
         true, false, false, false, false, false,
         vec2<f32>(0.0),
         vec3<f32>(0.0), 0.0,
+    );
+}
+
+// Decodifica el estado de «el tiempo en los cristales» (formato 3, bit 8, mods[6..7]).
+// Solo se llama una vez por fotograma en `[[before_world]]` (`adaptadores/cuadro_escritura.wgsl`), para no
+// encarecer `adp_mod()` en el resto de pasadas por píxel.
+fn adp_mod_cristales() -> AdpCristalMod {
+    if abs(frame.mods[0].x - ADP_MOD_FIRMA_V3) >= 0.5 {
+        return adp_cristal_mod_vacio();
+    }
+    let banderas = u32(max(round(frame.mods[0].z), 0.0));
+    if (banderas & 256u) == 0u {
+        return adp_cristal_mod_vacio();
+    }
+    let m6 = frame.mods[6];
+    let m7 = frame.mods[7];
+    let c_lluvia = u32(max(round(m6.x), 0.0));
+    let c_frio = u32(max(round(m6.y), 0.0));
+    let c_arena = u32(max(round(m6.z), 0.0));
+    let c_viento = u32(max(round(m6.w), 0.0));
+    let flags12 = c_arena & 4095u;
+    let vx = (f32(min(c_viento / 4096u, 4095u)) / 4095.0) * 2.0 - 1.0;
+    let vz = (f32(c_viento & 4095u) / 4095.0) * 2.0 - 1.0;
+    return AdpCristalMod(
+        true,
+        f32(min(c_lluvia / 4096u, 4095u)) / 4095.0,
+        f32(c_lluvia & 4095u) / 4095.0,
+        f32(c_frio & 255u) / 255.0,
+        f32((c_frio >> 8u) & 255u) / 255.0,
+        f32((c_frio >> 16u) & 255u) / 255.0,
+        f32(min(c_arena / 4096u, 4095u)) / 4095.0,
+        flags12 & 3u,
+        (flags12 >> 2u) & 3u,
+        (flags12 >> 4u) & 3u,
+        (flags12 & 64u) != 0u,
+        (flags12 & 128u) != 0u,
+        (flags12 & 256u) != 0u,
+        (flags12 & 512u) != 0u,
+        (flags12 & 1024u) != 0u,
+        (flags12 & 2048u) != 0u,
+        vec2<f32>(vx, vz),
+        m7.xyz,
+        clamp(m7.w, 0.0, 1.0),
     );
 }
 
@@ -100,7 +142,6 @@ fn adp_mod() -> AdpModDatos {
             0u,
             0.0,
             false,
-            adp_cristal_mod_vacio(),
         );
     }
 
@@ -140,41 +181,6 @@ fn adp_mod() -> AdpModDatos {
     let bioma = select(0u, u32(floor(w)), tiene_bioma);
     let bioma_peso = select(0.0, fract(w), tiene_bioma);
 
-    // Formato 3, bit 8: estado de «el tiempo en los cristales» (27) en mods[6] y mods[7].
-    var cristales = adp_cristal_mod_vacio();
-    if v3 && (banderas & 256u) != 0u {
-        let m6 = frame.mods[6];
-        let m7 = frame.mods[7];
-        let c_lluvia = u32(max(round(m6.x), 0.0));
-        let c_frio = u32(max(round(m6.y), 0.0));
-        let c_arena = u32(max(round(m6.z), 0.0));
-        let c_viento = u32(max(round(m6.w), 0.0));
-        let flags12 = c_arena & 4095u;
-        let vx = (f32(min(c_viento / 4096u, 4095u)) / 4095.0) * 2.0 - 1.0;
-        let vz = (f32(c_viento & 4095u) / 4095.0) * 2.0 - 1.0;
-        cristales = AdpCristalMod(
-            true,
-            f32(min(c_lluvia / 4096u, 4095u)) / 4095.0,
-            f32(c_lluvia & 4095u) / 4095.0,
-            f32(c_frio & 255u) / 255.0,
-            f32((c_frio >> 8u) & 255u) / 255.0,
-            f32((c_frio >> 16u) & 255u) / 255.0,
-            f32(min(c_arena / 4096u, 4095u)) / 4095.0,
-            flags12 & 3u,
-            (flags12 >> 2u) & 3u,
-            (flags12 >> 4u) & 3u,
-            (flags12 & 64u) != 0u,
-            (flags12 & 128u) != 0u,
-            (flags12 & 256u) != 0u,
-            (flags12 & 512u) != 0u,
-            (flags12 & 1024u) != 0u,
-            (flags12 & 2048u) != 0u,
-            vec2<f32>(vx, vz),
-            m7.xyz,
-            clamp(m7.w, 0.0, 1.0),
-        );
-    }
-
     return AdpModDatos(
         true,
         version_tabla,
@@ -192,7 +198,6 @@ fn adp_mod() -> AdpModDatos {
         bioma,
         bioma_peso,
         v2 && (banderas & 128u) != 0u,
-        cristales,
     );
 }
 
@@ -203,14 +208,20 @@ fn adp_mod_fijo_valido() -> bool {
 
 // Busca un parámetro fino por su `id` (0..37) en los ajustes en vivo de `frame.mods[4..7]`;
 // si no está en vivo, usa el valor del canal fijo si está activo; si no, usa el valor por defecto.
+// Comprueba directamente `frame.mods[0]` sin decodificar todo `adp_mod()` en cada píxel.
 fn adp_mod_param(id: u32, min_val: f32, max_val: f32, fijo_val: f32, def_val: f32) -> f32 {
     let base = select(def_val, fijo_val, adp_mod_fijo_valido());
-    let m = adp_mod();
-    if !m.activo || m.version_tabla != 1u || m.ajustes_en_vivo == 0u {
+    if frame.mods[0].w < 0.5 {
         return base;
     }
-    let tope = select(16u, 8u, m.formato >= 3u);
-    let n = min(m.ajustes_en_vivo, tope);
+    let firma = frame.mods[0].x;
+    let v3 = abs(firma - ADP_MOD_FIRMA_V3) < 0.5;
+    let activo = v3 || abs(firma - ADP_MOD_FIRMA_V2) < 0.5 || abs(firma - ADP_MOD_FIRMA_V1) < 0.5;
+    if !activo || abs(frame.mods[0].y - 1.0) >= 0.5 {
+        return base;
+    }
+    let tope = select(16u, 8u, v3);
+    let n = min(u32(round(frame.mods[0].w)), tope);
     for (var i = 0u; i < n; i++) {
         let code_f = frame.mods[4u + (i / 4u)][i % 4u];
         if code_f >= 0.0 {

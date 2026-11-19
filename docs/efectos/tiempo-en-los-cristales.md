@@ -7,16 +7,23 @@ Efecto propio de Vulpe para Horizon. Especificación: `vulpe-horizon-spec/subsis
 - **Etiqueta de sprites (`horizon-shaders.toml`):** `[[tags]] id = "cristal"` (bit 0 de `MaterialInput.tags`) agrupa
   `block/glass`, `block/*_stained_glass` y `block/tinted_glass`, cubriendo bloques y paneles (los paneles usan el mismo
   sprite en sus caras).
-- **Cobertura del material (`[material] coverage = "pack"`):** el cristal transparente vanilla (`glass` y `glass_pane`)
-  se dibuja en la pasada *cutout* (`input.translucent == false`), donde su textura tiene alfa 0 en el interior. Bajo
-  `coverage = "engine"` Horizon descarta esos texeles antes de devolver color. Con `coverage = "pack"`, los texeles con
-  efecto del tiempo devuelven alfa 1 y se dibujan en la rejilla de 32×32; el resto conserva `p.alfa`, igual que antes.
-  Nota de API: en la pasada *cutout* `opaque_color` no es válido (`shaders-reference-0.2.md`), así que en cristal
-  transparente las gotas usan reflejo de cielo/nubes (`22`), brillo especular y borde oscuro, mientras que en todos los
-  cristales tintados y ahumados (`input.translucent == true`) aplican además refracción completa con dispersión cromática.
-- **Estado una vez por fotograma (`datos_cuadro[17..21]`):** `[[before_world]]` decodifica `frame.mods[6..7]` (formato 3,
-  firma `1003.0`, bandera bit 8 `FLAG_GLASS_VALID`) o calcula el respaldo sin mod, de modo que ningún píxel de `material`
-  paga desempaquetado ni lectura de `adp_mod()`. En píxeles que no son cristal el coste añadido es una comprobación de bit.
+- **Cobertura del material (`coverage = "engine"` por defecto, `OPC_CRISTAL_CUTOUT_INTERIOR = false`):** el cristal
+  transparente vanilla (`glass` y `glass_pane`) se dibuja en la pasada *cutout* (`input.translucent == false`), donde su
+  textura tiene alfa 0 en el interior. En Horizon API 0.2 (`dd67b76`):
+  - `[material] coverage` es global a todo el terreno (`shaders-reference-0.2.md:101-111`, `shaders.md:212-216`), sin
+    opción por etiqueta ni por material; activarlo añade ~+1,9 ms de GPU en bosque sin cristales al desactivar *early-Z*.
+  - Mover `block/glass` con `[[materials]] translucent = true` (`shaders.md:100`, `572`) bajo `coverage = "engine"`
+    tampoco permite dibujar en el interior transparente, porque Horizon sigue descartando los texeles con `albedo.a <
+    0,01` en la pasada translúcida (`shaders-reference-0.2.md:105-106`, comprobado en `vulpe-pruebas`).
+  - Por ello, desde `F-84` el pack usa `coverage = "engine"` por defecto: el efecto corre completo (con refracción,
+    desenfoque y composición suave) en todos los cristales tintados, paneles tintados (`*_stained_glass`,
+    `*_stained_glass_pane`) y cristal ahumado (`tinted_glass`) con coste **≤ 0 ms** en escenas sin cristal. El soporte
+    para el interior *cutout* de `glass` y `glass_pane` queda detrás de `OPC_CRISTAL_CUTOUT_INTERIOR` en
+    `opciones/cristales.wgsl` (requiere descomentar `coverage = "pack"` en `[material]` de `horizon-shaders.toml`).
+- **Estado una vez por fotograma (`datos_cuadro[17..21]`):** `[[before_world]]` llama a `adp_mod_cristales()` (separada
+  de `adp_mod()` desde `F-84` para no encarecer las lecturas por píxel) y decodifica `frame.mods[6..7]` (formato 3,
+  firma `1003.0`, bandera bit 8 `FLAG_GLASS_VALID`) o calcula el respaldo sin mod. En píxeles que no son cristal el
+  coste añadido es nulo.
 - **Rejilla de 32 texeles por bloque (`OPC_CRISTAL_REJILLA = 32`):** todas las formas (gotas, rastros, escarcha, copos,
   montón, arena) se evalúan en coordenadas de mundo cuantizadas a 32×32 por cara, cruzando bloques contiguos sin saltos;
   las normales ópticas, la luz, los reflejos y la refracción no se cuantizan.
@@ -81,8 +88,9 @@ Efecto propio de Vulpe para Horizon. Especificación: `vulpe-horizon-spec/subsis
   en `mods[7].xyz`. El shader evalúa ruido continuo interpolado (`5,5`, `16` y `32` ciclos/bloque) con envolvente radial
   gaussiana y pulso de respiración cada `3,5 s` hasta `~1` bloque de radio, sin bloques pixelados ni borde duro. Sin mod
   funciona en vivo sin memoria.
-- **Fusión con la escarcha:** una máscara amplia (`aliento.derrite`) disuelve gradualmente el dibujo de helecho y las
-  facetas para dejar condensación lisa y borrosa detrás (`27` §4).
+- **Fusión con la escarcha y los copos:** una máscara amplia (`aliento.derrite`) disuelve gradualmente tanto el dibujo de
+  helecho y las facetas de la escarcha como los copos pegados (`nieve.copo`, `F-84`) para dejar condensación lisa y
+  borrosa detrás (`27` §4).
 
 ## 5. Arena tras tormenta en bioma seco (`F-78`, `F-82` / `N-08.5`)
 

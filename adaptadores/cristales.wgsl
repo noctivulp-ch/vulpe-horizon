@@ -13,7 +13,7 @@ struct AdpCristalResultado {
     capa_color: vec3<f32>,  // color iluminado de las capas translúcidas/opacas encima (vaho, escarcha, nieve, arena)
     capa_opacidad: f32,     // 0..1 mezcla sobre el fondo refractado
     especular_extra: vec3<f32>,
-    cobertura_cutout: f32,  // 0..1 cobertura para cristal transparente (cutout)
+    cobertura_cutout: f32,  // 0..1 cobertura para cristal transparente (solo con OPC_CRISTAL_CUTOUT_INTERIOR)
     color_cutout: vec3<f32>,// color de los texeles dibujados en cristal transparente
 }
 
@@ -150,8 +150,8 @@ fn adp_cristal_evaluar(
         esc_bruta.grad_uv * suprime_helecho,
     );
 
-    // 2) Copos pegados y montón inferior de nieve (27 §3).
-    let nieve = sup_cristal_nieve(
+    // 2) Copos pegados y montón inferior de nieve (27 §3); el aliento tibio también funde los copos pegados.
+    let nieve_bruta = sup_cristal_nieve(
         plano,
         p.normal_cara,
         p.luz_cielo,
@@ -163,6 +163,8 @@ fn adp_cristal_evaluar(
         c1.w,
         dist,
     );
+    let copo_vivo = nieve_bruta.copo * (1.0 - smoothstep(0.0, 0.65, aliento.derrite));
+    let nieve = SupCristalNieve(copo_vivo, nieve_bruta.monton, max(copo_vivo, nieve_bruta.monton), nieve_bruta.relieve_y);
 
     // 3) Arena tras tormenta en bioma seco (27 §5).
     let arena = sup_cristal_arena(
@@ -301,9 +303,9 @@ fn adp_cristal_evaluar(
         r.especular_extra *= (1.0 - op_arena);
     }
 
-    // Cristal transparente (cutout, `input.translucent == false`): en los texeles del interior dibuja
-    // arena, nieve, gotas, escarcha y vaho (orden de fuera adentro).
-    if !p.translucido {
+    // Cristal transparente (cutout, `input.translucent == false`): solo activo con `OPC_CRISTAL_CUTOUT_INTERIOR`
+    // y `[material] coverage = "pack"`; con `false` (por defecto) el compilador elimina esta rama por completo.
+    if OPC_CRISTAL_CUTOUT_INTERIOR && !p.translucido {
         let texel = floor(plano.uv * OPC_CRISTAL_REJILLA);
         let dither = rui_hash21(vec2<i32>(i32(texel.x), i32(texel.y)));
         let dither_fino = rui_hash21(vec2<i32>(i32(p.pixel.x), i32(p.pixel.y)));

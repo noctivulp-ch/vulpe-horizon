@@ -6,6 +6,10 @@ const OPC_CRISTAL_REJILLA: f32 = 32.0;           // resolución base: 32 texeles
 
 // Interruptor maestro del pack (sin mod; con mod manda [cristales] en config/vulpe-horizon.toml).
 const OPC_CRISTAL_ACTIVO: bool = true;
+// Dibujo en el interior transparente de `glass` y `glass_pane` (cutout): apagado por defecto porque en Horizon API 0.2
+// requiere `[material] coverage = "pack"` en horizon-shaders.toml (global a todo el terreno, ~+2,8 ms de GPU en bosque).
+// Con `false` el efecto corre sin `coverage = "pack"` en todos los cristales y paneles tintados y en el cristal ahumado.
+const OPC_CRISTAL_CUTOUT_INTERIOR: bool = false;
 const OPC_CRISTAL_NIVEL_DEFECTO: f32 = 1.0;      // 0 apagada, 0,5 ligera, 1,0 normal, 1,5 intensa
 const OPC_CRISTAL_ESTILO_REGUEROS: bool = false; // false = gotas a tirones, true = regueros verticales (27 §1)
 
