@@ -6,11 +6,19 @@ el estado en `adaptadores/bloom_estado.wgsl`; constantes en `opciones/gotas.wgsl
 
 ## Agua en la cámara (sustituye a las gotas de B-15)
 
-- **Memoria**: el téxel (4,0) de `bloom2` guarda en un solo valor el tiempo desde el cruce, si fue salida o entrada y la
-  rapidez: `±(1 + 8·nivel + t)`, positivo al salir, 0 sin cruce, con t < 8 s y la rapidez en 8 niveles de 2 bloques/s.
-  El (5,0) guarda si la cámara estaba en el agua (`eye_in == 1`) el fotograma anterior: el cruce es el cambio de ese
-  valor. La rapidez es `|camera_motion| / delta_time` en ese fotograma. Un solo téxel porque la pasada final iba por
-  63 lecturas.
+- **Memoria (F-73b):** el estado del cruce se guarda en `datos_cuadro[ADP_CUADRO_CRUCE]` (`buffer = 512` bytes,
+  `keep = "view"`, `f32` exacto) actualizado una vez por fotograma en `adaptadores/cuadro_escritura.wgsl`:
+  `x` = tiempo desde el cruce en segundos (`< 0` sin efecto), `y` = rapidez con signo (`+` al salir, `−` al entrar),
+  `z` = si la cámara estaba en agua el fotograma anterior, `w` = firma de dimensión (`dimension + 10`) para reiniciar
+  limpiamente tras limpiar el búfer o cambiar de dimensión (Nether/End).
+  - **Causa del congelado anterior:** antes se empaquetaba `±(1 + 8·nivel + t)` en el téxel `(4,0).a` de `bloom`/`bloom2`
+    (`rgba16float`); tras un teletransporte (`nivel = 7`, valor 57), el paso de precisión `f16` en `[32, 64)` es
+    `0,03125 s`, mayor que `delta_time` por encima de 32 fps, por lo que `t + delta_time` redondeaba de vuelta a `t` y
+    las gotas quedaban congeladas indefinidamente. Moverlo a `datos_cuadro` elimina el problema y libera una lectura de
+    textura en la pasada final (64 → 63).
+  - Comprobado en `vulpe-pruebas` (`pruebas/escenas/gotas-cruce.ctl`, 2026-11-19): tras teletransporte desde bajo el
+    agua (0, 2, 5 y 10 s) las gotas se deslizan y desaparecen a los 5 s; tras entrar y salir del Nether no aparece
+    ninguna gota atascada.
 - **Dirección**: la especificación pide la velocidad del cruce proyectada en pantalla y congelada. No cabe en el
   téxel con precisión de 16 bits; se usa el sentido vertical (al salir el agua escurre hacia abajo, al entrar sube).
 - **Salida**: dos octavas de ruido de valor a baja frecuencia, estiradas en esa dirección, que escurren; el umbral
@@ -36,13 +44,10 @@ y nulo en el tercio superior, más un acercamiento al centro del 2 % (fuerza 0,7
 se hace (decisión del dueño, `observaciones-del-dueno-2026-11-13.md` §5.2b).
 
 - Comprobado en `vulpe-pruebas` (`native-dd67b76-9841443bb307`, `pruebas/escenas/calor-llamas.ctl`, 2026-11-19):
-  `tools/validar.sh` pasa (Final 64/64 lecturas); en fuego y a 3 s tras salir se aprecia la ondulación y el
-  acercamiento al centro (diferencia media 10,81 en el cuadrante inferior derecho frente a 12 s), a 10 s cae a la mitad
-  (5,20, en plena bajada de 3 s) y a 12 s desaparece por completo; al entrar en agua se apaga en ~3 s; en lava activo.
-  Coste sin fuego (`bench 20` bosque): 48,33 fps, CPU 4,30 ms (`tick` 0,48 ms), GPU 13,60 ms.
-- Nota observada al capturar: el efecto previo de gotas de agua en cámara (`adp_estado_cruce`, téxel `(4,0).a`) puede
-  quedar atascado tras un teletransporte (`nivel = 7` → valor 57 en `rgba16float`, donde el paso de precisión f16 es
-  0,03125 s > `delta_time` a >32 fps). No afecta al téxel `(7,0).a` del calor (rango 0..1, paso f16 0,00049).
+  `tools/validar.sh` pasa (Final 63/64 lecturas); en los pares exactos sin fuego / en fuego (recto y girado 20°) y a
+  3 s tras salir se aprecia la ondulación ascendente en el suelo y el leve acercamiento al centro sin gotas en pantalla,
+  a 10 s está terminando la bajada de 3 s y a 12 s desaparece por completo; al entrar en agua se apaga en ~3 s; en lava
+  activo. Coste sin fuego (`bench 20` bosque): 48,89 fps, CPU 3,74 ms (`tick` 0,39 ms), GPU 13,68 ms.
 
 ## Lecturas de la pasada final
 

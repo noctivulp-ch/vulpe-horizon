@@ -1,7 +1,6 @@
-# Calor al arder y en lava (N-07 / F-73, subsistema 19):
-# Recorrido de comprobación con plataforma de ladrillos para ver con claridad la ondulación:
-# sin fuego -> en fuego (recto y girado 20°) -> 3 s, 10 s y 12 s tras salir del fuego ->
-# reencendido y salida a agua (0,5 s y 4 s) -> en lava.
+# Calor al arder y en lava (N-07 / F-73 + F-73b, subsistema 19):
+# Empieza en seco sin gotas; pares exactos sin fuego / en fuego desde la misma posición y ángulo,
+# 3 s, 10 s y 12 s tras salir del fuego, salida a agua y en lava.
 close
 command weather clear
 command gamerule advance_time false
@@ -12,22 +11,28 @@ command fill 160 99 158 172 108 182 minecraft:air
 command fill 160 99 158 172 99 182 minecraft:stone_bricks
 command fill 160 100 176 172 105 176 minecraft:stone_bricks
 
-# 1. Sin fuego (referencia, igual que antes).
+# 1. Referencias sin fuego (pares exactos para comparar).
 command tp @s 166.5 100 166.5 0 15
 sleep 1.5
-screenshot calor-sin-fuego
+screenshot calor-par1-sin-fuego
+command tp @s 166.5 100 166.5 20 15
+sleep 0.5
+screenshot calor-par2-sin-fuego-g20
+command tp @s 166.5 100 168.5 0 15
+sleep 0.5
+screenshot calor-par3-sin-fuego
 
-# 2. De pie en fuego (pies en minecraft:fire, cabeza en aire).
+# 2. De pie en fuego (misma posición y ángulos exactos que par1 y par2).
 command setblock 166 99 166 minecraft:netherrack
 command setblock 166 100 166 minecraft:fire
 command tp @s 166.5 100 166.5 0 15
 sleep 1.5
-screenshot calor-en-fuego
+screenshot calor-par1-en-fuego
 command tp @s 166.5 100 166.5 20 15
-sleep 0.4
-screenshot calor-en-fuego-g20
+sleep 0.5
+screenshot calor-par2-en-fuego-g20
 
-# 3. Sale del fuego: a 3 s sigue ardiendo (~8 s); a 10 s está terminando la bajada de 3 s; a 12 s ya sin calor.
+# 3. Sale del fuego a la posición exacta de par3: 3 s (ardiendo), 10 s (bajando), 12 s (apagado).
 command tp @s 166.5 100 168.5 0 15
 sleep 3
 screenshot calor-tras-fuego-3s
@@ -36,7 +41,7 @@ screenshot calor-tras-fuego-10s
 sleep 2
 screenshot calor-tras-fuego-12s
 
-# 4. Saliendo a agua: se apaga al instante al tocar agua (pies en agua, cabeza en aire) y la distorsión cae en ~3 s.
+# 4. Saliendo a agua: apaga al instante al tocar agua (pies en agua, cabeza en aire) y cae en ~3 s.
 command fill 164 100 169 168 100 173 minecraft:stone_bricks
 command fill 165 100 170 167 100 172 minecraft:water
 command tp @s 166.5 100 166.5 0 15

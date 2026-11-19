@@ -154,7 +154,7 @@ distance_option = "sombras_distancia"
 
 [[resource]]
 name = "datos_cuadro"
-buffer = 256
+buffer = 512
 element = "vec4<f32>"
 keep = "view"
 
@@ -274,14 +274,14 @@ file = "etapas/post/04-bloom-bajada.wgsl"
 files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/bloom_estado.wgsl"]
 name = "Bloom: bajada"
 output = "bloom"
-reads = ["historial_previous", "bloom2_previous"]
+reads = ["historial_previous", "bloom2_previous", "datos_cuadro"]
 
 [[post]]
 file = "etapas/post/05-bloom-ancho.wgsl"
 files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/bloom_estado.wgsl"]
 name = "Bloom: ancho"
 output = "bloom2"
-reads = ["bloom"]
+reads = ["bloom", "datos_cuadro"]
 
 [[post]]
 file = "etapas/post/06-taa.wgsl"
@@ -294,7 +294,7 @@ reads = ["composicion", "historial_previous"]
 file = "etapas/post/07-final.wgsl"
 files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/nitidez.wgsl", "nucleo/imagen/aislamiento.wgsl", "opciones/aislamiento.wgsl", "nucleo/volumen/fase.wgsl", "nucleo/imagen/rayos.wgsl", "opciones/rayos.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/rayos.wgsl", "adaptadores/aislamiento.wgsl"]
 name = "Final"
-reads = ["historial", "volumen", "bloom", "bloom2"]
+reads = ["historial", "volumen", "bloom", "bloom2", "datos_cuadro"]
 
 [tonemap]
 file = "etapas/tonemap.wgsl"

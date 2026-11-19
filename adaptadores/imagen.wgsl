@@ -97,16 +97,19 @@ fn adp_bloom_final(color: vec3<f32>, alfa_niebla: f32, uv: vec2<f32>, o: OpcImag
 }
 
 
-// Agua en la cámara (19): el estado del cruce está en el téxel (4,0) de bloom2. Porqué: docs/efectos/camara-y-juego.md
-fn adp_gotas_camara(uv: vec2<f32>, t_bloom2: texture_2d<f32>) -> ImgGotasResultado {
-    let c = adp_cruce_decodificar(textureLoad(t_bloom2, vec2<i32>(4, 0), 0).a);
-    if c.t < 0.0 {
+// Agua en la cámara (19): el estado del cruce está en `datos_cuadro[ADP_CUADRO_CRUCE]` (f32 exacto, F-73b).
+// Porqué: docs/efectos/camara-y-juego.md
+fn adp_gotas_camara(uv: vec2<f32>) -> ImgGotasResultado {
+    let c = datos_cuadro[ADP_CUADRO_CRUCE];
+    if c.w < 1.0 || c.x < 0.0 || c.x >= OPC_GOTAS_DURACION {
         return ImgGotasResultado(uv, 0.0);
     }
     let aspecto = frame.resolution.x / max(frame.resolution.y, 1.0);
+    let salida = c.y >= 0.0;
+    let rapidez = abs(c.y);
     // Sentido en pantalla: el del cruce vertical (al salir sube, al entrar baja).
-    let vel = vec2<f32>(0.0, select(c.rapidez, -c.rapidez, c.salida));
-    return img_agua_camara(uv, aspecto, c.t, c.salida, vel, opc_gotas());
+    let vel = vec2<f32>(0.0, select(rapidez, -rapidez, salida));
+    return img_agua_camara(uv, aspecto, c.x, salida, vel, opc_gotas());
 }
 
 // Calor (19): nivel suavizado (0,5 s subida, 3 s bajada) en el téxel (7,0) de bloom2.
@@ -122,28 +125,6 @@ fn adp_calor(uv: vec2<f32>, t_bloom2: texture_2d<f32>) -> vec2<f32> {
     }
     let aspecto = frame.resolution.x / max(frame.resolution.y, 1.0);
     return img_calor(uv, aspecto, adp_tiempo().segundos, nivel, fuerza);
-}
-
-// Estado del cruce del agua en un solo valor (texel (4,0).a): 0 sin cruce; si no, ±(1 + 8·nivel de rapidez + t),
-// positivo al salir y negativo al entrar, con t en segundos (< 8) y la rapidez en 8 niveles de 2 bloques/s.
-struct AdpCruce {
-    t: f32,             // segundos desde el cruce (negativo: sin efecto)
-    salida: bool,
-    rapidez: f32,       // bloques/s
-}
-
-fn adp_cruce_decodificar(v: f32) -> AdpCruce {
-    let a = abs(v) - 1.0;
-    if a < 0.0 {
-        return AdpCruce(-1.0, false, 0.0);
-    }
-    let nivel = floor(a / 8.0);
-    return AdpCruce(a - nivel * 8.0, v > 0.0, nivel * 2.0 + 1.0);
-}
-
-fn adp_cruce_codificar(t: f32, salida: bool, rapidez: f32) -> f32 {
-    let nivel = clamp(floor(rapidez / 2.0), 0.0, 7.0);
-    return select(-1.0, 1.0, salida) * (1.0 + nivel * 8.0 + clamp(t, 0.0, 7.9));
 }
 
 

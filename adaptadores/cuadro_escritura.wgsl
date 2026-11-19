@@ -87,4 +87,32 @@ fn adp_cuadro_escribir() {
     datos_cuadro[ADP_CUADRO_SOL_DISCO] = vec4<f32>(directa_sol, 0.0);
     datos_cuadro[ADP_CUADRO_HORARIO] = vec4<f32>(horario.uniforme, horario.manchas, f32(clima_obj.tipo), clima_obj.peso);
     datos_cuadro[ADP_CUADRO_RELAMPAGO] = vec4<f32>(relampago.base, relampago.brillo);
+
+    // Estado del cruce de la superficie del agua en f32 (F-73b): evita que la precisión f16 de bloom2 congele
+    // las gotas tras un teletransporte y reinicia limpiamente al cambiar de dimensión. Porqué: docs/efectos/camara-y-juego.md
+    let cruce_ant = datos_cuadro[ADP_CUADRO_CRUCE];
+    let en_agua = frame.eye_in == 1u;
+    let en_agua_f = select(0.0, 1.0, en_agua);
+    let firma_dim = f32(frame.dimension) + 10.0;
+    if abs(cruce_ant.w - firma_dim) > 0.5 {
+        datos_cuadro[ADP_CUADRO_CRUCE] = vec4<f32>(-1.0, 0.0, en_agua_f, firma_dim);
+    } else {
+        let dentro_antes = cruce_ant.z > 0.5;
+        let dt = max(frame.delta_time, 0.0);
+        if en_agua != dentro_antes && dt > 0.0 {
+            let rapidez = clamp(length(frame.camera_motion) / max(dt, 1e-3), 1.0, 16.0);
+            datos_cuadro[ADP_CUADRO_CRUCE] = vec4<f32>(0.0, select(-rapidez, rapidez, !en_agua), en_agua_f, firma_dim);
+        } else {
+            var t_cruce = cruce_ant.x;
+            var vel_cruce = cruce_ant.y;
+            if t_cruce >= 0.0 {
+                t_cruce += dt;
+                if t_cruce >= OPC_GOTAS_DURACION {
+                    t_cruce = -1.0;
+                    vel_cruce = 0.0;
+                }
+            }
+            datos_cuadro[ADP_CUADRO_CRUCE] = vec4<f32>(t_cruce, vel_cruce, en_agua_f, firma_dim);
+        }
+    }
 }

@@ -1,4 +1,4 @@
-// Índices del buffer por fotograma (`datos_cuadro`, 16 vec4<f32>) y struct de luces.
+// Índices del buffer por fotograma (`datos_cuadro`, 32 vec4<f32> = 512 bytes) y struct de luces.
 // Compartido (sin referenciar el recurso, para que vertex y displacement no lo toquen).
 // Porqué: docs/rendimiento.md
 
@@ -26,3 +26,4 @@ const ADP_CUADRO_LUNA_MULT: u32 = 12u;   // xyz: adp_luz_luna(c).multiple, w: pe
 const ADP_CUADRO_SOL_DISCO: u32 = 13u;   // xyz: atm_luz_directa_sol(elev_sol) * sol_color
 const ADP_CUADRO_HORARIO: u32 = 14u;     // xy: horario (uniforme, manchas), z: clima.tipo, w: clima.peso
 const ADP_CUADRO_RELAMPAGO: u32 = 15u;   // xyz: relampago.base, w: relampago.brillo
+const ADP_CUADRO_CRUCE: u32 = 16u;       // x: t en segundos (<0 sin cruce), y: rapidez con signo (+salida/-entrada), z: dentro_antes (0/1), w: firma dimensión+10

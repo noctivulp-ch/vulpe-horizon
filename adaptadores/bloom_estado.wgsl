@@ -19,11 +19,8 @@ fn adp_bloom_bajada(input: PostInput, tex: texture_2d<f32>, t_estado: texture_2d
     if texel.x == 6 {
         return vec4<f32>(rgb, adp_clima_local_estado(textureLoad(t_estado, texel, 0).a));
     }
-    if texel.x == 5 {
-        return vec4<f32>(rgb, select(0.0, 1.0, frame.eye_in == 1u));
-    }
-    if texel.x == 4 {
-        return vec4<f32>(rgb, adp_estado_cruce(textureLoad(t_estado, texel, 0).a, textureLoad(t_estado, vec2<i32>(5, 0), 0).a));
+    if texel.x == 5 || texel.x == 4 {
+        return vec4<f32>(rgb, 0.0);
     }
     if texel.x == 3 {
         return vec4<f32>(rgb, adp_estado_altura_entrada(textureLoad(t_estado, texel, 0).a));
@@ -66,18 +63,4 @@ fn adp_estado_calor(anterior: f32) -> f32 {
     let llamas = m.jugador.activo && m.jugador.en_llamas > 0.5;
     let activo = llamas || frame.eye_in == 2u;
     return img_calor_nivel(anterior, activo, frame.delta_time, OPC_CALOR_SUBE, OPC_CALOR_BAJA);
-}
-
-// Pasada 4, téxeles (4,0) y (5,0): el cruce. (5,0).a guarda si la cámara estaba en el agua el fotograma anterior.
-fn adp_estado_cruce(anterior: f32, dentro_antes: f32) -> f32 {
-    let dentro = frame.eye_in == 1u;
-    if dentro != (dentro_antes > 0.5) && frame.delta_time > 0.0 {
-        let rapidez = length(frame.camera_motion) / max(frame.delta_time, 1e-3);
-        return adp_cruce_codificar(0.0, !dentro, rapidez);
-    }
-    let c = adp_cruce_decodificar(anterior);
-    if c.t < 0.0 || c.t + frame.delta_time >= OPC_GOTAS_DURACION {
-        return 0.0;
-    }
-    return adp_cruce_codificar(c.t + frame.delta_time, c.salida, c.rapidez);
 }
