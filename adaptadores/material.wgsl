@@ -124,56 +124,6 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
     return p;
 }
 
-struct AdpLuces {
-    fija: bool,             // ambiente de dimensión (17): no depende de la luz de cielo de Minecraft
-    direccion: vec3<f32>,   // hacia el astro que da sombra (sol de día, luna de noche)
-    directa: vec3<f32>,     // irradiancia perpendicular tras la atmósfera (π = sol de mediodía)
-    cielo: vec3<f32>,       // radiancia media del cielo (ambiente)
-    suelo: vec3<f32>,
-}
-
-// Ganancia del ambiente de cielo de las superficies con el sol bajo, interpolada por elevación (F-54).
-// Porqué: docs/efectos/luz-de-superficie.md §«Sombra y sol bajo (F-53, F-54)» › «Sol bajo (F-54)»
-fn adp_sol_bajo_t(i: i32, elev: f32) -> f32 {
-    return clamp((elev - OPC_LUZ_SOL_BAJO_ELEV[i - 1]) / (OPC_LUZ_SOL_BAJO_ELEV[i] - OPC_LUZ_SOL_BAJO_ELEV[i - 1]), 0.0, 1.0);
-}
-
-// x: ganancia del cielo, y: gris del cielo, z: gris del sol, interpolados por la elevación del sol.
-fn adp_sol_bajo() -> vec3<f32> {
-    let elev = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
-    var v = vec3<f32>(OPC_LUZ_SOL_BAJO_GANANCIA[0], OPC_LUZ_SOL_BAJO_GRIS[0], OPC_LUZ_SOL_BAJO_GRIS_SOL[0]);
-    for (var i = 1; i < 6; i++) {
-        v = mix(v, vec3<f32>(OPC_LUZ_SOL_BAJO_GANANCIA[i], OPC_LUZ_SOL_BAJO_GRIS[i], OPC_LUZ_SOL_BAJO_GRIS_SOL[i]), adp_sol_bajo_t(i, elev));
-    }
-    return v;
-}
-
-fn adp_hacia_gris(c: vec3<f32>, gris: f32) -> vec3<f32> {
-    return mix(c, vec3<f32>(col_luminancia(c)), gris);
-}
-
-fn adp_luces(o: OpcLuz) -> AdpLuces {
-    if !adp_es_superficie() {
-        // Nether y End (17): sin sol ni cielo; un ambiente propio, hemisférico (en el Nether, más desde abajo).
-        let fc = frame.fog_color;
-        if frame.dimension == -1 {
-            let bruma = fc / max(max(fc.r, max(fc.g, fc.b)), 1e-3);
-            return AdpLuces(true, vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(0.0), bruma * OPC_AMBIENTE_NETHER * 0.6, bruma * OPC_AMBIENTE_NETHER * 1.4);
-        }
-        let azul = vec3<f32>(0.55, 0.6, 1.0) * OPC_AMBIENTE_END;
-        return AdpLuces(true, vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(0.0), azul, azul * 0.7);
-    }
-    let c = opc_cielo();
-    let d = frame.light_direction;
-    let sol_bajo = adp_sol_bajo();
-    let directa = adp_hacia_gris(adp_irradiancia_astro(c), sol_bajo.z);
-    // Ambiente medido de paridad/01, filtrado por las nubes del momento (F-12).
-    // Más el mínimo nocturno azulado (F-45): de noche, con luna, el terreno a cielo abierto se lee sin antorchas.
-    // Porqué: docs/efectos/luz-de-superficie.md §«Noche y otras dimensiones (F-45)»
-    let cielo = (adp_hacia_gris(adp_ambiente_cielo(), sol_bajo.y) * sol_bajo.x + OPC_LUZ_NOCHE_COLOR * (OPC_LUZ_NOCHE_SUELO + OPC_LUZ_NOCHE_LUNA * adp_luna_factor_fase() * smoothstep(-0.2, 0.1, frame.moon_direction.y))) * o.cielo;
-    return AdpLuces(false, d, directa, cielo, adp_suelo(c) * o.cielo * OPC_LUZ_CIELO_BASE);
-}
-
 struct AdpSombra {
     luz: vec3<f32>,         // 0..1 por canal
     grosor: f32,            // distancia al ocluyente hacia la luz, bloques
@@ -186,10 +136,9 @@ fn adp_sombra(p: AdpPunto) -> AdpSombra {
     let r = adp_sombra_punto(AdpEntradaSombra(p.posicion, p.normal_cara, p.luz_cielo, p.pixel), opc_sombras());
     var nubes = 1.0;
     if !opc_quitar(2048u) && (!adp_sombra_nubes_en_post() || p.translucido || p.fluido == 1u) {
-        nubes = mix(1.0, adp_sombra_nubes(p.mundo), opc_volumen().sombra_nubes);
+        nubes = mix(1.0, adp_sombra_nubes_cuadro(p.mundo), opc_volumen().sombra_nubes);
     }
-    let elev_sol = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
-    let horizonte = luz_sombra_horizonte(p.mundo.y, elev_sol, OPC_SOMBRA_HORIZONTE);
+    let horizonte = luz_sombra_horizonte(p.mundo.y, adp_elev_sol_cuadro(), OPC_SOMBRA_HORIZONTE);
     return AdpSombra(r.luz * nubes * horizonte, r.grosor);
 }
 
@@ -258,7 +207,7 @@ fn adp_suelo_clima(p: AdpPunto, o: OpcLuz, luz_dir: vec3<f32>) -> AdpSueloClima 
     if !(o.charcos || o.mojado) || !adp_es_superficie() || p.fluido != 0u || r.pbr.metal {
         return r;
     }
-    let clima = adp_clima_local_objetivo();
+    let clima = adp_clima_local_cuadro();
     if clima.tipo == 2u {
         // Bioma nevado: escarcha sutil en caras de arriba, sin charcos ni oscurecimiento.
         if clima.peso > 0.0 {

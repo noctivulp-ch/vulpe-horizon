@@ -9,7 +9,7 @@ fn material(input: MaterialInput) -> Surface {
     // Bits de medida 512 y 1024 (docs/rendimiento.md): con 0 no cuestan nada.
     var luces = AdpLuces(false, frame.light_direction, vec3<f32>(3.0), vec3<f32>(0.2, 0.25, 0.35), vec3<f32>(0.1));
     if !opc_quitar(1024u) {
-        luces = adp_luces(o);
+        luces = adp_luces_cuadro();
     }
     if p.fluido == 1u && p.translucido {
         return agua(input, p, luces);
@@ -72,7 +72,7 @@ fn material(input: MaterialInput) -> Surface {
     let bloque = (adp_color_luz_bloque(p, o) * luz_curva_bloque(p.luz_bloque) + p.luz_colorida) * OPC_LUZ_BLOQUE * o.bloque;
     // Relámpago (20): solo donde llega el cielo (luz de cielo a la cuarta). Porqué: docs/efectos/relampago.md
     let cielo2 = p.luz_cielo * p.luz_cielo;
-    let relampago = OPC_RELAMPAGO_COLOR * (OPC_RELAMPAGO_BRILLO * cielo2 * cielo2 * luz_relampago_superficie(adp_relampago(), p.posicion, n));
+    let relampago = OPC_RELAMPAGO_COLOR * (OPC_RELAMPAGO_BRILLO * cielo2 * cielo2 * luz_relampago_superficie(adp_relampago_cuadro(), p.posicion, n));
     // Luz mínima direccional (fino/03 §3, corregido 2026-11-10): atenuador frontal, 0,30 de frente a la cámara y 1 de
     // canto (medido: 1 − 0,7·N·V), sin caída con la distancia. Porqué: docs/efectos/luz-de-superficie.md §Cuevas (F-9)
     let frontal = max(dot(n, p.vista), 0.0);
@@ -93,7 +93,7 @@ fn material(input: MaterialInput) -> Surface {
     let por_pantalla = o.pasos_reflejo > 0 && !p.translucido && m.suavidad >= o.suavidad_reflejo;
     if (visible > 0.0 || m.metal) && !por_pantalla {
         let r = reflect(-p.vista, n);
-        let horizonte = adp_tabla(frame.sun_direction.y, ATM_FILA_HORIZONTE) * opc_cielo().sol_color;
+        let horizonte = adp_horizonte_cuadro();
         let cielo_r = mix(horizonte, luces.cielo * 2.0, sqrt(max(r.y, 0.0)));
         let ambiente_r = select(cielo_r, select(luces.cielo * 0.08, luces.suelo, luces.fija), r.y < 0.0);
         reflejo = ambiente_r * f_ambiente * curva_cielo * max(visible, select(0.0, 1.0, m.metal));

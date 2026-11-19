@@ -23,12 +23,12 @@ fn adp_volumen_rayo(uv: vec2<f32>, pixel: vec2<f32>) -> VolRayo {
 }
 
 fn adp_volumen_luz() -> VolLuz {
-    let c = opc_cielo();
-    // El ambiente de la niebla y del aire es el del cielo despejado (implementacion/02 §3b), por la luz de cielo suavizada
-    // de la cámara (bajo techo se apaga); la niebla toma 3/4 y el aire la mitad (fino/05 P2–P3), en el núcleo.
-    let elev = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
-    let cielo = adp_aplicar_crepusculo(atm_ambiente_cielo(elev)) * frame.eye_light_smooth.y;
-    return VolLuz(frame.light_direction, adp_irradiancia_astro(c), cielo, adp_suelo(c) * OPC_LUZ_CIELO_BASE);
+    return VolLuz(
+        frame.light_direction,
+        datos_cuadro[ADP_CUADRO_VOL_DIRECTA].xyz,
+        datos_cuadro[ADP_CUADRO_VOL_CIELO].xyz,
+        datos_cuadro[ADP_CUADRO_SUELO_RAW].xyz * OPC_LUZ_CIELO_BASE,
+    );
 }
 
 // Peso del bloom de niebla (10), en el alfa de la composición (fino/10 «Respuesta a la pregunta 10», medido): en el mundo
@@ -49,7 +49,7 @@ fn adp_opacidad_bloom_niebla(v: VolResultado, p: AdpPixel) -> f32 {
 fn adp_volumen_ajustes(bajo_agua: bool) -> VolAjustes {
     let o = opc_volumen();
     let m = adp_momento(o);
-    let h = adp_horario();
+    let h = adp_horario_cuadro();
     // En una cueva no entra la niebla de cielo: queda una tenue.
     let fuera = smoothstep(0.1, 0.7, frame.eye_light_smooth.y);
     let lluvia = frame.rain * o.lluvia;
@@ -74,9 +74,9 @@ fn adp_volumen_ajustes(bajo_agua: bool) -> VolAjustes {
     let con_niebla = o.niebla && !bajo_agua;
     let mapa = LuzMapa(frame.shadow_view_proj, frame.shadow_distortion);
     let viento_local = viento * OPC_LOCAL_VIENTO + vec3<f32>(0.0, frame.time * OPC_LOCAL_DESCENSO, 0.0);
-    let r = adp_relampago();
+    let r = adp_relampago_cuadro();
     let medio_local = VolNieblaLocal(local.uniforme * o.cantidad, local.manchas * o.cantidad, local.color, viento_local);
-    return VolAjustes(niebla, adp_nubes(), o.alcance, o.pasos, o.pasos_nubes, con_niebla, o.nubes,
+    return VolAjustes(niebla, adp_nubes_cuadro(), o.alcance, o.pasos, o.pasos_nubes, con_niebla, o.nubes,
                       frame.has_shadow == 1u, o.sombra_nubes, mapa, adp_aurora(o.alcance), medio_local, OPC_LOCAL_ALCANCE,
                       LuzRelampago(r.base, r.brillo * OPC_RELAMPAGO_NUBES * MAT_INV_PI * 0.25));
 }

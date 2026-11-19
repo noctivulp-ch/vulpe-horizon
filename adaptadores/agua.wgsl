@@ -67,13 +67,13 @@ fn adp_agua_refraccion(p: AdpPunto, n: vec3<f32>, cantidad: f32) -> AdpRefraccio
 // Lo que se refleja: el espejo de Horizon con su cielo vanilla sustituido por el del pack y nubes reflejadas.
 fn adp_agua_reflejo(p: AdpPunto, n: vec3<f32>, r: vec3<f32>, luces: AdpLuces) -> vec3<f32> {
     let c = opc_cielo();
-    let horizonte = adp_tabla(frame.sun_direction.y, ATM_FILA_HORIZONTE) * c.sol_color * c.brillo;
-    var cielo = vol_cielo_aproximado(horizonte, adp_cielo_medio(c), max(r.y, 0.0)) * OPC_CIELO_BRILLO_DIBUJO;
+    let horizonte = adp_horizonte_cuadro() * c.brillo;
+    var cielo = vol_cielo_aproximado(horizonte, adp_cielo_medio_cuadro(), max(r.y, 0.0)) * OPC_CIELO_BRILLO_DIBUJO;
     // Nubes reflejadas en la dirección reflejada (07 §4, obligatorias desde la observación del dueño 4.1): la forma de
     // las tres capas donde el rayo reflejado cruza la mitad de cada una, compuestas de abajo arriba.
     // Porqué: docs/efectos/agua.md §«Reflejo de nubes y niebla (F-48)»
     if r.y > 0.02 && opc_volumen().nubes {
-        let nubes_cfg = adp_nubes();
+        let nubes_cfg = adp_nubes_cuadro();
         var cob = 0.0;
         for (var i = 0; i < 3; i++) {
             if nubes_cfg.perfil.cobertura[i] > 0.0 {
@@ -107,9 +107,8 @@ fn adp_agua_reflejo(p: AdpPunto, n: vec3<f32>, r: vec3<f32>, luces: AdpLuces) ->
 // Hacia el horizonte el reflejo atraviesa la niebla que hay sobre el agua, como se ve mirando de frente: se funde con el
 // color del horizonte (con el velo de lluvia del cielo), más cuanto más rasante.
 fn adp_agua_reflejo_niebla(reflejo: vec3<f32>, r: vec3<f32>, horizonte: vec3<f32>) -> vec3<f32> {
-    let c = opc_cielo();
-    var color = vol_cielo_aproximado(horizonte, adp_cielo_medio(c), 0.0) * OPC_CIELO_BRILLO_DIBUJO;
-    color = cie_aplicar_lluvia(color, 0.0, vec3<f32>(1.0), frame.camera_position.y, adp_lluvia(c));
+    var color = vol_cielo_aproximado(horizonte, adp_cielo_medio_cuadro(), 0.0) * OPC_CIELO_BRILLO_DIBUJO;
+    color = cie_aplicar_lluvia(color, 0.0, vec3<f32>(1.0), frame.camera_position.y, adp_lluvia_cuadro());
     let rasante = max(r.y, 0.0) / OPC_AGUA_REFLEJO_NIEBLA;
     return mix(reflejo, color, exp(-rasante * rasante) * (OPC_AGUA_REFLEJO_NIEBLA_PESO + (1.0 - OPC_AGUA_REFLEJO_NIEBLA_PESO) * frame.rain));
 }

@@ -69,7 +69,16 @@ shared = [
     "adaptadores/fractal.wgsl",
     "adaptadores/tiempo.wgsl",
     "adaptadores/ruido.wgsl",
+    "adaptadores/cuadro.wgsl",
 ]
+
+[[before_world]]
+file = "etapas/cuadro.wgsl"
+files = ["adaptadores/cuadro_escritura.wgsl"]
+name = "Datos del cuadro"
+dispatch = [1, 1, 1]
+workgroup = [1, 1, 1]
+writes = ["datos_cuadro"]
 
 [sky]
 file = "etapas/cielo.wgsl"
@@ -77,9 +86,11 @@ files = [
     "nucleo/cielo/fractal_conjunto.wgsl",
     "nucleo/cielo/fractal_paleta.wgsl",
     "nucleo/cielo/fractal.wgsl",
+    "adaptadores/cuadro_lectura.wgsl",
     "adaptadores/fractal_dibujo.wgsl",
     "adaptadores/cielo.wgsl",
 ]
+reads = ["datos_cuadro"]
 name = "Cielo"
 clouds = false      # las nubes son del subsistema 05
 sun = false         # el disco del sol es nuestro (subsistema 01); la luna la dibuja Horizon
@@ -123,9 +134,11 @@ files = [
     "nucleo/luz/curvas.wgsl",
     "nucleo/luz/difusa.wgsl",
     "adaptadores/sombras.wgsl",
+    "adaptadores/cuadro_lectura.wgsl",
     "adaptadores/material.wgsl",
     "adaptadores/agua.wgsl",
 ]
+reads = ["datos_cuadro"]
 
 [displacement]       # relieve geométrico con teselación (subsistema 18)
 distance = 12.0
@@ -138,6 +151,12 @@ resolution = 2048
 distance = 128.0
 resolution_option = "sombras_resolucion"
 distance_option = "sombras_distancia"
+
+[[resource]]
+name = "datos_cuadro"
+buffer = 256
+element = "vec4<f32>"
+keep = "view"
 
 [[resource]]
 name = "volumen"
@@ -179,12 +198,14 @@ files = [
     "nucleo/volumen/aurora.wgsl",
     "adaptadores/fractal_dibujo.wgsl",
     "adaptadores/aurora.wgsl",
+    "adaptadores/cuadro_lectura.wgsl",
     "adaptadores/aurora_mapa.wgsl",
     "adaptadores/post.wgsl",
 ]
 name = "Mapa de la aurora"
 output = "mapa_aurora"
 scale = 0.25
+reads = ["datos_cuadro"]
 
 [[post]]
 file = "etapas/post/02-volumen.wgsl"
@@ -201,11 +222,12 @@ files = [
     "opciones/cruce_agua.wgsl",
     "adaptadores/cruce_agua.wgsl",
     "adaptadores/aurora.wgsl",
+    "adaptadores/cuadro_lectura.wgsl",
     "adaptadores/volumen.wgsl",
 ]
 name = "Volumen"
 output = "volumen"
-reads = ["bloom2_previous"]
+reads = ["bloom2_previous", "datos_cuadro"]
 
 [[post]]
 file = "etapas/post/03-composicion.wgsl"
@@ -225,6 +247,7 @@ files = [
     "opciones/cruce_agua.wgsl",
     "adaptadores/cruce_agua.wgsl",
     "adaptadores/aurora.wgsl",
+    "adaptadores/cuadro_lectura.wgsl",
     "adaptadores/volumen.wgsl",
     "adaptadores/reflejo.wgsl",
     "nucleo/luz/oclusion.wgsl",
@@ -235,7 +258,7 @@ files = [
 ]
 name = "Composición"
 output = "composicion"
-reads = ["volumen", "bloom2_previous"]
+reads = ["volumen", "bloom2_previous", "datos_cuadro"]
 
 [[post]]
 file = "etapas/post/04-bloom-bajada.wgsl"

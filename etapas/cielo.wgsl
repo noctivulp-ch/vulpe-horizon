@@ -7,8 +7,8 @@ fn sky(input: SkyInput) -> vec4<f32> {
     }
     let dir = rayo.direccion;
     let ajustes = opc_cielo();
-    let sol = adp_luz_sol(ajustes);
-    let luna = adp_luz_luna(ajustes);
+    let sol = adp_luz_sol_cuadro(ajustes);
+    let luna = adp_luz_luna_cuadro(ajustes);
 
     // Bajo el horizonte la atmósfera se evalúa mirando al horizonte: en Minecraft el terreno acaba antes que
     // el horizonte del planeta y lo que se ve detrás tiene que fundirse con la bruma, no con el suelo del
@@ -28,7 +28,7 @@ fn sky(input: SkyInput) -> vec4<f32> {
     if fractal.activo && noche > 0.0 {
         let mascara = estrellas / max(ajustes.estrellas.brillo, 1e-9);
         let escena = CieFractalEscena(adp_cielo_jitter(dir), frame.sun_direction, noche, mascara);
-        fondo += cie_fractal(escena, adp_fractal_ajustes(fractal, adp_cielo_medio(ajustes))) * OPC_FRACTAL_GANANCIA_CIELO;
+        fondo += cie_fractal(escena, adp_fractal_ajustes(fractal, adp_cielo_medio_cuadro())) * OPC_FRACTAL_GANANCIA_CIELO;
     }
     // Bajo el horizonte: bruma cerca de él y suelo al mirar más abajo, con la misma regla de ángulo que la
     // niebla de borde (05). Así el terreno que acaba antes del horizonte se funde con lo que hay detrás a
@@ -36,16 +36,15 @@ fn sky(input: SkyInput) -> vec4<f32> {
     let suelo = cie_peso_bruma_horizonte(dir.y);
     // El fondo (estrellas y fractal) no se multiplica por la transmitancia del rayo de vista (fino/02 §5).
     var cielo = atm.luz * mix(0.8, 1.0, suelo) + fondo * cie_factor_suelo(dir.y, 0.03);
-    cielo = mix(cie_color_bajo_horizonte(adp_cielo_medio(ajustes), adp_suelo(ajustes), 0.35), cielo, suelo);
+    cielo = mix(cie_color_bajo_horizonte(adp_cielo_medio_cuadro(), adp_suelo_cuadro(), 0.35), cielo, suelo);
     cielo = col_saturar(cielo, OPC_CIELO_SATURACION) * OPC_CIELO_BRILLO_DIBUJO;
 
     // Disco del sol: luz directa ya atenuada y con rampa de horizonte (fino/01 §8),
     // sumado directamente sin multiplicar por la transmitancia del rayo de vista ni por el brillo del dibujo.
-    let elev_sol = degrees(asin(clamp(frame.sun_direction.y, -1.0, 1.0)));
-    let directa_sol = atm_luz_directa_sol(elev_sol) * ajustes.sol_color;
+    let directa_sol = adp_sol_disco_cuadro();
     let disco = atm_disco(dot(dir, sol.direccion), OPC_SOL_DISCO_RADIO, OPC_SOL_DISCO_BORDE) * (1.0 - frame.rain);
     cielo += directa_sol * OPC_SOL_DISCO_BRILLO * disco * cie_factor_suelo(dir.y, 0.03);
 
-    cielo = cie_aplicar_lluvia(cielo, dir.y, atm.transmitancia, frame.camera_position.y, adp_lluvia(ajustes));
+    cielo = cie_aplicar_lluvia(cielo, dir.y, atm.transmitancia, frame.camera_position.y, adp_lluvia_cuadro());
     return adp_cielo_salida(cielo, dir);
 }
