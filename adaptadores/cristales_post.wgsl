@@ -101,8 +101,9 @@ fn adp_cristales_post_evaluar_cara(
         }
     }
 
-    // Capa 2 — Escarcha de fuera y repisa de nieve (27 v2 §Capa 2).
-    let frio_activo = bioma_frio && (c0.y > 0.001 || c0.z > 0.001) && c2.z > 0.001;
+    // Capa 2 y 3 — Escarcha de fuera, repisa de nieve y copos pegados (27 v2 §Capas 2 y 3).
+    let copos_vivos = bioma_frio && c2.z > 0.001 && (cristal_sim[8].z > 0.5 || cristal_sim[9].z > 0.5 || cristal_sim[10].z > 0.5 || cristal_sim[11].z > 0.5);
+    let frio_activo = bioma_frio && (c0.y > 0.001 || c0.z > 0.001 || copos_vivos) && c2.z > 0.001;
     if frio_activo && (entorno.es_exterior || entorno.es_interior_fria) {
         var esc = sup_cristal_escarcha_v2(plano, entorno.dist_marco, c0.y, c2.z, co.z, variante, false, 1.0);
         esc.alfa *= aten_dist;
@@ -112,6 +113,25 @@ fn adp_cristales_post_evaluar_cara(
             let comp = adp_cp_sobre(capa_col, capa_op, col_esc, esc.alfa);
             capa_col = comp.rgb;
             capa_op = comp.a;
+        }
+
+        let copo_ext = entorno.llega_cielo;
+        let copo_int = !copo_ext && entorno.es_interior && entorno.opuesta_llega_cielo;
+        if copos_vivos && plano.vertical && (copo_ext || copo_int) {
+            let n_copo = select(-n_cara, n_cara, copo_ext);
+            var pl_copo = plano;
+            if !copo_ext {
+                pl_copo = sup_cristal_plano(p_mundo, n_copo);
+            }
+            let coord_c = sup_cristal_copo_texel(b, n_copo, pl_copo, co.z);
+            var copo = textureLoad(cristal_clima, coord_c, 0);
+            copo.a *= aten_dist;
+            if copo.a > 0.002 {
+                let col_c = copo.rgb * (luz_base * 1.15 + luces.cielo * cielo_ext_ref * 0.35);
+                let comp = adp_cp_sobre(capa_col, capa_op, col_c, copo.a);
+                capa_col = comp.rgb;
+                capa_op = comp.a;
+            }
         }
 
         let muestra_rep = c0.z > 0.005 && (entorno.llega_cielo || (entorno.es_interior && entorno.opuesta_llega_cielo));

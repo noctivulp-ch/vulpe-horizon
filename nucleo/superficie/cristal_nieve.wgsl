@@ -1,103 +1,103 @@
-// Copos pegados (1–2 texeles) y montón inferior de nieve (4–6 texeles) en cristales, rejilla de 32 (27 §3).
-// Función pura del núcleo: no lee `frame` ni recursos del motor.
-// Porqué: docs/efectos/tiempo-en-los-cristales.md §3
+// Copos pegados en 8 tiras globales con 4 formas pixel-art y derretimiento progresivo (27 v2 §Capa 3).
+// Funciones puras del núcleo: no leen `frame` ni recursos del motor.
+// Porqué: docs/efectos/tiempo-en-los-cristales.md §4
 
-struct SupCristalNieve {
-    copo: f32,              // 0..1 copo suelto pegado (1–2 texeles)
-    monton: f32,            // 0..1 franja acumulada abajo (4–6 texeles)
-    cobertura: f32,         // max(copo, monton)
-    relieve_y: f32,         // inclinación suave del montón hacia arriba
+// Coordenada entera (x, y) en `cristal_clima` (512x512, filas y=256..511) para las 8 tiras globales de copos.
+fn sup_cristal_copo_texel(
+    b: vec3<i32>,
+    normal_cara: vec3<f32>,
+    plano: SupCristalPlano,
+    k_res: f32,
+) -> vec2<i32> {
+    let paso = select(1.0, 2.0, k_res < 0.75);
+    let cara = sup_cristal_indice_cara(normal_cara);
+    let h = sup_cr_hash_u32(
+        u32(b.x * 374761393) ^ u32(b.y * 668265263) ^ u32(b.z * 2147483647) ^ u32(cara * 1597334677),
+    );
+    let tira = i32(h & 7u);
+    let tile_x = i32((h >> 3u) & 3u);
+    let tile_y = i32((h >> 5u) & 3u);
+
+    let local = fract(plano.uv);
+    let lx = clamp(i32(floor(local.x * 32.0 / paso) * paso), 0, 31);
+    let ly = clamp(i32(floor((1.0 - local.y) * 32.0 / paso) * paso), 0, 31);
+
+    let ox = (tira & 3) * 128;
+    let oy = 256 + (tira >> 2) * 128;
+    return vec2<i32>(ox + tile_x * 32 + lx, oy + tile_y * 32 + ly);
 }
 
-fn sup_cristal_nieve(
-    plano: SupCristalPlano,
-    normal_cara: vec3<f32>,
-    luz_cielo: f32,
-    ao_vertice: f32,
-    viento_xz: vec2<f32>,
-    tiempo: f32,
-    nivel_copos: f32,
-    nivel_monton: f32,
-    escala_ajuste: f32,
-    distancia: f32,
-) -> SupCristalNieve {
-    let vacio = SupCristalNieve(0.0, 0.0, 0.0, 0.0);
-    if (nivel_copos <= 0.005 && nivel_monton <= 0.005) || escala_ajuste <= 0.0 {
-        return vacio;
-    }
-    if normal_cara.y < -0.5 {
-        return vacio;
-    }
-    let exp_cielo = smoothstep(OPC_CRISTAL_CIELO_MIN, OPC_CRISTAL_CIELO_MAX, luz_cielo);
-    if exp_cielo <= 0.001 {
-        return vacio;
-    }
-    let atenuacion_dist = 1.0 - smoothstep(OPC_CRISTAL_DIST_INICIO, OPC_CRISTAL_DIST_FIN, distancia);
-    if atenuacion_dist <= 0.001 {
-        return vacio;
+// Dibuja una de las 4 formas exactas de copo pegado (27 v2 §Capa 3):
+//   1: punto 1x1 blanco (alfa 0,90)
+//   2: pareja diagonal 2 texeles, blanco (0,90) y suave (236,250,251) (0,75)
+//   3: cruz 3x3, centro blanco (0,95) y brazos blancos (0,80)
+//   4: estrella 5x5, cruz interior blanca (0,95 / 0,85), puntas y diagonales azul hielo (188,214,255) (0,70 / 0,60)
+// Devuelve vec4(color.rgb, alfa) en luz lineal.
+fn sup_cristal_dibujar_copo(
+    p_tx: vec2<f32>,
+    centro: vec2<f32>,
+    forma_raw: u32,
+    escala_alfa: f32,
+    reducido: bool,
+) -> vec4<f32> {
+    let delta = sup_cr_wrap_delta(p_tx - centro);
+    let dx = i32(round(delta.x));
+    let dy = i32(round(delta.y));
+    let adx = abs(dx);
+    let ady = abs(dy);
+    if adx > 2 || ady > 2 {
+        return vec4<f32>(0.0);
     }
 
-    let texel = floor(plano.uv * OPC_CRISTAL_REJILLA);
-    let uv_q = (texel + 0.5) / OPC_CRISTAL_REJILLA;
-
-    // Barlovento recibe más copos pegados.
-    let viento_len = length(viento_xz);
-    let viento_dir = select(vec2<f32>(-1.0, 0.0), viento_xz / max(viento_len, 1e-4), viento_len > 0.01);
-    let viento_3d = vec3<f32>(viento_dir.x, 0.0, viento_dir.y);
-    let barlovento = select(0.6, dot(normal_cara, -viento_3d), plano.vertical);
-    let factor_viento = clamp(1.0 + 0.35 * barlovento, 0.45, 1.35);
-
-    // 1) Copos sueltos (1–2 texeles) en celdas de 4×4 texeles (= 8 celdas por bloque).
-    var copo = 0.0;
-    if nivel_copos > 0.005 {
-        // Cambio lento por bloques de tiempo para que vayan pegándose y cayendo poco a poco.
-        let ciclo = floor(tiempo * 0.12);
-        let celda = floor(uv_q * 8.0);
-        let h = rui_hash33(vec3<i32>(i32(celda.x), i32(celda.y), i32(ciclo) + 71));
-        let densidad = clamp(0.32 * nivel_copos * factor_viento * escala_ajuste, 0.0, 0.78);
-        if h.x < densidad {
-            // Al parar de nevar (`nivel_copos` baja), los copos se van desprendiendo según su umbral.
-            let retenido = smoothstep(0.0, 0.15, nivel_copos - h.z * 0.85);
-            if retenido > 0.01 {
-                let centro = vec2<f32>(0.25 + 0.5 * h.y, 0.25 + 0.5 * fract(h.z * 11.7));
-                // Radio de 0,6 a 1,15 texeles -> copos de 1 a 2 texeles en la rejilla de 32.
-                let r_tex = 0.58 + 0.58 * fract(h.x * 19.3);
-                let r_celda = (r_tex / OPC_CRISTAL_REJILLA) * 8.0;
-                let dq = (fract(uv_q * 8.0) - centro) / max(r_celda, 1e-4);
-                // Forma ligeramente en cruz/diamante (norma L1+L2) para recordar a un copo pixel art.
-                let d_copo = mix(length(dq), abs(dq.x) + abs(dq.y), 0.35);
-                if d_copo <= 1.0 {
-                    copo = retenido;
-                }
-            }
-        }
-    }
-
-    // 2) Montón inferior de nieve en caras verticales (4–6 texeles de alto) y capa fina arriba.
-    var monton = 0.0;
-    var relieve_y = 0.0;
-    if nivel_monton > 0.005 {
-        if plano.vertical {
-            let local_y = fract(uv_q.y);
-            let y_tex = local_y * OPC_CRISTAL_REJILLA;
-            let ondulacion = rui_valor2(vec2<f32>(uv_q.x * 3.5, floor(uv_q.y) * 1.7 + 9.3));
-            let repisa = mix(OPC_CRISTAL_NIEVE_JUNTA_PESO, 1.0, smoothstep(0.99, 0.80, ao_vertice));
-            let altura_tex = mix(OPC_CRISTAL_NIEVE_MONTON_MIN, OPC_CRISTAL_NIEVE_MONTON_MAX, ondulacion)
-                           * nivel_monton * clamp(escala_ajuste, 0.0, 1.35) * repisa;
-            if y_tex < altura_tex {
-                monton = smoothstep(altura_tex, max(altura_tex - 1.2, 0.0), y_tex);
-                relieve_y = 0.45 * (1.0 - y_tex / max(altura_tex, 1.0));
-            }
+    var forma = forma_raw;
+    if reducido {
+        // En el último 25 % de vida el copo se reduce a un punto o una pareja diagonal.
+        if forma >= 3u {
+            forma = 2u;
         } else {
-            // Cara superior (techo de cristal): polvo de nieve acumulado en manchas en la rejilla de 32.
-            let n = rui_valor2(uv_q * 3.0 + vec2<f32>(5.2, 2.7));
-            let umbral = 1.0 - clamp(nivel_monton * 0.65 * escala_ajuste, 0.0, 0.85);
-            monton = smoothstep(umbral, umbral + 0.15, n);
-            relieve_y = 0.25 * monton;
+            forma = 1u;
         }
     }
 
-    let c = copo * exp_cielo * atenuacion_dist;
-    let m = monton * exp_cielo * atenuacion_dist;
-    return SupCristalNieve(c, m, max(c, m), relieve_y * exp_cielo * atenuacion_dist);
+    if forma == 1u {
+        if adx == 0 && ady == 0 {
+            return vec4<f32>(OPC_CRISTAL_COPO_BLANCO, 0.90 * escala_alfa);
+        }
+        return vec4<f32>(0.0);
+    }
+
+    if forma == 2u {
+        if dx == 0 && dy == 0 {
+            return vec4<f32>(OPC_CRISTAL_COPO_BLANCO, 0.90 * escala_alfa);
+        }
+        if dx == 1 && dy == 1 {
+            return vec4<f32>(OPC_CRISTAL_COPO_SUAVE, 0.75 * escala_alfa);
+        }
+        return vec4<f32>(0.0);
+    }
+
+    if forma == 3u {
+        if adx == 0 && ady == 0 {
+            return vec4<f32>(OPC_CRISTAL_COPO_BLANCO, 0.95 * escala_alfa);
+        }
+        if (adx == 1 && ady == 0) || (adx == 0 && ady == 1) {
+            return vec4<f32>(OPC_CRISTAL_COPO_BLANCO, 0.80 * escala_alfa);
+        }
+        return vec4<f32>(0.0);
+    }
+
+    // Forma 4: estrella 5x5.
+    if adx == 0 && ady == 0 {
+        return vec4<f32>(OPC_CRISTAL_COPO_BLANCO, 0.95 * escala_alfa);
+    }
+    if (adx == 1 && ady == 0) || (adx == 0 && ady == 1) {
+        return vec4<f32>(OPC_CRISTAL_COPO_BLANCO, 0.85 * escala_alfa);
+    }
+    if (adx == 2 && ady == 0) || (adx == 0 && ady == 2) {
+        return vec4<f32>(OPC_CRISTAL_COPO_HIELO, 0.70 * escala_alfa);
+    }
+    if adx == 1 && ady == 1 {
+        return vec4<f32>(OPC_CRISTAL_COPO_HIELO, 0.60 * escala_alfa);
+    }
+    return vec4<f32>(0.0);
 }

@@ -92,7 +92,7 @@ writes = ["cristal_mapa"]
 
 [[before_world]]
 file = "etapas/cristal_sim.wgsl"
-files = ["nucleo/superficie/cristal_lluvia.wgsl", "adaptadores/cristal_mapa.wgsl", "adaptadores/cristal_sim_datos.wgsl", "adaptadores/cristal_sim.wgsl"]
+files = ["nucleo/superficie/cristal_lluvia.wgsl", "nucleo/superficie/cristal_nieve.wgsl", "adaptadores/cristal_mapa.wgsl", "adaptadores/cristal_sim_datos.wgsl", "adaptadores/cristal_sim.wgsl"]
 name = "Simulación cristales"
 dispatch = [16, 1, 1]
 workgroup = [1, 1, 1]
@@ -101,7 +101,7 @@ writes = ["cristal_sim"]
 
 [[before_world]]
 file = "etapas/cristal_lienzo.wgsl"
-files = ["nucleo/superficie/cristal_lluvia.wgsl", "adaptadores/cristal_sim_datos.wgsl", "adaptadores/cristal_lienzo.wgsl"]
+files = ["nucleo/superficie/cristal_lluvia.wgsl", "nucleo/superficie/cristal_nieve.wgsl", "adaptadores/cristal_sim_datos.wgsl", "adaptadores/cristal_lienzo.wgsl"]
 name = "Lienzo cristales"
 dispatch = [512, 512, 1]
 workgroup = [8, 8, 1]
@@ -311,6 +311,7 @@ files = [
     "adaptadores/menas_luz.wgsl",
     "nucleo/superficie/cristal_lluvia.wgsl",
     "nucleo/superficie/cristal_escarcha.wgsl",
+    "nucleo/superficie/cristal_nieve.wgsl",
     "adaptadores/cristal_mapa.wgsl",
     "adaptadores/cristal_sim_datos.wgsl",
     "adaptadores/cristales_post.wgsl",

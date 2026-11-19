@@ -524,6 +524,120 @@ fn adp_cs_simular_lluvia_arriba(panel: u32, dt: f32) {
     cristal_sim[panel] = vec4<f32>(spawn_acc, rng_f, f32(vivas), trail_t);
 }
 
+fn adp_cs_forma_copo(u: f32, k: f32) -> f32 {
+    if k < 0.75 {
+        // 16: 80 / 15 / 5 / 0 %
+        if u < 0.80 { return 1.0; }
+        if u < 0.95 { return 2.0; }
+        return 3.0;
+    }
+    if k > 1.5 {
+        // 64: 45 / 25 / 20 / 10 %
+        if u < 0.45 { return 1.0; }
+        if u < 0.70 { return 2.0; }
+        if u < 0.90 { return 3.0; }
+        return 4.0;
+    }
+    // 32 (base): 60 / 25 / 12 / 3 %
+    if u < 0.60 { return 1.0; }
+    if u < 0.85 { return 2.0; }
+    if u < 0.97 { return 3.0; }
+    return 4.0;
+}
+
+// Simulación de las 8 tiras globales de copos pegados (paneles 8..15; 27 v2 §Capa 3).
+// Cada ranura (1 vec4): xy=pos(0..128), z=forma(1..4)+0,01*vida_total(20..60), w=<0 nevando / >0 vida restante al fundirse.
+fn adp_cs_simular_copos(panel: u32, dt: f32) {
+    let c0 = datos_cuadro[ADP_CUADRO_CRISTAL_0];
+    let c2 = datos_cuadro[ADP_CUADRO_CRISTAL_2];
+    let cf = datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS];
+    let co = datos_cuadro[ADP_CUADRO_CRISTAL_VAHO_OPT];
+
+    let flags = u32(max(round(cf.x), 0.0));
+    let bioma_frio = (flags & OPC_CR_FLAG_BIOMA_FRIO) != 0u;
+    let escala = c2.z;
+    let clima = c0.x;
+    let nevando = bioma_frio && clima > OPC_CRISTAL_CLIMA_UMBRAL && escala > 0.001;
+    let k = clamp(co.z, 0.5, 2.0);
+
+    var hdr = cristal_sim[panel];
+    var activas = u32(max(round(hdr.z), 0.0));
+    var limpiar = hdr.w;
+    if !nevando && activas == 0u && limpiar <= -0.5 {
+        return;
+    }
+
+    var rng = u32(max(round(hdr.y), 1.0)) ^ (frame.frame_index * 747796405u + panel * 2891336453u + 17u);
+    let tira = panel - 8u;
+    let base = ADP_CS_OFF_COPOS + tira * ADP_CS_SLOT_COPOS;
+    var spawn_acc = hdr.x;
+    if hdr.y == 0.0 {
+        for (var i = 0u; i < ADP_CS_MAX_COPOS; i++) {
+            cristal_sim[base + i] = vec4<f32>(0.0);
+        }
+        activas = 0u;
+        spawn_acc = 0.0;
+    }
+
+    if nevando {
+        let tope = min(ADP_CS_MAX_COPOS, u32(clamp(140.0 * escala * clamp(clima, 0.35, 1.4), 16.0, f32(ADP_CS_MAX_COPOS))));
+        spawn_acc += 6.0 * escala * min(clima, 1.4) * dt;
+        var por_crear = min(u32(floor(spawn_acc)), 4u);
+        spawn_acc -= f32(por_crear);
+        for (var i = 0u; i < tope; i++) {
+            if por_crear == 0u || activas >= tope {
+                break;
+            }
+            if cristal_sim[base + i].z <= 0.0 {
+                let nx = floor(adp_cs_rand(&rng) * 128.0) + 0.5;
+                let ny = floor(adp_cs_rand(&rng) * 128.0) + 0.5;
+                let forma = adp_cs_forma_copo(adp_cs_rand(&rng), k);
+                let total_s = 20.0 + adp_cs_rand(&rng) * 40.0;
+                cristal_sim[base + i] = vec4<f32>(nx, ny, forma + 0.01 * total_s, -total_s);
+                activas += 1u;
+                por_crear -= 1u;
+            }
+        }
+    } else {
+        spawn_acc = 0.0;
+    }
+
+    var vivas = 0u;
+    for (var i = 0u; i < ADP_CS_MAX_COPOS; i++) {
+        var f0 = cristal_sim[base + i];
+        if f0.z <= 0.0 {
+            continue;
+        }
+        if nevando {
+            let total_s = max(fract(f0.z) * 100.0, 20.0);
+            f0.w = -total_s;
+        } else {
+            if f0.w < 0.0 {
+                f0.w = abs(f0.w);
+            } else {
+                f0.w -= dt;
+                if f0.w <= 0.0 {
+                    f0 = vec4<f32>(0.0);
+                }
+            }
+        }
+        cristal_sim[base + i] = f0;
+        if f0.z > 0.0 {
+            vivas += 1u;
+        }
+    }
+
+    if vivas > 0u || nevando {
+        limpiar = 0.5;
+    } else if limpiar > 0.0 {
+        limpiar = 0.0;
+    } else {
+        limpiar = -1.0;
+    }
+    let rng_f = f32((rng & 0x7FFFFFu) + 1u);
+    cristal_sim[panel] = vec4<f32>(spawn_acc, rng_f, f32(vivas), limpiar);
+}
+
 fn adp_cristal_sim_paso(panel: u32) {
     if !OPC_CRISTAL_ACTIVO || !adp_es_superficie() {
         if panel == 0u {
@@ -537,8 +651,9 @@ fn adp_cristal_sim_paso(panel: u32) {
             adp_cs_simular_lluvia_lado(panel, max(dt, 0.016));
         } else if panel < 8u {
             adp_cs_simular_lluvia_arriba(panel, max(dt, 0.016));
+        } else if panel < 16u {
+            adp_cs_simular_copos(panel, max(dt, 0.016));
         }
-        // Paneles 8..15: tiras globales de copos pegados (se añaden en el paso 4).
     }
 
     // Resume si hay algún cristal transparente cerca (coste ~0 cuando el tiempo está despejado o no hay cristales).

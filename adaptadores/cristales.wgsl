@@ -145,8 +145,9 @@ fn adp_cristal_evaluar(
     let hdr_lluvia_op = cristal_sim[panel_lluvia_op];
     let panel_lluvia_vivo = !es_abajo && (hdr_lluvia.z > 0.5 || hdr_lluvia.w > 0.0 || hdr_lluvia_op.z > 0.5 || hdr_lluvia_op.w > 0.0);
 
+    let copos_panel_vivo = bioma_frio && c2.z > 0.001 && (cristal_sim[8].z > 0.5 || cristal_sim[9].z > 0.5 || cristal_sim[10].z > 0.5 || cristal_sim[11].z > 0.5);
     let lluvia_activa = panel_lluvia_vivo && c2.y > 0.001;
-    let frio_activo = bioma_frio && (c0.y > 0.001 || c0.z > 0.001) && c2.z > 0.001;
+    let frio_activo = bioma_frio && (c0.y > 0.001 || c0.z > 0.001 || copos_panel_vivo) && c2.z > 0.001;
     let arena_activa = bioma_seco && c2.x > OPC_CRISTAL_ARENA_MIN && c2.w > 0.001;
     let cond_activa = interior_activo && bioma_frio && (c0.w > 0.001 || (borde_estilo == 1u && c0.y > 0.001));
     let vaho_activo = interior_activo && cv.w > 0.001 && co.x > 0.001;
@@ -205,21 +206,20 @@ fn adp_cristal_evaluar(
     );
     repisa_capa.alfa *= aten_dist;
 
-    // Copos temporales (se sustituyen por las 8 tiras globales en el paso 4) y arena (paso 5):
-    let nieve_bruta = sup_cristal_nieve(
-        plano,
-        p.normal_cara,
-        cielo_exposicion,
-        1.0,
-        c1.xy,
-        adp_tiempo().segundos,
-        select(0.0, c0.x, frio_activo && c0.x > OPC_CRISTAL_CLIMA_UMBRAL),
-        0.0,
-        c2.z,
-        dist,
-    );
-    let copo_vivo = nieve_bruta.copo * (1.0 - smoothstep(0.0, 0.65, aliento.derrite));
-    let nieve = SupCristalNieve(copo_vivo, 0.0, copo_vivo, 0.0);
+    // Capa 3 — Copos pegados desde las 8 tiras globales en `cristal_clima` (27 v2 §Capa 3).
+    var copo_rgba = vec4<f32>(0.0);
+    let copo_en_exterior = entorno.llega_cielo;
+    let copo_desde_interior = !copo_en_exterior && entorno.es_interior && entorno.opuesta_llega_cielo;
+    if copos_panel_vivo && plano.vertical && (copo_en_exterior || copo_desde_interior) {
+        let normal_copo = select(-p.normal_cara, p.normal_cara, copo_en_exterior);
+        var plano_copo = plano;
+        if !copo_en_exterior {
+            plano_copo = sup_cristal_plano(p.mundo, normal_copo);
+        }
+        let coord_copo = sup_cristal_copo_texel(b_cristal, normal_copo, plano_copo, co.z);
+        copo_rgba = textureLoad(cristal_clima, coord_copo, 0);
+        copo_rgba.a *= (1.0 - smoothstep(0.0, 0.65, aliento.derrite)) * aten_dist;
+    }
 
     let arena = sup_cristal_arena(
         plano,
@@ -249,7 +249,7 @@ fn adp_cristal_evaluar(
         let coord_lluvia = sup_cristal_lluvia_texel(b_cristal, normal_muestra, plano_muestra, co.z);
         let tx = textureLoad(cristal_clima, coord_lluvia, 0);
         let mascara_agua = (1.0 - smoothstep(0.35, 0.75, esc_capa.alfa))
-                         * (1.0 - smoothstep(0.15, 0.55, max(nieve.cobertura, repisa_capa.alfa)))
+                         * (1.0 - smoothstep(0.15, 0.55, max(copo_rgba.a, repisa_capa.alfa)))
                          * (1.0 - smoothstep(0.15, 0.55, arena.cobertura))
                          * aten_dist;
         lluvia_rgba = sup_cristal_lluvia_color(tx, regueros && plano.vertical);
@@ -259,7 +259,7 @@ fn adp_cristal_evaluar(
         lluvia_mojado = select(0.0, clamp(c0.x, 0.0, 1.0) * 0.4 * mascara_agua, llueve_bioma && c0.x > OPC_CRISTAL_CLIMA_UMBRAL);
     }
 
-    if lluvia_rgba.a <= 0.002 && lluvia_mojado <= 0.002 && esc_capa.alfa <= 0.002 && repisa_capa.alfa <= 0.002 && nieve.cobertura <= 0.001 && aliento.vaho <= 0.001 && arena.cobertura <= 0.001 {
+    if lluvia_rgba.a <= 0.002 && lluvia_mojado <= 0.002 && esc_capa.alfa <= 0.002 && repisa_capa.alfa <= 0.002 && copo_rgba.a <= 0.002 && aliento.vaho <= 0.001 && arena.cobertura <= 0.001 {
         return r;
     }
     r.activo = true;
@@ -334,20 +334,14 @@ fn adp_cristal_evaluar(
         }
     }
 
-    if nieve.cobertura > 0.001 {
-        let n_nieve = normalize(n_base + vec3<f32>(0.0, nieve.relieve_y, 0.0));
-        let n_l_nieve = max(dot(n_nieve, luces.direccion), 0.0);
-        let luz_nieve = luces.directa * sombra_luz * (n_l_nieve + contraluz * 0.4)
-                      + luces.cielo * curva_cielo * (0.95 + 0.2 * nieve.relieve_y)
-                      + bloque_luz
-                      + vec3<f32>(OPC_LUZ_NOCHE_SUELO * curva_cielo);
-        let color_nieve = OPC_CRISTAL_NIEVE_COLOR * luz_nieve;
-        let op_nieve = max(nieve.copo * OPC_CRISTAL_NIEVE_OPACIDAD_COPO, nieve.monton * OPC_CRISTAL_NIEVE_OPACIDAD_MONTON);
-        let comp_nieve = adp_cristal_sobre(r.capa_color, r.capa_opacidad, color_nieve, op_nieve);
-        r.capa_color = comp_nieve.rgb;
-        r.capa_opacidad = comp_nieve.a;
-        r.mate = max(r.mate, op_nieve * 0.85);
-        r.especular_extra *= (1.0 - op_nieve);
+    if copo_rgba.a > 0.002 {
+        let luz_copo = luz_capa * 1.15 + luces.cielo * cielo_ext_ref * 0.35;
+        let color_copo = copo_rgba.rgb * luz_copo;
+        let comp_copo = adp_cristal_sobre(r.capa_color, r.capa_opacidad, color_copo, copo_rgba.a);
+        r.capa_color = comp_copo.rgb;
+        r.capa_opacidad = comp_copo.a;
+        r.mate = max(r.mate, copo_rgba.a * 0.85);
+        r.especular_extra *= (1.0 - copo_rgba.a);
     }
 
     if arena.cobertura > 0.001 {

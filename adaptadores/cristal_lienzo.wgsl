@@ -1,13 +1,12 @@
-// Rasterización en [[before_world]] de los paneles de lluvia y copos desde `cristal_sim` a `cristal_clima` (512x512).
-// Usa memoria compartida de grupo (`var<workgroup>`) para leer cada gota una sola vez por bloque de 8x8 texeles,
-// y salida temprana de coste ~0 cuando el panel está seco.
-// Porqué: docs/efectos/tiempo-en-los-cristales.md §2
+// Rasterización en [[before_world]] de los paneles de lluvia y las 8 tiras globales de copos desde `cristal_sim`
+// a `cristal_clima` (512x512). Usa memoria compartida de grupo (`var<workgroup>`) y salida temprana de coste ~0
+// cuando el panel está vacío o seco.
+// Porqué: docs/efectos/tiempo-en-los-cristales.md §2 y §4
 
-var<workgroup> adp_cl_g0: array<vec4<f32>, 112>;
+var<workgroup> adp_cl_g0: array<vec4<f32>, 144>;
 var<workgroup> adp_cl_g1: array<vec4<f32>, 112>;
 
 fn adp_cristal_lienzo(cell: vec3<u32>, local: u32, in_bounds: bool) {
-    // Determina a qué panel pertenece este workgroup (todos los hilos del workgroup 8x8 comparten panel).
     let px_all = i32(cell.x);
     let py_all = i32(cell.y);
     let col_panel = u32(clamp(px_all / 128, 0, 3));
@@ -24,12 +23,62 @@ fn adp_cristal_lienzo(cell: vec3<u32>, local: u32, in_bounds: bool) {
     let activas = u32(max(round(hdr.z), 0.0));
     let trail_t = hdr.w;
 
-    // Paneles de copos (8..15) todavía inactivos hasta el paso 4; y paneles de lluvia completamente secos:
-    // salen todos los hilos del workgroup antes de tocar memoria ni texturas.
-    if panel_id >= 8u || (activas == 0u && trail_t <= -0.5) {
+    // Salida temprana uniforme de workgroup cuando el panel está seco/vacío.
+    if activas == 0u && trail_t <= -0.5 {
         return;
     }
 
+    let coord = vec2<i32>(px_all, py_all);
+    let p_tx = vec2<f32>(f32(px_all % 128) + 0.5, f32(py_all % 128) + 0.5);
+
+    // Paneles 8..15: 8 tiras globales de copos pegados (y=256..511; 27 v2 §Capa 3).
+    if panel_id >= 8u {
+        let tira = panel_id - 8u;
+        let base_c = ADP_CS_OFF_COPOS + tira * ADP_CS_SLOT_COPOS;
+        for (var idx = local; idx < ADP_CS_MAX_COPOS; idx += 64u) {
+            adp_cl_g0[idx] = cristal_sim[base_c + idx];
+        }
+        workgroupBarrier();
+
+        if !in_bounds {
+            return;
+        }
+        if activas == 0u {
+            textureStore(cristal_clima, coord, vec4<f32>(0.0));
+            return;
+        }
+
+        var mejor = vec4<f32>(0.0);
+        for (var i = 0u; i < ADP_CS_MAX_COPOS; i++) {
+            let f0 = adp_cl_g0[i];
+            if f0.z <= 0.0 {
+                continue;
+            }
+            let d = sup_cr_wrap_delta(p_tx - f0.xy);
+            if abs(d.x) > 2.6 || abs(d.y) > 2.6 {
+                continue;
+            }
+            let forma = u32(floor(f0.z));
+            var escala_a = 1.0;
+            var reducido = false;
+            if f0.w > 0.0 {
+                let total_s = max(fract(f0.z) * 100.0, 20.0);
+                let frac = clamp(f0.w / total_s, 0.0, 1.0);
+                if frac < 0.40 {
+                    escala_a = frac / 0.40;
+                }
+                reducido = frac < 0.25;
+            }
+            let c = sup_cristal_dibujar_copo(p_tx, f0.xy, forma, escala_a, reducido);
+            if c.a > mejor.a {
+                mejor = c;
+            }
+        }
+        textureStore(cristal_clima, coord, mejor);
+        return;
+    }
+
+    // Paneles 0..7: lluvia en caras laterales (0..3) y cara superior (4..7).
     let es_arriba = panel_id >= 4u;
     let max_slots = select(ADP_CS_MAX_GOTAS_LADO, ADP_CS_MAX_GOTAS_ARRIBA, es_arriba);
     let base = select(
@@ -38,7 +87,6 @@ fn adp_cristal_lienzo(cell: vec3<u32>, local: u32, in_bounds: bool) {
         es_arriba,
     );
 
-    // Carga cooperativa en memoria compartida (64 hilos cargan hasta 112 gotas en 2 iteraciones).
     for (var idx = local; idx < max_slots; idx += 64u) {
         adp_cl_g0[idx] = cristal_sim[base + idx * 2u];
         adp_cl_g1[idx] = cristal_sim[base + idx * 2u + 1u];
@@ -48,9 +96,6 @@ fn adp_cristal_lienzo(cell: vec3<u32>, local: u32, in_bounds: bool) {
     if !in_bounds {
         return;
     }
-
-    let coord = vec2<i32>(px_all, py_all);
-    // Si el panel acaba de quedarse seco del todo (trail_t <= 0), limpia el texel a 0.
     if activas == 0u && trail_t <= 0.0 {
         textureStore(cristal_clima, coord, vec4<f32>(0.0));
         return;
@@ -65,7 +110,6 @@ fn adp_cristal_lienzo(cell: vec3<u32>, local: u32, in_bounds: bool) {
     let prev = textureLoad(cristal_clima_previous, coord, 0);
     var rastro = max(prev.r - dt / fade_s, 0.0);
 
-    let p_tx = vec2<f32>(f32(px_all % 128) + 0.5, f32(py_all % 128) + 0.5);
     var mejor_tono = 0.5;
     var mejor_alfa = 0.0;
     var mejor_pend = vec2<f32>(0.0);
@@ -76,14 +120,12 @@ fn adp_cristal_lienzo(cell: vec3<u32>, local: u32, in_bounds: bool) {
             continue;
         }
         let delta = sup_cr_wrap_delta(p_tx - g0.xy);
-        // Descarte rápido por caja delimitadora.
         let margen = g0.z + 3.0;
         if abs(delta.x) > margen || abs(delta.y) > margen + 3.0 {
             continue;
         }
         let g1 = adp_cl_g1[i];
 
-        // Estampa rastro mojado si la gota está corriendo (ancho max(1, round(0,55 * tam))).
         if !es_arriba && g0.w > 0.5 {
             let medio_r = max(1.0, round(0.55 * g0.z)) * 0.5;
             if regueros {
