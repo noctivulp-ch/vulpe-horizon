@@ -54,6 +54,7 @@ const OPC_MAT_HIELO: u32 = 3u;
 const OPC_MAT_PLANTA_MEDIA: u32 = 4u;       // planta cruzada, SSS medio
 const OPC_MAT_MEDIO: u32 = 5u;
 const OPC_MAT_DEBIL: u32 = 6u;
+const OPC_MAT_ARENA: u32 = 10u;
 
 struct OpcLuz {
     cielo: f32,

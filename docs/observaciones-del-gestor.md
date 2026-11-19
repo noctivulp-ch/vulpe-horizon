@@ -395,3 +395,24 @@ dueño, distancia 8). Aplicado: la luz de menas no corre en el End (−1,2 ms, s
 17 fps en el Nether y yo mido 10,5 ms de GPU allí; hace falta su sitio y su versión del pack. Bloqueado: a mitad de la
 sesión Horizon dejó de recibir el foco (se queda en 10 fps aunque niri lo enfoca), y sin eso la ablación pieza a pieza
 no vale. Mis ajustes de `vulpe-pruebas` ya están restaurados (`build/respaldo-ajustes/`).
+
+## 2026-11-19 — N-02: suelo con el clima según el bioma (F-69)
+
+Probado en `vulpe-pruebas` con `pruebas/escenas/suelo-nieve.ctl` (llanura nevada en `(-499, ~70, -761)`) y
+`pruebas/escenas/suelo-desierto.ctl` (desierto en `(-9871.5, 90, -2199.5)` con plataforma temporal de arena, arena roja
+y arenisca).
+
+- **Antes:** `etapas/material.wgsl` aplicaba `sup_humedad` (oscuridad por agua y charcos) siempre que `frame.wetness > 0`,
+  sin comprobar la precipitación ni la temperatura del bioma; los biomas nevados y desérticos también se mojaban y
+  sacaban charcos.
+- **Después — biomas nevados (`suelo-nieve-*.png`):** sin charcos ni oscurecimiento. Con nieve (`weather rain`), las
+  caras superiores expuestas muestran un aclarado frío sutil y motas cristalinas blancas en la rejilla de 32 texeles por
+  bloque que centellean con la luz y cambian al girar la cámara (`suelo-nieve-d01`, `-d02`, `-d04`, `-giro-20/40/60`,
+  `-paso-1/2`); fundido limpio al despejar (`-fundido`).
+- **Después — biomas desérticos (`suelo-desierto-*.png`):** sin charcos en ningún bloque. Sobre las caras superiores de
+  `sand` y `red_sand` (no en `sandstone`) aparecen ondulaciones finas de 3–6 texeles en la rejilla de 32 alineadas con
+  `OPC_VIENTO` que avanzan despacio en la dirección del viento (`-lluvia-d01` vs `-lluvia-d01-t2`), más marcadas y
+  rápidas al subir el nivel de tormenta (`weather thunder`, aunque en nivel alto la niebla de arena del desierto cubre
+  casi toda la escena a >2 bloques).
+- **Constantes:** todas con nombre en `opciones/suelo_clima.wgsl`; menú sin cambios (64/64). Porqué en
+  `docs/efectos/suelo-clima.md`.

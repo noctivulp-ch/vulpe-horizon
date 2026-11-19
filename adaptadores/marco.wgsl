@@ -81,3 +81,13 @@ fn adp_clima_local_estado(anterior: f32) -> f32 {
     }
     return f32(c.tipo) * 2.0 + c.peso;
 }
+
+// Nivel de tormenta del día como t = (nivel − 1)/9 (F-64): 1–5 con lluvia y 6–10 con tormenta eléctrica, cada tramo con
+// su propio sorteo; el paso de un tramo al otro funde con la fuerza del trueno de Horizon (sube y baja en segundos).
+// Compartido entre volumen y material (suelo en desierto). Porqué: docs/efectos/niebla-local.md §«Diez niveles (F-64)»
+fn adp_tormenta_nivel(dia: u32) -> f32 {
+    let lluvia = 1.0 + floor(rui_hash21(vec2<i32>(i32(dia), 61)) * 4.999);
+    let trueno = 6.0 + floor(rui_hash21(vec2<i32>(i32(dia), 67)) * 4.999);
+    let nivel = mix(lluvia, trueno, smoothstep(0.2, 0.8, frame.thunder));
+    return (nivel - 1.0) / 9.0;
+}

@@ -108,6 +108,9 @@ files = [
     "nucleo/superficie/labpbr.wgsl",
     "nucleo/superficie/sss.wgsl",
     "nucleo/superficie/humedad.wgsl",
+    "nucleo/superficie/escarcha.wgsl",
+    "nucleo/superficie/arena_viento.wgsl",
+    "opciones/suelo_clima.wgsl",
     "nucleo/superficie/emision.wgsl",
     "nucleo/superficie/menas.wgsl",
     "opciones/menas.wgsl",
@@ -860,6 +863,10 @@ sprites = ["block/snow", "block/powder_snow", "block/amethyst_block", "block/cob
 [[materials]]       # menas (12); los restos ancestrales no
 id = 7
 sprites = ["block/*_ore", "block/gilded_blackstone"]
+
+[[materials]]       # arena (suelo con viento en biomas desérticos, N-02)
+id = 10
+sprites = ["block/sand", "block/red_sand", "block/suspicious_sand*"]
 
 # --- Colores de la luz de bloque (03.1): block_light_color en el material ---------------------
 

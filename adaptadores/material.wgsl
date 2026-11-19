@@ -245,3 +245,63 @@ fn adp_mena(input: MaterialInput, albedo: vec3<f32>) -> AdpMena {
     let aclarado = mix(albedo, max(albedo, vec3<f32>(col_srgb_a_lineal(vec3<f32>(0.3)).x)), r.oscuro);
     return AdpMena(min(r.mascara * o.intensidad, 0.99), aclarado, true, mineral);
 }
+
+// Efectos de clima sobre el suelo según el bioma (16, observaciones 2026-11-13 §5.3):
+// lluvia (mojado y charcos), bioma nevado (escarcha sutil con motas cristalinas) y desierto
+// (granos de arena movidos por el viento). Porqué: docs/efectos/suelo-clima.md
+struct AdpSueloClima {
+    albedo: vec3<f32>,
+    normal: vec3<f32>,
+    pbr: SupMaterial,
+    destello_escarcha: f32,
+}
+
+fn adp_suelo_clima(p: AdpPunto, o: OpcLuz, luz_dir: vec3<f32>) -> AdpSueloClima {
+    var r = AdpSueloClima(p.albedo, p.normal, p.pbr, 0.0);
+    if !(o.charcos || o.mojado) || !adp_es_superficie() || p.fluido != 0u || r.pbr.metal {
+        return r;
+    }
+    let clima = adp_clima_local_objetivo();
+    if clima.tipo == 2u {
+        // Bioma nevado: escarcha sutil en caras de arriba, sin charcos ni oscurecimiento.
+        if clima.peso > 0.0 {
+            let pe = opc_escarcha();
+            let e = sup_escarcha(p.mundo, p.luz_cielo, p.normal_cara.y, p.vista, luz_dir, length(p.posicion), clima.peso, pe);
+            r.albedo = sup_albedo_escarcha(r.albedo, e, pe);
+            r.pbr.suavidad = mix(r.pbr.suavidad, pe.mota_suavidad, e.mota);
+            r.pbr.f0 = mix(r.pbr.f0, vec3<f32>(pe.mota_f0), e.mota);
+            r.pbr.rugosidad = (1.0 - r.pbr.suavidad) * (1.0 - r.pbr.suavidad);
+            r.destello_escarcha = e.destello;
+        }
+        return r;
+    }
+    if clima.tipo == 1u {
+        // Bioma desértico: granos movidos en las caras de arriba de la arena, sin charcos.
+        if clima.peso > 0.0 && p.material == OPC_MAT_ARENA {
+            let pa = opc_arena_viento();
+            let mod_datos = adp_mod();
+            let dia = u32(max(select(0.0, mod_datos.dia, mod_datos.tiene_tiempo), 0.0));
+            let nivel = adp_tormenta_nivel(dia);
+            let a = sup_arena_viento(
+                p.mundo, p.luz_cielo, p.normal_cara.y,
+                normalize(OPC_VIENTO), adp_tiempo().segundos, clima.peso, nivel, length(p.posicion), pa,
+            );
+            r.albedo = sup_albedo_arena_viento(r.albedo, a, pa.contraste);
+            r.normal = normalize(r.normal + vec3<f32>(a.pendiente_xz.x, 0.0, a.pendiente_xz.y));
+        }
+        return r;
+    }
+    // Lluvia en biomas donde llueve: mojado y charcos.
+    if frame.precipitation == 1u && frame.wetness > 0.0 {
+        let h = sup_humedad(frame.wetness, p.luz_cielo, p.mundo, p.normal_cara.y, adp_tiempo().segundos);
+        let mojado = select(0.0, h.mojado, o.mojado);
+        let charco = select(0.0, h.charco, o.charcos);
+        r.albedo = sup_albedo_mojado(r.albedo, max(mojado, charco), r.pbr.porosidad);
+        r.pbr.suavidad = mix(r.pbr.suavidad, 0.85, mojado * 0.6);
+        r.pbr.suavidad = mix(r.pbr.suavidad, 0.97, charco);
+        r.pbr.f0 = mix(r.pbr.f0, vec3<f32>(0.02), charco);
+        r.normal = normalize(mix(r.normal, p.normal_cara, charco));
+        r.pbr.rugosidad = (1.0 - r.pbr.suavidad) * (1.0 - r.pbr.suavidad);
+    }
+    return r;
+}

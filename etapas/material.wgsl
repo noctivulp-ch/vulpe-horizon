@@ -21,21 +21,12 @@ fn material(input: MaterialInput) -> Surface {
         sombra = adp_sombra(p);
     }
 
-    // Humedad: más oscuro, más liso; en los charcos, normal plana y suavidad máxima.
-    var albedo = p.albedo;
-    var n = p.normal;
-    var m = p.pbr;
-    if (o.charcos || o.mojado) && frame.wetness > 0.0 && adp_es_superficie() && p.fluido == 0u && !m.metal {
-        let h = sup_humedad(frame.wetness, p.luz_cielo, p.mundo, p.normal_cara.y, adp_tiempo().segundos);
-        let mojado = select(0.0, h.mojado, o.mojado);
-        let charco = select(0.0, h.charco, o.charcos);
-        albedo = sup_albedo_mojado(albedo, max(mojado, charco), m.porosidad);
-        m.suavidad = mix(m.suavidad, 0.85, mojado * 0.6);
-        m.suavidad = mix(m.suavidad, 0.97, charco);
-        m.f0 = mix(m.f0, vec3<f32>(0.02), charco);
-        n = normalize(mix(n, p.normal_cara, charco));
-        m.rugosidad = (1.0 - m.suavidad) * (1.0 - m.suavidad);
-    }
+    // Suelo con el clima según el bioma: lluvia (mojado/charcos), nieve (escarcha) o desierto (arena).
+    // Porqué: docs/efectos/suelo-clima.md
+    let suelo = adp_suelo_clima(p, o, luces.direccion);
+    let albedo = suelo.albedo;
+    let n = suelo.normal;
+    let m = suelo.pbr;
 
     let l = luces.direccion;
     let n_l = select(dot(n, l), 0.75, p.cruzada);
@@ -90,9 +81,12 @@ fn material(input: MaterialInput) -> Surface {
     let minima = OPC_LUZ_CUEVA_COLOR * (OPC_LUZ_CUEVA_SUELO * factor_cueva * mix(1.0, atenuador, OPC_LUZ_CUEVA_FRENTE_PESO)) + vec3<f32>(frame.night_vision * 0.08);
     let indirecta = albedo * (ambiente_cielo + bloque + relampago + minima) + sss_cielo;
 
-    // Especular del sol y reflejo del ambiente.
+    // Especular del sol, destellos de escarcha y reflejo del ambiente.
     let f_ambiente = sup_fresnel_schlick_rugosidad(max(dot(n, p.vista), 0.0), m.f0, m.rugosidad);
     var especular = sup_especular(n, p.vista, l, m.rugosidad, m.f0) * max(dot(n, l), 0.0) * luces.directa * sombra.luz * o.especular_sol;
+    if suelo.destello_escarcha > 0.0 {
+        especular += vec3<f32>(suelo.destello_escarcha) * (directa_luz * sombra.luz * proteccion_cueva + luces.cielo * curva_cielo + bloque);
+    }
     var reflejo = vec3<f32>(0.0);
     let visible = smoothstep(0.45, 0.7, m.suavidad);
     // Superficies lisas y sólidas: su reflejo lo pone el trazado de pantalla de la composición.
