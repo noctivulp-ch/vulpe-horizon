@@ -34,12 +34,12 @@ fn adp_taa_uv_anterior(uv: vec2<f32>) -> vec2<f32> {
 fn adp_taa(input: PostInput) -> vec4<f32> {
     let o = opc_taa();
     let px = 1.0 / frame.resolution;
-    let entrada = textureSampleLevel(previous, linear_sampler, input.uv, 0.0);
+    let entrada = textureSampleLevel(composicion, linear_sampler, input.uv, 0.0);
     // El alfa de la composición (opacidad de la niebla para el bloom de niebla) pasa tal cual a la final.
     let alfa_niebla = entrada.a;
     var actual = entrada.rgb;
     if OPC_TAA_FXAA {
-        actual = img_fxaa(previous, linear_sampler, input.uv, actual);
+        actual = img_fxaa(composicion, linear_sampler, input.uv, actual);
     }
     if !o.activo {
         return vec4<f32>(actual, alfa_niebla);
@@ -49,7 +49,7 @@ fn adp_taa(input: PostInput) -> vec4<f32> {
     var m2 = vec3<f32>(0.0);
     for (var k = 0; k < 9; k++) {
         let o2 = vec2<f32>(f32(k % 3) - 1.0, f32(k / 3) - 1.0);
-        let c = img_a_ycocg(img_comprimir(textureSampleLevel(previous, nearest_sampler, input.uv + o2 * px, 0.0).rgb));
+        let c = img_a_ycocg(img_comprimir(textureSampleLevel(composicion, nearest_sampler, input.uv + o2 * px, 0.0).rgb));
         m1 += c;
         m2 += c * c;
     }
@@ -58,7 +58,7 @@ fn adp_taa(input: PostInput) -> vec4<f32> {
 
     let uv_ant = adp_taa_uv_anterior(input.uv);
     let fuera = any(uv_ant < vec2<f32>(0.0)) || any(uv_ant > vec2<f32>(1.0));
-    let h_crudo = img_catmull_rom(history, linear_sampler, uv_ant, o.nitidez);
+    let h_crudo = img_catmull_rom(historial_previous, linear_sampler, uv_ant, o.nitidez);
     if fuera || frame.delta_time <= 0.0 || dot(h_crudo, h_crudo) <= 0.0 {
         return vec4<f32>(actual, alfa_niebla);
     }

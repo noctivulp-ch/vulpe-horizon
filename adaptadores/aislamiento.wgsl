@@ -7,7 +7,7 @@ fn adp_aislamiento_hs(uv: vec2<f32>, a: ImgAislamiento) -> vec2<f32> {
     if s.present {
         return sup_desempaquetar_suavidad(s.smoothness).yz;
     }
-    return sup_matiz_sat(img_aislamiento_muestra(previous, linear_sampler, uv, a));
+    return sup_matiz_sat(img_aislamiento_muestra(historial, linear_sampler, uv, a));
 }
 
 fn adp_aislar(color: vec3<f32>, uv: vec2<f32>, a: ImgAislamiento) -> vec3<f32> {

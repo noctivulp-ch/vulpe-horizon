@@ -40,5 +40,5 @@ fn adp_rayos(uv: vec2<f32>, pixel: vec2<f32>, exposicion: f32) -> vec3<f32> {
     let fase = directa + multiple * OPC_RAYOS_ATRAS * 0.01;
     // Fuera del encuadre, el polo se apaga entre 2,5 y 4,5 radios de pantalla del centro (fino/14 §3).
     let borde = 1.0 - smoothstep(2.5, 4.5, length(origen - 0.5));
-    return img_rayos(uv, previous, linear_sampler, r) * fase * sobre * peso_polo * borde * noche;
+    return img_rayos(uv, historial, linear_sampler, r) * fase * sobre * peso_polo * borde * noche;
 }

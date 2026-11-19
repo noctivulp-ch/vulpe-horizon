@@ -76,22 +76,22 @@ fn adp_estado_agua(anterior: f32) -> f32 {
 }
 
 // x: la superficie del agua junto a la cámara, relativa a ella; y: 1 si la hay.
-fn adp_plano_agua_cercano() -> vec2<f32> {
+fn adp_plano_agua_cercano(t_estado: texture_2d<f32>) -> vec2<f32> {
     let s = adp_sonda_agua();
     if !s.en_banda {
         return vec2<f32>(0.0);
     }
     var hay = s.vista > 0.5;
     if s.vista < 0.0 {
-        let guardado = textureLoad(bloom2, vec2<i32>(2, 0), 0).a;
+        let guardado = textureLoad(t_estado, vec2<i32>(2, 0), 0).a;
         hay = abs(guardado - adp_id_nivel_agua(s.nivel)) < 0.5 || adp_agua_en_sombras(s.nivel);
     }
     return vec2<f32>(s.nivel, select(0.0, 1.0, hay));
 }
 
 // Si el píxel está bajo el agua: manda el punto del plano cercano de ese píxel, no lo que hay en el ojo.
-fn adp_pixel_bajo_agua(uv: vec2<f32>) -> bool {
-    let plano = adp_plano_agua_cercano();
+fn adp_pixel_bajo_agua(uv: vec2<f32>, t_estado: texture_2d<f32>) -> bool {
+    let plano = adp_plano_agua_cercano(t_estado);
     if plano.y < 0.5 {
         return frame.in_water > 0.5;
     }
@@ -114,7 +114,7 @@ fn adp_estado_altura_entrada(anterior: f32) -> f32 {
     return select(v, 0.001, v == 0.0);
 }
 
-fn adp_altura_entrada() -> f32 {
-    let v = textureLoad(bloom2, vec2<i32>(3, 0), 0).a;
+fn adp_altura_entrada(t_estado: texture_2d<f32>) -> f32 {
+    let v = textureLoad(t_estado, vec2<i32>(3, 0), 0).a;
     return select(v + VOL_MAR, frame.camera_position.y + OPC_AGUA_ENTRADA_CUEVA * 0.5, v == 0.0);
 }

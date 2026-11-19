@@ -5,7 +5,7 @@ schema = 1
 id = "vulpe"
 name = "Vulpe"
 version = "0.2.0-beta.1"
-api = "0.1"
+api = "0.2"
 description = "Vulpe para Horizon, escrito en sala limpia."
 authors = ["noctivulp-ch"]
 license = "GPL-3.0-or-later"
@@ -94,9 +94,12 @@ files = ["nucleo/superficie/viento.wgsl", "adaptadores/vertice.wgsl"]
 file = "etapas/clima.wgsl"
 files = ["nucleo/luz/curvas.wgsl", "nucleo/volumen/fase.wgsl", "nucleo/volumen/medios.wgsl", "opciones/clima.wgsl", "adaptadores/clima.wgsl"]
 
+[frame]
+blend = "linear"
+fog = "pack"        # la niebla es nuestra (subsistema 05)
+
 [material]
 file = "etapas/material.wgsl"
-fog = false         # la niebla es nuestra (subsistema 05)
 files = [
     "nucleo/agua/optica.wgsl",
     "nucleo/agua/olas.wgsl",
@@ -136,6 +139,36 @@ distance = 128.0
 resolution_option = "sombras_resolucion"
 distance_option = "sombras_distancia"
 
+[[resource]]
+name = "volumen"
+format = "rgba16float"
+scale = 0.5
+keep = "view"
+
+[[resource]]
+name = "composicion"
+format = "rgba16float"
+scale = 1.0
+keep = "view"
+
+[[resource]]
+name = "bloom"
+format = "rgba16float"
+scale = 0.25
+keep = "view"
+
+[[resource]]
+name = "bloom2"
+format = "rgba16float"
+scale = 0.25
+keep = "view"
+
+[[resource]]
+name = "historial"
+format = "rgba16float"
+scale = 1.0
+keep = "view"
+
 [[post]]
 file = "etapas/post/01-aurora.wgsl"
 files = [
@@ -172,7 +205,7 @@ files = [
 ]
 name = "Volumen"
 output = "volumen"
-scale = 0.5
+reads = ["bloom2_previous"]
 
 [[post]]
 file = "etapas/post/03-composicion.wgsl"
@@ -201,30 +234,38 @@ files = [
     "adaptadores/menas_luz.wgsl",
 ]
 name = "Composición"
+output = "composicion"
+reads = ["volumen", "bloom2_previous"]
 
 [[post]]
 file = "etapas/post/04-bloom-bajada.wgsl"
 files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/bloom_estado.wgsl"]
 name = "Bloom: bajada"
 output = "bloom"
-scale = 0.25
+reads = ["historial_previous", "bloom2_previous"]
 
 [[post]]
 file = "etapas/post/05-bloom-ancho.wgsl"
 files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/bloom_estado.wgsl"]
 name = "Bloom: ancho"
 output = "bloom2"
-scale = 0.25
+reads = ["bloom"]
 
 [[post]]
 file = "etapas/post/06-taa.wgsl"
 files = ["nucleo/imagen/taa.wgsl", "adaptadores/taa.wgsl"]
 name = "TAA"
+output = "historial"
+reads = ["composicion", "historial_previous"]
 
 [[post]]
 file = "etapas/post/07-final.wgsl"
 files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/nitidez.wgsl", "nucleo/imagen/aislamiento.wgsl", "opciones/aislamiento.wgsl", "nucleo/volumen/fase.wgsl", "nucleo/imagen/rayos.wgsl", "opciones/rayos.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/rayos.wgsl", "adaptadores/aislamiento.wgsl"]
 name = "Final"
+reads = ["historial", "volumen", "bloom", "bloom2"]
+
+[tonemap]
+file = "etapas/tonemap.wgsl"
 
 # ============================================================================================
 # 1. MENÚ DIRECTO (37 OPCIONES, mapa-de-ajustes.md §1)

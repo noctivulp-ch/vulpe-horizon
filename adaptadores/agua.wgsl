@@ -90,7 +90,12 @@ fn adp_agua_reflejo(p: AdpPunto, n: vec3<f32>, r: vec3<f32>, luces: AdpLuces) ->
     if frame.has_reflection == 1u && abs(p.mundo.y - frame.water_plane) < 1.5 {
         let uv = p.pixel / frame.resolution + (n.xz - p.normal_cara.xz) * 0.03;
         let texel = textureSampleLevel(reflection, reflection_sampler, uv, 0.0);
-        let peso = agu_peso_cielo(texel.rgb, r.y, frame.sky_color, frame.fog_color);
+        let peso = agu_peso_cielo(
+            adp_lineal_a_gamma22(texel.rgb),
+            r.y,
+            adp_lineal_a_gamma22(frame.sky_color),
+            adp_lineal_a_gamma22(frame.fog_color),
+        );
         var terreno = col_decodificar_escena(texel.rgb, adp_codificacion());
         // Alfa < 0,75: bloque emisivo (marca de HDR del motor): reforzarlo.
         terreno *= select(1.0, 3.0, texel.a < 0.75);

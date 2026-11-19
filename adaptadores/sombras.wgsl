@@ -78,7 +78,7 @@ fn adp_sombra_punto(e: AdpEntradaSombra, o: OpcSombras) -> AdpResultadoSombra {
         if detras < 1.0 {
             let lado = vec2<f32>(textureDimensions(shadow_color));
             let c = textureLoad(shadow_color, vec2<i32>(clamp(mapa.xy * lado, vec2<f32>(0.0), lado - 1.0)), 0);
-            var tinte = luz_tinte_translucido(c, vec3<f32>(1.0));
+            var tinte = luz_tinte_translucido(vec4<f32>(adp_lineal_a_gamma22(c.rgb), c.a), vec3<f32>(1.0));
             if c.a >= 0.999 {
                 // Agua (07): absorción por los bloques de agua hacia la luz (diferencia de profundidades de los dos
                 // mapas) y cáusticas con proyección oblicua solar (fino/07 §4), fundidas en el primer bloque.

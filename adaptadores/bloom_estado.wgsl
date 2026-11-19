@@ -4,32 +4,32 @@
 
 // Pasada 4: bajada a ¼ desde history; en la esquina, la medida y la adaptación (el estado anterior está en la
 // esquina de bloom2, que aún guarda el del fotograma anterior).
-fn adp_bloom_bajada(input: PostInput) -> vec4<f32> {
+fn adp_bloom_bajada(input: PostInput, tex: texture_2d<f32>, t_estado: texture_2d<f32>) -> vec4<f32> {
     if opc_quitar(16u) && !(i32(input.pixel.y) == 0 && i32(input.pixel.x) <= 6) {
         return vec4<f32>(0.0);
     }
-    let rgb = img_bloom_bajada(history, linear_sampler, input.uv);
+    let rgb = img_bloom_bajada(tex, linear_sampler, input.uv);
     let texel = vec2<i32>(input.pixel);
     if texel.y != 0 || texel.x > 6 {
         return vec4<f32>(rgb, 0.0);
     }
     if texel.x == 6 {
-        return vec4<f32>(rgb, adp_clima_local_estado(textureLoad(bloom2, texel, 0).a));
+        return vec4<f32>(rgb, adp_clima_local_estado(textureLoad(t_estado, texel, 0).a));
     }
     if texel.x == 5 {
         return vec4<f32>(rgb, select(0.0, 1.0, frame.eye_in == 1u));
     }
     if texel.x == 4 {
-        return vec4<f32>(rgb, adp_estado_cruce(textureLoad(bloom2, texel, 0).a, textureLoad(bloom2, vec2<i32>(5, 0), 0).a));
+        return vec4<f32>(rgb, adp_estado_cruce(textureLoad(t_estado, texel, 0).a, textureLoad(t_estado, vec2<i32>(5, 0), 0).a));
     }
     if texel.x == 3 {
-        return vec4<f32>(rgb, adp_estado_altura_entrada(textureLoad(bloom2, texel, 0).a));
+        return vec4<f32>(rgb, adp_estado_altura_entrada(textureLoad(t_estado, texel, 0).a));
     }
     if texel.x == 2 {
-        return vec4<f32>(rgb, adp_estado_agua(textureLoad(bloom2, texel, 0).a));
+        return vec4<f32>(rgb, adp_estado_agua(textureLoad(t_estado, texel, 0).a));
     }
-    let anterior = adp_estado(bloom2);
-    let l = img_luminancia_media(history, linear_sampler);
+    let anterior = adp_estado(t_estado);
+    let l = img_luminancia_media(tex, linear_sampler);
     let vel_mod = max(adp_mod_param(33u, 0.1, 10.0, VULPE_ADAPTACION_VELOCIDAD, 1.0), 0.1);
     var estado = 0.0;
     if texel.x == 0 {
@@ -41,17 +41,17 @@ fn adp_bloom_bajada(input: PostInput) -> vec4<f32> {
 }
 
 // Pasada 5: desenfoque ancho de bloom; copia el estado de la esquina.
-fn adp_bloom_ancho(input: PostInput) -> vec4<f32> {
+fn adp_bloom_ancho(input: PostInput, t_bloom: texture_2d<f32>) -> vec4<f32> {
     if opc_quitar(16u) && !(i32(input.pixel.y) == 0 && i32(input.pixel.x) <= 6) {
         return vec4<f32>(0.0);
     }
     let aspecto = frame.resolution.x / frame.resolution.y;
     let giro = rui_tramado_ign(input.pixel);
-    let rgb = img_bloom_ancho(bloom, linear_sampler, input.uv, OPC_BLOOM_RADIO, aspecto, OPC_BLOOM_ANILLOS, giro).rgb;
+    let rgb = img_bloom_ancho(t_bloom, linear_sampler, input.uv, OPC_BLOOM_RADIO, aspecto, OPC_BLOOM_ANILLOS, giro).rgb;
     let texel = vec2<i32>(input.pixel);
     var alfa = 0.0;
     if texel.y == 0 && texel.x <= 6 {
-        alfa = textureLoad(bloom, texel, 0).a;
+        alfa = textureLoad(t_bloom, texel, 0).a;
     }
     return vec4<f32>(rgb, alfa);
 }

@@ -49,22 +49,20 @@ fn adp_material_punto(input: MaterialInput, o: OpcLuz) -> AdpPunto {
     var p: AdpPunto;
     p.material = input.material;
     p.cruzada = adp_es_cruzada(input.material);
-    var tinte = input.tint.rgb;
+    let tinte_gamma = adp_lineal_a_gamma22(input.shaded_tint.rgb);
     let sombreado = max(adp_sombreado_vanilla(input.normal), 0.5);
-    if !p.cruzada {
-        tinte /= sombreado;
-    }
     // La oclusión de vértice va en el tinte junto al color del bioma: el canal mayor, no la luminancia, para que el verde del
     // pasto no cuente como sombra (F-59). Porqué: docs/efectos/luz-de-superficie.md §«Noche y cuevas (F-59)»
     // En los bloques con color de bioma (tinte no gris) se divide además por el canal mayor de un verde típico de pasto.
-    let tinte_max = max(input.tint.r, max(input.tint.g, input.tint.b));
-    let bioma_tinte = max(abs(input.tint.r - input.tint.g), abs(input.tint.g - input.tint.b)) > 0.03;
+    let tinte_max = max(tinte_gamma.r, max(tinte_gamma.g, tinte_gamma.b));
+    let bioma_tinte = max(abs(tinte_gamma.r - tinte_gamma.g), abs(tinte_gamma.g - tinte_gamma.b)) > 0.03;
     let ref_bioma = select(1.0, OPC_AO_REF_BIOMA, bioma_tinte);
     p.ao_vertice = select(clamp(tinte_max / (sombreado * ref_bioma), 0.0, 1.0), 1.0, p.cruzada);
-    p.albedo = col_srgb_a_lineal(mat_saturar3(input.albedo.rgb * tinte));
+    let sombreado_lin = select(pow(sombreado, 2.2), 1.0, p.cruzada);
+    p.albedo = mat_saturar3(input.albedo.rgb * (input.shaded_tint.rgb / sombreado_lin));
     // Estaciones (03.2): solo los bloques con color de bioma (tinte no blanco), y las hojas con su propio tinte. Con
     // mod nativo sigue la estación continua del mundo; sin mod nativo, queda fija en la estación inicial.
-    let con_bioma = max(abs(input.tint.r - input.tint.g), abs(input.tint.g - input.tint.b)) > 0.03;
+    let con_bioma = bioma_tinte;
     let est_act = adp_mod_param(18u, 0.0, 1.0, VULPE_ESTACIONES_ACTIVA, 1.0) >= 0.5;
     if estaciones && est_act && con_bioma && adp_es_superficie() {
         let m = adp_mod();
@@ -159,7 +157,7 @@ fn adp_luces(o: OpcLuz) -> AdpLuces {
         // Nether y End (17): sin sol ni cielo; un ambiente propio, hemisférico (en el Nether, más desde abajo).
         let fc = frame.fog_color;
         if frame.dimension == -1 {
-            let bruma = col_srgb_a_lineal(fc / max(max(fc.r, max(fc.g, fc.b)), 1e-3));
+            let bruma = fc / max(max(fc.r, max(fc.g, fc.b)), 1e-3);
             return AdpLuces(true, vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(0.0), bruma * OPC_AMBIENTE_NETHER * 0.6, bruma * OPC_AMBIENTE_NETHER * 1.4);
         }
         let azul = vec3<f32>(0.55, 0.6, 1.0) * OPC_AMBIENTE_END;
@@ -211,8 +209,7 @@ fn adp_material_salida(color: vec3<f32>, alfa: f32, p: AdpPunto) -> Surface {
         return Surface(vec4<f32>(dbg, alfa));
     }
     let v = col_codificar_escena(color, adp_codificacion());
-    let tramado = (rui_tramado_ign(p.pixel) - 0.5) / 255.0;
-    return Surface(vec4<f32>(v + tramado, alfa));
+    return Surface(vec4<f32>(v, alfa));
 }
 
 // Menas brillantes (12): las 16 muestras del sprite a mip 0 (block_texture lee el mismo sprite: sin mezcla con los
@@ -234,14 +231,14 @@ fn adp_mena(input: MaterialInput, albedo: vec3<f32>) -> AdpMena {
     var sat_max = -1.0;
     for (var k = 0; k < 16; k++) {
         let uv = (vec2<f32>(f32(k / 4), f32(k % 4)) + 0.5) * 0.25;
-        m[k] = block_texture_level(uv, 0.0).rgb;
+        m[k] = adp_lineal_a_gamma22(block_texture_level(uv, 0.0).rgb);
         let sat = sup_matiz_sat(m[k]).y;
         if sat > sat_max {
             sat_max = sat;
             mineral = m[k];
         }
     }
-    let r = sup_mena(input.albedo.rgb, m, f32(menas_umbral) * 0.01, OPC_MENAS_CARBON);
+    let r = sup_mena(adp_lineal_a_gamma22(input.albedo.rgb), m, f32(menas_umbral) * 0.01, OPC_MENAS_CARBON);
     let aclarado = mix(albedo, max(albedo, vec3<f32>(col_srgb_a_lineal(vec3<f32>(0.3)).x)), r.oscuro);
     return AdpMena(min(r.mascara * o.intensidad, 0.99), aclarado, true, mineral);
 }

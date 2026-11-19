@@ -24,6 +24,16 @@ fn adp_factor_noche() -> f32 {
     return select(0.0, clamp(-frame.sun_direction.y * 2.0, 0.0, 1.0), adp_es_superficie());
 }
 
+// Conversión con la potencia 2,2 de Horizon (shaders-reference-0.2.md §Colour).
+// Porqué: docs/decisiones/0005-api-0-2.md
+fn adp_lineal_a_gamma22(c: vec3<f32>) -> vec3<f32> {
+    return pow(max(c, vec3<f32>(0.0)), vec3<f32>(1.0 / 2.2));
+}
+
+fn adp_gamma22_a_lineal(c: vec3<f32>) -> vec3<f32> {
+    return pow(max(c, vec3<f32>(0.0)), vec3<f32>(2.2));
+}
+
 // La misma en todas las etapas: es la clave de la codificación del «picture» (ADR 0004).
 fn adp_codificacion() -> ColCodificacion {
     let p = ColParametrosExposicion(frame.sun_direction.y, frame.eye_light_smooth.y, OPC_EV_DIA, OPC_EV_NOCHE, OPC_EV_INTERIOR);

@@ -95,7 +95,7 @@ struct AdpNieblaLocal {
 fn adp_niebla_local(dia: u32, fuera: f32) -> AdpNieblaLocal {
     var r = AdpNieblaLocal(0.0, 0.0, vec3<f32>(0.0), 0.0);
     let t = frame.temperature;
-    let clima = adp_clima_local_decodificar(textureLoad(bloom2, vec2<i32>(6, 0), 0).a);
+    let clima = adp_clima_local_decodificar(textureLoad(bloom2_previous, vec2<i32>(6, 0), 0).a);
     let nivel = adp_tormenta_nivel(dia);
     let curva = nivel * nivel;
     if clima.tipo == 1u && clima.peso > 0.0 {
@@ -134,20 +134,20 @@ fn adp_volumen(uv: vec2<f32>, pixel: vec2<f32>) -> VolResultado {
     if !adp_es_superficie() {
         // Nether y End (17): su propia niebla; nada del Overworld (nubes, horario, aurora).
         let fc = frame.fog_color;
-        let bruma = col_srgb_a_lineal(fc / max(max(fc.r, max(fc.g, fc.b)), 1e-3));
+        let bruma = fc / max(max(fc.r, max(fc.g, fc.b)), 1e-3);
         let d = VolDimension(bruma, select(opc_niebla_end(), opc_niebla_nether(), frame.dimension == -1), frame.time);
         if frame.dimension == -1 {
             return vol_nether(adp_volumen_rayo(uv, pixel), d, ruido2d, ruido2d_sampler, ruido3d);
         }
         return vol_end(adp_volumen_rayo(uv, pixel), d, ruido3d);
     }
-    let bajo_agua = adp_pixel_bajo_agua(uv);
+    let bajo_agua = adp_pixel_bajo_agua(uv, bloom2_previous);
     if bajo_agua {
         // Con la cámara bajo el agua, la niebla del agua sustituye a la de aire (07).
         let oa = opc_agua(adp_tiempo().segundos, frame.rain);
-        let plano = adp_plano_agua_cercano();
+        let plano = adp_plano_agua_cercano(bloom2_previous);
         // La superficie congelada al entrar (fino/07 §7), no derivada de la cámara: así la luz no salta al subir o bajar.
-        var superficie = adp_altura_entrada();
+        var superficie = adp_altura_entrada(bloom2_previous);
         if plano.y > 0.5 {
             superficie = frame.camera_position.y + plano.x;
         }
@@ -166,8 +166,8 @@ fn adp_volumen_salida(r: VolResultado) -> vec4<f32> {
 
 // Composición: el volumen de media resolución reescalado con pesos por parecido de distancia (filtro
 // bilateral de 4 vecinos), para que no haya halos en los bordes de los objetos.
-fn adp_volumen_reescalado(pixel: vec2<f32>, distancia: f32) -> VolResultado {
-    let lado = vec2<f32>(textureDimensions(volumen));
+fn adp_volumen_reescalado(pixel: vec2<f32>, distancia: f32, vol_tex: texture_2d<f32>) -> VolResultado {
+    let lado = vec2<f32>(textureDimensions(vol_tex));
     let q = pixel * 0.5 - 0.5;
     // Sobre el cielo no hay bordes que respetar: un filtro de tienda 3×3 de texeles del volumen que también sean cielo quita
     // el grano del tramado en los bordes tenues de las nubes (el original lo acumula en el tiempo, fino/05 §6; aquí no hay
@@ -185,7 +185,7 @@ fn adp_volumen_reescalado(pixel: vec2<f32>, distancia: f32) -> VolResultado {
             }
             let dq = abs(texel - q);
             let w = max(1.5 - dq.x, 0.0) * max(1.5 - dq.y, 0.0);
-            suma_c += textureLoad(volumen, vec2<i32>(texel), 0) * w;
+            suma_c += textureLoad(vol_tex, vec2<i32>(texel), 0) * w;
             pesos_c += w;
         }
         if pesos_c > 0.0 {
@@ -206,7 +206,7 @@ fn adp_volumen_reescalado(pixel: vec2<f32>, distancia: f32) -> VolResultado {
         let w_bil = mix(1.0 - f, f, o);
         let parecido = 1.0 / (1e-3 + abs(dist - distancia) / max(distancia, 1.0));
         let w = w_bil.x * w_bil.y * min(parecido, 1000.0);
-        suma += textureLoad(volumen, vec2<i32>(texel), 0) * w;
+        suma += textureLoad(vol_tex, vec2<i32>(texel), 0) * w;
         pesos += w;
     }
     let v = suma / max(pesos, 1e-6);
@@ -225,15 +225,15 @@ fn adp_niebla_inmersion(color: vec3<f32>, distancia: f32) -> vec3<f32> {
     if !medio && efecto <= 0.0 {
         return color;
     }
-    // `frame.fog_end` de Horizon no es el de la lava ni el de la nieve en polvo (medido: más de 4 bloques dentro de la
+    // `frame.fog_environment.y` de Horizon no es el de la lava ni el de la nieve en polvo (medido: más de 4 bloques dentro de la
     // lava): se acota con los de vanilla de cada medio y, con ceguera, hacia el de la ceguera.
-    var fin = frame.fog_end;
+    var fin = min(frame.fog_environment.y, frame.fog_render.y);
     fin = select(fin, min(fin, OPC_INMERSION_FIN.x), frame.eye_in == 2u || frame.in_lava > 0.5);
     fin = select(fin, min(fin, OPC_INMERSION_FIN.y), frame.eye_in == 3u);
     fin = mix(fin, min(fin, OPC_INMERSION_FIN.z), frame.blindness);
     var d = smoothstep(0.0, 1.0, distancia / max(fin, 0.1));
     d = mix(d, 1.0, clamp(2.0 * frame.darkness, 0.0, 1.0));
-    let niebla = col_srgb_a_lineal(frame.fog_color) / adp_codificacion().exposicion;
+    let niebla = frame.fog_color / adp_codificacion().exposicion;
     return mix(color, niebla, d);
 }
 
@@ -251,7 +251,7 @@ fn adp_niebla_cueva(color: vec3<f32>, p: AdpPixel, dir: vec3<f32>) -> vec3<f32> 
 // agua a lo largo de la vista, la misma del raymarch del agua): el rojo se pierde antes que el verde y el azul (07.1).
 // El destino del volumen solo guarda una transmitancia, la luminancia. Porqué: docs/efectos/agua.md §Bajo el agua
 fn adp_transmitancia_compuesta(v: VolResultado, distancia: f32, uv: vec2<f32>) -> vec3<f32> {
-    if !adp_pixel_bajo_agua(uv) {
+    if !adp_pixel_bajo_agua(uv, bloom2_previous) {
         return vec3<f32>(v.transmitancia);
     }
     let oa = opc_agua(adp_tiempo().segundos, frame.rain);

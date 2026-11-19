@@ -13,8 +13,8 @@ struct AdpExposicion {
     bastones: f32,          // peso del efecto Purkinje
 }
 
-fn adp_exposicion(o: OpcImagen) -> AdpExposicion {
-    let estado = adp_estado(bloom2);
+fn adp_exposicion(o: OpcImagen, t_bloom2: texture_2d<f32>) -> AdpExposicion {
+    let estado = adp_estado(t_bloom2);
     let previa = adp_codificacion().exposicion;
     var e = previa;
     // Sin medida aún, lo oscuro o lo claro según la hora.
@@ -43,7 +43,7 @@ fn adp_exposicion(o: OpcImagen) -> AdpExposicion {
 // Destello del sol en el bloom: la parte de la radiancia del disco que la codificación de 8 bits recorta (ADR 0004)
 // se devuelve con la respuesta del bloom del original, pesada por la parte visible del disco (profundidad) y por la
 // transmitancia del volumen (nubes y niebla) delante del sol. Porqué: docs/efectos/bloom.md §Destello del sol
-fn adp_destello_sol(uv: vec2<f32>) -> vec3<f32> {
+fn adp_destello_sol(uv: vec2<f32>, t_vol: texture_2d<f32>) -> vec3<f32> {
     let d_sol = frame.sun_direction;
     if !adp_es_superficie() || d_sol.y <= 0.0 || frame.rain >= 1.0 {
         return vec3<f32>(0.0);
@@ -70,9 +70,9 @@ fn adp_destello_sol(uv: vec2<f32>) -> vec3<f32> {
     if visible <= 0.0 {
         return vec3<f32>(0.0);
     }
-    let t_vol = textureSampleLevel(volumen, linear_sampler, clamp(uv_sol, vec2<f32>(0.0), vec2<f32>(1.0)), 0.0).a;
+    let t_vol_val = textureSampleLevel(t_vol, linear_sampler, clamp(uv_sol, vec2<f32>(0.0), vec2<f32>(1.0)), 0.0).a;
     let elev = degrees(asin(clamp(d_sol.y, -1.0, 1.0)));
-    let disco = atm_luz_directa_sol(elev) * opc_cielo().sol_color * OPC_SOL_DISCO_BRILLO * t_vol * (1.0 - frame.rain);
+    let disco = atm_luz_directa_sol(elev) * opc_cielo().sol_color * OPC_SOL_DISCO_BRILLO * t_vol_val * (1.0 - frame.rain);
     let techo = OPC_BLANCO / adp_codificacion().exposicion;
     let exceso = max(disco - vec3<f32>(techo), vec3<f32>(0.0)) * visible;
     let d = length((uv - uv_sol) * vec2<f32>(aspecto, 1.0));
@@ -80,11 +80,11 @@ fn adp_destello_sol(uv: vec2<f32>) -> vec3<f32> {
 }
 
 // Bloom de la pasada final: núcleo (bicúbico de bloom) más ancho (bloom2), y bloom de niebla.
-fn adp_bloom_final(color: vec3<f32>, alfa_niebla: f32, uv: vec2<f32>, o: OpcImagen) -> vec3<f32> {
-    let nucleo = img_catmull_rom(bloom, linear_sampler, uv, 1.0);
-    let ancho4 = textureSampleLevel(bloom2, linear_sampler, uv, 0.0);
+fn adp_bloom_final(color: vec3<f32>, alfa_niebla: f32, uv: vec2<f32>, o: OpcImagen, t_bloom: texture_2d<f32>, t_bloom2: texture_2d<f32>, t_vol: texture_2d<f32>) -> vec3<f32> {
+    let nucleo = img_catmull_rom(t_bloom, linear_sampler, uv, 1.0);
+    let ancho4 = textureSampleLevel(t_bloom2, linear_sampler, uv, 0.0);
     let ancho = ancho4.rgb;
-    let b = mix(ancho, nucleo, OPC_BLOOM_NUCLEO) + adp_destello_sol(uv);
+    let b = mix(ancho, nucleo, OPC_BLOOM_NUCLEO) + adp_destello_sol(uv, t_vol);
     let vineta = mix(OPC_BLOOM_VINETA_CENTRO, OPC_BLOOM_VINETA_ESQUINA, saturate(length(uv - 0.5) * 1.41421356));
     // La opacidad de la niebla del propio píxel, sin nubes, que deja la composición en su alfa (pasa por el TAA); llega
     // de la muestra central de la nitidez. Porqué: docs/efectos/bloom.md §«Bloom de niebla» (F-11).
@@ -98,8 +98,8 @@ fn adp_bloom_final(color: vec3<f32>, alfa_niebla: f32, uv: vec2<f32>, o: OpcImag
 
 
 // Agua en la cámara (19): el estado del cruce está en el téxel (4,0) de bloom2. Porqué: docs/efectos/camara-y-juego.md
-fn adp_gotas_camara(uv: vec2<f32>) -> ImgGotasResultado {
-    let c = adp_cruce_decodificar(textureLoad(bloom2, vec2<i32>(4, 0), 0).a);
+fn adp_gotas_camara(uv: vec2<f32>, t_bloom2: texture_2d<f32>) -> ImgGotasResultado {
+    let c = adp_cruce_decodificar(textureLoad(t_bloom2, vec2<i32>(4, 0), 0).a);
     if c.t < 0.0 {
         return ImgGotasResultado(uv, 0.0);
     }
@@ -145,7 +145,7 @@ fn adp_cruce_codificar(t: f32, salida: bool, rapidez: f32) -> f32 {
 // Desenfoque de movimiento (19, opción `desenfoque_movimiento`): tres muestras más a lo largo del desplazamiento del
 // píxel (reproyección por profundidad con la vista anterior), con tramado; la mano no se desenfoca.
 // Porqué: docs/efectos/camara-y-juego.md §«Ajustes de cámara»
-fn adp_desenfoque_movimiento(c: vec3<f32>, uv: vec2<f32>, p: AdpPixel) -> vec3<f32> {
+fn adp_desenfoque_movimiento(c: vec3<f32>, uv: vec2<f32>, p: AdpPixel, tex: texture_2d<f32>) -> vec3<f32> {
     if desenfoque_movimiento <= 0 || frame.delta_time <= 0.0 {
         return c;
     }
@@ -164,7 +164,7 @@ fn adp_desenfoque_movimiento(c: vec3<f32>, uv: vec2<f32>, p: AdpPixel) -> vec3<f
     let j = adp_ruido_azul(p.pixel, 3u);
     var suma = c;
     for (var i = 1; i <= 3; i++) {
-        suma += textureSampleLevel(previous, linear_sampler, uv - v * ((f32(i) - 1.0 + j) / 3.0), 0.0).rgb;
+        suma += textureSampleLevel(tex, linear_sampler, uv - v * ((f32(i) - 1.0 + j) / 3.0), 0.0).rgb;
     }
     return suma * 0.25;
 }

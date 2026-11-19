@@ -19,10 +19,9 @@ fn adp_cielo_jitter(dir: vec3<f32>) -> vec3<f32> {
     return normalize(dir + (o.x * eje_x + o.y * eje_y) * pixel);
 }
 
-// Luz lineal de la escena -> valor del «picture» (ADR 0004), con tramado de ±½ nivel.
+// Luz lineal de la escena -> valor del «picture» lineal (ADR 0004, API 0.2).
 fn adp_cielo_salida(luz: vec3<f32>, dir: vec3<f32>) -> vec4<f32> {
     let v = col_codificar_escena(luz, adp_codificacion());
-    let tramado = (rui_tramado_direccion(dir) - 0.5) / 255.0;
-    return vec4<f32>(v + tramado, 1.0);
+    return vec4<f32>(v, 1.0);
 }
 

@@ -416,3 +416,32 @@ y arenisca).
   casi toda la escena a >2 bloques).
 - **Constantes:** todas con nombre en `opciones/suelo_clima.wgsl`; menú sin cambios (64/64). Porqué en
   `docs/efectos/suelo-clima.md`.
+
+## 2026-11-19 — N-04: migración a la Shader API 0.2 (F-70)
+
+Probado en `vulpe-pruebas` (versión nativa `native-dd67b76-2ae03345fa04`, con `libvulpe.so` cargado) mediante
+`pruebas/escenas/api-02.ctl`. El pack compila y carga sin errores ni avisos en `horizon-ctl logs` (~1,0 s en caliente).
+Decisiones y límites por etapa en `docs/decisiones/0005-api-0-2.md`.
+
+- **Incidencias encontradas y corregidas durante la prueba:**
+  1. En la 0.2 Horizon ignora (fija a 1) el canal `.a` de los destinos `[[post]]` ordinarios; eso rompía la transmitancia
+     del volumen, el bloom de niebla de la composición y los 7 téxeles de estado en `bloom`/`bloom2` (exposición fija en 1
+     y gotas de cruce de agua permanentes en cámara). Pasados a `[[resource]]` guardados (`keep = "view"`), donde `.a` se
+     conserva intacto (4,8125 / 6,0 de presupuesto).
+  2. Convertir la salida final de `07-final.wgsl` con `col_srgb_a_lineal` dejaba la cueva ~35 % más clara porque Horizon
+     codifica con potencia 2,2 pura (`pow(c, 1/2.2)`). Cambiado a `adp_gamma22_a_lineal` (`pow(c, 2.2)`).
+- **Comparación visual contra capturas de la 0.1** (con `aislamiento_rango = 0` temporal para comparar colores, restaurado
+  a 20 antes del commit):
+  - **Carta de color (`api02-carta-06000`, `-12500`, `-18000` vs `carta-*`):** mismo blanco del cubo, sombras, cielo azul
+    de mediodía, crepúsculo azul-violáceo y noche.
+  - **Tormenta y mod nativo (`api02-tormenta`):** sin cortinas de lluvia de vanilla (bit 7 de `frame.mods` activo) y con
+    las partículas de lluvia del mod visibles sobre la niebla densa de tormenta (F-64).
+  - **Agua (`api02-agua-orilla` vs `agua-orilla`):** mismo turquesa en la orilla, cáusticas, absorción azul profunda,
+    reflejo de nubes y de la costa.
+  - **Noche con fractal y aurora (`api02-fractal-cenit`):** cortinas doradas de la aurora, halo lunar azul y cielo
+    nocturno oscuro sin ruido de tramado.
+  - **Cueva cerrada (`api02-cueva-05s` vs `cueva-oscura-05s`):** misma oscuridad y lectura de la piedra tras pasar a
+    `adp_gamma22_a_lineal`.
+  - **Nether y End (`api02-nether`, `api02-end`):** End con tormenta azulada, pilares y cristales correctos; Nether
+    verificado con lava y columnas de basalto en la primera pasada (en la segunda `sleep 8` fue corto para cargar chunks;
+    subido a `sleep 12` en `api-02.ctl`).
