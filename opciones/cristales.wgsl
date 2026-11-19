@@ -53,6 +53,14 @@ const OPC_CRISTAL_VAHO_PERIODO: f32 = 3.5;         // pulso de respiración en s
 const OPC_CRISTAL_VAHO_COLOR: vec3<f32> = vec3<f32>(0.90, 0.94, 0.98); // condensación lisa, más clara que la escarcha
 const OPC_CRISTAL_VAHO_OPACIDAD: f32 = 0.62;
 
+// Arena tras tormenta en bioma seco (27 §5)
+const OPC_CRISTAL_ARENA_BARLOVENTO: f32 = 0.45;    // más arena en caras hacia el viento
+const OPC_CRISTAL_ARENA_BASE_MIN: f32 = 3.0;       // franja inferior de arena en texeles de 32
+const OPC_CRISTAL_ARENA_BASE_MAX: f32 = 6.5;
+const OPC_CRISTAL_ARENA_MARCO: f32 = 0.22;         // anchura de granos adheridos al marco (bloques)
+const OPC_CRISTAL_ARENA_COLOR_AMARILLA: vec3<f32> = vec3<f32>(0.74, 0.62, 0.36); // arena de desierto/sabana (lineal)
+const OPC_CRISTAL_ARENA_COLOR_ROJA: vec3<f32> = vec3<f32>(0.54, 0.21, 0.08);     // arena roja de mesa/badlands (lineal)
+
 // Convierte el código 0..3 del mod (apagada / ligera / normal / intensa) a multiplicador de intensidad.
 fn opc_cristal_escala_nivel(codigo: u32) -> f32 {
     switch codigo {

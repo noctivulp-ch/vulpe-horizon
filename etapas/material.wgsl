@@ -164,7 +164,7 @@ fn translucido(
         var fondo = mix(refr.color * tinte * (1.0 - cr.oscurecer_fondo), superficie, a);
         fondo = mix(fondo, cr.capa_color, cr.capa_opacidad);
         let f0 = select(vec3<f32>(OPC_TRANSL_F0), m.f0, p.con_pbr) + vec3<f32>(cr.f0_extra);
-        let f = col_luminancia(sup_fresnel_schlick(max(dot(cr.normal, p.vista), 0.0), f0)) * (1.0 - cr.capa_opacidad * 0.75);
+        let f = col_luminancia(sup_fresnel_schlick(max(dot(cr.normal, p.vista), 0.0), f0)) * (1.0 - max(cr.capa_opacidad * 0.75, cr.mate));
         let reflejo = adp_agua_reflejo(p, cr.normal, reflect(-p.vista, cr.normal), luces) * luz_curva_cielo(max(p.luz_cielo, 0.3));
         return mix(fondo, reflejo, f) + cr.especular_extra;
     }

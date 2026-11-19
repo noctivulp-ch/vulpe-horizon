@@ -82,3 +82,14 @@ Efecto propio de Vulpe para Horizon. Especificación: `vulpe-horizon-spec/subsis
   memoria (se borra al alejarse).
 - **Fusión con la escarcha:** dentro de la mancha, el dibujo de helecho y las facetas se atenúan y dan paso a una
   condensación lisa más clara con desenfoque detrás (`27` §4).
+
+## 5. Arena tras tormenta en bioma seco (`F-78` / `N-08.5`)
+
+- **Núcleo puro:** [`nucleo/superficie/cristal_arena.wgsl`](../../nucleo/superficie/cristal_arena.wgsl).
+- **Cuándo:** solo en biomas secos del Overworld (`!has_precipitation && temperature >= 1,0`: desierto, sabana, mesas y
+  biomas secos de mods), gestionado por el mod nativo. Acumula durante lluvia/tormenta (más fuerte y rápido con tormenta
+  eléctrica) y el viento se la lleva en `~3 min` tras despejar (`mods[6].z` bits 12..23). Sin el mod queda apagada.
+- **Cómo:** granos en la rejilla de 32 acumulados sobre todo en la base (`3–6,5` texeles) y pegados al marco, con más
+  cantidad a barlovento y menos hacia arriba. Amarilla (`OPC_CRISTAL_ARENA_COLOR_AMARILLA`) en desierto/sabana y roja
+  (`OPC_CRISTAL_ARENA_COLOR_ROJA`, `bit 8`) en mesas (`badlands`). Opaca y completamente mate (`cr.mate = 1`), tapa lo
+  de detrás y anula el brillo especular y el reflejo Fresnel donde se posa.

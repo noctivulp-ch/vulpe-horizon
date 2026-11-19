@@ -5,10 +5,11 @@
 struct AdpCristalResultado {
     normal: vec3<f32>,      // normal perturbada por las gotas o escarcha
     refraccion: f32,        // fuerza de refracción en pantalla
-    desenfoque: f32,        // 0..1 borrosidad detrás del cristal (escarcha)
+    desenfoque: f32,        // 0..1 borrosidad detrás del cristal (escarcha, vaho)
     f0_extra: f32,          // reflejo adicional en cristal mojado
+    mate: f32,              // 0..1 supresión de reflejo/brillo (arena opaca y nieve gruesa)
     oscurecer_fondo: f32,   // 0..1 oscurecimiento sutil del borde de la gota
-    capa_color: vec3<f32>,  // color iluminado de las capas translúcidas/opacas encima (escarcha, nieve, arena)
+    capa_color: vec3<f32>,  // color iluminado de las capas translúcidas/opacas encima (vaho, escarcha, nieve, arena)
     capa_opacidad: f32,     // 0..1 mezcla sobre el fondo refractado
     especular_extra: vec3<f32>,
     cobertura_cutout: f32,  // 0..1 cobertura para cristal transparente (cutout)
@@ -83,6 +84,7 @@ fn adp_cristal_evaluar(
         0.0,
         0.0,
         0.0,
+        0.0,
         vec3<f32>(0.0),
         0.0,
         vec3<f32>(0.0),
@@ -144,7 +146,19 @@ fn adp_cristal_evaluar(
         dist,
     );
 
-    // 3) Gotas de lluvia (27 §1): no se dibujan sobre escarcha gruesa ni sobre nieve (27 §Composición).
+    // 3) Arena tras tormenta en bioma seco (27 §5).
+    let arena = sup_cristal_arena(
+        plano,
+        p.normal_cara,
+        p.luz_cielo,
+        p.ao_vertice,
+        c1.xy,
+        c2.z,
+        c2.w,
+        dist,
+    );
+
+    // 4) Gotas de lluvia (27 §1): no se dibujan sobre escarcha gruesa, nieve ni arena (27 §Composición).
     let lluvia = sup_cristal_lluvia(
         plano,
         p.normal_cara,
@@ -157,12 +171,14 @@ fn adp_cristal_evaluar(
         c0.z,
         dist,
     );
-    let mascara_agua = (1.0 - smoothstep(0.35, 0.75, esc.cobertura)) * (1.0 - smoothstep(0.15, 0.55, nieve.cobertura));
+    let mascara_agua = (1.0 - smoothstep(0.35, 0.75, esc.cobertura))
+                     * (1.0 - smoothstep(0.15, 0.55, nieve.cobertura))
+                     * (1.0 - smoothstep(0.15, 0.55, arena.cobertura));
     let gota = lluvia.gota * mascara_agua;
     let rastro = lluvia.rastro * mascara_agua;
     let cobertura_agua = max(gota, rastro * 0.7);
 
-    if cobertura_agua <= 0.001 && lluvia.mojado <= 0.001 && esc.cobertura <= 0.001 && nieve.cobertura <= 0.001 && aliento.vaho <= 0.001 {
+    if cobertura_agua <= 0.001 && lluvia.mojado <= 0.001 && esc.cobertura <= 0.001 && nieve.cobertura <= 0.001 && aliento.vaho <= 0.001 && arena.cobertura <= 0.001 {
         return r;
     }
 
@@ -223,19 +239,43 @@ fn adp_cristal_evaluar(
         let op_nieve = max(nieve.copo * OPC_CRISTAL_NIEVE_OPACIDAD_COPO, nieve.monton * OPC_CRISTAL_NIEVE_OPACIDAD_MONTON);
         r.capa_color = mix(r.capa_color, color_nieve, op_nieve);
         r.capa_opacidad = max(r.capa_opacidad, op_nieve);
+        r.mate = max(r.mate, op_nieve * 0.85);
         r.especular_extra *= (1.0 - op_nieve);
     }
 
+    // Capa más exterior (27 §5): arena opaca y mate (amarilla en desierto/sabana, roja en mesas).
+    var color_arena = vec3<f32>(0.0);
+    if arena.cobertura > 0.001 {
+        let base_arena = select(OPC_CRISTAL_ARENA_COLOR_AMARILLA, OPC_CRISTAL_ARENA_COLOR_ROJA, cf.y > 0.5);
+        let grano_color = base_arena * (0.82 + 0.36 * arena.variacion);
+        let n_arena = normalize(n_base + vec3<f32>(0.0, arena.relieve_y, 0.0));
+        let n_l_arena = max(dot(n_arena, luces.direccion), 0.0);
+        let luz_arena = luces.directa * sombra_luz * n_l_arena
+                      + luces.cielo * curva_cielo * 0.90
+                      + bloque_luz
+                      + vec3<f32>(OPC_LUZ_NOCHE_SUELO * curva_cielo);
+        color_arena = grano_color * luz_arena;
+        let op_arena = clamp(arena.cobertura, 0.0, 1.0);
+        r.capa_color = mix(r.capa_color, color_arena, op_arena);
+        r.capa_opacidad = max(r.capa_opacidad, op_arena);
+        r.mate = max(r.mate, op_arena);
+        r.especular_extra *= (1.0 - op_arena);
+    }
+
     // Cristal transparente (cutout, `input.translucent == false`): en los texeles del interior dibuja
-    // nieve, gotas y cristales de escarcha (orden de fuera adentro).
+    // arena, nieve, gotas, escarcha y vaho (orden de fuera adentro).
     if !p.translucido {
         let texel = floor(plano.uv * OPC_CRISTAL_REJILLA);
         let dither = rui_hash21(vec2<i32>(i32(texel.x), i32(texel.y)));
+        let hay_arena = arena.cobertura >= 0.45;
         let hay_nieve = nieve.monton >= 0.40 || nieve.copo >= 0.45;
         let hay_vaho = aliento.vaho > 0.14 && aliento.vaho > dither * 0.72;
         let hay_escarcha = esc.cobertura >= 0.42 || (esc.cobertura > 0.14 && esc.cobertura > dither * 0.65);
         let hay_gota = gota >= 0.45 || rastro >= 0.55;
-        if hay_nieve {
+        if hay_arena {
+            r.cobertura_cutout = 1.0;
+            r.color_cutout = color_arena;
+        } else if hay_nieve {
             r.cobertura_cutout = 1.0;
             r.color_cutout = color_nieve;
         } else if hay_gota {
