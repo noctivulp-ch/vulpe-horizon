@@ -38,7 +38,6 @@ fn post(input: PostInput) -> vec4<f32> {
         return vec4<f32>(vec3<f32>(1.0 - v.transmitancia), 1.0);
     }
     c = c * adp_transmitancia_compuesta(v, dist, p.uv) + v.luz;
-    c = adp_cristales_post(c, p, dir, dist);
     c = adp_niebla_inmersion(c, dist);
     return vec4<f32>(c, adp_opacidad_bloom_niebla(v, p.es_cielo, p.pixel));
 }

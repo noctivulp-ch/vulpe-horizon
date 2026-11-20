@@ -310,6 +310,17 @@ files = [
     "nucleo/superficie/menas.wgsl",
     "opciones/menas.wgsl",
     "adaptadores/menas_luz.wgsl",
+]
+name = "Composición"
+output = "composicion_base"
+reads = ["volumen", "bloom2_previous", "datos_cuadro"]
+
+[[post]]
+file = "etapas/post/03b-cristales.wgsl"
+files = [
+    "nucleo/superficie/brdf.wgsl",
+    "adaptadores/post.wgsl",
+    "adaptadores/cuadro_lectura.wgsl",
     "nucleo/superficie/cristal_lluvia.wgsl",
     "nucleo/superficie/cristal_escarcha.wgsl",
     "nucleo/superficie/cristal_nieve.wgsl",
@@ -320,9 +331,9 @@ files = [
     "adaptadores/cristal_sim_datos.wgsl",
     "adaptadores/cristales_post.wgsl",
 ]
-name = "Composición"
+name = "Cristales transparentes"
 output = "composicion"
-reads = ["volumen", "bloom2_previous", "datos_cuadro", "cristal_mapa", "cristal_sim", "cristal_clima"]
+reads = ["datos_cuadro", "cristal_mapa", "cristal_sim", "cristal_clima"]
 
 [[post]]
 file = "etapas/post/04-bloom-bajada.wgsl"
@@ -330,21 +341,21 @@ files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/i
 name = "Bloom: bajada"
 output = "bloom"
 scale = 0.25
-reads = ["historial_previous", "bloom2_previous", "datos_cuadro"]
+reads = ["historial_previous", "datos_cuadro"]
 
 [[post]]
 file = "etapas/post/05-bloom-ancho.wgsl"
 files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/bloom_estado.wgsl"]
 name = "Bloom: ancho"
 output = "bloom2"
-reads = ["datos_cuadro"]
+reads = ["historial_previous", "bloom2_previous", "datos_cuadro"]
 
 [[post]]
 file = "etapas/post/06-taa.wgsl"
 files = ["nucleo/imagen/taa.wgsl", "adaptadores/taa.wgsl"]
 name = "TAA"
 output = "historial"
-reads = ["historial_previous"]
+reads = ["historial_previous", "volumen"]
 
 [[post]]
 file = "etapas/post/07-final.wgsl"

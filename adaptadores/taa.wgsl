@@ -31,12 +31,23 @@ fn adp_taa_uv_anterior(uv: vec2<f32>) -> vec2<f32> {
     return mat_ndc_a_uv(h.xy / h.w);
 }
 
+fn adp_taa_alfa_niebla(input: PostInput) -> f32 {
+    let opacidad = 1.0 - textureSampleLevel(volumen, linear_sampler, input.uv, 0.0).a;
+    if frame.in_water > 0.5 || !adp_es_superficie() {
+        return opacidad;
+    }
+    if input.depth <= 0.0 || surface_at(vec2<i32>(input.pixel)).present {
+        return 0.0;
+    }
+    return OPC_BLOOM_NIEBLA_TRANSLUCIDO * opacidad;
+}
+
 fn adp_taa(input: PostInput) -> vec4<f32> {
     let o = opc_taa();
     let px = 1.0 / frame.resolution;
     let entrada = textureSampleLevel(composicion, linear_sampler, input.uv, 0.0);
-    // El alfa de la composición (opacidad de la niebla para el bloom de niebla) pasa tal cual a la final.
-    let alfa_niebla = entrada.a;
+    // `composicion` es un destino [[post]] sin canal alfa: el alfa de niebla se calcula aquí para `historial` (rgba16float).
+    let alfa_niebla = adp_taa_alfa_niebla(input);
     var actual = entrada.rgb;
     if OPC_TAA_FXAA {
         actual = img_fxaa(composicion, linear_sampler, input.uv, actual);
