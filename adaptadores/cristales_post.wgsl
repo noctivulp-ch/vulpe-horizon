@@ -329,7 +329,7 @@ fn adp_cristales_post(
             n_enter = vec3<f32>(0.0, 0.0, -f32(step_v.z));
         }
 
-        if t_hit >= t_max - 0.015 {
+        if t_hit > t_max + 0.02 {
             break;
         }
         let rel = b - cam_b;
@@ -354,7 +354,7 @@ fn adp_cristales_post(
         if (w0 & ADP_CM_BIT_PANEL) != 0u {
             // Panel fino: interseca el plano del brazo activo (+-0,0625 desde el centro del bloque).
             valido = false;
-            var mejor_t = t_max - 0.015;
+            var mejor_t = t_max + 0.02;
             if (w0 & ADP_CM_BIT_PANEL_X) != 0u && abs(dir.z) > 1e-4 {
                 let z_pl = f32(b.z) + 0.5 + select(0.0625, -0.0625, dir.z > 0.0);
                 let tp = (z_pl - orig.z) / dir.z;
@@ -421,13 +421,13 @@ fn adp_cristales_post(
             for (var dx = -3; dx <= 3; dx++) {
                 let q = clamp(vec2<i32>(round(p.pixel + vec2<f32>(f32(dx), f32(dy)) * escala)), vec2<i32>(0), res_i);
                 let dm = textureLoad(scene_depth, q, 0);
-                if (dx == 0 && dy == 0) || dm <= d_cristal {
+                if dm < d_cristal - 0.0002 {
                     suma += textureLoad(composicion_base, q, 0).rgb;
                     peso_b += 1.0;
                 }
             }
         }
-        let borroso = suma / max(peso_b, 1.0);
+        let borroso = select(base_color, suma / peso_b, peso_b > 0.0);
         fondo = sup_cristal_blur_conservar_luces(base_color, borroso, accum_blur);
     }
 

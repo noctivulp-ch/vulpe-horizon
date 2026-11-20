@@ -69,7 +69,8 @@ fn material(input: MaterialInput) -> Surface {
         // hacia abajo, 2 hacia arriba; aquí escalada por OPC_SSS_CIELO. Porqué: docs/efectos/luz-de-superficie.md §SSS de cielo (F-9)
         sss_cielo = sup_sss_color(albedo, 0.5) * luces.cielo * curva_cielo * m.sss * (sup_sss_fase_cielo(-p.vista.y) * OPC_SSS_CIELO);
     }
-    let bloque = (adp_color_luz_bloque(p, o) * luz_curva_bloque(p.luz_bloque) + p.luz_colorida) * OPC_LUZ_BLOQUE * o.bloque;
+    let color_luz_b = select(adp_color_luz_bloque(p, o), vec3<f32>(col_luminancia(adp_color_luz_bloque(p, o))) * 0.35, p.es_cristal && !p.translucido);
+    let bloque = (color_luz_b * luz_curva_bloque(p.luz_bloque) + p.luz_colorida) * OPC_LUZ_BLOQUE * o.bloque;
     // Relámpago (20): solo donde llega el cielo (luz de cielo a la cuarta). Porqué: docs/efectos/relampago.md
     let cielo2 = p.luz_cielo * p.luz_cielo;
     let relampago = OPC_RELAMPAGO_COLOR * (OPC_RELAMPAGO_BRILLO * cielo2 * cielo2 * luz_relampago_superficie(adp_relampago_cuadro(), p.posicion, n));
