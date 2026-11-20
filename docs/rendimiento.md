@@ -282,3 +282,25 @@ real.)*
 - **Petición opcional para Horizon:** `coverage = "pack"` acotado a `[[tags]]` o permitir que `[[materials]]
   translucent = true` conserve los texeles `albedo.a < 0,01` bajo `coverage = "engine"`, para habilitar el interior de
   `glass` y `glass_pane` sin pagar el coste global de *early-Z* en terreno sólido.
+
+## 2026-11-19 (N-09 / N-09b): el tiempo en los cristales v2 (`F-90`..`F-98` + mod `N-09.1`..`N-09.2`)
+
+Medidas A/B alternas (2 rondas × 20 s por pareja) en `vulpe-pruebas`
+(`HORIZON_HOME=~/.local/share/horizon/instances/vulpe-pruebas`, versión nativa `native-dd67b76-1539d06868e3`,
+`gpu-passes on`, `time set 6000`) contra `e7ad1c4` en:
+- **Bosque sin cristales** (`170,5, 90, 166,5`, despejado);
+- **Frente a la pared de cristal con lluvia** (`168,5, 110, 152,2`, bajo techo a 1,8 bloques del muro de 17×9 bloques con
+  cristal transparente `glass`, paneles `glass_pane`, tintado y ahumado).
+
+| escena (2 rondas × 20 s) | `e7ad1c4` (R1 / R2 · media) | `F-98` (R1 / R2 · media) | diferencia (`gpu_avg` / pasadas de cristales) | desglose de pasadas (`e7ad1c4` → `F-98`) |
+|---|---|---|---|---|
+| Overworld bosque (sin cristales) | 38,99 / 38,76 fps (**38,88**) · avg 19,16 / 19,25 (**19,21 ms**) · p50 13,16 / 13,20 (**13,18 ms**) | 36,89 / 36,90 fps (**36,90**) · avg 19,47 / 19,57 (**19,52 ms**) · p50 13,55 / 13,64 (**13,60 ms**) | **+0,04 ms** en pasadas de cristales (`+0,31 ms` total frame con `[ray_tracing]`) | `Mapa de cristales` **0,00 ms**, `Simulación cristales` **0,00 ms**, `Lienzo cristales` **0,01 ms**, `Composición + Cristales transparentes` 1,21 → `1,08 + 0,16 =` **1,24 ms** (+0,03 ms), `Cielo` 1,41 → 1,37 ms |
+| Pared de cristal 17×9 (con lluvia) | 38,91 / 38,66 fps (**38,79**) · avg 18,56 / 18,56 (**18,56 ms**) · p50 13,49 / 13,45 (**13,47 ms**) | 34,05 / 33,94 fps (**34,00**) · avg 21,09 / 21,08 (**21,09 ms**) · p50 16,47 / 16,35 (**16,41 ms**) | **+2,53 ms** (simulando 8 paneles de lluvia y dibujando cristal transparente + tintado a pantalla completa) | `Mapa de cristales` **0,01 ms**, `Simulación cristales` **0,76 ms**, `Lienzo cristales` **0,11 ms**, `Composición` 1,50 → 1,36 ms, `Cristales transparentes` **1,38 ms** |
+
+- **Por qué `03b-cristales.wgsl` va en pasada separada (`F-97`):** al integrar el DDA de cristal transparente dentro de
+  `03-composicion.wgsl`, la presión de registros sube `Composición` en bosque de `1,08 + 0,16 = 1,24 ms` a `1,50 ms`
+  (`+0,26 ms`) y frente a la pared de cristal de `1,36 + 1,38 = 2,74 ms` a `3,07 ms` (`+0,33 ms`). Separarla mantiene
+  intacto el coste de `03-composicion` y permite muestrear `composicion_base` en el desenfoque de caja separable (`F-98`).
+- **Presupuestos (`tools/validar.sh`):** `material` `16 022 / 20 000` expresiones y `19 / 64` lecturas;
+  `Cristales transparentes` `12 278` expresiones y `29 / 64` lecturas; `Composición` `13 343` expresiones y `40 / 64`
+  lecturas.
