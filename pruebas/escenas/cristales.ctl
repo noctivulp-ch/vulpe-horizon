@@ -1,156 +1,151 @@
-# Recorrido de «el tiempo en los cristales» (27, N-08): muro de cristal (transparente, tintado y ahumado) y paneles
-# (transparente y tintado) con alero corto y porche hondo. Recorridos con acercamiento (16/8/4/2/1 bloques),
-# giros de 20° y pasos laterales de 1 en 1 bloque en lluvia, secado, frío (escarcha), nieve, aliento y desierto.
+# Recorrido de «el tiempo en los cristales» (27 v2, N-09): casa de cristal bajo techo y de día (/time set 6000)
+# con cristal transparente, paneles, tintado y ahumado; alero corto vs porche hondo; recorridos 16/8/4/2/1,
+# giros de 15-30° y pasos de 1 en 1 bloque en lluvia/secado, frío (escarcha, repisa, copos, condensación, borde,
+# vaho y desenfoque con luces) y desierto/arena.
 close
 command gamemode spectator
 command gamerule advance_time false
 command time set 6000
 command weather clear
 
-# === 1. LLUVIA, ALERO CORTO VS PORCHE HONDO Y SECADO ===
-command tp @s 170.5 110 149.0 0 0
+# === 1. LLUVIA, ALERO CORTO VS PORCHE HONDO Y SECADO (bajo techo, de día) ===
+command tp @s 170.0 110 158.0 180 0
 sleep 4
-command fill 162 106 149 180 115 158 minecraft:air
-command fill 162 106 154 178 106 154 minecraft:stone_bricks
-command fill 162 106 154 162 114 154 minecraft:stone_bricks
-command fill 178 106 154 178 114 154 minecraft:stone_bricks
-command fill 163 107 154 165 113 154 minecraft:glass
-command fill 166 107 154 168 113 154 minecraft:light_blue_stained_glass
-command fill 169 107 154 171 113 154 minecraft:tinted_glass
-command fill 172 107 154 174 113 154 minecraft:glass_pane
-command fill 175 107 154 177 113 154 minecraft:white_stained_glass_pane
-# Alero corto (1 bloque) sobre la izquierda; porche hondo (5 bloques) sobre la derecha
-command fill 162 114 153 166 114 154 minecraft:stone_bricks
-command fill 175 114 149 179 114 156 minecraft:stone_bricks
+command fill 161 106 147 180 116 161 minecraft:air
+command fill 162 106 154 178 106 160 minecraft:oak_planks
+command fill 162 106 154 162 114 160 minecraft:stone_bricks
+command fill 178 106 154 178 114 160 minecraft:stone_bricks
+command fill 162 106 160 178 114 160 minecraft:stone_bricks
+command fill 162 114 154 178 114 160 minecraft:stone_bricks
+command fill 163 107 154 166 113 154 minecraft:glass
+command fill 167 107 154 169 113 154 minecraft:glass_pane
+command fill 170 107 154 172 113 154 minecraft:light_blue_stained_glass
+command fill 173 107 154 177 113 154 minecraft:tinted_glass
+# Alero corto (1 bloque) sobre tinted derecha; porche hondo (5 bloques) sobre glass izquierda
+command fill 175 114 153 178 114 153 minecraft:stone_bricks
+command fill 162 114 149 164 114 153 minecraft:stone_bricks
+command setblock 165 107 158 minecraft:lantern
+command setblock 175 107 158 minecraft:lantern
 sleep 2
-screenshot cristales-recorrido-despejado
+command tp @s 170.0 110 156.8 180 0
+sleep 1
+screenshot cristales-v2-despejado
 
 command weather rain
-sleep 8
-# Acercamiento 16, 8, 4, 2 y 1 bloques al muro (Z=154)
-command tp @s 170.5 110 138.0 0 0
-sleep 1
-screenshot cristales-recorrido-lluvia-d16
-command tp @s 170.5 110 146.0 0 0
-sleep 1
-screenshot cristales-recorrido-lluvia-d08
-command tp @s 170.5 110 150.0 0 0
-sleep 1
-screenshot cristales-recorrido-lluvia-d04
-command tp @s 167.5 110 152.0 0 0
-sleep 1
-screenshot cristales-recorrido-lluvia-d02
-command tp @s 167.5 110 153.0 0 0
-sleep 1
-screenshot cristales-recorrido-lluvia-d01
-# Movimiento temporal (2 s): gotas bajando a tirones
-sleep 2
-screenshot cristales-recorrido-lluvia-d01-t2
-# Giro en pasos de 20° y recorrido lateral de 1 en 1 bloque (alero -> expuesto -> paneles -> porche)
-command tp @s 167.5 110 151.5 20 0
-sleep 1
-screenshot cristales-recorrido-lluvia-g20
-command tp @s 167.5 110 151.5 -20 0
-sleep 1
-screenshot cristales-recorrido-lluvia-gn20
-command tp @s 164.5 110 151.5 0 0
-sleep 1
-screenshot cristales-recorrido-lluvia-paso-alero
-command tp @s 170.5 110 151.5 0 0
-sleep 1
-screenshot cristales-recorrido-lluvia-paso-ahumado
-command tp @s 173.5 110 151.5 0 0
-sleep 1
-screenshot cristales-recorrido-lluvia-paso-panel
-command tp @s 176.5 110 151.5 0 0
-sleep 1
-screenshot cristales-recorrido-lluvia-paso-porche
-# Cruce de la superficie del cristal de 1 en 1 bloque (exterior -> interior)
-command tp @s 167.5 110 153.2 0 0
-sleep 1
-screenshot cristales-recorrido-cruce-ext
-command tp @s 167.5 110 155.2 180 0
-sleep 1
-screenshot cristales-recorrido-cruce-int
+sleep 22
+# Secuencia de 5 capturas seguidas para ver las gotas bajar, fusionarse y dejar rastro (1,8 bloques del cristal)
+screenshot cristales-v2-lluvia-f1
+sleep 0.5
+screenshot cristales-v2-lluvia-f2
+sleep 0.5
+screenshot cristales-v2-lluvia-f3
+sleep 0.5
+screenshot cristales-v2-lluvia-f4
+sleep 0.5
+screenshot cristales-v2-lluvia-f5
 
-# Secado gradual (mod): 12 s intermedio y 35 s seco
-command tp @s 167.5 110 151.8 0 0
+# Acercamiento 16, 8, 4, 2 y 1 bloques por fuera y giros 20°
+command tp @s 170.0 110 138.0 0 0
+sleep 1
+screenshot cristales-v2-lluvia-d16
+command tp @s 170.0 110 146.0 0 0
+sleep 1
+screenshot cristales-v2-lluvia-d08
+command tp @s 170.0 110 150.0 0 0
+sleep 1
+screenshot cristales-v2-lluvia-d04
+command tp @s 168.5 110 152.0 0 0
+sleep 1
+screenshot cristales-v2-lluvia-d02
+command tp @s 168.5 110 153.0 0 0
+sleep 1
+screenshot cristales-v2-lluvia-d01
+command tp @s 168.5 110 152.0 20 0
+sleep 1
+screenshot cristales-v2-lluvia-g20
+command tp @s 168.5 110 152.0 -20 0
+sleep 1
+screenshot cristales-v2-lluvia-gn20
+# Cruce de 1 en 1 bloque (fuera -> dentro)
+command tp @s 168.5 110 153.2 0 0
+sleep 1
+screenshot cristales-v2-cruce-ext
+command tp @s 168.5 110 155.8 180 0
+sleep 1
+screenshot cristales-v2-cruce-int
+
+# Secado gradual (6-26 s)
 command weather clear
-sleep 12
-screenshot cristales-recorrido-secado-12s
-sleep 25
-screenshot cristales-recorrido-secado-37s
-command fill 162 106 149 180 115 158 minecraft:air
+sleep 10
+screenshot cristales-v2-secado-10s
+sleep 18
+screenshot cristales-v2-secado-28s
+command fill 161 106 147 180 116 161 minecraft:air
 
-# === 2. FRÍO (ESCARCHA), NIEVE (COPOS Y MONTÓN) Y ALIENTO ===
-command time set 18000
-command tp @s -499.5 75 -766.0 0 0
-sleep 6
-command fill -506 72 -765 -492 78 -760 minecraft:air
-command fill -506 72 -761 -492 72 -761 minecraft:stone_bricks
-command fill -506 72 -761 -506 78 -761 minecraft:stone_bricks
-command fill -492 72 -761 -492 78 -761 minecraft:stone_bricks
-command fill -506 78 -761 -492 78 -761 minecraft:stone_bricks
-command fill -505 73 -761 -503 77 -761 minecraft:glass
-command fill -502 73 -761 -499 77 -761 minecraft:light_blue_stained_glass
-command fill -498 73 -761 -496 77 -761 minecraft:tinted_glass
-command fill -495 73 -761 -493 77 -761 minecraft:white_stained_glass_pane
-sleep 6
-screenshot cristales-recorrido-escarcha-d05
-command tp @s -500.5 75 -763.0 0 0
-sleep 1
-screenshot cristales-recorrido-escarcha-d02
-command tp @s -500.5 75 -763.0 20 0
-sleep 1
-screenshot cristales-recorrido-escarcha-g20
-
-# Nevando: copos pegados y montón inferior
+# === 2. FRÍO: ESCARCHA EN MARCO ENTERO, REPISA, COPOS, CONDENSACIÓN, BORDE, VAHO Y DESENFOQUE CON LUCES ===
 command time set 6000
 command weather rain
-sleep 12
-command tp @s -499.5 75 -765.0 0 0
-sleep 1
-screenshot cristales-recorrido-nevando-d04
-command tp @s -500.5 75 -763.0 0 0
-sleep 1
-screenshot cristales-recorrido-nevando-d02
-
-# Aliento (modo creativo, pegado al cristal con escarcha -> memoria al alejarse)
-command fill -502 72 -765 -499 72 -762 minecraft:stone_bricks
-command gamemode creative
-command tp @s -500.5 73 -761.8 0 0
-sleep 6
-screenshot cristales-recorrido-aliento-cerca
-command tp @s -500.5 73 -763.8 0 0
-sleep 2
-screenshot cristales-recorrido-aliento-memoria
-command gamemode spectator
-command fill -506 72 -765 -492 78 -760 minecraft:air
+command tp @s -500.0 97.3 -763.2 180 5
+sleep 4
+command fill -506 94 -773 -494 101 -760 minecraft:air
+command fill -505 94 -766 -495 94 -761 minecraft:oak_planks
+command fill -505 94 -766 -505 100 -761 minecraft:quartz_bricks
+command fill -495 94 -766 -495 100 -761 minecraft:quartz_bricks
+command fill -505 94 -761 -495 100 -761 minecraft:quartz_bricks
+command fill -505 100 -766 -495 100 -761 minecraft:quartz_bricks
+command fill -505 95 -766 -495 99 -766 minecraft:quartz_bricks
+command fill -503 96 -766 -501 98 -766 minecraft:glass
+command fill -499 96 -766 -497 98 -766 minecraft:light_blue_stained_glass
+command setblock -503 95 -763 minecraft:lantern
+command setblock -497 95 -763 minecraft:lantern
+# Fondo de prueba con luces exteriores para comprobar el desenfoque conservando las luces
+command fill -504 95 -771 -496 98 -771 minecraft:deepslate_bricks
+command setblock -502 97 -771 minecraft:glowstone
+command setblock -498 97 -771 minecraft:glowstone
+sleep 35
+screenshot cristales-v2-frio-nieve
+command weather thunder
+sleep 45
 command weather clear
+sleep 4
+screenshot cristales-v2-frio-cond-blur
+# Giro 15° en movimiento
+command tp @s -500.0 97.3 -763.2 165 5
+sleep 0.5
+screenshot cristales-v2-frio-g15
+command tp @s -500.0 97.3 -763.2 195 5
+sleep 0.5
+screenshot cristales-v2-frio-gn15
+
+# Vaho del aliento (modo creativo a 1,1 bloques -> retención al retroceder)
+command gamemode creative
+command tp @s -502.0 95.0 -763.9 180 0
+sleep 12
+screenshot cristales-v2-vaho-cerca
+command tp @s -502.0 95.0 -763.1 180 0
+sleep 5
+screenshot cristales-v2-vaho-retencion
+command gamemode spectator
+command fill -506 94 -773 -494 101 -760 minecraft:air
 
 # === 3. DESIERTO TRAS TORMENTA (ARENA) ===
 command time set 6000
-command tp @s -9871.5 91 -2205.0 0 0
-sleep 6
-command fill -9878 88 -2200 -9864 94 -2200 minecraft:air
-command fill -9878 88 -2200 -9864 88 -2200 minecraft:sandstone
-command fill -9878 88 -2200 -9878 94 -2200 minecraft:sandstone
-command fill -9864 88 -2200 -9864 94 -2200 minecraft:sandstone
-command fill -9878 94 -2200 -9864 94 -2200 minecraft:sandstone
-command fill -9877 89 -2200 -9875 93 -2200 minecraft:glass
-command fill -9874 89 -2200 -9871 93 -2200 minecraft:light_blue_stained_glass
-command fill -9870 89 -2200 -9868 93 -2200 minecraft:tinted_glass
-command fill -9867 89 -2200 -9865 93 -2200 minecraft:glass_pane
-command weather thunder
-sleep 12
 command weather clear
-sleep 6
-screenshot cristales-recorrido-desierto-d05
-command tp @s -9872.5 91 -2202.0 0 0
-sleep 1
-screenshot cristales-recorrido-desierto-d02
-command tp @s -9872.5 91 -2202.0 20 0
-sleep 1
-screenshot cristales-recorrido-desierto-g20
-command fill -9878 88 -2200 -9864 94 -2200 minecraft:air
+command tp @s -9872.0 98.0 -2202.2 180 6
+sleep 4
+command fill -9878 95 -2209 -9866 102 -2199 minecraft:air
+command fill -9877 95 -2205 -9867 95 -2200 minecraft:smooth_sandstone
+command fill -9877 95 -2205 -9877 101 -2200 minecraft:smooth_sandstone
+command fill -9867 95 -2205 -9867 101 -2200 minecraft:smooth_sandstone
+command fill -9877 95 -2200 -9867 101 -2200 minecraft:smooth_sandstone
+command fill -9877 101 -2205 -9867 101 -2200 minecraft:smooth_sandstone
+command fill -9877 96 -2205 -9867 100 -2205 minecraft:smooth_sandstone
+command fill -9875 97 -2205 -9873 99 -2205 minecraft:glass
+command fill -9871 97 -2205 -9869 99 -2205 minecraft:light_blue_stained_glass
+command weather thunder
+sleep 42
+command weather clear
+sleep 4
+screenshot cristales-v2-desierto-arena
+command fill -9878 95 -2209 -9866 102 -2199 minecraft:air
 command tp @s 170.5 90 166.5 0 10

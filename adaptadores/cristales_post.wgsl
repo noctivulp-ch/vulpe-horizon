@@ -5,6 +5,13 @@
 // cristales transparentes cerca o el tiempo está despejado.
 // Porqué: docs/efectos/tiempo-en-los-cristales.md §Arquitectura y coste
 
+struct AdpCristalPostRes {
+    color: vec3<f32>,
+    alfa: f32,
+    blur: f32,
+    blur_nivel: u32,
+}
+
 fn adp_cp_sobre(base_col: vec3<f32>, base_op: f32, nueva_col: vec3<f32>, nueva_op: f32) -> vec4<f32> {
     let op_out = nueva_op + base_op * (1.0 - nueva_op);
     if op_out <= 1e-4 {
@@ -23,7 +30,8 @@ fn adp_cristales_post_evaluar_cara(
     w0: u32,
     w1: u32,
     luces: AdpLuces,
-) -> vec4<f32> {
+) -> AdpCristalPostRes {
+    let vacio = AdpCristalPostRes(vec3<f32>(0.0), 0.0, 0.0, 0u);
     let c0 = datos_cuadro[ADP_CUADRO_CRISTAL_0];
     let c1 = datos_cuadro[ADP_CUADRO_CRISTAL_1];
     let c2 = datos_cuadro[ADP_CUADRO_CRISTAL_2];
@@ -39,16 +47,17 @@ fn adp_cristales_post_evaluar_cara(
     let bioma_seco = (flags & OPC_CR_FLAG_BIOMA_SECO) != 0u;
     let bioma_frio = (flags & OPC_CR_FLAG_BIOMA_FRIO) != 0u;
     let borde_estilo = (flags >> 8u) & 3u;
+    let blur_nivel = (flags >> 10u) & 3u;
 
     let plano = sup_cristal_plano(p_mundo, n_cara);
     let entorno = adp_cm_decodificar_entorno(w0, w1, n_cara, plano.vertical, bioma_frio);
     if entorno.cerrada {
-        return vec4<f32>(0.0);
+        return vacio;
     }
 
     let aten_dist = 1.0 - smoothstep(OPC_CRISTAL_DIST_INICIO, OPC_CRISTAL_DIST_FIN, dist);
     if aten_dist <= 0.001 {
-        return vec4<f32>(0.0);
+        return vacio;
     }
 
     let es_arriba = n_cara.y > 0.5;
@@ -237,7 +246,15 @@ fn adp_cristales_post_evaluar_cara(
         }
     }
 
-    return vec4<f32>(capa_col, capa_op);
+    // Capa 7 — Máscara de desenfoque detrás del cristal empañado por dentro (27 v2 §Capa 7).
+    var blur_m = 0.0;
+    if blur_nivel > 0u && entorno.es_interior {
+        let grosor_emp = max(cond.grosor, aliento.grosor);
+        let fuerza_b = max(min(1.0, c0.y * 1.25), select(0.0, 1.0, aliento.grosor > 0.01));
+        blur_m = clamp(fuerza_b * 0.95 * grosor_emp, 0.0, 0.95);
+    }
+
+    return AdpCristalPostRes(capa_col, capa_op, blur_m, blur_nivel);
 }
 
 fn adp_cristales_post(
@@ -287,6 +304,9 @@ fn adp_cristales_post(
     let vista = -dir;
     var accum_col = vec3<f32>(0.0);
     var accum_a = 0.0;
+    var accum_blur = 0.0;
+    var blur_dist = 1e6;
+    var blur_nivel = 0u;
     let mascara_claro = ADP_CM_BIT_VALIDO | ADP_CM_BIT_ES_CRISTAL | ADP_CM_BIT_CLARO;
 
     for (var paso = 0; paso < 52; paso++) {
@@ -369,9 +389,14 @@ fn adp_cristales_post(
 
         let p_mundo = orig + dir * t_surf;
         let capa = adp_cristales_post_evaluar_cara(b, p_mundo, n_surf, vista, t_surf, w0, w1, luces);
-        if capa.a > 0.002 {
-            let peso = capa.a * (1.0 - accum_a);
-            accum_col += capa.rgb * peso;
+        if capa.blur > accum_blur {
+            accum_blur = capa.blur;
+            blur_dist = t_surf;
+            blur_nivel = capa.blur_nivel;
+        }
+        if capa.alfa > 0.002 {
+            let peso = capa.alfa * (1.0 - accum_a);
+            accum_col += capa.color * peso;
             accum_a += peso;
             if accum_a > 0.95 {
                 break;
@@ -379,8 +404,32 @@ fn adp_cristales_post(
         }
     }
 
-    if accum_a <= 0.002 {
+    if accum_a <= 0.002 && accum_blur <= 0.01 {
         return base_color;
     }
-    return accum_col + base_color * (1.0 - accum_a);
+
+    // Capa 7 — Desenfoque de caja separable 2D detrás del cristal empañado conservando luces, aplicado ANTES de las capas interiores.
+    var fondo = base_color;
+    if accum_blur > 0.01 && blur_nivel > 0u {
+        let radios = sup_cristal_blur_radio(blur_nivel);
+        let escala = radios / vec2<f32>(3.0, 2.0);
+        let d_cristal = mat_proyectar(frame.projection * frame.view, dir * blur_dist).z;
+        let res_i = vec2<i32>(frame.resolution) - vec2<i32>(1);
+        var suma = vec3<f32>(0.0);
+        var peso_b = 0.0;
+        for (var dy = -2; dy <= 2; dy++) {
+            for (var dx = -3; dx <= 3; dx++) {
+                let q = clamp(vec2<i32>(round(p.pixel + vec2<f32>(f32(dx), f32(dy)) * escala)), vec2<i32>(0), res_i);
+                let dm = textureLoad(scene_depth, q, 0);
+                if (dx == 0 && dy == 0) || dm <= d_cristal {
+                    suma += textureLoad(composicion_base, q, 0).rgb;
+                    peso_b += 1.0;
+                }
+            }
+        }
+        let borroso = suma / max(peso_b, 1.0);
+        fondo = sup_cristal_blur_conservar_luces(base_color, borroso, accum_blur);
+    }
+
+    return accum_col + fondo * (1.0 - accum_a);
 }

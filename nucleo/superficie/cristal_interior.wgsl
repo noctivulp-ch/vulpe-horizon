@@ -164,3 +164,22 @@ fn sup_cristal_borde_helado(
     let vis = max(0.45, clamp(cond_nivel, 0.0, 1.0));
     return SupCristalCapa(color, alfa * vis, destello * vis);
 }
+
+// Radios en píxeles de pantalla del desenfoque detrás del cristal empañado (27 v2 §Capa 7):
+// 0 apagado, 1 suave (3, 2), 2 normal (6, 4), 3 fuerte (11, 7).
+fn sup_cristal_blur_radio(nivel: u32) -> vec2<f32> {
+    switch nivel {
+        case 1u: { return vec2<f32>(3.0, 2.0); }
+        case 2u: { return vec2<f32>(6.0, 4.0); }
+        case 3u: { return vec2<f32>(11.0, 7.0); }
+        default: { return vec2<f32>(0.0, 0.0); }
+    }
+}
+
+// Composición del desenfoque que conserva las luces detrás del cristal empañado (27 v2 §Capa 7):
+// brillo = max(nítido - borroso - 0,04, 0); visto = borroso + 0,8 * brillo; resultado = mix(nítido, visto, máscara).
+fn sup_cristal_blur_conservar_luces(nitido: vec3<f32>, borroso: vec3<f32>, mascara: f32) -> vec3<f32> {
+    let brillo = max(nitido - borroso - vec3<f32>(OPC_CRISTAL_BLUR_UMBRAL_LUZ), vec3<f32>(0.0));
+    let visto = borroso + brillo * OPC_CRISTAL_BLUR_CONSERVA_LUZ;
+    return mix(nitido, visto, clamp(mascara, 0.0, 1.0));
+}

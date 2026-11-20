@@ -17,10 +17,9 @@ struct AdpCristalResultado {
     especular_extra: vec3<f32>,
 }
 
-// Refracción en pantalla para caras verticales y horizontales de cristal: proyecta el desvío de normal al plano
-// de vista para que las gotas actúen como lentes en cualquier orientación (N/S/E/O y horizontal), y aplica un
-// desenfoque de 4 muestras detrás de la escarcha protegiendo la profundidad delantera.
-fn adp_cristal_refraccion(p: AdpPunto, n: vec3<f32>, cantidad: f32, desenfoque: f32) -> AdpRefraccion {
+// Refracción en pantalla para caras verticales y horizontales de cristal + desenfoque 2D detrás del
+// cristal empañado conservando las luces (27 v2 §Capa 7: radios 3/2, 6/4, 11/7 y protección de profundidad).
+fn adp_cristal_refraccion(p: AdpPunto, n: vec3<f32>, cantidad: f32, desenfoque: f32, nivel_blur: u32) -> AdpRefraccion {
     let uv0 = p.pixel / frame.resolution;
     let dist = length(p.posicion);
     let dist_factor = 1.0 + pow(dist, 0.75) * 0.08;
@@ -47,27 +46,23 @@ fn adp_cristal_refraccion(p: AdpPunto, n: vec3<f32>, cantidad: f32, desenfoque: 
         adp_agua_color_opaco(uv_b).b,
     );
 
-    // Escarcha (27 §2): dispersa la luz y emborrona lo de detrás (solo cuando hay escarcha en el píxel).
-    if desenfoque > 0.01 {
-        let radio = OPC_CRISTAL_ESCARCHA_DESENFOQUE * desenfoque * borde / (1.0 + dist * 0.04);
-        let aspecto = frame.resolution.y / max(frame.resolution.x, 1.0);
-        let paso = vec2<f32>(radio * aspecto, radio);
-        let offs = array<vec2<f32>, 4>(
-            vec2<f32>(paso.x, paso.y),
-            vec2<f32>(-paso.x, paso.y),
-            vec2<f32>(paso.x, -paso.y),
-            vec2<f32>(-paso.x, -paso.y),
-        );
-        var suma = col;
-        var peso = 1.0;
-        for (var i = 0; i < 4; i++) {
-            let u = clamp(uv + offs[i], vec2<f32>(0.0), vec2<f32>(1.0));
-            if adp_agua_profundidad_opaca(u) <= d_cristal {
-                suma += adp_agua_color_opaco(u);
-                peso += 1.0;
+    // Desenfoque de caja separable 2D detrás del cristal empañado conservando luces (27 v2 §Capa 7).
+    if desenfoque > 0.01 && nivel_blur > 0u {
+        let radios = sup_cristal_blur_radio(nivel_blur);
+        let escala = (radios / vec2<f32>(3.0, 2.0)) / max(frame.resolution, vec2<f32>(1.0));
+        var suma = vec3<f32>(0.0);
+        var peso = 0.0;
+        for (var dy = -2; dy <= 2; dy++) {
+            for (var dx = -3; dx <= 3; dx++) {
+                let u = clamp(uv + vec2<f32>(f32(dx), f32(dy)) * escala, vec2<f32>(0.0), vec2<f32>(1.0));
+                if (dx == 0 && dy == 0) || adp_agua_profundidad_opaca(u) <= d_cristal {
+                    suma += adp_agua_color_opaco(u);
+                    peso += 1.0;
+                }
             }
         }
-        col = mix(col, suma / peso, desenfoque);
+        let borroso = suma / max(peso, 1.0);
+        col = sup_cristal_blur_conservar_luces(col, borroso, desenfoque);
     }
     return AdpRefraccion(col, 0.0);
 }
@@ -419,6 +414,13 @@ fn adp_cristal_evaluar(
         let comp_borde = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_borde, borde_capa.alfa);
         r.capa_color = comp_borde.rgb;
         r.capa_opacidad = comp_borde.a;
+    }
+
+    // Capa 7 — Máscara de desenfoque detrás del cristal empañado por dentro (27 v2 §Capa 7).
+    if blur_nivel > 0u && entorno.es_interior {
+        let grosor_empanado = max(cond_capa.grosor, aliento.grosor);
+        let fuerza_blur = max(min(1.0, c0.y * 1.25), select(0.0, 1.0, aliento.grosor > 0.01));
+        r.desenfoque = clamp(fuerza_blur * 0.95 * grosor_empanado, 0.0, 0.95);
     }
 
     return r;

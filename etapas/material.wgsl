@@ -149,7 +149,7 @@ fn translucido(
     if p.es_cristal {
         let cr = adp_cristal_evaluar(p, n, luces, sombra_luz, bloque_luz);
         if cr.activo {
-            let refr = adp_cristal_refraccion(p, cr.normal, cr.refraccion, cr.desenfoque);
+            let refr = adp_cristal_refraccion(p, cr.normal, cr.refraccion, cr.desenfoque, cr.desenfoque_nivel);
             let a = clamp(p.alfa, 0.0, 1.0);
             let peso_tinte = select(0.0, clamp(a / OPC_TRANSL_TINTE_MIN, 0.0, 1.0), OPC_TRANSL_TINTE);
             let tinte = mix(vec3<f32>(1.0), normalize(max(p.albedo, vec3<f32>(1e-4))), peso_tinte);
