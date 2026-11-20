@@ -342,3 +342,17 @@ Análisis del sobrecoste de `F-98` en el bosque sin cristales y correcciones apl
 justo por debajo del umbral de 2 refrescos de 145 Hz (`13,79 ms`); el mantenimiento interno del TLAS/BLAS de 8 chunks del
 motor cuando el manifiesto declara `[ray_tracing]` añade `~0,55 ms` de CPU (`4,01 → 4,58 ms`), haciendo que un ~5 % más de
 fotogramas crucen `13,79 ms` y esperen al siguiente intervalo VSync de `27,58 ms` en `gpu_avg`.)*
+
+### 3. Marco y brillos del cristal transparente (`F-102`, N-09c, 2026-11-20)
+
+Bosque sin cristales (170,5 90 166,5, de día, despejado), `horizon-ctl bench 20` con la ventana al frente, instancia
+`vulpe-pruebas` (`--game-dir` de la instancia), alternando las compilaciones:
+
+| compilación | rondas (gpu avg, ms) | fps |
+|---|---|---|
+| `d8ec4f5` | 13,29 · 13,32 · 13,33 · 13,31 · 13,36 · 13,33 (media **13,32**) | 47,9–48,2 |
+| `F-102` | 13,00 · 13,04 · 13,08 · 13,06 (media **13,05**) | 48,3–48,9 |
+
+No empeora: en el bosque el resumen de `cristal_sim` corta el DDA y el aislamiento antes de leer la caché, y `[material]`
+pierde las expresiones de F-100 (11 300 → 11 273). Con cristales cerca, el DDA añade de 1 a 4 rayos cortos por píxel de
+cristal (luz de bloque) y el aislamiento hasta 6 lecturas de la caché por píxel sin superficie; no se midió frente al muro.

@@ -83,3 +83,29 @@ aislamiento entre sin él:
 A pleno sol ya hace lo que pide el dueño: el rango entero y realzado (×1,1 con el realce 30), y los demás conservan
 ~1/5 de su saturación (el 80 % de desaturación) con su matiz. No se cambia; queda para comprobar con el dueño de noche, donde
 la saturación de partida es baja y 1/5 de ella apenas se ve. El freno de F-60 no cambia esta tabla.
+
+## Marco y brillos del cristal transparente (F-102, 2026-11-20, N-09c)
+
+**El fallo.** En bioma nevado, con una antorcha o un farol detrás de una ventana de `glass`, salían trazos naranjas en
+el marco y en los brillos diagonales. El marco y los brillos (téxeles opacos de `glass.png`) los dibuja `[material]` en
+la pasada translúcida, que no llama a `set_surface`; el cuerpo transparente no se dibuja (alfa < 0,01) y lo pinta el DDA
+de `adp_cristales_post` en `06-taa`, de modo que en esos píxeles `surface_at` ve el terreno de detrás. El aislamiento
+tomaba así el matiz del **bloque de detrás** en el cuerpo y el de la **imagen** en el marco: la luz de la antorcha (y el
+desenfoque de la capa 7, que corre la llama sobre el marco) metía el marco en el rango del naranja y lo realzaba, mientras
+el cristal de alrededor se desaturaba.
+
+**Comprobado con datos** (vista de depuración temporal, `pruebas/capturas/n09c-dbg*`): el marco y los brillos salen de
+`[material]` con `MaterialInput.translucent = true` y el DDA los cubre (desde `a317499`); el cuerpo solo lo pinta el DDA.
+
+**Lo que se hace.** `adp_aislamiento_superficie` (`adaptadores/aislamiento.wgsl`) reconoce el marco y los brillos del
+cristal transparente: reconstruye el punto con la profundidad, avanza 0,02 bloques en el sentido de la vista por cada eje
+por separado (en diagonal, en el borde de la ventana caía en el muro y dejaba una línea de un píxel) y lee en la
+caché `cristal_mapa` si ese bloque es cristal transparente (bits válido, cristal y claro, con la firma del bloque). Ahí
+usa el matiz del bloque antes de la luz, como en el terreno sólido: el cristal transparente es incoloro (saturación 0),
+así que no entra en el rango y se desatura como el resto de la ventana. El freno de F-60 se aplica igual.
+
+- Mismo interruptor que el DDA (`OPC_CRISTAL_ACTIVO`, trazado de rayos, caché con cristal transparente y clima activo):
+  con el efecto apagado o sin clima, la caché no se actualiza y el aislamiento hace lo de antes (lo de `e7ad1c4`).
+- El cristal tintado y el ahumado siguen con el matiz de la imagen: su color es suyo y se dibujan enteros en `[material]`.
+- Coste: una lectura de profundidad y hasta seis de la caché por píxel sin superficie (cielo excluido), y solo con cristales
+  cerca y clima activo; en el bosque sin cristales el resumen de `cristal_sim` corta antes.

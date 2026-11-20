@@ -69,8 +69,7 @@ fn material(input: MaterialInput) -> Surface {
         // hacia abajo, 2 hacia arriba; aquí escalada por OPC_SSS_CIELO. Porqué: docs/efectos/luz-de-superficie.md §SSS de cielo (F-9)
         sss_cielo = sup_sss_color(albedo, 0.5) * luces.cielo * curva_cielo * m.sss * (sup_sss_fase_cielo(-p.vista.y) * OPC_SSS_CIELO);
     }
-    let color_luz_b = select(adp_color_luz_bloque(p, o), vec3<f32>(col_luminancia(adp_color_luz_bloque(p, o))), p.es_cristal);
-    let bloque = (color_luz_b * luz_curva_bloque(p.luz_bloque) + p.luz_colorida) * OPC_LUZ_BLOQUE * o.bloque;
+    let bloque = (adp_color_luz_bloque(p, o) * luz_curva_bloque(p.luz_bloque) + p.luz_colorida) * OPC_LUZ_BLOQUE * o.bloque;
     // Relámpago (20): solo donde llega el cielo (luz de cielo a la cuarta). Porqué: docs/efectos/relampago.md
     let cielo2 = p.luz_cielo * p.luz_cielo;
     let relampago = OPC_RELAMPAGO_COLOR * (OPC_RELAMPAGO_BRILLO * cielo2 * cielo2 * luz_relampago_superficie(adp_relampago_cuadro(), p.posicion, n));
@@ -124,9 +123,6 @@ fn material(input: MaterialInput) -> Surface {
         brillo_emision = o.emision_labpbr;
     }
     color = mix(color, color_emision * OPC_EMISION * brillo_emision * 4.0, emision);
-    if p.material == OPC_MAT_CRISTAL_CLARO {
-        color = vec3<f32>(max(col_luminancia(color), col_luminancia(albedo) * 0.35));
-    }
 
     if !p.translucido {
         let total = col_luminancia(directa + indirecta) + 1e-6;
@@ -138,7 +134,7 @@ fn material(input: MaterialInput) -> Surface {
 
 // Translúcidos que no son agua (22): lo de detrás refractado y teñido por el color normalizado, la superficie encima
 // por su opacidad y el reflejo con Fresnel, que la vuelve espejo de refilón. Sale opaco, como el agua.
-// Las capas climáticas de «el tiempo en los cristales» (27) se componen en post (`03b-cristales.wgsl`) sobre la caché
+// Las capas climáticas de «el tiempo en los cristales» (27) se componen en post (`06-taa.wgsl`) sobre la caché
 // 3D `cristal_mapa`, manteniendo `[material]` con el mismo coste y presión de registros que sin cristales.
 // Porqué: docs/efectos/translucidos.md y docs/efectos/tiempo-en-los-cristales.md
 fn translucido(
@@ -149,7 +145,7 @@ fn translucido(
     superficie: vec3<f32>,
 ) -> vec3<f32> {
     let refr = adp_agua_refraccion(p, n, OPC_TRANSL_REFRACCION * 0.0006);
-    let a = clamp(p.alfa, 0.0, 1.0) * select(1.0, 0.45, p.material == OPC_MAT_CRISTAL_CLARO);
+    let a = clamp(p.alfa, 0.0, 1.0);
     let peso_tinte = select(0.0, clamp(a / OPC_TRANSL_TINTE_MIN, 0.0, 1.0), OPC_TRANSL_TINTE);
     let tinte = mix(vec3<f32>(1.0), normalize(max(p.albedo, vec3<f32>(1e-4))), peso_tinte);
     let fondo = mix(refr.color * tinte, superficie, a);

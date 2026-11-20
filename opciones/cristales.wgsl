@@ -5,6 +5,7 @@ const OPC_TAG_CRISTAL: u32 = 1u;                 // bit 0 de MaterialInput.tags 
 const OPC_MAT_CRISTAL_CLARO: u32 = 11u;          // [[materials]] id = 11: block/glass y block/glass_pane_top (translucent = true)
 const OPC_CRISTAL_ALFA_CLARO_MAX: f32 = 0.08;    // interior transparente del cristal claro (~6/255 = 0,0235 en el mod)
 const OPC_CRISTAL_REJILLA: f32 = 32.0;           // resolución base: 32 texeles por bloque (decisión del dueño, 27 §Base)
+const OPC_CRISTAL_MARCO_TEXEL: f32 = 0.03125;    // centro del téxel opaco del marco (0,5 / 16 del bloque): donde post lee la luz de bloque (F-102)
 
 // Interruptor maestro y valores por defecto sin mod (con mod manda [cristales] en config/vulpe-horizon.toml).
 const OPC_CRISTAL_ACTIVO: bool = true;

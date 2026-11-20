@@ -21,6 +21,30 @@ fn adp_cp_sobre(base_col: vec3<f32>, base_op: f32, nueva_col: vec3<f32>, nueva_o
     return vec4<f32>(col_out, op_out);
 }
 
+// Nivel de luz de bloque (0..1, recortado como en [material]) de la cara de cristal en `p_mundo`: la pasada post no
+// tiene la luz del terreno, así que se lee de un téxel opaco del marco de esa misma cara con un rayo corto de la capa
+// translúcida (el cuerpo transparente, alfa < 0,01, no para los rayos). Se prueban los 4 bordes de la cara, del más
+// cercano al más lejano (en los paneles unidos no todos los bordes tienen marco); sin acierto, 0 (sin luz de bloque).
+// Porqué: docs/efectos/tiempo-en-los-cristales.md §«Marco y brillos del cristal transparente (F-102)»
+fn adp_cristales_post_nivel_bloque(p_mundo: vec3<f32>, n_cara: vec3<f32>) -> f32 {
+    let plano = sup_cristal_plano(p_mundo, n_cara);
+    let local = fract(plano.uv);
+    let e = OPC_CRISTAL_MARCO_TEXEL;
+    let cerca = vec2<f32>(select(e, 1.0 - e, local.x > 0.5), select(e, 1.0 - e, local.y > 0.5)) - local;
+    let lejos = vec2<f32>(select(1.0 - e, e, local.x > 0.5), select(1.0 - e, e, local.y > 0.5)) - local;
+    let primero_u = abs(cerca.x) <= abs(cerca.y);
+    for (var i = 0; i < 4; i++) {
+        let d = select(cerca, lejos, i >= 2);
+        let por_u = (i % 2 == 0) == primero_u;
+        let q = p_mundo + select(plano.bitangente * d.y, plano.tangente * d.x, por_u);
+        let h = trace_layers(q + n_cara * 0.05 - frame.camera_position, -n_cara, 0.1, RAY_TRANSLUCENT);
+        if h.distance >= 0.0 {
+            return luz_recorte_vanilla(h.light.x);
+        }
+    }
+    return 0.0;
+}
+
 fn adp_cristales_post_evaluar_cara(
     b: vec3<i32>,
     p_mundo: vec3<f32>,
@@ -30,6 +54,7 @@ fn adp_cristales_post_evaluar_cara(
     w0: u32,
     w1: u32,
     luces: AdpLuces,
+    bloque: vec3<f32>,
 ) -> AdpCristalPostRes {
     let vacio = AdpCristalPostRes(vec3<f32>(0.0), 0.0, 0.0, 0u);
     let c0 = datos_cuadro[ADP_CUADRO_CRISTAL_0];
@@ -68,9 +93,12 @@ fn adp_cristales_post_evaluar_cara(
     let n_l = max(dot(n_cara, luces.direccion), 0.0);
     let contraluz = pow(max(dot(-vista, luces.direccion), 0.0), 3.0) * 0.35;
     let cielo_ext_ref = select(0.85, 1.0, entorno.llega_cielo || entorno.es_exterior);
+    // La luz de bloque, con su color, como la que [material] da al marco y a los brillos (N-09c).
+    // Porqué: docs/efectos/tiempo-en-los-cristales.md §«Marco y brillos del cristal transparente (F-102)»
     let luz_base = luces.directa * (n_l + contraluz) * 0.60
                  + luces.cielo * cielo_ext_ref * 1.10
-                 + vec3<f32>(OPC_LUZ_NOCHE_SUELO * 1.8 * cielo_ext_ref);
+                 + vec3<f32>(OPC_LUZ_NOCHE_SUELO * 1.8 * cielo_ext_ref)
+                 + bloque;
 
     var capa_col = vec3<f32>(0.0);
     var capa_op = 0.0;
@@ -402,7 +430,9 @@ fn adp_cristales_post(
     }
 
     let p_mundo = orig + dir * t_surf;
-    let capa = adp_cristales_post_evaluar_cara(b_hit, p_mundo, n_surf, vista, t_surf, w0_hit, w1_hit, luces);
+    let o_luz = opc_luz();
+    let bloque = o_luz.bloque_color * (luz_curva_bloque(adp_cristales_post_nivel_bloque(p_mundo, n_surf)) * OPC_LUZ_BLOQUE * o_luz.bloque);
+    let capa = adp_cristales_post_evaluar_cara(b_hit, p_mundo, n_surf, vista, t_surf, w0_hit, w1_hit, luces, bloque);
     let accum_a = min(capa.alfa, 0.96);
     let accum_col = capa.color * accum_a;
     let accum_blur = capa.blur;

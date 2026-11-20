@@ -41,10 +41,11 @@ añade +1,9 ms en bosque. También se probó sustituir `minecraft:block/glass` d
 
 **Solución adoptada (coste ~0 ms en bosque):**
 
-- `glass` y `glass_pane` se mantienen en su pasada *cutout* nativa con `coverage = "engine"`.
+- `glass` y `glass_pane` se mantienen con `coverage = "engine"`: Horizon los dibuja en la pasada translúcida y
+  recorta el cuerpo (alfa < 0,01); solo quedan el marco y los brillos (ver §«Marco y brillos del cristal transparente»).
 - Cada workgroup `[8, 4, 1]` de `cristal_mapa` reduce un bit de presencia de cristal transparente (`1 728` baldosas)
   que `cristal_sim` resume en `cristal_sim[ADP_CS_RESUMEN]`.
-- Al final de [`etapas/post/03b-cristales.wgsl`](../../etapas/post/03b-cristales.wgsl) (`F-97`),
+- Al principio de [`etapas/post/06-taa.wgsl`](../../etapas/post/06-taa.wgsl) (`F-101`; antes en `03b-cristales`, `F-97`),
   [`adaptadores/cristales_post.wgsl`](../../adaptadores/cristales_post.wgsl) sale en una única rama uniforme si no hay
   cristales transparentes cerca o si el clima está inactivo. Cuando sí los hay, recorre `cristal_mapa` con un DDA
   entero (sin ray queries) hasta `scene_depth` (dejando intacto el marco opaco de 1 píxel y los brillos diagonales) y
@@ -135,9 +136,31 @@ añade +1,9 ms en bosque. También se probó sustituir `minecraft:block/glass` d
   luces:
   `brillo = max(nítido − borroso − 0,04, 0); visto = borroso + 0,8 · brillo; fondo = mix(nítido, visto, máscara)`.
 - La condensación, el vaho y el borde helado se componen siempre **encima** del fondo desenfocado.
-- En `[material]` (`F-100`), como Horizon dibuja `minecraft:glass` y `minecraft:glass_pane` en la pasada translúcida
-  (`p.translucido == true`, recortando el interior `albedo.a < 0,01` y dejando solo el marco y los trazos diagonales de
-  brillo con `albedo.a = 1,0`), la luz de bloque se neutraliza a luminancia acromática para todo `p.es_cristal` y la
-  superficie de `OPC_MAT_CRISTAL_CLARO` se mantiene acromática con opacidad de brillo `0,45`, evitando que la luz cálida
-  de antorchas/faroles tiña de naranja los téxeles claros `(208, 234, 233)` de `glass.png` y los meta dentro del rango
-  del aislamiento de color (`07-final.wgsl`).
+### Marco y brillos del cristal transparente (F-102, N-09c)
+
+En `glass` y `glass_pane` Horizon dibuja en la pasada translúcida (`MaterialInput.translucent = true`, comprobado con
+una vista de depuración en N-09c, `pruebas/capturas/n09c-dbg*`) solo los téxeles opacos: el marco y los brillos
+diagonales. Esos los ilumina `[material]` como cualquier translúcido (sol, cielo y luz de bloque con su color de
+`adp_color_luz_bloque`). El cuerpo lo pinta el DDA de `adp_cristales_post`, que también cubre el marco y los brillos con
+las capas del clima (cambio de `t_max` de `a317499`, se conserva: sin él el marco quedaba sin escarcha encima).
+
+- **F-100 se revierte** en lo que tocaba el color (rechazado por el dueño): ya no se quita el color a la luz de bloque
+  de los cristales, ni se pinta gris el transparente, ni se baja al 0,45 la opacidad de los brillos. Con el efecto
+  apagado, `[material]` vuelve a ser el de `e7ad1c4` en los cristales.
+- **Se conserva de F-100** (`a317499`, cobertura del DDA): `t_hit > t_max + 0,02` como corte del recorrido y del panel
+  (para que el DDA llegue a la superficie del marco, que escribe profundidad), y el desenfoque solo con muestras de
+  detrás del cristal (`dm < d_cristal − 0,0002`) y sin la muestra central forzada, que metía el propio marco en el
+  promedio.
+- **Misma luz en las capas.** Las capas de escarcha, repisa, copos, arena, condensación, vaho y borde helado sumaban sol
+  y cielo pero no luz de bloque (`luz_base`), así que junto a una antorcha el marco salía cálido y la escarcha de al lado
+  fría. Ahora `luz_base` suma `color de bloque × curva de bloque × OPC_LUZ_BLOQUE × fuerza`, igual que `[material]`. La
+  pasada post no tiene la luz del terreno: el nivel se lee de un téxel opaco del marco de la misma cara con un rayo corto
+  de la capa translúcida (`adp_cristales_post_nivel_bloque`, centro del téxel del borde `OPC_CRISTAL_MARCO_TEXEL`, los
+  4 bordes del más cercano al más lejano porque en los paneles unidos no todos tienen marco). Coste: de 1 a 4 rayos por
+  píxel de cristal con el efecto activo; ninguno sin cristales cerca. La lluvia no cambia (`luz_lluvia` no lleva el
+  término, por decisión del dueño).
+- **Límite:** en post no existe `block_light_color`, así que las capas usan el color de bloque del estilo
+  (`opc_luz().bloque_color`), no el de la rejilla de luces de colores (una antorcha de almas tiñe el marco de azul y la
+  escarcha de cálido). Y el rayo lee la luz guardada del mundo, sin la luz dinámica de la mano.
+- El trato del aislamiento de color se iguala en `docs/efectos/aislamiento-de-color.md` §«Marco y brillos del cristal
+  transparente (F-102)».
