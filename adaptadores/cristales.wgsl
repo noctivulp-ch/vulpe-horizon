@@ -263,7 +263,37 @@ fn adp_cristal_evaluar(
         lluvia_mojado = select(0.0, clamp(c0.x, 0.0, 1.0) * 0.4 * mascara_agua, llueve_bioma && c0.x > OPC_CRISTAL_CLIMA_UMBRAL);
     }
 
-    if lluvia_rgba.a <= 0.002 && lluvia_mojado <= 0.002 && esc_capa.alfa <= 0.002 && repisa_capa.alfa <= 0.002 && copo_rgba.a <= 0.002 && aliento.vaho <= 0.001 && arena_capa.alfa <= 0.002 {
+    // Capa 5 — Condensación de dentro y borde helado (27 v2 §Capa 5).
+    var cond_capa = SupCristalCondensacion(vec3<f32>(0.0), 0.0, 0.0);
+    var borde_capa = SupCristalCapa(vec3<f32>(0.0), 0.0, 0.0);
+    if cond_activa && entorno.es_interior_fria {
+        cond_capa = sup_cristal_condensacion(
+            plano,
+            entorno.dist_marco,
+            c0.y,
+            c0.w,
+            cf.y,
+            cf.z,
+            co.z,
+            variante,
+        );
+        cond_capa.alfa *= aten_dist;
+        cond_capa.grosor *= aten_dist;
+
+        borde_capa = sup_cristal_borde_helado(
+            plano,
+            entorno.dist_marco,
+            c0.y,
+            c0.w,
+            c2.z,
+            co.z,
+            borde_estilo,
+            variante,
+        );
+        borde_capa.alfa *= suprime_escarcha * aten_dist;
+    }
+
+    if lluvia_rgba.a <= 0.002 && lluvia_mojado <= 0.002 && esc_capa.alfa <= 0.002 && repisa_capa.alfa <= 0.002 && copo_rgba.a <= 0.002 && aliento.vaho <= 0.001 && arena_capa.alfa <= 0.002 && cond_capa.alfa <= 0.002 && borde_capa.alfa <= 0.002 {
         return r;
     }
     r.activo = true;
@@ -356,6 +386,25 @@ fn adp_cristal_evaluar(
         r.capa_opacidad = comp_arena.a;
         r.mate = max(r.mate, arena_capa.alfa);
         r.especular_extra *= (1.0 - arena_capa.alfa);
+    }
+
+    // Capas interiores (encima de las exteriores): condensación y borde helado.
+    if cond_capa.alfa > 0.002 {
+        let luz_cond = luz_capa * 1.08 + luces.cielo * cielo_ext_ref * 0.30 + bloque_luz * 0.35;
+        let col_cond = cond_capa.color * luz_cond;
+        let comp_cond = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_cond, cond_capa.alfa);
+        r.capa_color = comp_cond.rgb;
+        r.capa_opacidad = comp_cond.a;
+        r.mate = max(r.mate, cond_capa.alfa * 0.5);
+    }
+
+    if borde_capa.alfa > 0.002 {
+        let luz_borde = luz_capa * 1.15 + luces.cielo * cielo_ext_ref * 0.35 + bloque_luz * 0.45;
+        let dest_b = borde_capa.destello * (luces.directa * sombra_luz * 0.8 + luces.cielo * cielo_ext_ref * 0.8 + bloque_luz);
+        let col_borde = borde_capa.color * luz_borde + dest_b;
+        let comp_borde = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_borde, borde_capa.alfa);
+        r.capa_color = comp_borde.rgb;
+        r.capa_opacidad = comp_borde.a;
     }
 
     return r;

@@ -32,9 +32,11 @@ fn adp_cristales_post_evaluar_cara(
 
     let flags = u32(max(round(cf.x), 0.0));
     let regueros = (flags & OPC_CR_FLAG_REGUEROS) != 0u;
+    let interior_activo = (flags & OPC_CR_FLAG_INTERIOR) != 0u;
     let arena_roja = (flags & OPC_CR_FLAG_ARENA_ROJA) != 0u;
     let bioma_seco = (flags & OPC_CR_FLAG_BIOMA_SECO) != 0u;
     let bioma_frio = (flags & OPC_CR_FLAG_BIOMA_FRIO) != 0u;
+    let borde_estilo = (flags >> 8u) & 3u;
 
     let plano = sup_cristal_plano(p_mundo, n_cara);
     let entorno = adp_cm_decodificar_entorno(w0, w1, n_cara, plano.vertical, bioma_frio);
@@ -168,6 +170,29 @@ fn adp_cristales_post_evaluar_cara(
         if ar.alfa > 0.002 {
             let col_ar = ar.color * (luz_base * 1.05 + luces.cielo * cielo_ext_ref * 0.20);
             let comp = adp_cp_sobre(capa_col, capa_op, col_ar, ar.alfa);
+            capa_col = comp.rgb;
+            capa_op = comp.a;
+        }
+    }
+
+    // Capa 5 — Condensación interior y borde helado en caras interiores frías (27 v2 §Capa 5).
+    let cond_activa = interior_activo && bioma_frio && (c0.w > 0.001 || (borde_estilo == 1u && c0.y > 0.001));
+    if cond_activa && entorno.es_interior_fria {
+        var cond = sup_cristal_condensacion(plano, entorno.dist_marco, c0.y, c0.w, cf.y, cf.z, co.z, variante);
+        cond.alfa *= aten_dist;
+        if cond.alfa > 0.002 {
+            let col_cond = cond.color * (luz_base * 1.12 + luces.cielo * cielo_ext_ref * 0.30);
+            let comp = adp_cp_sobre(capa_col, capa_op, col_cond, cond.alfa);
+            capa_col = comp.rgb;
+            capa_op = comp.a;
+        }
+
+        var borde = sup_cristal_borde_helado(plano, entorno.dist_marco, c0.y, c0.w, c2.z, co.z, borde_estilo, variante);
+        borde.alfa *= aten_dist;
+        if borde.alfa > 0.002 {
+            let col_b = borde.color * (luz_base * 1.18 + luces.cielo * cielo_ext_ref * 0.35)
+                      + vec3<f32>(borde.destello) * (luces.directa * 0.6 + luces.cielo * cielo_ext_ref * 0.9);
+            let comp = adp_cp_sobre(capa_col, capa_op, col_b, borde.alfa);
             capa_col = comp.rgb;
             capa_op = comp.a;
         }
