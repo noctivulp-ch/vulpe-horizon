@@ -1,84 +1,128 @@
-// Velo fino de polvo y granos sutiles de arena tras tormenta en bioma seco, sin bandas horizontales (27 §5).
-// Función pura del núcleo: no lee `frame` ni recursos del motor.
+// Arena tras la tormenta en biomas secos y mesas (27 v2 §Capa 4).
+// Paletas de 5 tonos (amarilla y roja), manchas bilineales de 8 texeles, granos horizontales de 1-2 texeles,
+// duna sinusoidal en el borde inferior activo de la ventana entera y modo específico a 16 texeles.
+// Funciones puras del núcleo: no leen `frame` ni recursos del motor.
 // Porqué: docs/efectos/tiempo-en-los-cristales.md §5
 
-struct SupCristalArena {
-    cobertura: f32,         // 0..1 velo continuo de polvo + granos sutiles (más denso abajo)
-    variacion: f32,         // 0..1 variación tonal suave del polvo y granos
-    relieve_y: f32,         // leve inclinación difusa del polvo
+fn sup_cristal_arena_paleta(idx: u32, roja: bool) -> vec3<f32> {
+    if roja {
+        switch idx {
+            case 0u: { return OPC_CRISTAL_ARENA_ROJA_0; }
+            case 1u: { return OPC_CRISTAL_ARENA_ROJA_1; }
+            case 2u: { return OPC_CRISTAL_ARENA_ROJA_2; }
+            case 3u: { return OPC_CRISTAL_ARENA_ROJA_3; }
+            default: { return OPC_CRISTAL_ARENA_ROJA_4; }
+        }
+    }
+    switch idx {
+        case 0u: { return OPC_CRISTAL_ARENA_0; }
+        case 1u: { return OPC_CRISTAL_ARENA_1; }
+        case 2u: { return OPC_CRISTAL_ARENA_2; }
+        case 3u: { return OPC_CRISTAL_ARENA_3; }
+        default: { return OPC_CRISTAL_ARENA_4; }
+    }
 }
 
-fn sup_cristal_arena(
+fn sup_cristal_arena_v2(
     plano: SupCristalPlano,
     normal_cara: vec3<f32>,
-    luz_cielo: f32,
-    ao_vertice: f32,
+    bordes: u32,
+    dist_marco: vec4<f32>,
     viento_xz: vec2<f32>,
-    nivel_arena: f32,
-    escala_ajuste: f32,
-    distancia: f32,
-) -> SupCristalArena {
-    let vacio = SupCristalArena(0.0, 0.5, 0.0);
-    if nivel_arena <= 0.005 || escala_ajuste <= 0.0 {
-        return vacio;
-    }
-    if normal_cara.y < -0.5 {
-        return vacio;
-    }
-    let exp_cielo = smoothstep(OPC_CRISTAL_CIELO_MIN, OPC_CRISTAL_CIELO_MAX, luz_cielo);
-    if exp_cielo <= 0.001 {
-        return vacio;
-    }
-    let atenuacion_dist = 1.0 - smoothstep(OPC_CRISTAL_DIST_INICIO, OPC_CRISTAL_DIST_FIN, distancia);
-    if atenuacion_dist <= 0.001 {
+    arena_nivel: f32,
+    escala_arena: f32,
+    k_res: f32,
+    roja: bool,
+) -> SupCristalCapa {
+    let vacio = SupCristalCapa(vec3<f32>(0.0), 0.0, 0.0);
+    if !plano.vertical || arena_nivel <= OPC_CRISTAL_ARENA_MIN || escala_arena <= 0.001 {
         return vacio;
     }
 
-    // Más polvo y arena en las caras que dan al viento.
-    let viento_len = length(viento_xz);
-    let viento_dir = select(vec2<f32>(-1.0, 0.0), viento_xz / max(viento_len, 1e-4), viento_len > 0.01);
-    let viento_3d = vec3<f32>(viento_dir.x, 0.0, viento_dir.y);
-    let barlovento = select(0.5, dot(normal_cara, -viento_3d), plano.vertical);
-    let factor_viento = clamp(1.0 + OPC_CRISTAL_ARENA_BARLOVENTO * barlovento, 0.45, 1.40);
-    let fuerza = clamp(nivel_arena * factor_viento * escala_ajuste, 0.0, 1.35);
-
-    let uv = plano.uv;
-    let texel = floor(uv * OPC_CRISTAL_REJILLA);
-
-    // 1) Velo fino de polvo en coordenadas continuas del mundo (sin repetición ni bandas por bloque).
-    // Ligeramente estirado horizontalmente por el viento para imitar polvo arrastrado sobre el cristal.
-    let n_nube = rui_valor2(vec2<f32>(uv.x * 0.55, uv.y * 0.85) + vec2<f32>(2.3, 6.1));
-    let n_estria = rui_valor2(vec2<f32>(uv.x * 1.9, uv.y * 3.4) + vec2<f32>(n_nube * 0.6, 1.7));
-    let n_polvo = rui_valor2(uv * 11.0 + vec2<f32>(4.9, 8.3));
-    let velo_base = 0.35 * n_nube + 0.40 * n_estria + 0.25 * n_polvo;
-
-    // 2) Granos sutiles en la rejilla de 32 texeles/bloque (mezclados suavemente sobre el velo).
-    let h = rui_hash33(vec3<i32>(i32(texel.x), i32(texel.y), 97));
-    let grano = smoothstep(0.55, 0.96, h.x);
-
-    var densidad = 0.0;
-    var relieve_y = 0.0;
-
-    if plano.vertical {
-        // Más denso en la parte baja de cada cristal con gradiente continuo (sin franja dura ni bandas).
-        let local_y = fract(uv.y);
-        let peso_abajo = pow(1.0 - local_y, 2.4) * 0.42;
-        let marco_solido = smoothstep(0.99, 0.80, ao_vertice);
-        let grad_abajo = peso_abajo * (0.45 + 0.55 * n_nube) * mix(0.65, 1.25, marco_solido);
-        let velo = (velo_base * 0.52 + grad_abajo) * OPC_CRISTAL_ARENA_VELO_MAX * fuerza;
-        let aporte_grano = grano * (0.35 + 0.65 * (1.0 - local_y)) * OPC_CRISTAL_ARENA_GRANO_PESO * fuerza;
-        densidad = clamp(velo + aporte_grano, 0.0, 0.72);
-        relieve_y = 0.18 * densidad;
-    } else {
-        // Cara superior: capa fina y homogénea de polvo de arena.
-        densidad = clamp((velo_base * 0.65 + grano * 0.25) * OPC_CRISTAL_ARENA_VELO_MAX * fuerza, 0.0, 0.68);
-        relieve_y = 0.15 * densidad;
+    // Factor de viento (27 v2 §Viento): 1 - 0,3 * fuerza * (1 - hacia_la_cara), en [0,4..1].
+    let fuerza_v = clamp(length(viento_xz), 0.0, 1.0);
+    let v_dir = select(vec2<f32>(1.0, 0.0), viento_xz / max(fuerza_v, 1e-4), fuerza_v > 0.02);
+    let hacia = clamp(dot(-vec3<f32>(v_dir.x, 0.0, v_dir.y), normal_cara), -1.0, 1.0);
+    let factor_viento = clamp(1.0 - OPC_CRISTAL_ARENA_BARLOVENTO * fuerza_v * (1.0 - hacia), 0.4, 1.0);
+    let a = clamp(arena_nivel * factor_viento * clamp(escala_arena, 0.0, 1.4), 0.0, 1.0);
+    if a <= OPC_CRISTAL_ARENA_MIN {
+        return vacio;
     }
 
-    let variacion = mix(n_polvo, h.y, 0.35);
-    return SupCristalArena(
-        densidad * exp_cielo * atenuacion_dist,
-        variacion,
-        relieve_y * exp_cielo * atenuacion_dist,
+    let k = clamp(k_res, 0.5, 2.0);
+    let res = OPC_CRISTAL_REJILLA * k;
+    let gx = floor(plano.uv * res);
+    let tx = floor(fract(plano.uv) * res);
+    let cara = u32(sup_cristal_indice_cara(normal_cara));
+    let off_cara = vec2<f32>(f32(cara) * 19.7 + 2.3, f32(cara) * 11.3 + 5.1);
+
+    let d = sup_cristal_dist_bordes_tx(tx, res, dist_marco);
+    let d_min = min(min(d.x, d.y), min(d.z, d.w));
+    let h_tx = rui_hash33(vec3<i32>(i32(gx.x), i32(gx.y), i32(cara) * 37 + 97));
+
+    // Duna en la base de la ventana entera (solo si el borde inferior de la ventana está activo).
+    if (bordes & 2u) != 0u {
+        let esq_izq = select(0.0, exp(-tx.x / (6.0 * k)), (bordes & 4u) != 0u);
+        let esq_der = select(0.0, exp(-(res - 1.0 - tx.x) / (6.0 * k)), (bordes & 8u) != 0u);
+        let onda = 0.5 + 0.5 * sin(plano.uv.x * 4.7 + f32(cara) * 1.9 + 0.4 * sin(plano.uv.x * 11.3));
+        let base_h = select(2.2 + 2.4 * onda, 2.0 + 3.0 * onda, k < 0.75);
+        let altura = (base_h * max(k, 1.0) + 3.2 * k * max(esq_izq, esq_der)) * a;
+        if tx.y < altura {
+            // Sombreado de la duna con la paleta de 5 tonos (claro en la cresta, más oscuro abajo).
+            let frac_h = tx.y / max(altura, 1.0);
+            var tono_idx = 1u;
+            if frac_h > 0.72 {
+                tono_idx = select(0u, 2u, h_tx.x > 0.45);
+            } else if frac_h < 0.30 {
+                tono_idx = select(3u, 4u, h_tx.x > 0.55);
+            } else {
+                tono_idx = select(1u, 3u, h_tx.x > 0.65);
+            }
+            return SupCristalCapa(sup_cristal_arena_paleta(tono_idx, roja), 0.97, 0.0);
+        }
+    }
+
+    // Modo 16 texeles/bloque (27 v2 §Capa 4): velo 0,16*a + bordes +0,45*a*exp(-d/2), borde irregular 0,75, 5 % granos 0,9.
+    if k < 0.75 {
+        let borde_irreg = d_min < (1.2 + 1.4 * rui_valor2(gx * 0.45 + off_cara)) * a;
+        if borde_irreg {
+            let tono_b = u32(floor(h_tx.y * 5.0)) % 5u;
+            return SupCristalCapa(sup_cristal_arena_paleta(tono_b, roja), 0.75 * clamp(a * 1.1, 0.0, 1.0), 0.0);
+        }
+        if h_tx.x < 0.05 * a {
+            let tono_g = u32(floor(h_tx.z * 5.0)) % 5u;
+            return SupCristalCapa(sup_cristal_arena_paleta(tono_g, roja), 0.90, 0.0);
+        }
+        let op16 = clamp(0.16 * a + 0.45 * a * exp(-d_min / 2.0), 0.0, 0.75);
+        let tono_v = select(0u, 1u, h_tx.y > 0.5);
+        return SupCristalCapa(sup_cristal_arena_paleta(tono_v, roja), op16, 0.0);
+    }
+
+    // Modo 32 y 64 texeles/bloque:
+    // 1) Manchas suaves de ruido bilineal en celdas de 8 texeles, más densas hacia abajo (y^2) y bordes activos.
+    let mancha = rui_valor2(gx / (8.0 * k) + off_cara);
+    let detalle = rui_valor2(gx / (3.0 * k) + off_cara * 1.7 + vec2<f32>(3.1, 7.4));
+    let y_abajo = clamp(1.0 - d.y / (res * 3.0), 0.0, 1.0);
+    let grad_y2 = y_abajo * y_abajo;
+    let borde_peso = exp(-d_min / (5.5 * k));
+
+    // 2) Granos sueltos de 1-2 texeles en horizontal (alfa 0,9).
+    let g_par = vec2<i32>(i32(floor(gx.x * 0.5)), i32(gx.y));
+    let h_par = rui_hash33(vec3<i32>(g_par.x, g_par.y, i32(cara) * 43 + 131));
+    let prob_grano = (0.018 + 0.055 * grad_y2 + 0.08 * borde_peso) * a * (0.65 + 0.7 * mancha);
+    if h_par.x < prob_grano * 0.65 || h_tx.x < prob_grano * 0.45 {
+        let tono_g = u32(floor(h_tx.y * 5.0)) % 5u;
+        return SupCristalCapa(sup_cristal_arena_paleta(tono_g, roja), 0.90, 0.0);
+    }
+
+    let op_mancha = clamp(
+        (0.10 + 0.34 * mancha * (0.45 + 0.55 * grad_y2) + 0.42 * borde_peso * (0.55 + 0.45 * detalle)) * a,
+        0.0,
+        0.74,
     );
+    if op_mancha <= 0.01 {
+        return vacio;
+    }
+    let tono_m = u32(clamp(floor((mancha * 0.55 + detalle * 0.30 + h_tx.z * 0.15) * 5.0), 0.0, 4.0));
+    return SupCristalCapa(sup_cristal_arena_paleta(tono_m, roja), op_mancha, 0.0);
 }

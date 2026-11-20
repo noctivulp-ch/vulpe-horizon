@@ -221,16 +221,20 @@ fn adp_cristal_evaluar(
         copo_rgba.a *= (1.0 - smoothstep(0.0, 0.65, aliento.derrite)) * aten_dist;
     }
 
-    let arena = sup_cristal_arena(
+    // Capa 4 — Arena tras la tormenta en biomas secos / mesas (27 v2 §Capa 4).
+    let muestra_arena = arena_activa && plano.vertical && (entorno.llega_cielo || (entorno.es_interior && entorno.opuesta_llega_cielo));
+    var arena_capa = sup_cristal_arena_v2(
         plano,
-        p.normal_cara,
-        cielo_exposicion,
-        select(1.0, 0.72, entorno.bordes != 0u),
+        select(-p.normal_cara, p.normal_cara, entorno.llega_cielo),
+        entorno.bordes,
+        entorno.dist_marco,
         c1.zw,
-        select(0.0, c2.x, arena_activa),
+        select(0.0, c2.x, muestra_arena),
         c2.w,
-        dist,
+        co.z,
+        arena_roja,
     );
+    arena_capa.alfa *= aten_dist;
 
     // Capa 1 — Lluvia global desde el lienzo de cómputo `cristal_clima` (27 v2 §Capa 1).
     // Se dibuja en caras exteriores mojadas, y también se ve a través del cristal cuando miramos desde la cara interior.
@@ -250,7 +254,7 @@ fn adp_cristal_evaluar(
         let tx = textureLoad(cristal_clima, coord_lluvia, 0);
         let mascara_agua = (1.0 - smoothstep(0.35, 0.75, esc_capa.alfa))
                          * (1.0 - smoothstep(0.15, 0.55, max(copo_rgba.a, repisa_capa.alfa)))
-                         * (1.0 - smoothstep(0.15, 0.55, arena.cobertura))
+                         * (1.0 - smoothstep(0.15, 0.55, arena_capa.alfa))
                          * aten_dist;
         lluvia_rgba = sup_cristal_lluvia_color(tx, regueros && plano.vertical);
         lluvia_rgba.a *= mascara_agua;
@@ -259,7 +263,7 @@ fn adp_cristal_evaluar(
         lluvia_mojado = select(0.0, clamp(c0.x, 0.0, 1.0) * 0.4 * mascara_agua, llueve_bioma && c0.x > OPC_CRISTAL_CLIMA_UMBRAL);
     }
 
-    if lluvia_rgba.a <= 0.002 && lluvia_mojado <= 0.002 && esc_capa.alfa <= 0.002 && repisa_capa.alfa <= 0.002 && copo_rgba.a <= 0.002 && aliento.vaho <= 0.001 && arena.cobertura <= 0.001 {
+    if lluvia_rgba.a <= 0.002 && lluvia_mojado <= 0.002 && esc_capa.alfa <= 0.002 && repisa_capa.alfa <= 0.002 && copo_rgba.a <= 0.002 && aliento.vaho <= 0.001 && arena_capa.alfa <= 0.002 {
         return r;
     }
     r.activo = true;
@@ -344,23 +348,14 @@ fn adp_cristal_evaluar(
         r.especular_extra *= (1.0 - copo_rgba.a);
     }
 
-    if arena.cobertura > 0.001 {
-        let base_arena = select(OPC_CRISTAL_ARENA_COLOR_AMARILLA, OPC_CRISTAL_ARENA_COLOR_ROJA, arena_roja);
-        let grano_color = base_arena * (0.90 + 0.20 * arena.variacion);
-        let n_arena = normalize(n_base + vec3<f32>(0.0, arena.relieve_y, 0.0));
-        let n_l_arena = max(dot(n_arena, luces.direccion), 0.0);
-        let luz_arena = luces.directa * sombra_luz * (n_l_arena + contraluz * 0.25)
-                      + luces.cielo * curva_cielo * 0.92
-                      + bloque_luz
-                      + vec3<f32>(OPC_LUZ_NOCHE_SUELO * curva_cielo);
-        let color_arena = grano_color * luz_arena;
-        let op_arena = clamp(arena.cobertura, 0.0, 0.78);
-        let comp_arena = adp_cristal_sobre(r.capa_color, r.capa_opacidad, color_arena, op_arena);
+    if arena_capa.alfa > 0.002 {
+        let luz_arena = luz_capa * 1.05 + luces.cielo * cielo_ext_ref * 0.20;
+        let color_arena = arena_capa.color * luz_arena;
+        let comp_arena = adp_cristal_sobre(r.capa_color, r.capa_opacidad, color_arena, arena_capa.alfa);
         r.capa_color = comp_arena.rgb;
         r.capa_opacidad = comp_arena.a;
-        r.desenfoque = max(r.desenfoque, smoothstep(0.10, 0.55, op_arena) * 0.45);
-        r.mate = max(r.mate, op_arena);
-        r.especular_extra *= (1.0 - op_arena);
+        r.mate = max(r.mate, arena_capa.alfa);
+        r.especular_extra *= (1.0 - arena_capa.alfa);
     }
 
     return r;

@@ -25,12 +25,14 @@ fn adp_cristales_post_evaluar_cara(
     luces: AdpLuces,
 ) -> vec4<f32> {
     let c0 = datos_cuadro[ADP_CUADRO_CRISTAL_0];
+    let c1 = datos_cuadro[ADP_CUADRO_CRISTAL_1];
     let c2 = datos_cuadro[ADP_CUADRO_CRISTAL_2];
     let cf = datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS];
     let co = datos_cuadro[ADP_CUADRO_CRISTAL_VAHO_OPT];
 
     let flags = u32(max(round(cf.x), 0.0));
     let regueros = (flags & OPC_CR_FLAG_REGUEROS) != 0u;
+    let arena_roja = (flags & OPC_CR_FLAG_ARENA_ROJA) != 0u;
     let bioma_seco = (flags & OPC_CR_FLAG_BIOMA_SECO) != 0u;
     let bioma_frio = (flags & OPC_CR_FLAG_BIOMA_FRIO) != 0u;
 
@@ -144,6 +146,30 @@ fn adp_cristales_post_evaluar_cara(
                 capa_col = comp.rgb;
                 capa_op = comp.a;
             }
+        }
+    }
+
+    // Capa 4 — Arena tras la tormenta en biomas secos y mesas (27 v2 §Capa 4).
+    let arena_activa = bioma_seco && c2.x > OPC_CRISTAL_ARENA_MIN && c2.w > 0.001;
+    let muestra_arena = arena_activa && plano.vertical && (entorno.llega_cielo || (entorno.es_interior && entorno.opuesta_llega_cielo));
+    if muestra_arena {
+        var ar = sup_cristal_arena_v2(
+            plano,
+            select(-n_cara, n_cara, entorno.llega_cielo),
+            entorno.bordes,
+            entorno.dist_marco,
+            c1.zw,
+            c2.x,
+            c2.w,
+            co.z,
+            arena_roja,
+        );
+        ar.alfa *= aten_dist;
+        if ar.alfa > 0.002 {
+            let col_ar = ar.color * (luz_base * 1.05 + luces.cielo * cielo_ext_ref * 0.20);
+            let comp = adp_cp_sobre(capa_col, capa_op, col_ar, ar.alfa);
+            capa_col = comp.rgb;
+            capa_op = comp.a;
         }
     }
 

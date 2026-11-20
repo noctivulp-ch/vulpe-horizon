@@ -312,6 +312,7 @@ files = [
     "nucleo/superficie/cristal_lluvia.wgsl",
     "nucleo/superficie/cristal_escarcha.wgsl",
     "nucleo/superficie/cristal_nieve.wgsl",
+    "nucleo/superficie/cristal_arena.wgsl",
     "adaptadores/cristal_mapa.wgsl",
     "adaptadores/cristal_sim_datos.wgsl",
     "adaptadores/cristales_post.wgsl",
