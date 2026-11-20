@@ -192,14 +192,21 @@ fn adp_cristal_mapa_actualizar(cell: vec3<u32>, local: u32, in_bounds: bool) {
     if !OPC_CRISTAL_ACTIVO || !adp_es_superficie() || frame.has_ray_tracing == 0u {
         return;
     }
-    // Solo actualizamos cuando hay algún efecto de cristal potencialmente activo.
+    // Solo actualizamos cuando hay algún efecto de cristal potencialmente activo en el bioma actual.
     let c0 = datos_cuadro[ADP_CUADRO_CRISTAL_0];
     let c2 = datos_cuadro[ADP_CUADRO_CRISTAL_2];
     let cv = datos_cuadro[ADP_CUADRO_CRISTAL_VAHO];
+    let cf = datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS];
+    let flags = u32(max(round(cf.x), 0.0));
+    let bioma_seco = (flags & OPC_CR_FLAG_BIOMA_SECO) != 0u;
+    let bioma_frio = (flags & OPC_CR_FLAG_BIOMA_FRIO) != 0u;
+    let llueve_bioma = (flags & OPC_CR_FLAG_LLUEVE_BIOMA) != 0u;
     let sim_viva = (cristal_sim[0].z > 0.5) || (cristal_sim[1].z > 0.5) || (cristal_sim[2].z > 0.5) || (cristal_sim[3].z > 0.5)
                  || (cristal_sim[4].z > 0.5) || (cristal_sim[8].z > 0.5);
-    let activo = sim_viva || (c0.x > OPC_CRISTAL_CLIMA_UMBRAL) || (c0.y > 0.001) || (c0.z > 0.001)
-               || (c0.w > 0.001) || (c2.x > OPC_CRISTAL_ARENA_MIN) || (cv.w > 0.001);
+    let lluvia_act = llueve_bioma && (c0.x > OPC_CRISTAL_CLIMA_UMBRAL) && (c2.y > 0.001);
+    let frio_act = bioma_frio && ((c0.y > 0.001) || (c0.z > 0.001) || (c0.w > 0.001)) && (c2.z > 0.001);
+    let arena_act = bioma_seco && (c2.x > OPC_CRISTAL_ARENA_MIN) && (c2.w > 0.001);
+    let activo = sim_viva || lluvia_act || frio_act || arena_act || (cv.w > 0.001);
     if !activo {
         return;
     }
@@ -216,61 +223,71 @@ fn adp_cristal_mapa_actualizar(cell: vec3<u32>, local: u32, in_bounds: bool) {
         let b = origen + vec3<i32>(i32(cell.x), i32(cell.y), lz);
         let idx = adp_cm_indice(b);
         let firma = adp_cm_firma_bloque(b);
+        let w0_ant = cristal_mapa[idx];
+        let w1_ant = cristal_mapa[idx + 1u];
+        let en_cache = (w0_ant & ADP_CM_BIT_VALIDO) != 0u && ((w1_ant >> 24u) & 255u) == firma;
 
-        let cls = adp_cm_clasificar_cristal(b);
-        if (cls & ADP_CM_BIT_ES_CRISTAL) == 0u {
-            cristal_mapa[idx] = ADP_CM_BIT_VALIDO;
-            cristal_mapa[idx + 1u] = firma << 24u;
-        } else {
-            if (cls & ADP_CM_BIT_CLARO) != 0u {
-                es_claro_local = 1u;
+        // Si el vóxel ya está en la caché 3D sin ser cristal, no relanzamos ray queries salvo cada 4 ciclos (96 cuadros).
+        // Si ya era cristal en la caché, conservamos su indicador de baldosa entre ciclos.
+        let redescanear = !en_cache || ((frame.frame_index / u32(ADP_CM_SZ / 2)) & 3u) == 0u;
+        if !redescanear {
+            if (w0_ant & ADP_CM_BIT_ES_CRISTAL) != 0u {
+                es_claro_local = 2u | select(0u, 1u, (w0_ant & ADP_CM_BIT_CLARO) != 0u);
             }
-            let centro_cam = (vec3<f32>(b) + vec3<f32>(0.5)) - frame.camera_position;
-            let d_py = adp_cm_dist_marco(b, vec3<i32>(0, 1, 0));
-            let d_ny = adp_cm_dist_marco(b, vec3<i32>(0, -1, 0));
-            let d_nx = adp_cm_dist_marco(b, vec3<i32>(-1, 0, 0));
-            let d_px = adp_cm_dist_marco(b, vec3<i32>(1, 0, 0));
-            let d_nz = adp_cm_dist_marco(b, vec3<i32>(0, 0, -1));
-            let d_pz = adp_cm_dist_marco(b, vec3<i32>(0, 0, 1));
+        } else {
+            let cls = adp_cm_clasificar_cristal(b);
+            if (cls & ADP_CM_BIT_ES_CRISTAL) == 0u {
+                cristal_mapa[idx] = ADP_CM_BIT_VALIDO;
+                cristal_mapa[idx + 1u] = firma << 24u;
+            } else {
+                es_claro_local = 2u | select(0u, 1u, (cls & ADP_CM_BIT_CLARO) != 0u);
+                let centro_cam = (vec3<f32>(b) + vec3<f32>(0.5)) - frame.camera_position;
+                let d_py = adp_cm_dist_marco(b, vec3<i32>(0, 1, 0));
+                let d_ny = adp_cm_dist_marco(b, vec3<i32>(0, -1, 0));
+                let d_nx = adp_cm_dist_marco(b, vec3<i32>(-1, 0, 0));
+                let d_px = adp_cm_dist_marco(b, vec3<i32>(1, 0, 0));
+                let d_nz = adp_cm_dist_marco(b, vec3<i32>(0, 0, -1));
+                let d_pz = adp_cm_dist_marco(b, vec3<i32>(0, 0, 1));
 
-            var bordes_z = 0u;
-            if d_py == 0u { bordes_z |= 1u; }
-            if d_ny == 0u { bordes_z |= 2u; }
-            if d_nx == 0u { bordes_z |= 4u; }
-            if d_px == 0u { bordes_z |= 8u; }
+                var bordes_z = 0u;
+                if d_py == 0u { bordes_z |= 1u; }
+                if d_ny == 0u { bordes_z |= 2u; }
+                if d_nx == 0u { bordes_z |= 4u; }
+                if d_px == 0u { bordes_z |= 8u; }
 
-            var bordes_x = 0u;
-            if d_py == 0u { bordes_x |= 1u; }
-            if d_ny == 0u { bordes_x |= 2u; }
-            if d_nz == 0u { bordes_x |= 4u; }
-            if d_pz == 0u { bordes_x |= 8u; }
+                var bordes_x = 0u;
+                if d_py == 0u { bordes_x |= 1u; }
+                if d_ny == 0u { bordes_x |= 2u; }
+                if d_nz == 0u { bordes_x |= 4u; }
+                if d_pz == 0u { bordes_x |= 8u; }
 
-            let c_n = adp_cm_evaluar_cara(centro_cam, vec3<f32>(0.0, 0.0, -1.0));
-            let c_s = adp_cm_evaluar_cara(centro_cam, vec3<f32>(0.0, 0.0, 1.0));
-            let c_w = adp_cm_evaluar_cara(centro_cam, vec3<f32>(-1.0, 0.0, 0.0));
-            let c_e = adp_cm_evaluar_cara(centro_cam, vec3<f32>(1.0, 0.0, 0.0));
-            let cielo_arriba = !trace_any_layers(centro_cam + vec3<f32>(0.0, 0.55, 0.0), vec3<f32>(0.0, 1.0, 0.0), 64.0, RAY_SOLID);
+                let c_n = adp_cm_evaluar_cara(centro_cam, vec3<f32>(0.0, 0.0, -1.0));
+                let c_s = adp_cm_evaluar_cara(centro_cam, vec3<f32>(0.0, 0.0, 1.0));
+                let c_w = adp_cm_evaluar_cara(centro_cam, vec3<f32>(-1.0, 0.0, 0.0));
+                let c_e = adp_cm_evaluar_cara(centro_cam, vec3<f32>(1.0, 0.0, 0.0));
+                let cielo_arriba = !trace_any_layers(centro_cam + vec3<f32>(0.0, 0.55, 0.0), vec3<f32>(0.0, 1.0, 0.0), 64.0, RAY_SOLID);
 
-            let w0 = bordes_z
-                   | (bordes_x << 4u)
-                   | (c_n << 8u)
-                   | (c_s << 12u)
-                   | (c_w << 16u)
-                   | (c_e << 20u)
-                   | select(0u, ADP_CM_BIT_ARRIBA_CIELO, cielo_arriba)
-                   | cls
-                   | ADP_CM_BIT_VALIDO;
+                let w0 = bordes_z
+                       | (bordes_x << 4u)
+                       | (c_n << 8u)
+                       | (c_s << 12u)
+                       | (c_w << 16u)
+                       | (c_e << 20u)
+                       | select(0u, ADP_CM_BIT_ARRIBA_CIELO, cielo_arriba)
+                       | cls
+                       | ADP_CM_BIT_VALIDO;
 
-            let w1 = (d_py & 15u)
-                   | ((d_ny & 15u) << 4u)
-                   | ((d_nx & 15u) << 8u)
-                   | ((d_px & 15u) << 12u)
-                   | ((d_nz & 15u) << 16u)
-                   | ((d_pz & 15u) << 20u)
-                   | (firma << 24u);
+                let w1 = (d_py & 15u)
+                       | ((d_ny & 15u) << 4u)
+                       | ((d_nx & 15u) << 8u)
+                       | ((d_px & 15u) << 12u)
+                       | ((d_nz & 15u) << 16u)
+                       | ((d_pz & 15u) << 20u)
+                       | (firma << 24u);
 
-            cristal_mapa[idx] = w0;
-            cristal_mapa[idx + 1u] = w1;
+                cristal_mapa[idx] = w0;
+                cristal_mapa[idx + 1u] = w1;
+            }
         }
     }
 

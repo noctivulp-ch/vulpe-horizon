@@ -32,14 +32,12 @@ fn adp_taa_uv_anterior(uv: vec2<f32>) -> vec2<f32> {
 }
 
 fn adp_taa_alfa_niebla(input: PostInput) -> f32 {
-    let opacidad = 1.0 - textureSampleLevel(volumen, linear_sampler, input.uv, 0.0).a;
-    if frame.in_water > 0.5 || !adp_es_superficie() {
-        return opacidad;
-    }
-    if input.depth <= 0.0 || surface_at(vec2<i32>(input.pixel)).present {
+    let en_agua = frame.in_water > 0.5 || !adp_es_superficie();
+    if !en_agua && (input.depth <= 0.0 || surface_at(vec2<i32>(input.pixel)).present) {
         return 0.0;
     }
-    return OPC_BLOOM_NIEBLA_TRANSLUCIDO * opacidad;
+    let opacidad = 1.0 - textureSampleLevel(volumen, linear_sampler, input.uv, 0.0).a;
+    return select(OPC_BLOOM_NIEBLA_TRANSLUCIDO * opacidad, opacidad, en_agua);
 }
 
 fn adp_taa(input: PostInput) -> vec4<f32> {
@@ -52,6 +50,7 @@ fn adp_taa(input: PostInput) -> vec4<f32> {
     if OPC_TAA_FXAA {
         actual = img_fxaa(composicion, linear_sampler, input.uv, actual);
     }
+    actual = adp_cristales_post(actual, input);
     if !o.activo {
         return vec4<f32>(actual, alfa_niebla);
     }

@@ -2,12 +2,6 @@
 // (realimentación entre fotogramas sin compute), el bloom de niebla y los efectos de estado del jugador.
 // Porqué: docs/efectos/exposicion-tonemap-gradacion.md §Adaptadores y docs/efectos/bloom.md
 
-// Texeles de esquina: (0,0).a la luminancia adaptada; (1,0).a la de los bastones (más lenta); (2,0).a el nivel del
-// agua junto a la cámara (adaptadores/cruce_agua.wgsl).
-fn adp_estado(t: texture_2d<f32>) -> vec2<f32> {
-    return vec2<f32>(textureLoad(t, vec2<i32>(0, 0), 0).a, textureLoad(t, vec2<i32>(1, 0), 0).a);
-}
-
 struct AdpExposicion {
     exposicion: f32,
     bastones: f32,          // peso del efecto Purkinje

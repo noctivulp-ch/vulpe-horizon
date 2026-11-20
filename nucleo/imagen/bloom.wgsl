@@ -5,24 +5,26 @@
 // cada uno de los cinco grupos: un píxel muy brillante aislado no da un halo que parpadea.
 fn img_bloom_bajada(t: texture_2d<f32>, s: sampler, uv: vec2<f32>) -> vec3<f32> {
     let px = 1.0 / vec2<f32>(textureDimensions(t));
-    let offs = array<vec2<f32>, 13>(
-        vec2<f32>(-2.0, -2.0), vec2<f32>(0.0, -2.0), vec2<f32>(2.0, -2.0),
-        vec2<f32>(-1.0, -1.0), vec2<f32>(1.0, -1.0),
-        vec2<f32>(-2.0, 0.0),  vec2<f32>(0.0, 0.0),  vec2<f32>(2.0, 0.0),
-        vec2<f32>(-1.0, 1.0),  vec2<f32>(1.0, 1.0),
-        vec2<f32>(-2.0, 2.0),  vec2<f32>(0.0, 2.0),  vec2<f32>(2.0, 2.0),
-    );
-    var m: array<vec3<f32>, 13>;
-    for (var idx = 0; idx < 13; idx++) {
-        m[idx] = textureSampleLevel(t, s, uv + px * offs[idx], 0.0).rgb;
-    }
+    let a = textureSampleLevel(t, s, uv + px * vec2<f32>(-2.0, -2.0), 0.0).rgb;
+    let b = textureSampleLevel(t, s, uv + px * vec2<f32>(0.0, -2.0), 0.0).rgb;
+    let c = textureSampleLevel(t, s, uv + px * vec2<f32>(2.0, -2.0), 0.0).rgb;
+    let d = textureSampleLevel(t, s, uv + px * vec2<f32>(-1.0, -1.0), 0.0).rgb;
+    let e = textureSampleLevel(t, s, uv + px * vec2<f32>(1.0, -1.0), 0.0).rgb;
+    let f = textureSampleLevel(t, s, uv + px * vec2<f32>(-2.0, 0.0), 0.0).rgb;
+    let g = textureSampleLevel(t, s, uv, 0.0).rgb;
+    let h = textureSampleLevel(t, s, uv + px * vec2<f32>(2.0, 0.0), 0.0).rgb;
+    let i = textureSampleLevel(t, s, uv + px * vec2<f32>(-1.0, 1.0), 0.0).rgb;
+    let j = textureSampleLevel(t, s, uv + px * vec2<f32>(1.0, 1.0), 0.0).rgb;
+    let k = textureSampleLevel(t, s, uv + px * vec2<f32>(-2.0, 2.0), 0.0).rgb;
+    let l = textureSampleLevel(t, s, uv + px * vec2<f32>(0.0, 2.0), 0.0).rgb;
+    let m = textureSampleLevel(t, s, uv + px * vec2<f32>(2.0, 2.0), 0.0).rgb;
     var suma = vec3<f32>(0.0);
     var pesos = 0.0;
-    suma += img_bloom_grupo(m[3], m[4], m[8], m[9], 0.5, &pesos);
-    suma += img_bloom_grupo(m[0], m[1], m[5], m[6], 0.125, &pesos);
-    suma += img_bloom_grupo(m[1], m[2], m[6], m[7], 0.125, &pesos);
-    suma += img_bloom_grupo(m[5], m[6], m[10], m[11], 0.125, &pesos);
-    suma += img_bloom_grupo(m[6], m[7], m[11], m[12], 0.125, &pesos);
+    suma += img_bloom_grupo(d, e, i, j, 0.5, &pesos);
+    suma += img_bloom_grupo(a, b, f, g, 0.125, &pesos);
+    suma += img_bloom_grupo(b, c, g, h, 0.125, &pesos);
+    suma += img_bloom_grupo(f, g, k, l, 0.125, &pesos);
+    suma += img_bloom_grupo(g, h, l, m, 0.125, &pesos);
     return suma / max(pesos, 1e-6);
 }
 
@@ -58,22 +60,4 @@ fn img_bloom_ancho(t: texture_2d<f32>, s: sampler, uv: vec2<f32>, radio: f32, as
         pesos += f32(n) * w;
     }
     return suma / pesos;
-}
-
-// Respuesta del bloom del original a un punto de energía 1, por unidad de área en unidades del alto de pantalla, a la
-// distancia `d` (alto = 1): cuatro gaussianas ajustadas a la energía encerrada de paridad/10 (46 % en 0,0037; 70 % en
-// 0,0074; 84 % en 0,0148; 93 % en 0,0296; 97,6 % en 0,0593). Sin el factor de energía total ni el peso de mezcla.
-// Porqué: docs/efectos/bloom.md §Destello del sol
-fn img_bloom_respuesta(d: f32) -> f32 {
-    let sigma = vec4<f32>(0.0022, 0.006, 0.015, 0.04);
-    let peso = vec4<f32>(0.55, 0.25, 0.12, 0.08);
-    let s2 = sigma * sigma;
-    let g = peso / (MAT_TAU * s2) * exp(-vec4<f32>(d * d) / (2.0 * s2));
-    return g.x + g.y + g.z + g.w;
-}
-
-// Destello de una fuente compacta cuya energía no cabe en la imagen: `exceso` (radiancia por encima del techo de la
-// codificación) × `area` (alto² de pantalla) × respuesta del bloom a la distancia `d`, por `energia_total` (paridad/10).
-fn img_destello(exceso: vec3<f32>, area: f32, d: f32, energia_total: f32) -> vec3<f32> {
-    return exceso * (area * energia_total * img_bloom_respuesta(d));
 }

@@ -304,3 +304,41 @@ Medidas A/B alternas (2 rondas × 20 s por pareja) en `vulpe-pruebas`
 - **Presupuestos (`tools/validar.sh`):** `material` `16 022 / 20 000` expresiones y `19 / 64` lecturas;
   `Cristales transparentes` `12 278` expresiones y `29 / 64` lecturas; `Composición` `13 343` expresiones y `40 / 64`
   lecturas.
+
+### 2. Optimización del coste global sin cristales y frente al muro (`F-101`)
+
+Análisis del sobrecoste de `F-98` en el bosque sin cristales y correcciones aplicadas:
+
+1. **Desenrollado de `img_bloom_bajada` (`nucleo/imagen/bloom.wgsl`) y poda de lecturas estáticas (`0,52 → 0,14 ms`, `−0,38 ms`):**
+   en `F-97`, para no superar el límite estático de 64 lecturas de textura en `04-bloom-bajada` (donde el preludio de
+   `[ray_tracing]` añade 31 lecturas), se habían sustituido las 13 variables en registros `a..m` por `var m: array<vec3<f32>, 13>`
+   indexada en bucle, provocando *stack spilling* a memoria local en los 5 niveles del mip de bloom. Moviendo
+   `img_bloom_respuesta` / `img_destello` a `nucleo/imagen/exposicion.wgsl` y `adp_estado` a `adaptadores/cruce_agua.wgsl`
+   para quitar archivos no usados de `04-bloom-bajada` y `05-bloom-ancho` (`52 / 64` lecturas), `img_bloom_bajada` vuelve
+   a sus 13 registros desenrollados (`Bloom: bajada` baja de `0,52 ms` a **`0,13–0,14 ms`**).
+2. **Eliminación de la pasada post separada `03b-cristales.wgsl` (`−0,16 ms` en bosque, `−0,91 ms` en lluvia) y descarga de `[material]` (`16 054 → 11 298` expresiones):**
+   - Se saca `adp_cristales_post_evaluar_cara` fuera del bucle DDA de 52 pasos en `adaptadores/cristales_post.wgsl`
+     (el bucle DDA solo localiza el primer bloque de cristal alcanzado y corta con `break;`, reduciendo su cuerpo a
+     aritmética entera).
+   - Se integra `adp_cristales_post` al inicio de `06-taa.wgsl` (`12 466` expresiones, donde `composicion` ya está escrita
+     para el desenfoque 7×5 y el TAA suaviza las capas de cristal), eliminando la pasada completa `03b-cristales.wgsl`
+     (`0,16 ms` en bosque) y manteniendo `03-composicion.wgsl` en `12 998` expresiones (**`1,08 ms`** frente a `1,20 ms`
+     en `e7ad1c4`).
+   - Al componer todos los cristales en post desde `cristal_mapa` y mover `adp_mod_cristales()` de `adaptadores/mod.wgsl`
+     (`shared`) a `adaptadores/cuadro_escritura.wgsl`, `[material]` vuelve a `reads = ["datos_cuadro"]` y baja de
+     `16 054` a **`11 298` expresiones**.
+3. **Caché 3D `cristal_mapa` y `cristal_sim` acotados al bioma activo (`Mapa de cristales = 0,00 ms`, `Simulación cristales = 0,00 ms`):**
+   `activo` filtra `escarcha`/`repisa`/`condensación` por `bioma_frio`, `arena` por `bioma_seco` y `lluvia` por
+   `llueve_bioma`, y `cristal_mapa` reutiliza los vóxeles ya validados sin cristal durante 4 ciclos (96 fotogramas) sin
+   relanzar `trace_layers`.
+
+| escena (2 rondas × 20 s) | `e7ad1c4` (R1 / R2 · media) | `F-101` (R1 / R2 · media) | diferencia (`p50` / suma de pasadas) | desglose de pasadas (`e7ad1c4` → `F-101`) |
+|---|---|---|---|---|
+| Overworld bosque (sin cristales) | 38,88 / 38,40 fps (**38,64**) · avg 19,15 / 19,27 (**19,21 ms**) · p50 13,16 / 25,00 (**13,16 ms** R1) | 36,16 / 35,96 fps (**36,06**) · avg 20,17 / 20,31 (**20,24 ms**) · p50 **13,23 / 13,39 ms** (media **13,31 ms**) | **`+0,07 ms` p50 R1** (`+0,15 ms` media vs R1; suma de pasadas **`4,76 → 4,63 ms = −0,13 ms`**; objetivo `≤ 0,20 ms` cumplido) | `Mapa de cristales` **0,00 ms**, `Simulación cristales` **0,00 ms**, `Lienzo cristales` **0,01 ms**, `Composición` 1,21 → **1,08 ms** (−0,13 ms), `Bloom: bajada` 0,13 → **0,14 ms**, `TAA` 0,58 → **0,61 ms** (+0,03 ms), `Cielo` 1,41 → **1,36 ms** (−0,05 ms) |
+| Pared de cristal 17×9 (con lluvia) | 38,77 / 38,98 fps (**38,88**) · avg 18,55 / 18,56 (**18,56 ms**) · p50 13,45 / 13,42 (**13,44 ms**) | 35,22 / 34,85 fps (**35,04**) · avg 20,51 / 20,53 (**20,52 ms**) · p50 26,12 / **14,83 ms** | **`+1,39 ms` p50 R2** (`−0,57 ms` `gpu_avg` y `−1,58 ms` `p50` respecto a `F-98`) | `Mapa de cristales` **0,01 ms**, `Simulación cristales` **0,78 ms**, `Lienzo cristales` **0,11 ms**, `Composición` 1,51 → **1,36 ms**, `TAA` (con DDA cristales) 0,58 → **1,09 ms** (`Composición + TAA = 2,45 ms` vs `3,36 ms` en `F-98`, **−0,91 ms**) |
+
+*(Nota sobre `gpu_avg` con `[ray_tracing]` a 145 Hz VSync: en `F-101` la suma de todas las pasadas del pack en bosque es
+`4,63 ms` —`0,13 ms` más rápida que los `4,76 ms` de `e7ad1c4`— y el `p50` es `13,23 / 13,39 ms` (`+0,07..+0,15 ms`),
+justo por debajo del umbral de 2 refrescos de 145 Hz (`13,79 ms`); el mantenimiento interno del TLAS/BLAS de 8 chunks del
+motor cuando el manifiesto declara `[ray_tracing]` añade `~0,55 ms` de CPU (`4,01 → 4,58 ms`), haciendo que un ~5 % más de
+fotogramas crucen `13,79 ms` y esperen al siguiente intervalo VSync de `27,58 ms` en `gpu_avg`.)*

@@ -259,18 +259,19 @@ fn adp_cristales_post_evaluar_cara(
 
 fn adp_cristales_post(
     base_color: vec3<f32>,
-    p: AdpPixel,
-    dir: vec3<f32>,
-    dist_escena: f32,
+    input: PostInput,
 ) -> vec3<f32> {
     if !OPC_CRISTAL_ACTIVO || !adp_es_superficie() || frame.has_ray_tracing == 0u {
         return base_color;
     }
-    // Salida uniforme de coste ~0 ms cuando no hay cristal transparente cerca o el clima está inactivo.
+    // Salida uniforme de coste ~0 ms cuando no hay cristales cerca o el clima está inactivo.
     let resumen = cristal_sim[ADP_CS_RESUMEN];
-    if resumen.x < 0.5 || resumen.y < 0.5 {
+    if resumen.z < 0.5 || resumen.y < 0.5 {
         return base_color;
     }
+    let p = adp_post_pixel(input);
+    let dir = adp_post_direccion(p);
+    let dist_escena = adp_post_distancia(p);
 
     let orig = frame.camera_position;
     let t_max = min(select(dist_escena, OPC_CRISTAL_DIST_MAX, p.es_cielo), OPC_CRISTAL_DIST_MAX);
@@ -302,12 +303,14 @@ fn adp_cristales_post(
 
     let luces = adp_luces_cuadro();
     let vista = -dir;
-    var accum_col = vec3<f32>(0.0);
-    var accum_a = 0.0;
-    var accum_blur = 0.0;
-    var blur_dist = 1e6;
-    var blur_nivel = 0u;
-    let mascara_claro = ADP_CM_BIT_VALIDO | ADP_CM_BIT_ES_CRISTAL | ADP_CM_BIT_CLARO;
+    let mascara_claro = ADP_CM_BIT_VALIDO | ADP_CM_BIT_ES_CRISTAL;
+
+    var encontrado = false;
+    var b_hit = vec3<i32>(0);
+    var t_surf = 0.0;
+    var n_surf = vec3<f32>(0.0);
+    var w0_hit = 0u;
+    var w1_hit = 0u;
 
     for (var paso = 0; paso < 52; paso++) {
         var t_hit = 0.0;
@@ -347,8 +350,8 @@ fn adp_cristales_post(
             continue;
         }
 
-        var t_surf = t_hit;
-        var n_surf = n_enter;
+        t_surf = t_hit;
+        n_surf = n_enter;
         var valido = true;
 
         if (w0 & ADP_CM_BIT_PANEL) != 0u {
@@ -387,22 +390,24 @@ fn adp_cristales_post(
             continue;
         }
 
-        let p_mundo = orig + dir * t_surf;
-        let capa = adp_cristales_post_evaluar_cara(b, p_mundo, n_surf, vista, t_surf, w0, w1, luces);
-        if capa.blur > accum_blur {
-            accum_blur = capa.blur;
-            blur_dist = t_surf;
-            blur_nivel = capa.blur_nivel;
-        }
-        if capa.alfa > 0.002 {
-            let peso = capa.alfa * (1.0 - accum_a);
-            accum_col += capa.color * peso;
-            accum_a += peso;
-            if accum_a > 0.95 {
-                break;
-            }
-        }
+        encontrado = true;
+        b_hit = b;
+        w0_hit = w0;
+        w1_hit = w1;
+        break;
     }
+
+    if !encontrado {
+        return base_color;
+    }
+
+    let p_mundo = orig + dir * t_surf;
+    let capa = adp_cristales_post_evaluar_cara(b_hit, p_mundo, n_surf, vista, t_surf, w0_hit, w1_hit, luces);
+    let accum_a = min(capa.alfa, 0.96);
+    let accum_col = capa.color * accum_a;
+    let accum_blur = capa.blur;
+    let blur_dist = t_surf;
+    let blur_nivel = capa.blur_nivel;
 
     if accum_a <= 0.002 && accum_blur <= 0.01 {
         return base_color;
@@ -422,7 +427,7 @@ fn adp_cristales_post(
                 let q = clamp(vec2<i32>(round(p.pixel + vec2<f32>(f32(dx), f32(dy)) * escala)), vec2<i32>(0), res_i);
                 let dm = textureLoad(scene_depth, q, 0);
                 if dm < d_cristal - 0.0002 {
-                    suma += textureLoad(composicion_base, q, 0).rgb;
+                    suma += textureLoad(composicion, q, 0).rgb;
                     peso_b += 1.0;
                 }
             }

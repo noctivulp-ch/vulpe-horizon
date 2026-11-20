@@ -656,24 +656,31 @@ fn adp_cristal_sim_paso(panel: u32) {
         }
     }
 
-    // Resume si hay algún cristal transparente cerca (coste ~0 cuando el tiempo está despejado o no hay cristales).
+    // Resume si hay algún cristal cerca en el bioma activo (coste ~0 ms cuando el tiempo está despejado o no hay cristales).
     if panel == 0u {
         let c0 = datos_cuadro[ADP_CUADRO_CRISTAL_0];
         let c2 = datos_cuadro[ADP_CUADRO_CRISTAL_2];
         let cv = datos_cuadro[ADP_CUADRO_CRISTAL_VAHO];
+        let cf = datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS];
+        let flags = u32(max(round(cf.x), 0.0));
+        let bioma_seco = (flags & OPC_CR_FLAG_BIOMA_SECO) != 0u;
+        let bioma_frio = (flags & OPC_CR_FLAG_BIOMA_FRIO) != 0u;
+        let llueve_bioma = (flags & OPC_CR_FLAG_LLUEVE_BIOMA) != 0u;
         let sim_viva = (cristal_sim[0].z > 0.5) || (cristal_sim[1].z > 0.5) || (cristal_sim[2].z > 0.5)
                      || (cristal_sim[3].z > 0.5) || (cristal_sim[4].z > 0.5) || (cristal_sim[8].z > 0.5);
-        let activo = sim_viva || (c0.x > OPC_CRISTAL_CLIMA_UMBRAL) || (c0.y > 0.001) || (c0.z > 0.001)
-                   || (c0.w > 0.001) || (c2.x > OPC_CRISTAL_ARENA_MIN) || (cv.w > 0.001);
-        var hay_claro = 0.0;
+        let lluvia_act = llueve_bioma && (c0.x > OPC_CRISTAL_CLIMA_UMBRAL) && (c2.y > 0.001);
+        let frio_act = bioma_frio && ((c0.y > 0.001) || (c0.z > 0.001) || (c0.w > 0.001)) && (c2.z > 0.001);
+        let arena_act = bioma_seco && (c2.x > OPC_CRISTAL_ARENA_MIN) && (c2.w > 0.001);
+        let activo = sim_viva || lluvia_act || frio_act || arena_act || (cv.w > 0.001);
+        var hay_cristal = 0.0;
         if activo && frame.has_ray_tracing != 0u {
             for (var t = 0u; t < ADP_CM_META_TILES; t++) {
                 if cristal_mapa[ADP_CM_META_OFF + t] != 0u {
-                    hay_claro = 1.0;
+                    hay_cristal = 1.0;
                     break;
                 }
             }
         }
-        cristal_sim[ADP_CS_RESUMEN] = vec4<f32>(hay_claro, select(0.0, 1.0, activo), 0.0, 0.0);
+        cristal_sim[ADP_CS_RESUMEN] = vec4<f32>(hay_cristal, select(0.0, 1.0, activo), hay_cristal, 0.0);
     }
 }

@@ -10,6 +10,12 @@ struct AdpSondaAgua {
     vista: f32,         // 1 la sonda la ve, 0 la sonda ve otra cosa, −1 la sonda no cae en la pantalla
 }
 
+// Texeles de esquina: (0,0).a la luminancia adaptada; (1,0).a la de los bastones (más lenta); (2,0).a el nivel del
+// agua junto a la cámara.
+fn adp_estado(t: texture_2d<f32>) -> vec2<f32> {
+    return vec2<f32>(textureLoad(t, vec2<i32>(0, 0), 0).a, textureLoad(t, vec2<i32>(1, 0), 0).a);
+}
+
 fn adp_sonda_agua() -> AdpSondaAgua {
     let e = frame.camera_position.y;
     let abajo = floor(e - OPC_AGUA_NIVEL) + OPC_AGUA_NIVEL;

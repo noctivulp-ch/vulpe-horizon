@@ -139,7 +139,6 @@ fog = "pack"        # la niebla es nuestra (subsistema 05)
 
 [material]
 file = "etapas/material.wgsl"
-# coverage = "pack" # solo necesario si se activa OPC_CRISTAL_CUTOUT_INTERIOR en opciones/cristales.wgsl (~+2,8 ms en bosque)
 files = [
     "nucleo/agua/optica.wgsl",
     "nucleo/agua/olas.wgsl",
@@ -153,12 +152,6 @@ files = [
     "nucleo/superficie/humedad.wgsl",
     "nucleo/superficie/escarcha.wgsl",
     "nucleo/superficie/arena_viento.wgsl",
-    "nucleo/superficie/cristal_lluvia.wgsl",
-    "nucleo/superficie/cristal_escarcha.wgsl",
-    "nucleo/superficie/cristal_nieve.wgsl",
-    "nucleo/superficie/cristal_interior.wgsl",
-    "nucleo/superficie/cristal_aliento.wgsl",
-    "nucleo/superficie/cristal_arena.wgsl",
     "opciones/suelo_clima.wgsl",
     "nucleo/superficie/emision.wgsl",
     "nucleo/superficie/menas.wgsl",
@@ -172,11 +165,8 @@ files = [
     "adaptadores/cuadro_lectura.wgsl",
     "adaptadores/material.wgsl",
     "adaptadores/agua.wgsl",
-    "adaptadores/cristal_mapa.wgsl",
-    "adaptadores/cristales_entorno.wgsl",
-    "adaptadores/cristales.wgsl",
 ]
-reads = ["datos_cuadro", "cristal_mapa", "cristal_sim", "cristal_clima"]
+reads = ["datos_cuadro"]
 
 [ray_tracing]        # consultas por bloque solo en píxeles de cristal (27 §En Horizon, opción b)
 
@@ -312,32 +302,12 @@ files = [
     "adaptadores/menas_luz.wgsl",
 ]
 name = "Composición"
-output = "composicion_base"
+output = "composicion"
 reads = ["volumen", "bloom2_previous", "datos_cuadro"]
 
 [[post]]
-file = "etapas/post/03b-cristales.wgsl"
-files = [
-    "nucleo/superficie/brdf.wgsl",
-    "adaptadores/post.wgsl",
-    "adaptadores/cuadro_lectura.wgsl",
-    "nucleo/superficie/cristal_lluvia.wgsl",
-    "nucleo/superficie/cristal_escarcha.wgsl",
-    "nucleo/superficie/cristal_nieve.wgsl",
-    "nucleo/superficie/cristal_interior.wgsl",
-    "nucleo/superficie/cristal_aliento.wgsl",
-    "nucleo/superficie/cristal_arena.wgsl",
-    "adaptadores/cristal_mapa.wgsl",
-    "adaptadores/cristal_sim_datos.wgsl",
-    "adaptadores/cristales_post.wgsl",
-]
-name = "Cristales transparentes"
-output = "composicion"
-reads = ["datos_cuadro", "cristal_mapa", "cristal_sim", "cristal_clima"]
-
-[[post]]
 file = "etapas/post/04-bloom-bajada.wgsl"
-files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/bloom_estado.wgsl"]
+files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/bloom.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/bloom_estado.wgsl"]
 name = "Bloom: bajada"
 output = "bloom"
 scale = 0.25
@@ -345,21 +315,36 @@ reads = ["historial_previous", "datos_cuadro"]
 
 [[post]]
 file = "etapas/post/05-bloom-ancho.wgsl"
-files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/bloom_estado.wgsl"]
+files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/bloom.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/bloom_estado.wgsl"]
 name = "Bloom: ancho"
 output = "bloom2"
 reads = ["historial_previous", "bloom2_previous", "datos_cuadro"]
 
 [[post]]
 file = "etapas/post/06-taa.wgsl"
-files = ["nucleo/imagen/taa.wgsl", "adaptadores/taa.wgsl"]
+files = [
+    "nucleo/superficie/brdf.wgsl",
+    "nucleo/imagen/taa.wgsl",
+    "nucleo/superficie/cristal_lluvia.wgsl",
+    "nucleo/superficie/cristal_escarcha.wgsl",
+    "nucleo/superficie/cristal_nieve.wgsl",
+    "nucleo/superficie/cristal_interior.wgsl",
+    "nucleo/superficie/cristal_aliento.wgsl",
+    "nucleo/superficie/cristal_arena.wgsl",
+    "adaptadores/post.wgsl",
+    "adaptadores/cuadro_lectura.wgsl",
+    "adaptadores/cristal_mapa.wgsl",
+    "adaptadores/cristal_sim_datos.wgsl",
+    "adaptadores/cristales_post.wgsl",
+    "adaptadores/taa.wgsl",
+]
 name = "TAA"
 output = "historial"
-reads = ["historial_previous", "volumen"]
+reads = ["historial_previous", "volumen", "datos_cuadro", "cristal_mapa", "cristal_sim", "cristal_clima"]
 
 [[post]]
 file = "etapas/post/07-final.wgsl"
-files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/bloom.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/nitidez.wgsl", "nucleo/imagen/aislamiento.wgsl", "opciones/aislamiento.wgsl", "nucleo/volumen/fase.wgsl", "nucleo/imagen/rayos.wgsl", "opciones/rayos.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/rayos.wgsl", "adaptadores/aislamiento.wgsl"]
+files = ["nucleo/imagen/exposicion.wgsl", "nucleo/imagen/taa.wgsl", "nucleo/imagen/camara.wgsl", "nucleo/imagen/nitidez.wgsl", "nucleo/imagen/aislamiento.wgsl", "opciones/aislamiento.wgsl", "nucleo/volumen/fase.wgsl", "nucleo/imagen/rayos.wgsl", "opciones/rayos.wgsl", "adaptadores/post.wgsl", "opciones/cruce_agua.wgsl", "adaptadores/cruce_agua.wgsl", "adaptadores/imagen.wgsl", "adaptadores/rayos.wgsl", "adaptadores/aislamiento.wgsl"]
 name = "Final"
 reads = ["historial", "volumen", "bloom2", "datos_cuadro"]
 

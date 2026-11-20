@@ -1,6 +1,128 @@
 // Cálculo único por fotograma (pasada [[before_world]]): luces del terreno, tablas por elevación del sol,
 // ambiente de nubes, cielo y horario. Porqué: docs/rendimiento.md
 
+struct AdpCristalMod {
+    activo: bool,
+    es_v4: bool,
+    escarcha: f32,
+    repisa: f32,
+    condensacion: f32,
+    arena: f32,
+    viento_xz: vec2<f32>,
+    nivel_lluvia: u32,
+    nivel_nieve: u32,
+    nivel_arena: u32,
+    estilo_regueros: bool,
+    resolucion_cod: u32,
+    seguir_viento: bool,
+    interior: bool,
+    borde_helado: u32,
+    desenfoque: u32,
+    arena_roja: bool,
+    espectador: bool,
+    bioma_seco: bool,
+    bioma_frio: bool,
+    llueve_en_bioma: bool,
+    cond_opacidad: f32,
+    cond_blancura: f32,
+    aliento_opacidad: f32,
+    aliento_blancura: f32,
+    vaho_pos: vec3<f32>,
+    vaho_peso: f32,
+    vaho_escala: f32,
+}
+
+fn adp_cristal_mod_vacio() -> AdpCristalMod {
+    return AdpCristalMod(
+        false, false,
+        0.0, 0.0, 0.0, 0.0,
+        vec2<f32>(0.0),
+        2u, 2u, 2u,
+        false, 1u, true, true, 1u, 1u,
+        false, false, false, false, false,
+        1.0, 0.0, 1.5, 1.0,
+        vec3<f32>(0.0), 0.0, 1.0,
+    );
+}
+
+fn adp_mod_cristales() -> AdpCristalMod {
+    let firma = frame.mods[0].x;
+    let es_v4 = abs(firma - ADP_MOD_FIRMA_V4) < 0.5;
+    let es_v3 = abs(firma - ADP_MOD_FIRMA_V3) < 0.5;
+    if !es_v4 && !es_v3 {
+        return adp_cristal_mod_vacio();
+    }
+    let banderas = u32(max(round(frame.mods[0].z), 0.0));
+    if (banderas & 256u) == 0u {
+        return adp_cristal_mod_vacio();
+    }
+    let m6 = frame.mods[6];
+    let m7 = frame.mods[7];
+    if es_v4 {
+        let p0 = u32(max(round(m6.x), 0.0));
+        let p1 = u32(max(round(m6.y), 0.0));
+        let f24 = u32(max(round(m6.z), 0.0));
+        let q4 = u32(max(round(m6.w), 0.0));
+        let escarcha = f32(p0 & 255u) / 255.0;
+        let repisa = f32((p0 >> 8u) & 255u) / 255.0;
+        let condensacion = f32((p0 >> 16u) & 255u) / 255.0;
+        let arena = f32(p1 & 255u) / 255.0;
+        let vx = (f32((p1 >> 8u) & 255u) / 255.0) * 2.0 - 1.0;
+        let vz = (f32((p1 >> 16u) & 255u) / 255.0) * 2.0 - 1.0;
+        let cond_op = f32(q4 & 63u) / 63.0 * 2.5;
+        let cond_bl = f32((q4 >> 6u) & 63u) / 63.0;
+        let al_op = f32((q4 >> 12u) & 63u) / 63.0 * 2.5;
+        let al_bl = f32((q4 >> 18u) & 63u) / 63.0;
+        let vaho_esc = 1.0 + 0.7 * (f32((f24 >> 20u) & 15u) / 15.0);
+        return AdpCristalMod(
+            true, true,
+            escarcha, repisa, condensacion, arena,
+            vec2<f32>(vx, vz),
+            f24 & 3u,
+            (f24 >> 2u) & 3u,
+            (f24 >> 4u) & 3u,
+            (f24 & (1u << 6u)) != 0u,
+            (f24 >> 7u) & 3u,
+            (f24 & (1u << 9u)) != 0u,
+            (f24 & (1u << 10u)) != 0u,
+            (f24 >> 11u) & 3u,
+            (f24 >> 13u) & 3u,
+            (f24 & (1u << 15u)) != 0u,
+            (f24 & (1u << 16u)) != 0u,
+            (f24 & (1u << 17u)) != 0u,
+            (f24 & (1u << 18u)) != 0u,
+            (f24 & (1u << 19u)) != 0u,
+            cond_op, cond_bl, al_op, al_bl,
+            m7.xyz, clamp(m7.w, 0.0, 1.0), vaho_esc,
+        );
+    }
+    let c_frio = u32(max(round(m6.y), 0.0));
+    let c_arena = u32(max(round(m6.z), 0.0));
+    let c_viento = u32(max(round(m6.w), 0.0));
+    let flags12 = c_arena & 4095u;
+    let vx = (f32(min(c_viento / 4096u, 4095u)) / 4095.0) * 2.0 - 1.0;
+    let vz = (f32(c_viento & 4095u) / 4095.0) * 2.0 - 1.0;
+    return AdpCristalMod(
+        true, false,
+        f32(c_frio & 255u) / 255.0,
+        f32((c_frio >> 16u) & 255u) / 255.0,
+        0.0,
+        f32(min(c_arena / 4096u, 4095u)) / 4095.0,
+        vec2<f32>(vx, vz),
+        flags12 & 3u,
+        (flags12 >> 2u) & 3u,
+        (flags12 >> 4u) & 3u,
+        false, 1u, true, true, 1u, 1u,
+        (flags12 & 256u) != 0u,
+        (flags12 & 512u) != 0u,
+        (flags12 & 1024u) != 0u,
+        (flags12 & 2048u) != 0u,
+        frame.precipitation == 1u,
+        1.0, 0.0, select(0.0, 1.5, (flags12 & 64u) != 0u), 1.0,
+        m7.xyz, clamp(m7.w, 0.0, 1.0), 1.0,
+    );
+}
+
 // Ganancia del ambiente de cielo de las superficies con el sol bajo, interpolada por elevación (F-54).
 // Porqué: docs/efectos/luz-de-superficie.md §«Sombra y sol bajo (F-53, F-54)» › «Sol bajo (F-54)»
 fn adp_sol_bajo_t(i: i32, elev: f32) -> f32 {
