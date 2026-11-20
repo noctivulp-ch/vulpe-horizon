@@ -128,6 +128,7 @@ fn adp_cristal_evaluar(
     let regueros = (flags & OPC_CR_FLAG_REGUEROS) != 0u;
     let interior_activo = (flags & OPC_CR_FLAG_INTERIOR) != 0u;
     let arena_roja = (flags & OPC_CR_FLAG_ARENA_ROJA) != 0u;
+    let espectador = (flags & OPC_CR_FLAG_ESPECTADOR) != 0u;
     let bioma_seco = (flags & OPC_CR_FLAG_BIOMA_SECO) != 0u;
     let bioma_frio = (flags & OPC_CR_FLAG_BIOMA_FRIO) != 0u;
     let llueve_bioma = (flags & OPC_CR_FLAG_LLUEVE_BIOMA) != 0u;
@@ -150,7 +151,7 @@ fn adp_cristal_evaluar(
     let frio_activo = bioma_frio && (c0.y > 0.001 || c0.z > 0.001 || copos_panel_vivo) && c2.z > 0.001;
     let arena_activa = bioma_seco && c2.x > OPC_CRISTAL_ARENA_MIN && c2.w > 0.001;
     let cond_activa = interior_activo && bioma_frio && (c0.w > 0.001 || (borde_estilo == 1u && c0.y > 0.001));
-    let vaho_activo = interior_activo && cv.w > 0.001 && co.x > 0.001;
+    let vaho_activo = interior_activo && !espectador && co.x > 0.001 && (cv.w > 0.001 || (co.w < 0.5 && dist < OPC_CRISTAL_VAHO_DIST));
 
     // Salida temprana sin lanzar ningún rayo cuando todo está apagado o despejado.
     if !lluvia_activa && !frio_activo && !arena_activa && !cond_activa && !vaho_activo {
@@ -170,17 +171,60 @@ fn adp_cristal_evaluar(
     let b_cristal = vec3<i32>(floor(p.mundo - p.normal_cara * 0.02));
     let variante = sup_cr_hash_u32(u32(b_cristal.x * 73856093) ^ u32(b_cristal.y * 19349663) ^ u32(b_cristal.z * 83492791) ^ cara_idx) & 3u;
 
-    let aliento = sup_cristal_aliento(
-        plano,
-        p.posicion,
-        p.normal_cara,
-        cv.xyz,
-        select(-1.0, cv.w, entorno.es_interior),
-        co.w > 0.5,
-        c0.y,
-        adp_tiempo().segundos,
-    );
-    let suprime_escarcha = 1.0 - smoothstep(0.0, 0.72, aliento.derrite) * 0.92;
+    // Capa 5 (condensación) y Capa 6 (vaho del aliento): el aliento actúa donde cond_grosor < 0,5 y funde escarcha/copos.
+    var cond_capa = SupCristalCondensacion(vec3<f32>(0.0), 0.0, 0.0);
+    if cond_activa && entorno.es_interior_fria {
+        cond_capa = sup_cristal_condensacion(
+            plano,
+            entorno.dist_marco,
+            c0.y,
+            c0.w,
+            cf.y,
+            cf.z,
+            co.z,
+            variante,
+        );
+        cond_capa.alfa *= aten_dist;
+        cond_capa.grosor *= aten_dist;
+    }
+
+    var aliento = SupCristalAliento(vec3<f32>(0.0), 0.0, 0.0, 0.0);
+    if vaho_activo {
+        aliento = sup_cristal_aliento_v2(
+            plano,
+            p.posicion,
+            p.normal_cara,
+            cv.xyz,
+            cv.w,
+            cf.w,
+            co.x,
+            co.y,
+            cond_capa.grosor,
+            co.z,
+            co.w > 0.5,
+            entorno.es_interior,
+            espectador,
+            adp_tiempo().segundos,
+        );
+        aliento.alfa *= aten_dist;
+        aliento.grosor *= aten_dist;
+    }
+    let suprime_escarcha = 1.0 - smoothstep(0.0, 0.70, aliento.derrite) * 0.92;
+
+    var borde_capa = SupCristalCapa(vec3<f32>(0.0), 0.0, 0.0);
+    if cond_activa && entorno.es_interior_fria {
+        borde_capa = sup_cristal_borde_helado(
+            plano,
+            entorno.dist_marco,
+            c0.y,
+            c0.w,
+            c2.z,
+            co.z,
+            borde_estilo,
+            variante,
+        );
+        borde_capa.alfa *= suprime_escarcha * aten_dist;
+    }
 
     // Capa 2 — Escarcha de fuera y repisa de nieve desde el marco de la ventana entera (27 v2 §Capa 2).
     let muestra_esc_ext = frio_activo && (entorno.es_exterior || entorno.es_interior_fria);
@@ -263,37 +307,7 @@ fn adp_cristal_evaluar(
         lluvia_mojado = select(0.0, clamp(c0.x, 0.0, 1.0) * 0.4 * mascara_agua, llueve_bioma && c0.x > OPC_CRISTAL_CLIMA_UMBRAL);
     }
 
-    // Capa 5 — Condensación de dentro y borde helado (27 v2 §Capa 5).
-    var cond_capa = SupCristalCondensacion(vec3<f32>(0.0), 0.0, 0.0);
-    var borde_capa = SupCristalCapa(vec3<f32>(0.0), 0.0, 0.0);
-    if cond_activa && entorno.es_interior_fria {
-        cond_capa = sup_cristal_condensacion(
-            plano,
-            entorno.dist_marco,
-            c0.y,
-            c0.w,
-            cf.y,
-            cf.z,
-            co.z,
-            variante,
-        );
-        cond_capa.alfa *= aten_dist;
-        cond_capa.grosor *= aten_dist;
-
-        borde_capa = sup_cristal_borde_helado(
-            plano,
-            entorno.dist_marco,
-            c0.y,
-            c0.w,
-            c2.z,
-            co.z,
-            borde_estilo,
-            variante,
-        );
-        borde_capa.alfa *= suprime_escarcha * aten_dist;
-    }
-
-    if lluvia_rgba.a <= 0.002 && lluvia_mojado <= 0.002 && esc_capa.alfa <= 0.002 && repisa_capa.alfa <= 0.002 && copo_rgba.a <= 0.002 && aliento.vaho <= 0.001 && arena_capa.alfa <= 0.002 && cond_capa.alfa <= 0.002 && borde_capa.alfa <= 0.002 {
+    if lluvia_rgba.a <= 0.002 && lluvia_mojado <= 0.002 && esc_capa.alfa <= 0.002 && repisa_capa.alfa <= 0.002 && copo_rgba.a <= 0.002 && aliento.alfa <= 0.002 && arena_capa.alfa <= 0.002 && cond_capa.alfa <= 0.002 && borde_capa.alfa <= 0.002 {
         return r;
     }
     r.activo = true;
@@ -307,15 +321,6 @@ fn adp_cristal_evaluar(
                  + luces.cielo * cielo_ext_ref * 0.95
                  + bloque_luz
                  + vec3<f32>(OPC_LUZ_NOCHE_SUELO * cielo_ext_ref);
-
-    if aliento.vaho > 0.001 {
-        let col_vaho = OPC_CRISTAL_VAHO_COLOR * (luz_capa + luces.cielo * curva_cielo * 0.25);
-        let op_vaho = clamp(aliento.vaho * OPC_CRISTAL_VAHO_OPACIDAD, 0.0, 0.72);
-        let comp = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_vaho, op_vaho);
-        r.capa_color = comp.rgb;
-        r.capa_opacidad = comp.a;
-        r.desenfoque = max(r.desenfoque, aliento.borroso);
-    }
 
     if esc_capa.alfa > 0.002 {
         let luz_esc = luz_capa * 1.15
@@ -388,7 +393,7 @@ fn adp_cristal_evaluar(
         r.especular_extra *= (1.0 - arena_capa.alfa);
     }
 
-    // Capas interiores (encima de las exteriores): condensación y borde helado.
+    // Capas interiores (encima de las exteriores): condensación, vaho del aliento y borde helado.
     if cond_capa.alfa > 0.002 {
         let luz_cond = luz_capa * 1.08 + luces.cielo * cielo_ext_ref * 0.30 + bloque_luz * 0.35;
         let col_cond = cond_capa.color * luz_cond;
@@ -396,6 +401,15 @@ fn adp_cristal_evaluar(
         r.capa_color = comp_cond.rgb;
         r.capa_opacidad = comp_cond.a;
         r.mate = max(r.mate, cond_capa.alfa * 0.5);
+    }
+
+    if aliento.alfa > 0.002 {
+        let luz_vaho = luz_capa * 1.10 + luces.cielo * cielo_ext_ref * 0.30 + bloque_luz * 0.40;
+        let col_vaho = aliento.color * luz_vaho;
+        let comp_vaho = adp_cristal_sobre(r.capa_color, r.capa_opacidad, col_vaho, aliento.alfa);
+        r.capa_color = comp_vaho.rgb;
+        r.capa_opacidad = comp_vaho.a;
+        r.mate = max(r.mate, aliento.alfa * 0.55);
     }
 
     if borde_capa.alfa > 0.002 {

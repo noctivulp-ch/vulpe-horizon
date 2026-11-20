@@ -27,6 +27,7 @@ fn adp_cristales_post_evaluar_cara(
     let c0 = datos_cuadro[ADP_CUADRO_CRISTAL_0];
     let c1 = datos_cuadro[ADP_CUADRO_CRISTAL_1];
     let c2 = datos_cuadro[ADP_CUADRO_CRISTAL_2];
+    let cv = datos_cuadro[ADP_CUADRO_CRISTAL_VAHO];
     let cf = datos_cuadro[ADP_CUADRO_CRISTAL_FLAGS];
     let co = datos_cuadro[ADP_CUADRO_CRISTAL_VAHO_OPT];
 
@@ -34,6 +35,7 @@ fn adp_cristales_post_evaluar_cara(
     let regueros = (flags & OPC_CR_FLAG_REGUEROS) != 0u;
     let interior_activo = (flags & OPC_CR_FLAG_INTERIOR) != 0u;
     let arena_roja = (flags & OPC_CR_FLAG_ARENA_ROJA) != 0u;
+    let espectador = (flags & OPC_CR_FLAG_ESPECTADOR) != 0u;
     let bioma_seco = (flags & OPC_CR_FLAG_BIOMA_SECO) != 0u;
     let bioma_frio = (flags & OPC_CR_FLAG_BIOMA_FRIO) != 0u;
     let borde_estilo = (flags >> 8u) & 3u;
@@ -63,6 +65,39 @@ fn adp_cristales_post_evaluar_cara(
 
     var capa_col = vec3<f32>(0.0);
     var capa_op = 0.0;
+
+    // Evalúa primero condensación interior y vaho del aliento para conocer `derrite` y `cond.grosor`.
+    let cond_activa = interior_activo && bioma_frio && (c0.w > 0.001 || (borde_estilo == 1u && c0.y > 0.001));
+    var cond = SupCristalCondensacion(vec3<f32>(0.0), 0.0, 0.0);
+    if cond_activa && entorno.es_interior_fria {
+        cond = sup_cristal_condensacion(plano, entorno.dist_marco, c0.y, c0.w, cf.y, cf.z, co.z, variante);
+        cond.alfa *= aten_dist;
+        cond.grosor *= aten_dist;
+    }
+
+    let vaho_activo = interior_activo && !espectador && co.x > 0.001 && (cv.w > 0.001 || (co.w < 0.5 && dist < OPC_CRISTAL_VAHO_DIST));
+    var aliento = SupCristalAliento(vec3<f32>(0.0), 0.0, 0.0, 0.0);
+    if vaho_activo {
+        aliento = sup_cristal_aliento_v2(
+            plano,
+            p_mundo - frame.camera_position,
+            n_cara,
+            cv.xyz,
+            cv.w,
+            cf.w,
+            co.x,
+            co.y,
+            cond.grosor,
+            co.z,
+            co.w > 0.5,
+            entorno.es_interior,
+            espectador,
+            adp_tiempo().segundos,
+        );
+        aliento.alfa *= aten_dist;
+        aliento.grosor *= aten_dist;
+    }
+    let suprime_esc = 1.0 - smoothstep(0.0, 0.70, aliento.derrite) * 0.92;
 
     // Capa 1 — Lluvia global desde el lienzo `cristal_clima` (27 v2 §Capa 1).
     let cara_op_idx = cara_idx ^ 1u;
@@ -110,7 +145,7 @@ fn adp_cristales_post_evaluar_cara(
     let frio_activo = bioma_frio && (c0.y > 0.001 || c0.z > 0.001 || copos_vivos) && c2.z > 0.001;
     if frio_activo && (entorno.es_exterior || entorno.es_interior_fria) {
         var esc = sup_cristal_escarcha_v2(plano, entorno.dist_marco, c0.y, c2.z, co.z, variante, false, 1.0);
-        esc.alfa *= aten_dist;
+        esc.alfa *= suprime_esc * aten_dist;
         if esc.alfa > 0.002 {
             let col_esc = esc.color * (luz_base * 1.15 + luces.cielo * cielo_ext_ref * 0.30)
                         + vec3<f32>(esc.destello) * (luces.directa * 0.6 + luces.cielo * cielo_ext_ref * 0.9);
@@ -129,7 +164,7 @@ fn adp_cristales_post_evaluar_cara(
             }
             let coord_c = sup_cristal_copo_texel(b, n_copo, pl_copo, co.z);
             var copo = textureLoad(cristal_clima, coord_c, 0);
-            copo.a *= aten_dist;
+            copo.a *= (1.0 - smoothstep(0.0, 0.65, aliento.derrite)) * aten_dist;
             if copo.a > 0.002 {
                 let col_c = copo.rgb * (luz_base * 1.15 + luces.cielo * cielo_ext_ref * 0.35);
                 let comp = adp_cp_sobre(capa_col, capa_op, col_c, copo.a);
@@ -175,20 +210,24 @@ fn adp_cristales_post_evaluar_cara(
         }
     }
 
-    // Capa 5 — Condensación interior y borde helado en caras interiores frías (27 v2 §Capa 5).
-    let cond_activa = interior_activo && bioma_frio && (c0.w > 0.001 || (borde_estilo == 1u && c0.y > 0.001));
-    if cond_activa && entorno.es_interior_fria {
-        var cond = sup_cristal_condensacion(plano, entorno.dist_marco, c0.y, c0.w, cf.y, cf.z, co.z, variante);
-        cond.alfa *= aten_dist;
-        if cond.alfa > 0.002 {
-            let col_cond = cond.color * (luz_base * 1.12 + luces.cielo * cielo_ext_ref * 0.30);
-            let comp = adp_cp_sobre(capa_col, capa_op, col_cond, cond.alfa);
-            capa_col = comp.rgb;
-            capa_op = comp.a;
-        }
+    // Capas 5 y 6 — Condensación interior, vaho del aliento y borde helado (27 v2 §Capas 5 y 6).
+    if cond.alfa > 0.002 {
+        let col_cond = cond.color * (luz_base * 1.12 + luces.cielo * cielo_ext_ref * 0.30);
+        let comp = adp_cp_sobre(capa_col, capa_op, col_cond, cond.alfa);
+        capa_col = comp.rgb;
+        capa_op = comp.a;
+    }
 
+    if aliento.alfa > 0.002 {
+        let col_vaho = aliento.color * (luz_base * 1.14 + luces.cielo * cielo_ext_ref * 0.30);
+        let comp = adp_cp_sobre(capa_col, capa_op, col_vaho, aliento.alfa);
+        capa_col = comp.rgb;
+        capa_op = comp.a;
+    }
+
+    if cond_activa && entorno.es_interior_fria {
         var borde = sup_cristal_borde_helado(plano, entorno.dist_marco, c0.y, c0.w, c2.z, co.z, borde_estilo, variante);
-        borde.alfa *= aten_dist;
+        borde.alfa *= suprime_esc * aten_dist;
         if borde.alfa > 0.002 {
             let col_b = borde.color * (luz_base * 1.18 + luces.cielo * cielo_ext_ref * 0.35)
                       + vec3<f32>(borde.destello) * (luces.directa * 0.6 + luces.cielo * cielo_ext_ref * 0.9);

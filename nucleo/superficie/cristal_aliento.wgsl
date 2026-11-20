@@ -1,72 +1,93 @@
-// Vaho del aliento al acercarse a un cristal con escarcha (27 §4).
-// Empañado suave y continuo con ruido interpolado a >= 32 texeles/bloque y fundido gaussiano en el borde.
+// Vaho del aliento en caras interiores (27 v2 §Capa 6).
+// Elipse de semiejes 0,26 x 0,22 bloques ensanchada hasta 1,7x tras 5 exhalaciones repetidas,
+// color de condensación con blancura (100 % defecto) y opacidad (150 % defecto), perfil suave,
+// grano fino y fusión de la escarcha/borde/copos que tenga debajo.
 // Función pura del núcleo: no lee `frame` ni recursos del motor.
-// Porqué: docs/efectos/tiempo-en-los-cristales.md §4
+// Porqué: docs/efectos/tiempo-en-los-cristales.md §7
 
 struct SupCristalAliento {
-    vaho: f32,              // 0..1 densidad continua de condensación
-    derrite: f32,           // 0..1 máscara amplia y suave que disuelve el dibujo de escarcha
-    borroso: f32,           // 0..1 desenfoque suave detrás del vaho
+    color: vec3<f32>,       // color lineal del vaho
+    alfa: f32,              // 0..1 opacidad final
+    grosor: f32,            // 0..1 grosor para el desenfoque detrás del cristal (§Capa 7)
+    derrite: f32,           // 0..1 máscara que funde escarcha, borde helado y copos debajo
 }
 
-// Evalúa la mancha de vaho centrada en `centro_rel` (posición relativa a la cámara del punto más cercano
-// del cristal), con pulso de respiración cada ~3,5 s hasta un radio de ~1 bloque.
-fn sup_cristal_aliento(
+fn sup_cristal_aliento_v2(
     plano: SupCristalPlano,
     pos_rel: vec3<f32>,
     normal_cara: vec3<f32>,
     centro_rel: vec3<f32>,
     vaho_peso: f32,
+    vaho_escala: f32,
+    aliento_opacidad: f32,
+    aliento_blancura: f32,
+    cond_grosor: f32,
+    k_res: f32,
     con_mod: bool,
-    escarcha_nivel: f32,
+    es_interior: bool,
+    espectador: bool,
     tiempo: f32,
 ) -> SupCristalAliento {
-    let vacio = SupCristalAliento(0.0, 0.0, 0.0);
-    if escarcha_nivel <= 0.05 || vaho_peso < 0.0 {
+    let vacio = SupCristalAliento(vec3<f32>(0.0), 0.0, 0.0, 0.0);
+    if !plano.vertical || !es_interior || espectador || aliento_opacidad <= 0.001 || cond_grosor >= 0.5 {
         return vacio;
     }
 
     var peso = vaho_peso;
     var centro = centro_rel;
+    var escala = clamp(vaho_escala, 1.0, 1.7);
+
     if !con_mod {
-        // Sin mod: calcula en vivo el punto más cercano del plano del cristal a la cámara, sin memoria de 5 s.
+        // Respaldo sin mod: punto más cercano de la cara a <= 1,5 bloques con pulso de exhalación cada 3,3 s.
         let d_plano = dot(pos_rel, normal_cara);
         let dist_cam = abs(d_plano);
         if dist_cam >= OPC_CRISTAL_VAHO_DIST {
             return vacio;
         }
         centro = normal_cara * d_plano;
-        peso = smoothstep(OPC_CRISTAL_VAHO_DIST, 0.35, dist_cam);
+        let pulso = 0.55 + 0.45 * (0.5 + 0.5 * sin(tiempo * (MAT_TAU / OPC_CRISTAL_VAHO_PERIODO)));
+        peso = smoothstep(OPC_CRISTAL_VAHO_DIST, 0.40, dist_cam) * pulso;
+        escala = 1.0 + 0.35 * peso;
     }
 
-    if peso <= 0.005 {
+    if peso <= 0.004 {
         return vacio;
     }
 
-    // Pulso de respiración cada ~3,5 s: crece suavemente con cada exhalación hasta ~1 bloque de radio.
-    let fase = tiempo * (MAT_TAU / OPC_CRISTAL_VAHO_PERIODO);
-    let pulso = 0.88 + 0.12 * (0.5 + 0.5 * sin(fase));
-    let radio = OPC_CRISTAL_VAHO_RADIO * (0.34 + 0.66 * peso) * pulso;
-
-    let d = length(pos_rel - centro);
-    let limite = radio * 1.2;
-    if d >= limite {
+    // Evita que la elipse se proyecte en paredes de cristal perpendiculares o lejanas en profundidad.
+    let delta = pos_rel - centro;
+    if abs(dot(delta, normal_cara)) > 0.22 {
         return vacio;
     }
 
-    // Ruido continuo interpolado a >= 32 texeles por bloque (sin cuantización en bloques gruesos).
-    let uv = plano.uv;
-    let n_suave = rui_valor2(uv * 5.5 + vec2<f32>(1.3, 4.7));
-    let n_medio = rui_valor2(uv * 16.0 + vec2<f32>(n_suave * 0.4, -n_suave * 0.3));
-    let n_fino = rui_valor2(uv * OPC_CRISTAL_REJILLA + vec2<f32>(7.1, 2.9));
-    let micro_vaho = 0.78 + 0.22 * (n_suave * 0.45 + n_medio * 0.35 + n_fino * 0.20);
+    let semi_x = OPC_CRISTAL_VAHO_SEMI_X * escala;
+    let semi_y = OPC_CRISTAL_VAHO_SEMI_Y * escala;
+    let du = dot(delta, plano.tangente) / max(semi_x, 1e-4);
+    let dv = dot(delta, plano.bitangente) / max(semi_y, 1e-4);
+    let r2_bruto = du * du + dv * dv;
+    if r2_bruto > 1.85 {
+        return vacio;
+    }
 
-    // Deformación sutil y continua del borde para que no sea un círculo geométrico rígido.
-    let rn = d / max(radio * (0.90 + 0.18 * n_suave), 1e-4);
-    let gauss = exp(-2.5 * rn * rn) * smoothstep(1.15, 0.12, rn);
-    let derrite = exp(-1.7 * rn * rn) * smoothstep(1.20, 0.05, rn) * clamp(peso, 0.0, 1.0);
-    let vaho = clamp(gauss * micro_vaho * peso * (0.90 + 0.10 * pulso), 0.0, 1.0);
-    let borroso = smoothstep(0.03, 0.55, vaho) * 0.90;
+    // Perfil suave y orgánico con grano fino en la rejilla elegida.
+    let n_suave = rui_valor2(plano.uv * 5.2 + vec2<f32>(1.7, 4.3));
+    let rn = sqrt(r2_bruto) / (0.92 + 0.16 * n_suave);
+    let perfil = exp(-2.2 * rn * rn) * smoothstep(1.22, 0.15, rn);
+    if perfil <= 0.002 {
+        return vacio;
+    }
 
-    return SupCristalAliento(vaho, derrite, borroso);
+    let k = clamp(k_res, 0.5, 2.0);
+    let gx = floor(plano.uv * (OPC_CRISTAL_REJILLA * k));
+    let h_fino = rui_hash33(vec3<i32>(i32(gx.x), i32(gx.y), 211)).x;
+    let grano = 0.90 + 0.20 * h_fino;
+
+    // Atenuación limpia al acercarse al umbral cond_grosor = 0,5.
+    let libre_cond = smoothstep(0.50, 0.35, cond_grosor);
+    let grosor = clamp(perfil * peso * libre_cond, 0.0, 1.0);
+    let alfa = clamp(0.24 * aliento_opacidad * grosor * grano, 0.0, 0.78);
+    let derrite = clamp(exp(-1.5 * rn * rn) * smoothstep(1.28, 0.05, rn) * peso, 0.0, 1.0);
+    let color = mix(OPC_CRISTAL_COND_COLOR, vec3<f32>(1.0), clamp(aliento_blancura, 0.0, 1.0));
+
+    return SupCristalAliento(color, alfa, grosor, derrite);
 }

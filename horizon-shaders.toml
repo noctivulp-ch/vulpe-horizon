@@ -314,6 +314,7 @@ files = [
     "nucleo/superficie/cristal_escarcha.wgsl",
     "nucleo/superficie/cristal_nieve.wgsl",
     "nucleo/superficie/cristal_interior.wgsl",
+    "nucleo/superficie/cristal_aliento.wgsl",
     "nucleo/superficie/cristal_arena.wgsl",
     "adaptadores/cristal_mapa.wgsl",
     "adaptadores/cristal_sim_datos.wgsl",
