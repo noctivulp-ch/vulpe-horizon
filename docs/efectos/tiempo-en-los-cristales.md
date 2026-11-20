@@ -125,12 +125,19 @@ añade +1,9 ms en bosque. También se probó sustituir `minecraft:block/glass` d
   bloques), retención de 35 s + desvanecimiento en 20 s, blancura 100 % y opacidad 150 % por defecto; funde escarcha,
   borde helado y copos debajo.
 
-### 7. Desenfoque detrás del cristal empañado conservando las luces (`F-98`, 27 v2 §Capa 7)
+### 7. Desenfoque detrás del cristal empañado conservando las luces (`F-98`..`F-101`, 27 v2 §Capa 7)
 
-- Máscara `min(1, escarcha · 1,25) · 0,95 · grosor` (condensación y vaho, < 48 bloques), aplicada tanto en
-  `adp_cristal_refraccion` (tintado/ahumado) como en `adp_cristales_post` (cristal transparente `glass` y `glass_pane`
-  sobre `composicion_base` en `03b-cristales.wgsl`), con desenfoque de caja separable 2D (`[-rx..rx] × [-ry..ry]`,
-  rejilla 7×5) de radios `suave` (3, 2 px), `normal` (6, 4 px) y `fuerte` (11, 7 px), protección de profundidad
-  delantera y conservación de luces:
+- Máscara `min(1, escarcha · 1,25) · 0,95 · grosor` (condensación y vaho, < 48 bloques), aplicada en
+  `adp_cristales_post` sobre la textura `composicion` al inicio de `06-taa.wgsl` (`F-101`, eliminando la pasada post
+  intermedia `03b-cristales.wgsl` y dejando `[material]` en `11 298` expresiones sin lecturas de recursos de cristal),
+  con desenfoque de caja separable 2D (`[-rx..rx] × [-ry..ry]`, rejilla 7×5) de radios `suave` (3, 2 px), `normal`
+  (6, 4 px) y `fuerte` (11, 7 px), protección de profundidad delantera (`dm < d_cristal - 0,0002`) y conservación de
+  luces:
   `brillo = max(nítido − borroso − 0,04, 0); visto = borroso + 0,8 · brillo; fondo = mix(nítido, visto, máscara)`.
 - La condensación, el vaho y el borde helado se componen siempre **encima** del fondo desenfocado.
+- En `[material]` (`F-100`), como Horizon dibuja `minecraft:glass` y `minecraft:glass_pane` en la pasada translúcida
+  (`p.translucido == true`, recortando el interior `albedo.a < 0,01` y dejando solo el marco y los trazos diagonales de
+  brillo con `albedo.a = 1,0`), la luz de bloque se neutraliza a luminancia acromática para todo `p.es_cristal` y la
+  superficie de `OPC_MAT_CRISTAL_CLARO` se mantiene acromática con opacidad de brillo `0,45`, evitando que la luz cálida
+  de antorchas/faroles tiña de naranja los téxeles claros `(208, 234, 233)` de `glass.png` y los meta dentro del rango
+  del aislamiento de color (`07-final.wgsl`).

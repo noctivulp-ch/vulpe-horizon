@@ -69,7 +69,7 @@ fn material(input: MaterialInput) -> Surface {
         // hacia abajo, 2 hacia arriba; aquí escalada por OPC_SSS_CIELO. Porqué: docs/efectos/luz-de-superficie.md §SSS de cielo (F-9)
         sss_cielo = sup_sss_color(albedo, 0.5) * luces.cielo * curva_cielo * m.sss * (sup_sss_fase_cielo(-p.vista.y) * OPC_SSS_CIELO);
     }
-    let color_luz_b = select(adp_color_luz_bloque(p, o), vec3<f32>(col_luminancia(adp_color_luz_bloque(p, o))) * 0.35, p.es_cristal && !p.translucido);
+    let color_luz_b = select(adp_color_luz_bloque(p, o), vec3<f32>(col_luminancia(adp_color_luz_bloque(p, o))), p.es_cristal);
     let bloque = (color_luz_b * luz_curva_bloque(p.luz_bloque) + p.luz_colorida) * OPC_LUZ_BLOQUE * o.bloque;
     // Relámpago (20): solo donde llega el cielo (luz de cielo a la cuarta). Porqué: docs/efectos/relampago.md
     let cielo2 = p.luz_cielo * p.luz_cielo;
@@ -124,46 +124,32 @@ fn material(input: MaterialInput) -> Surface {
         brillo_emision = o.emision_labpbr;
     }
     color = mix(color, color_emision * OPC_EMISION * brillo_emision * 4.0, emision);
+    if p.material == OPC_MAT_CRISTAL_CLARO {
+        color = vec3<f32>(max(col_luminancia(color), col_luminancia(albedo) * 0.35));
+    }
 
     if !p.translucido {
         let total = col_luminancia(directa + indirecta) + 1e-6;
         set_surface(n, select(sup_empaquetar_suavidad(m.suavidad, col_lineal_a_srgb(albedo)), -sup_empaquetar_suavidad(m.suavidad, mena.mineral), mena.fuente), sup_empaquetar_dato(m.f0.g, col_luminancia(indirecta) / total, p.luz_cielo));
         return adp_material_salida(color, p.alfa, p);
     }
-    return adp_material_salida(translucido(p, n, m, luces, sombra.luz, bloque, color), 1.0, p);
+    return adp_material_salida(translucido(p, n, m, luces, color), 1.0, p);
 }
 
 // Translúcidos que no son agua (22): lo de detrás refractado y teñido por el color normalizado, la superficie encima
 // por su opacidad y el reflejo con Fresnel, que la vuelve espejo de refilón. Sale opaco, como el agua.
-// En los cristales (`p.es_cristal`) compone además «el tiempo en los cristales» (27); si el efecto está apagado o
-// despejado (`!cr.activo`), sigue el camino exacto de `22` sin alteración.
+// Las capas climáticas de «el tiempo en los cristales» (27) se componen en post (`03b-cristales.wgsl`) sobre la caché
+// 3D `cristal_mapa`, manteniendo `[material]` con el mismo coste y presión de registros que sin cristales.
 // Porqué: docs/efectos/translucidos.md y docs/efectos/tiempo-en-los-cristales.md
 fn translucido(
     p: AdpPunto,
     n: vec3<f32>,
     m: SupMaterial,
     luces: AdpLuces,
-    sombra_luz: vec3<f32>,
-    bloque_luz: vec3<f32>,
     superficie: vec3<f32>,
 ) -> vec3<f32> {
-    if p.es_cristal {
-        let cr = adp_cristal_evaluar(p, n, luces, sombra_luz, bloque_luz);
-        if cr.activo {
-            let refr = adp_cristal_refraccion(p, cr.normal, cr.refraccion, cr.desenfoque, cr.desenfoque_nivel);
-            let a = clamp(p.alfa, 0.0, 1.0);
-            let peso_tinte = select(0.0, clamp(a / OPC_TRANSL_TINTE_MIN, 0.0, 1.0), OPC_TRANSL_TINTE);
-            let tinte = mix(vec3<f32>(1.0), normalize(max(p.albedo, vec3<f32>(1e-4))), peso_tinte);
-            var fondo = mix(refr.color * tinte * (1.0 - cr.oscurecer_fondo), superficie, a);
-            fondo = mix(fondo, cr.capa_color, cr.capa_opacidad);
-            let f0 = select(vec3<f32>(OPC_TRANSL_F0), m.f0, p.con_pbr) + vec3<f32>(cr.f0_extra);
-            let f = col_luminancia(sup_fresnel_schlick(max(dot(cr.normal, p.vista), 0.0), f0)) * (1.0 - max(cr.capa_opacidad * 0.75, cr.mate));
-            let reflejo = adp_agua_reflejo(p, cr.normal, reflect(-p.vista, cr.normal), luces) * luz_curva_cielo(max(p.luz_cielo, 0.3));
-            return mix(fondo, reflejo, f) + cr.especular_extra;
-        }
-    }
     let refr = adp_agua_refraccion(p, n, OPC_TRANSL_REFRACCION * 0.0006);
-    let a = clamp(p.alfa, 0.0, 1.0);
+    let a = clamp(p.alfa, 0.0, 1.0) * select(1.0, 0.45, p.material == OPC_MAT_CRISTAL_CLARO);
     let peso_tinte = select(0.0, clamp(a / OPC_TRANSL_TINTE_MIN, 0.0, 1.0), OPC_TRANSL_TINTE);
     let tinte = mix(vec3<f32>(1.0), normalize(max(p.albedo, vec3<f32>(1e-4))), peso_tinte);
     let fondo = mix(refr.color * tinte, superficie, a);
